@@ -183,22 +183,16 @@ A deploy workflow is committed at `.github/workflows/deploy.yml`. Push to
 `main` and it tests, builds and publishes to GitHub Pages at
 `https://leonidas47dario.github.io/Fish2tank/`.
 
-**One blocker:** GitHub Pages on a **private** repository requires a paid
-GitHub plan. This repo is currently private, so on the free plan the build
-step will pass and the deploy step will fail. Three ways forward:
+The workflow enables Pages itself on first run (`enablement: true`), so no
+manual setup is needed. If you ever need to set it by hand, it is Settings →
+Pages → Source: **GitHub Actions**.
 
-1. **Make the repo public** — Settings → General → Change visibility. Pages
-   then works on the free plan. Everything in the app is local to the
-   browser, so publishing the code exposes no personal data — though the
-   inventory and the Panther photo are committed as seed data, so consider
-   whether you want those public.
-2. **Upgrade to GitHub Pro** (~$4/month) and keep it private.
-3. **Host it elsewhere free** — the build is fully static. Netlify, Cloudflare
-   Pages or Vercel will each deploy this repo from a private source on their
-   free tier. Build command `npm run build`, publish directory `dist`, and
-   leave `VITE_BASE` unset since those hosts serve from the root.
-
-Enable Pages first under Settings → Pages → Source: **GitHub Actions**.
+Note that Pages on a *private* repository needs a paid GitHub plan. This
+repository is public, so the free plan covers it. To host it privately
+instead, the build is fully static and Netlify, Cloudflare Pages or Vercel
+will each serve it from a private repo on their free tier — build command
+`npm run build`, publish directory `dist`, and leave `VITE_BASE` unset since
+those hosts serve from the root.
 
 Because there is no backend, "deployed" means the app is installable from that
 URL and then runs entirely on the device. Data never leaves the phone, and it
