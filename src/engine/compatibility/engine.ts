@@ -625,15 +625,33 @@ export function evaluateCompatibility(
   return assessment;
 }
 
-/** Screen a candidate against every active aquarium (FR-E02). */
+/**
+ * Screen a candidate against every active aquarium (FR-E02).
+ *
+ * The whole run shares ONE timestamp. One screening is a single event at a
+ * single moment, and callers group a run by its `assessedAt`; letting each
+ * tank stamp its own `new Date()` made runs differ by a millisecond and split
+ * apart. It also matters for FR-E07: "the encounter-day result" has to mean
+ * one coherent set of snapshots, not a scatter of near-simultaneous ones.
+ */
 export function evaluateAllTanks(
   candidate: CandidateInput,
   tanks: TankInput[],
   options: EvaluateOptions = {},
 ): CompatibilityAssessment[] {
+  const now = options.now ?? new Date().toISOString();
   return tanks
     .filter((t) => t.aquarium.status === 'active')
-    .map((t) => evaluateCompatibility(candidate, t, options));
+    .map((t) =>
+      evaluateCompatibility(candidate, t, {
+        ...options,
+        now,
+        // Ids must still be unique per tank within the shared instant.
+        assessmentId: options.assessmentId
+          ? `${options.assessmentId}_${t.aquarium.id}`
+          : undefined,
+      }),
+    );
 }
 
 export { DEFAULT_RULES };

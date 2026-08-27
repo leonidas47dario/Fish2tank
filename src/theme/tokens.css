@@ -1,0 +1,199 @@
+/*
+ * Design-token contract - PRD 7.3.
+ *
+ * Every slot the PRD names has exactly one semantic variable here. Components
+ * consume ONLY these variables; no component hard-codes a colour, radius,
+ * duration or font. That is what makes 7.3's rule enforceable: "Functional
+ * components must render correctly when the token set changes; no data
+ * migration or component rewrite is allowed for a theme change."
+ *
+ * The three token sets below are the three visual territories from PRD 7.2,
+ * shipped as a comparison tool for the art-direction acceptance test (7.6).
+ * PRD 7.3 is explicit that shipping several production themes is NOT a release
+ * requirement - one default is chosen later, and these remain as the proof
+ * that themeability holds.
+ */
+
+:root {
+  /* --- Color ------------------------------------------------------------ */
+  --color-canvas: #0b1d2a;
+  --color-surface: #12293a;
+  --color-surface-raised: #1a3a50;
+  --color-text: #eaf2f7;
+  --color-muted: #93aec1;
+  --color-primary: #3ba3d0;
+  --color-accent: #5ee0c0;
+  --color-positive: #4bbf87;
+  --color-caution: #e0b34f;
+  --color-danger: #e0685f;
+  --color-legendary: #f0c059;
+  --color-border: #24455c;
+
+  /* --- Typography ------------------------------------------------------- */
+  --font-display: 'Georgia', 'Iowan Old Style', serif;
+  --font-body: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-data: ui-monospace, 'SF Mono', 'Cascadia Mono', monospace;
+  --font-scientific-style: italic;
+  --font-scientific-weight: 400;
+
+  --size-xs: 0.75rem;
+  --size-sm: 0.875rem;
+  --size-md: 1rem;
+  --size-lg: 1.25rem;
+  --size-xl: 1.625rem;
+  --size-2xl: 2.125rem;
+
+  --weight-regular: 400;
+  --weight-medium: 600;
+  --weight-bold: 700;
+
+  /* --- Shape ------------------------------------------------------------ */
+  --radius-card: 16px;
+  --radius-control: 10px;
+  --radius-pill: 999px;
+  --border-width: 1px;
+  --image-mask: 16px;
+  --rarity-frame-radius: 18px;
+
+  /* --- Depth ------------------------------------------------------------ */
+  --elevation-surface: 0 1px 2px rgb(0 0 0 / 0.3);
+  --elevation-raised: 0 8px 24px rgb(0 0 0 / 0.35);
+  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--color-primary) 60%, transparent);
+  --media-glow: 0 0 40px rgb(59 163 208 / 0.18);
+  --foil-strength: 0.55;
+
+  /* --- Motion and sound ------------------------------------------------- */
+  --duration-fast: 120ms;
+  --duration-base: 220ms;
+  --duration-reveal: 2200ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0.1, 1);
+  --ease-rise: cubic-bezier(0.16, 1, 0.3, 1);
+  --reveal-intensity: 1;
+
+  /* --- Assets ----------------------------------------------------------- */
+  --texture-canvas: radial-gradient(ellipse at 50% -10%, #17394f 0%, transparent 60%);
+  --divider-style: solid;
+  --rarity-ornament-display: block;
+
+  /* --- Layout (not themed; structural) ---------------------------------- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --nav-height: 64px;
+  --content-max: 640px;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Territory: Midnight Aquarium (PRD 7.2)                                  */
+/* Dark gallery, luminous media, restrained foil. Real fish as the hero.    */
+/* ---------------------------------------------------------------------- */
+[data-theme='midnight-aquarium'] {
+  /* The :root defaults above already are this territory. */
+  --color-canvas: #08151f;
+  --color-surface: #0f2433;
+  --color-surface-raised: #163449;
+  --media-glow: 0 0 56px rgb(94 224 192 / 0.22);
+  --foil-strength: 0.4;
+  --font-display: 'Iowan Old Style', Georgia, serif;
+  --texture-canvas: radial-gradient(ellipse at 50% -20%, #14364b 0%, transparent 65%);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Territory: Playful Collector (PRD 7.2)                                  */
+/* Bright aquatic colour, rounded cards, buoyant icons.                     */
+/* ---------------------------------------------------------------------- */
+[data-theme='playful-collector'] {
+  --color-canvas: #f2fbff;
+  --color-surface: #ffffff;
+  --color-surface-raised: #e8f6fe;
+  --color-text: #123246;
+  --color-muted: #5b7c91;
+  --color-primary: #1a8fd1;
+  --color-accent: #17c3a2;
+  --color-positive: #21a366;
+  --color-caution: #d98a12;
+  --color-danger: #d94b3f;
+  --color-legendary: #e8a317;
+  --color-border: #cbe4f2;
+
+  --font-display: 'Trebuchet MS', 'Segoe UI', system-ui, sans-serif;
+  --radius-card: 24px;
+  --radius-control: 16px;
+  --image-mask: 22px;
+  --rarity-frame-radius: 26px;
+  --elevation-surface: 0 2px 6px rgb(18 50 70 / 0.08);
+  --elevation-raised: 0 12px 28px rgb(18 50 70 / 0.14);
+  --media-glow: 0 0 32px rgb(23 195 162 / 0.25);
+  --foil-strength: 0.75;
+  --reveal-intensity: 1.25;
+  --texture-canvas: radial-gradient(ellipse at 50% -10%, #d9f1ff 0%, transparent 55%);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Territory: Expedition Fieldbook (PRD 7.2)                               */
+/* Warm paper, stamps, annotated dossiers. Strong research identity.        */
+/* ---------------------------------------------------------------------- */
+[data-theme='expedition-fieldbook'] {
+  --color-canvas: #f4ece0;
+  --color-surface: #fbf6ee;
+  --color-surface-raised: #f0e5d4;
+  --color-text: #2e2519;
+  --color-muted: #7b6a55;
+  --color-primary: #8a5a2b;
+  --color-accent: #4f6b52;
+  --color-positive: #4f6b52;
+  --color-caution: #b07d20;
+  --color-danger: #9e3f2f;
+  --color-legendary: #a8802b;
+  --color-border: #d8c8b0;
+
+  --font-display: 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+  --font-body: 'Iowan Old Style', Georgia, serif;
+  --radius-card: 4px;
+  --radius-control: 3px;
+  --image-mask: 2px;
+  --rarity-frame-radius: 2px;
+  --border-width: 1.5px;
+  --elevation-surface: 0 1px 0 rgb(46 37 25 / 0.12);
+  --elevation-raised: 0 6px 18px rgb(46 37 25 / 0.16);
+  --media-glow: none;
+  --foil-strength: 0.35;
+  --divider-style: dashed;
+  --texture-canvas: none;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Accessibility (NFR-06, FR-R04)                                          */
+/* ---------------------------------------------------------------------- */
+
+/*
+ * Reduced motion is honoured two ways: the OS setting, and an in-app toggle
+ * that writes data-reduced-motion. The PRD requires the control to exist from
+ * first release, not to be inherited from the platform alone.
+ */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms;
+    --duration-base: 0ms;
+    --duration-reveal: 0ms;
+    --reveal-intensity: 0;
+  }
+}
+
+[data-reduced-motion='true'] {
+  --duration-fast: 0ms;
+  --duration-base: 0ms;
+  --duration-reveal: 0ms;
+  --reveal-intensity: 0;
+}
+
+[data-reduced-motion='true'] *,
+[data-reduced-motion='true'] *::before,
+[data-reduced-motion='true'] *::after {
+  animation-duration: 1ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 1ms !important;
+}

@@ -386,3 +386,32 @@ describe('evaluateAllTanks (FR-E02)', () => {
     expect(results[1]!.verdict).toBe('extreme-risk');
   });
 });
+
+describe('a screening run is one event (FR-E07)', () => {
+  it('stamps every tank in a run with the same assessedAt', () => {
+    const tanks = Array.from({ length: 6 }, (_, i) =>
+      tank({ aquarium: aquarium({ id: `t${i}`, name: `Tank ${i}` }) }),
+    );
+    // No `now` supplied, so the engine must generate exactly one itself.
+    const results = evaluateAllTanks(candidate(), tanks);
+    expect(new Set(results.map((r) => r.assessedAt)).size).toBe(1);
+  });
+
+  it('keeps assessment ids unique within that shared instant', () => {
+    const tanks = [
+      tank({ aquarium: aquarium({ id: 't1', name: 'A' }) }),
+      tank({ aquarium: aquarium({ id: 't2', name: 'B' }) }),
+    ];
+    const results = evaluateAllTanks(candidate(), tanks);
+    expect(new Set(results.map((r) => r.id)).size).toBe(2);
+  });
+
+  it('so grouping a run by its timestamp returns every tank', () => {
+    const tanks = Array.from({ length: 6 }, (_, i) =>
+      tank({ aquarium: aquarium({ id: `t${i}`, name: `Tank ${i}` }) }),
+    );
+    const results = evaluateAllTanks(candidate(), tanks);
+    const newest = [...results].sort((a, b) => b.assessedAt.localeCompare(a.assessedAt))[0]!;
+    expect(results.filter((r) => r.assessedAt === newest.assessedAt)).toHaveLength(6);
+  });
+});
