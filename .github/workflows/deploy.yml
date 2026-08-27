@@ -1,9 +1,7 @@
 # Build the PWA and publish it to GitHub Pages.
 #
-# NOTE: Pages on a PRIVATE repository requires a paid GitHub plan. On the free
-# plan this workflow builds fine but the deploy step fails until either the
-# repository is made public or the plan is upgraded. See README, "Running it as
-# a live web app", for the alternatives.
+# Pages on a PRIVATE repository requires a paid GitHub plan; this repository is
+# public, so the free plan covers it.
 name: Deploy
 
 on:
@@ -45,7 +43,14 @@ jobs:
           VITE_BASE: /${{ github.event.repository.name }}/
         run: npm run build
 
+      # enablement:true turns Pages on via the API when it has never been
+      # configured, instead of failing with a 404 and requiring someone to
+      # click through repository settings first. Also means a fork gets a
+      # working deploy without manual setup.
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
