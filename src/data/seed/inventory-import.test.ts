@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { enclosureKind, importInventory, matchSpeciesExact, parseInventoryCsv, type InventoryRow } from './inventory-import';
-import { SPECIES_CATALOG } from './species-catalog';
+import { DELIBERATELY_UNRESOLVED, SPECIES_CATALOG } from './species-catalog';
 
 const catalog = SPECIES_CATALOG.map((e) => e.species);
 
@@ -156,5 +156,40 @@ describe('CSV parsing', () => {
   it('skips blank lines', () => {
     const csv = ['Tank,Species / Description,Quantity', '75G,A,1', '', '75G,B,2', ''].join('\n');
     expect(parseInventoryCsv(csv)).toHaveLength(2);
+  });
+});
+
+describe('catalog coverage of the real inventory', () => {
+  it('resolves the species it claims to know', () => {
+    const rows: InventoryRow[] = [
+      { tank: '75G', speciesDescription: 'Wolf fish', quantity: 1 },
+      { tank: '75G', speciesDescription: 'Jack Dempsey', quantity: 1 },
+      { tank: '75G', speciesDescription: 'Rocket gar', quantity: 2 },
+      { tank: 'Breeder Tote', speciesDescription: 'Feeder guppy', quantity: 50 },
+      { tank: 'Predator Tank', speciesDescription: 'Congo puffer', quantity: 1 },
+    ];
+    const result = importInventory(rows, catalog);
+    expect(result.report.every((r) => r.identity === 'matched')).toBe(true);
+  });
+
+  it('leaves every deliberately-unresolved label unresolved', () => {
+    // If someone later adds a guess for one of these, this fails loudly.
+    for (const label of DELIBERATELY_UNRESOLVED) {
+      expect(matchSpeciesExact(label, catalog)).toBeUndefined();
+    }
+  });
+
+  it('gives every catalog profile a source', () => {
+    for (const e of SPECIES_CATALOG) {
+      expect(e.profile.sources.length).toBeGreaterThan(0);
+      expect(e.profile.sources[0]!.note).toBeTruthy();
+    }
+  });
+
+  it('marks hybrids as having no taxonomic source rather than inventing one', () => {
+    const flowerhorn = SPECIES_CATALOG.find((e) => e.species.id === 'sp_flowerhorn')!;
+    expect(flowerhorn.species.scientificName).toBeUndefined();
+    expect(flowerhorn.profile.sources[0]!.url).toBeUndefined();
+    expect(flowerhorn.profile.sources[0]!.label).toMatch(/hybrid/i);
   });
 });

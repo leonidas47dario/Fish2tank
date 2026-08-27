@@ -405,11 +405,13 @@ describe('End-to-end acceptance: the Panther (PRD 10)', () => {
     expect((await assessmentHistory(draft.specimen.id, db))[0]!.verdict).toBe('extreme-risk');
   });
 
-  it('the seeded jaguar profile carries an honest provenance note, not a fake citation', () => {
+  it('the seeded jaguar profile cites its placeholder source and says it is one', () => {
     const jaguar = CATALOG_BY_ID.get('sp_jaguar_cichlid')!;
-    expect(jaguar.profile.sources).toHaveLength(1);
-    expect(jaguar.profile.sources[0]!.label).toMatch(/NOT verified/i);
-    expect(jaguar.profile.sources[0]!.url).toBeUndefined();
+    const source = jaguar.profile.sources[0]!;
+    expect(source.url).toBe('https://en.wikipedia.org/wiki/Parachromis_managuensis');
+    expect(source.label).toMatch(/PLACEHOLDER/i);
+    // The note must keep saying which fields the article does NOT support.
+    expect(source.note).toMatch(/NOT sourced from it/i);
   });
 });
 

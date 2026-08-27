@@ -19,7 +19,7 @@ npm run dev          # http://localhost:5173
 ```
 
 ```bash
-npm test             # 165 unit + integration tests
+npm test             # 182 unit + integration tests
 npm run build        # type-check, bundle, generate the service worker
 npm run preview      # serve the production build on :4173
 
@@ -115,32 +115,94 @@ nowhere yet. Nothing leaves the device.
 
 ---
 
-## Two things that need your input
+## Real data, seeded
 
-**1. The species care data is unverified.** Seven species ship in
-`src/data/seed/species-catalog.ts` covering the enclosure types in the PRD.
-Every value is general hobbyist consensus typed in by hand. None of it has been
-checked against a licensed care database, and no citation URL is attached
-because none was consulted — each profile carries a source note saying exactly
-that. PRD 12 names this as a top risk and PRD 12.1 leaves the source an open
-decision. **Pick a source and re-verify every row before trusting a verdict.**
+The app opens on Ryan's actual system, not an empty shell:
 
-**2. Two files the PRD references were not provided.** `fish_inventory.xlsx`
-(61 rows, six enclosure labels) and `IMG_5126.jpeg` (the jaguar encounter
-photo). The importer is built to the documented column contract and tested
-against a synthetic 61-row sheet — see [`docs/INVENTORY_IMPORT.md`](docs/INVENTORY_IMPORT.md).
-Export the sheet to CSV and load it from Settings → Import inventory.
+- **All 61 inventory rows** across the six real enclosures, imported as opening
+  balances from [`docs/fish_inventory.xlsx`](docs/fish_inventory.xlsx)
+- **47 species profiles**, covering the fish that are actually in those tanks
+- **The Panther**, with the real encounter photo, $100 asking / $75 member, and
+  the story
 
-## One decision worth reviewing
+Which makes the screening real. Ask the app where a 14″ jaguar cichlid could
+live and it answers *Extreme risk* for every tank Ryan owns — naming the wolf
+fish it would fight, the Geophagus it would kill, and the 125-gallon minimum a
+75-gallon tank cannot meet. That is the product's whole thesis working: the
+honest answer was always "nowhere", and the app says so without needing him to
+buy anything to find out.
 
-PRD 5.2 lists a trigger for each verdict but no precedence between them, and
-two triggers can fire at once — a proven hard conflict plus an unrelated
-missing input. This build ranks a known conflict **above** *Not enough data*,
-because reporting "Not enough data" when a fatal predation conflict is already
-proven hides the more actionable fact. *Not enough data* still outranks
-*Conditional* and *Suitable*, so no green verdict can survive a missing
-required input — which is what FR-E05 and success measure 11.2 actually
-require. The reasoning is written out in `src/engine/compatibility/engine.ts`.
+## About the species data
+
+Per your decision, **Wikipedia is the placeholder source** until a licensed
+care database is chosen (PRD 12.1). Every profile carries a real article URL.
+
+One caveat worth keeping in view: Wikipedia species articles are good on
+taxonomy and adult size, and **thin on exactly what this engine screens** —
+minimum tank volume, aggression rating, prey-size behaviour. Those fields are
+hobbyist consensus, and each profile's source note says so rather than implying
+the article backs them.
+
+Eleven inventory labels are **deliberately left unresolved** — the unclear IDs
+you had already flagged, plus genus-only and ambiguous trade names like
+`Severum (unspecified)` and `Striped cory`. They stay raw, and screening for
+them says *Not enough data*. A guess there would be the fastest way to make the
+app dishonest, so there is a test that fails if anyone later adds one.
+
+## The verdict-precedence decision, plainly
+
+You said this one wasn't clear — here it is without the jargon.
+
+A tank can trip two rules at once: one that's *definitely* fatal, and one the
+app *can't check*. Say a fish would certainly eat your tetras, and separately
+you never recorded that tank's temperature.
+
+Two possible answers:
+
+- **"Not enough data"** — technically true, but it buries the fact that you
+  already know this fish will eat your tetras.
+- **"Extreme risk"** — tells you the thing that actually matters, and still
+  lists the temperature as unchecked underneath.
+
+This build picks the second. The one rule that never bends: **missing data can
+never produce a green "Suitable"**. So nothing unsafe slips through — you just
+get told the worst *known* problem first instead of a shrug. That matches what
+the PRD actually requires (FR-E05 says don't infer *safety*; measure 11.2 says
+missing inputs must not yield *Suitable*), and PRD 5.2 never said which
+of the two wins.
+
+If you'd rather it always say "Not enough data" the moment anything is
+unchecked, that's a one-line change in `engine.ts` — the ordering is a single
+constant.
+
+---
+
+## Running it as a live web app
+
+A deploy workflow is committed at `.github/workflows/deploy.yml`. Push to
+`main` and it tests, builds and publishes to GitHub Pages at
+`https://leonidas47dario.github.io/Fish2tank/`.
+
+**One blocker:** GitHub Pages on a **private** repository requires a paid
+GitHub plan. This repo is currently private, so on the free plan the build
+step will pass and the deploy step will fail. Three ways forward:
+
+1. **Make the repo public** — Settings → General → Change visibility. Pages
+   then works on the free plan. Everything in the app is local to the
+   browser, so publishing the code exposes no personal data — though the
+   inventory and the Panther photo are committed as seed data, so consider
+   whether you want those public.
+2. **Upgrade to GitHub Pro** (~$4/month) and keep it private.
+3. **Host it elsewhere free** — the build is fully static. Netlify, Cloudflare
+   Pages or Vercel will each deploy this repo from a private source on their
+   free tier. Build command `npm run build`, publish directory `dist`, and
+   leave `VITE_BASE` unset since those hosts serve from the root.
+
+Enable Pages first under Settings → Pages → Source: **GitHub Actions**.
+
+Because there is no backend, "deployed" means the app is installable from that
+URL and then runs entirely on the device. Data never leaves the phone, and it
+keeps working offline once installed.
 
 ---
 

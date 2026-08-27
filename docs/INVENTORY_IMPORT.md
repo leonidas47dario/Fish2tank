@@ -4,18 +4,26 @@ Implements FR-O03 and the migration rules in PRD 6.2.
 
 ## The file
 
-The PRD references `fish_inventory.xlsx` — 61 holding rows on a "Fish Inventory"
-sheet, across six enclosure labels: **75G, Breeder Tote, Quarantine, Bass Tote,
-Mini Tank, Predator Tank**. That file was not supplied with the PRD, so the
-importer is written to the documented column contract rather than to the actual
-sheet, and is tested against a synthetic 61-row fixture.
+`fish_inventory.xlsx` — 61 holding rows on a "Fish Inventory" sheet, across six
+enclosure labels: **75G (19), Mini Tank (18), Predator Tank (15), Quarantine
+(6), Breeder Tote (2), Bass Tote (1)**. 136 animals in total: 54 fish rows, 6
+invert rows, 1 amphibian.
 
-## How to load it
+The workbook is committed at [`fish_inventory.xlsx`](fish_inventory.xlsx) and
+its contents ship as the app's first-run seed data, so a fresh install already
+holds the real inventory. The tests read the real workbook rather than a
+fixture.
 
-1. Open the workbook and export the Fish Inventory sheet as **CSV**.
-2. In the app: **Settings → Import inventory → choose the file.**
+## How to load a newer version
+
+1. In the app: **Settings → Import inventory → choose the file.**
+2. Pick either the **`.xlsx` directly** or a CSV export — both work.
 3. Read the row-by-row report. Every row is listed, with whether its species
    resolved or still needs confirming.
+
+The `.xlsx` reader is dependency-free: an .xlsx is a ZIP of XML, and it is
+unzipped with the platform's own `DecompressionStream` (Safari 16.4+, Chrome
+80+). No spreadsheet library is bundled for one import screen.
 
 ## Columns
 

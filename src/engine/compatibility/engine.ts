@@ -26,7 +26,7 @@ import type {
   Verdict,
   WaterRange,
 } from '@/domain/types';
-import { formatLength, formatVolume, toCm, toLitres } from '@/domain/units';
+import { formatLength, formatVolume, fromCm, toCm, toLitres } from '@/domain/units';
 import { AGGRESSION_LEVEL, DEFAULT_RULES, type CompatibilityRuleConfig } from './rules';
 
 // ---------------------------------------------------------------------------
@@ -118,6 +118,27 @@ function bodyLength(candidate: CandidateInput, basis: SizeBasis): LengthMeasurem
   return basis === 'adult' ? candidate.profile?.adultSize : candidate.observedSize;
 }
 
+/**
+ * Condense per-resident findings into a readable sentence.
+ *
+ * PRD 5.2 asks for a "concise reason". A tank with fifteen residents produces
+ * fifteen findings, and listing them all buries the worst one in a run-on
+ * sentence nobody reads. The most severe few are named; the rest are counted.
+ * Nothing is lost - every resident still appears in `inputsUsed`, and every
+ * implicated one in `relatedHoldingIds` (FR-E04).
+ */
+const NAMED_FINDINGS = 3;
+
+function summarize(findings: Array<{ verdict: Verdict; text: string }>): string | undefined {
+  if (findings.length === 0) return undefined;
+  const ranked = [...findings].sort((a, b) => SEVERITY[b.verdict] - SEVERITY[a.verdict]);
+  const named = ranked.slice(0, NAMED_FINDINGS).map((f) => f.text);
+  const remaining = ranked.length - named.length;
+  return remaining > 0
+    ? `${named.join('; ')}; and ${remaining} more resident${remaining === 1 ? '' : 's'} affected.`
+    : `${named.join('; ')}.`;
+}
+
 // ---------------------------------------------------------------------------
 // Individual rules (PRD 5.1)
 // ---------------------------------------------------------------------------
@@ -199,8 +220,10 @@ function ruleAdultSize(
     { label: basis === 'adult' ? 'Adult size' : 'Observed size', value: formatLength(size) },
     { label: `${tank.aquarium.name} length`, value: formatLength(dims!.length) },
     { label: `${tank.aquarium.name} width`, value: formatLength(dims!.width) },
-    { label: 'Required length', value: `${cfg.adultSize.minLengthMultiple}x body = ${Math.round(needLen)}cm` },
-    { label: 'Required width', value: `${cfg.adultSize.minWidthMultiple}x body = ${Math.round(needWid)}cm` },
+    // Reported in the tank's own unit: showing "142cm" beside "48in" makes the
+    // comparison the user is being asked to check unnecessarily hard.
+    { label: 'Required length', value: `${cfg.adultSize.minLengthMultiple}x body = ${formatLength(fromCm(needLen, dims!.length.unit))}` },
+    { label: 'Required width', value: `${cfg.adultSize.minWidthMultiple}x body = ${formatLength(fromCm(needWid, dims!.width.unit))}` },
   ];
 
   if (tankLenCm < needLen) {
@@ -243,7 +266,7 @@ function ruleAggression(candidate: CandidateInput, tank: TankInput): FactorResul
   const inputsUsed = [{ label: 'Candidate aggression', value: candAgg }];
   const missingInputs: string[] = [];
   let verdict: Verdict = 'suitable';
-  const reasons: string[] = [];
+  const findings: Array<{ verdict: Verdict; text: string }> = [];
   const related: Id[] = [];
 
   for (const r of tank.residents) {
@@ -265,7 +288,7 @@ function ruleAggression(candidate: CandidateInput, tank: TankInput): FactorResul
 
     if (pairVerdict !== 'suitable') {
       related.push(r.holdingId);
-      reasons.push(`${candAgg} candidate vs ${resAgg} ${r.label}`);
+      findings.push({ verdict: pairVerdict, text: `${candAgg} candidate vs ${resAgg} ${r.label}` });
       verdict = worst(verdict, pairVerdict);
     }
   }
@@ -273,10 +296,11 @@ function ruleAggression(candidate: CandidateInput, tank: TankInput): FactorResul
   // A missing resident rating cannot be assumed harmless (FR-E05).
   if (missingInputs.length) verdict = worst(verdict, 'insufficient-data');
 
+  const summary = summarize(findings);
   return {
     factor: 'aggression',
     verdict,
-    reason: reasons.length ? `Temperament conflict: ${reasons.join('; ')}.` : undefined,
+    reason: summary ? `Temperament conflict: ${summary}` : undefined,
     inputsUsed,
     missingInputs,
     relatedHoldingIds: related,
@@ -304,7 +328,7 @@ function rulePredation(
     { label: 'Candidate predation tags', value: candProfile.predationTags.join(', ') || 'none recorded' },
   ];
   const missingInputs: string[] = [];
-  const reasons: string[] = [];
+  const findings: Array<{ verdict: Verdict; text: string }> = [];
   const related: Id[] = [];
   let verdict: Verdict = 'suitable';
 
@@ -312,7 +336,7 @@ function rulePredation(
     // Inverts are prey to anything tagged as an invert predator, regardless of size.
     if (candProfile.predationTags.includes('invert-predator') && r.category?.toLowerCase() === 'invert') {
       related.push(r.holdingId);
-      reasons.push(`candidate preys on inverts and ${r.label} is an invert`);
+      findings.push({ verdict: 'high-risk', text: `candidate preys on inverts and ${r.label} is an invert` });
       verdict = worst(verdict, 'high-risk');
       continue;
     }
@@ -336,24 +360,25 @@ function rulePredation(
 
     if (ratio <= eatRatio) {
       related.push(r.holdingId);
-      reasons.push(`${preyLabel} is ${Math.round(ratio * 100)}% of ${predatorLabel}'s length, inside its ${Math.round(eatRatio * 100)}% prey band`);
+      findings.push({ verdict: 'extreme-risk', text: `${preyLabel} is ${Math.round(ratio * 100)}% of ${predatorLabel}'s length, inside its ${Math.round(eatRatio * 100)}% prey band` });
       verdict = worst(verdict, 'extreme-risk');
     } else if (ratio <= eatRatio * cfg.predation.cautionRatioMultiple) {
       related.push(r.holdingId);
-      reasons.push(`${preyLabel} at ${Math.round(ratio * 100)}% of ${predatorLabel}'s length is within harassment range`);
+      findings.push({ verdict: 'high-risk', text: `${preyLabel} at ${Math.round(ratio * 100)}% of ${predatorLabel}'s length is within harassment range` });
       verdict = worst(verdict, 'high-risk');
     }
   }
 
   if (missingInputs.length) verdict = worst(verdict, 'insufficient-data');
-  if (!candPredatory && reasons.length === 0 && missingInputs.length === 0) {
+  if (!candPredatory && findings.length === 0 && missingInputs.length === 0) {
     return pass('predation', inputsUsed, 'No predation tags on the candidate and none triggered by residents.');
   }
 
+  const summary = summarize(findings);
   return {
     factor: 'predation',
     verdict,
-    reason: reasons.length ? `Predation risk: ${reasons.join('; ')}.` : undefined,
+    reason: summary ? `Predation risk: ${summary}` : undefined,
     inputsUsed,
     missingInputs,
     relatedHoldingIds: related,

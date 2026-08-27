@@ -415,3 +415,71 @@ describe('a screening run is one event (FR-E07)', () => {
     expect(results.filter((r) => r.assessedAt === newest.assessedAt)).toHaveLength(6);
   });
 });
+
+describe('reason summarisation (PRD 5.2 "concise reason")', () => {
+  const manyResidents = (n: number) =>
+    Array.from({ length: n }, (_, i) =>
+      resident({
+        holdingId: `h${i}`,
+        label: `Fish ${i}`,
+        speciesId: `sp_${i}`,
+        profile: profile(`sp_${i}`, { aggression: 'peaceful' }),
+      }),
+    );
+
+  it('names the worst few and counts the rest instead of listing fifteen', () => {
+    const c = candidate({ profile: profile('sp_test', { aggression: 'highly-aggressive' }) });
+    const r = evaluateCompatibility(c, tank({ residents: manyResidents(15) }), at);
+    const reason = factor(r, 'aggression').reason!;
+    expect(reason).toMatch(/and 12 more residents affected/);
+    expect(reason.split(';').length).toBeLessThanOrEqual(4);
+  });
+
+  it('still exposes every implicated resident for inspection (FR-E04)', () => {
+    const c = candidate({ profile: profile('sp_test', { aggression: 'highly-aggressive' }) });
+    const r = evaluateCompatibility(c, tank({ residents: manyResidents(15) }), at);
+    const aggression = r.factors.find((f) => f.factor === 'aggression')!;
+    // Summarised in prose, complete in the data.
+    expect(aggression.relatedHoldingIds).toHaveLength(15);
+    expect(aggression.inputsUsed).toHaveLength(16);
+  });
+
+  it('leads with the most severe pairing, not the first one encountered', () => {
+    const c = candidate({ profile: profile('sp_test', { aggression: 'highly-aggressive' }) });
+    const residents = [
+      resident({ holdingId: 'h1', label: 'Robust', speciesId: 'sp_a', profile: profile('sp_a', { aggression: 'aggressive' }) }),
+      resident({ holdingId: 'h2', label: 'Fragile', speciesId: 'sp_b', profile: profile('sp_b', { aggression: 'peaceful' }) }),
+    ];
+    const reason = factor(evaluateCompatibility(c, tank({ residents }), at), 'aggression').reason!;
+    expect(reason.indexOf('Fragile')).toBeLessThan(reason.indexOf('Robust'));
+  });
+
+  it('reports no temperament conflict when no resident is affected', () => {
+    const reason = factor(evaluateCompatibility(candidate(), tank(), at), 'aggression').reason;
+    expect(reason).not.toMatch(/Temperament conflict/);
+    expect(reason).toBe('No current residents to conflict with.');
+  });
+});
+
+describe('unit presentation', () => {
+  it('reports required dimensions in the same unit as the tank', () => {
+    const c = candidate({ profile: profile('sp_test', { adultSize: { value: 14, unit: 'in' } }) });
+    const inputs = factor(evaluateCompatibility(c, tank(), at), 'adult-size');
+    const required = evaluateCompatibility(c, tank(), at).factors
+      .find((f) => f.factor === 'adult-size')!.inputsUsed
+      .find((i) => i.label === 'Required length')!;
+    expect(required.value).toMatch(/in$/);
+    expect(required.value).not.toMatch(/cm/);
+    expect(inputs.verdict).toBe('extreme-risk');
+  });
+
+  it('reports in centimetres when the tank is recorded in centimetres', () => {
+    const t = tank({ aquarium: aquarium({ dimensions: {
+      length: { value: 120, unit: 'cm' }, width: { value: 45, unit: 'cm' }, height: { value: 50, unit: 'cm' },
+    } }) });
+    const required = evaluateCompatibility(candidate(), t, at).factors
+      .find((f) => f.factor === 'adult-size')!.inputsUsed
+      .find((i) => i.label === 'Required length')!;
+    expect(required.value).toMatch(/cm$/);
+  });
+});

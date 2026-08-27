@@ -6,10 +6,11 @@
  * and switching must change nothing but appearance. Mute and reduced motion
  * ship from first release, not later.
  */
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { SCENES, THEMES, useTheme } from '@/theme/ThemeProvider';
 import { db } from '@/data/db';
-import { importInventory, parseInventoryCsv, type ImportResult } from '@/data/seed/inventory-import';
+import { importInventoryFile } from '@/data/import-service';
+import type { ImportResult } from '@/data/seed/inventory-import';
 
 export default function Settings() {
   const { theme, setTheme, scene, setScene, reducedMotion, setReducedMotion, muted, setMuted } = useTheme();
@@ -89,38 +90,20 @@ export default function Settings() {
 
 /** FR-O03: bring the existing 61-row inventory in as opening balances. */
 function InventoryImport() {
-  const fileRef = useRef<HTMLInputElement>(null);
   const [result, setResult] = useState<ImportResult | undefined>();
   const [error, setError] = useState<string | undefined>();
+  const [busy, setBusy] = useState(false);
 
   async function onFile(file: File | undefined) {
     if (!file) return;
     setError(undefined);
+    setBusy(true);
     try {
-      const rows = parseInventoryCsv(await file.text());
-      if (rows.length === 0) { setError('No rows found in that file.'); return; }
-      const catalog = await db.species.toArray();
-      const imported = importInventory(rows, catalog);
-
-      await db.transaction('rw', [db.aquariums, db.holdings, db.residencies], async () => {
-        // Existing tanks keep their measurements; imported labels only add
-        // enclosures that are genuinely new.
-        const existing = await db.aquariums.toArray();
-        const byName = new Map(existing.map((a) => [a.name.toLowerCase(), a]));
-        for (const a of imported.aquariums) {
-          const match = byName.get(a.name.toLowerCase());
-          if (match) {
-            for (const r of imported.residencies) if (r.aquariumId === a.id) r.aquariumId = match.id;
-          } else {
-            await db.aquariums.add(a);
-          }
-        }
-        await db.holdings.bulkAdd(imported.holdings);
-        await db.residencies.bulkAdd(imported.residencies);
-      });
-      setResult(imported);
+      setResult(await importInventoryFile(file));
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not read that file.');
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -128,10 +111,16 @@ function InventoryImport() {
     <section className="card stack">
       <h2>Import inventory</h2>
       <p className="muted small">
-        A CSV of the Fish Inventory sheet: Tank, Species / Description, Quantity, Category, Notes.
-        Raw labels are kept exactly as written, unclear IDs stay unclear, and no arrival dates are invented.
+        Load the Fish Inventory sheet — the <code>.xlsx</code> directly, or a CSV export. Raw labels are
+        kept exactly as written, unclear IDs stay unclear, and no arrival dates are invented.
       </p>
-      <input ref={fileRef} type="file" accept=".csv,text/csv" onChange={(e) => void onFile(e.target.files?.[0])} />
+      <input
+        type="file"
+        accept=".xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        disabled={busy}
+        onChange={(e) => void onFile(e.target.files?.[0])}
+      />
+      {busy && <p className="small muted">Reading…</p>}
       {error && <p className="warn">{error}</p>}
       {result && (
         <>
