@@ -1,0 +1,479 @@
+/**
+ * Logical data model - PRD section 6.
+ *
+ * The central modelling decision (PRD 3.4): Species, Specimen/group, Encounter,
+ * Holding, Residency and Life event are SEPARATE records. A spreadsheet-style
+ * "species in tank" row cannot preserve the product story by itself.
+ */
+
+// ---------------------------------------------------------------------------
+// Identifiers and shared primitives
+// ---------------------------------------------------------------------------
+
+export type Id = string;
+
+/** ISO-8601 instant, e.g. "2026-08-27T15:04:05.000Z". */
+export type Instant = string;
+/** ISO-8601 calendar date, e.g. "2026-08-27". Used where time of day is noise. */
+export type CalendarDate = string;
+
+export type LengthUnit = 'in' | 'cm';
+export type VolumeUnit = 'gal' | 'l';
+export type CurrencyCode = string;
+
+export interface Measurement<U extends string> {
+  value: number;
+  unit: U;
+  /** True when the user eyeballed it rather than measured it (FR-C05, FR-T07). */
+  estimate?: boolean;
+}
+
+export type LengthMeasurement = Measurement<LengthUnit>;
+export type VolumeMeasurement = Measurement<VolumeUnit>;
+
+export interface Dimensions {
+  length: LengthMeasurement;
+  width: LengthMeasurement;
+  height: LengthMeasurement;
+}
+
+/**
+ * Provenance for any externally sourced fact. NFR-05 requires every computed
+ * result to expose its sources; NFR-12 requires external sources to sit behind
+ * replaceable adapters that retain attribution and source dates.
+ */
+export interface SourceRef {
+  label: string;
+  url?: string;
+  retrievedAt: Instant;
+  note?: string;
+}
+
+/** Local-first sync state. FR-C02, FR-C07, NFR-02. */
+export type SyncState = 'local-draft' | 'uploading' | 'synced' | 'retry-required' | 'failed';
+
+// ---------------------------------------------------------------------------
+// User and place
+// ---------------------------------------------------------------------------
+
+export interface UserSettings {
+  homeRegion?: string;
+  lengthUnit: LengthUnit;
+  volumeUnit: VolumeUnit;
+  currency: CurrencyCode;
+  /** NFR-06 / FR-R04: reveal ceremony must respect both of these. */
+  reducedMotion: boolean;
+  muted: boolean;
+  /** Active app theme token set (PRD 7.2/7.3). */
+  themeId: string;
+}
+
+export interface User {
+  id: Id;
+  displayName: string;
+  settings: UserSettings;
+  createdAt: Instant;
+}
+
+export type PlaceType = 'fish-store' | 'chain-store' | 'aquarium' | 'expo' | 'home' | 'other';
+
+/** NFR-04 / 8.2: exact store and home locations stay private. */
+export type PlacePrivacy = 'private-exact' | 'private-coarse';
+
+export interface Place {
+  id: Id;
+  name: string;
+  branch?: string;
+  type: PlaceType;
+  /** Free-text coarse locality, e.g. "Chicago area". Safe to surface. */
+  coarseLocation?: string;
+  /** Precise coordinates. Never leaves the device in the MVP. */
+  exactLocation?: { lat: number; lon: number };
+  privacy: PlacePrivacy;
+  isFavorite: boolean;
+  createdAt: Instant;
+}
+
+// ---------------------------------------------------------------------------
+// Species and species profile
+// ---------------------------------------------------------------------------
+
+export interface Species {
+  id: Id;
+  commonName: string;
+  scientificName?: string;
+  /** Alternate trade names the store might use. Searchable (FR-I02). */
+  aliases: string[];
+  morph?: string;
+  locality?: string;
+  createdAt: Instant;
+}
+
+export type AggressionRating = 'peaceful' | 'semi-aggressive' | 'aggressive' | 'highly-aggressive';
+export type SocialNeed = 'solitary' | 'pair' | 'schooling' | 'shoaling' | 'colony' | 'territorial';
+export type PredationTag =
+  | 'piscivore'
+  | 'fin-nipper'
+  | 'invert-predator'
+  | 'opportunistic'
+  | 'ambush-predator';
+
+export interface WaterRange {
+  temperatureC?: { min: number; max: number };
+  ph?: { min: number; max: number };
+}
+
+/**
+ * The screening inputs for one species. Deliberately all-optional below the
+ * identity fields: FR-E05 requires missing facts to produce "Not enough data"
+ * rather than an inferred green result, so absence must be representable.
+ */
+export interface SpeciesProfile {
+  id: Id;
+  speciesId: Id;
+  adultSize?: LengthMeasurement;
+  /** Hard floor for a long-term adult home (PRD 5.1 "Minimum enclosure"). */
+  minimumVolume?: VolumeMeasurement;
+  minimumFootprint?: { length: LengthMeasurement; width: LengthMeasurement };
+  aggression?: AggressionRating;
+  water?: WaterRange;
+  socialNeeds: SocialNeed[];
+  predationTags: PredationTag[];
+  /**
+   * Largest prey-to-predator length ratio this species is known to swallow.
+   * Drives the predation rule in PRD 5.1.
+   */
+  preySizeRatio?: number;
+  sources: SourceRef[];
+  /** Bumped whenever curated values change, so assessments stay traceable (NFR-09). */
+  profileVersion: number;
+  /** Conflicting sources must surface as a conflict, not a silent pick (edge cases, section 9). */
+  conflictNotes?: string[];
+  updatedAt: Instant;
+}
+
+// ---------------------------------------------------------------------------
+// Specimen, encounter, media, identification
+// ---------------------------------------------------------------------------
+
+/** FR-I01. "Unknown" is a valid, saveable, permanent state (P6). */
+export type IdentityStatus = 'unknown' | 'provisional' | 'user-confirmed';
+
+/** PRD 6.1 specimen transitions. */
+export type SpecimenStatus =
+  | 'encountered'
+  | 'considering'
+  | 'reserved'
+  | 'resident'
+  | 'rehomed'
+  | 'sold'
+  | 'returned'
+  | 'missing'
+  | 'deceased';
+
+export type SpecimenKind = 'individual' | 'group';
+
+export interface Specimen {
+  id: Id;
+  kind: SpecimenKind;
+  /** Verbatim store label. Never overwritten by an identification (FR-O05, FR-J04). */
+  rawLabel?: string;
+  /** Null until identified. FR-I01. */
+  speciesId?: Id;
+  identityStatus: IdentityStatus;
+  /** Narrative name such as "the Panther" (FR-J04). */
+  nickname?: string;
+  status: SpecimenStatus;
+  /** FR-R06: personal foil treatment, with an optional private reason. */
+  golden?: { awardedAt: Instant; reason?: string };
+  /** FR-R06 / 5.3: user-flagged unusually compelling individual. */
+  exceptional?: boolean;
+  createdAt: Instant;
+  updatedAt: Instant;
+}
+
+export interface Encounter {
+  id: Id;
+  specimenId: Id;
+  placeId?: Id;
+  /** Automatic but editable (FR-C03). */
+  observedAt: Instant;
+  quantitySeen?: number;
+  observedSize?: LengthMeasurement;
+  /** The label on the store's own tank, kept verbatim. */
+  rawTankLabel?: string;
+  /** Store co-housing. Explicitly NOT compatibility evidence (FR-T08). */
+  observedTankmates?: string;
+  originLocality?: string;
+  notes?: string;
+  createdAt: Instant;
+  syncState: SyncState;
+}
+
+export type MediaKind = 'photo' | 'video' | 'audio';
+
+export interface Media {
+  id: Id;
+  kind: MediaKind;
+  /** One media item may link to several specimens (section 9, multi-species video). */
+  specimenIds: Id[];
+  encounterId?: Id;
+  /** The untouched original. NFR-03: never silently downsampled or replaced. */
+  originalBlobKey: string;
+  originalBytes: number;
+  mimeType: string;
+  /** Compressed playback derivative; regenerable, never authoritative. */
+  previewBlobKey?: string;
+  thumbnailBlobKey?: string;
+  durationSeconds?: number;
+  capturedAt: Instant;
+  syncState: SyncState;
+  /** FR-J03: transcript is editable and its deletion never deletes the audio. */
+  transcript?: { text: string; editedByUser: boolean; updatedAt: Instant };
+}
+
+export interface IdentificationAssertion {
+  id: Id;
+  specimenId: Id;
+  candidateSpeciesId?: Id;
+  /** Retained when the user typed a name that matched no species record. */
+  candidateRawText?: string;
+  source: 'user' | 'external-visual-search' | 'store-label' | 'import';
+  /**
+   * Only populated when a source actually supplies one. FR-I04 forbids
+   * inventing a percentage for a manual confirmation.
+   */
+  confidence?: number;
+  assertedAt: Instant;
+  /** Superseded assertions are retained, never deleted (FR-I06, NFR-09). */
+  supersededByAssertionId?: Id;
+  note?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Price
+// ---------------------------------------------------------------------------
+
+/** FR-C06 / FR-P04: a lot price cannot be compared per-fish without this. */
+export type PriceBasis = 'each' | 'pair' | 'lot';
+
+export interface PriceObservation {
+  id: Id;
+  specimenId?: Id;
+  speciesId?: Id;
+  encounterId?: Id;
+  placeId?: Id;
+  /** FR-P03: these three are separate facts and never overwrite one another. */
+  askingPrice?: number;
+  memberPrice?: number;
+  paidPrice?: number;
+  currency: CurrencyCode;
+  basis: PriceBasis;
+  /** How many fish the price covers. Required to normalize a pair/lot price. */
+  packageQuantity: number;
+  observedSize?: LengthMeasurement;
+  observedAt: Instant;
+  /** FR-P05: manual online comparisons carry shipping and a source URL. */
+  online?: { sourceUrl?: string; shipping?: number; riskNote?: string };
+  source: 'in-store' | 'online-manual' | 'import';
+  note?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Collection: rarity and dream list
+// ---------------------------------------------------------------------------
+
+export type DiscoveryTier = 'familiar' | 'uncommon' | 'rare' | 'epic' | 'legendary';
+
+export interface RarityComponentBreakdown {
+  firstConfirmedSpecies: number;
+  dreamListHit: number;
+  personalEncounterScarcity: number;
+  exceptionalSpecimen: number;
+}
+
+/**
+ * Immutable reveal-day result. FR-E07 / 5.3: retuning weights must never
+ * rewrite a historical reveal.
+ */
+export interface RaritySnapshot {
+  id: Id;
+  specimenId: Id;
+  speciesId?: Id;
+  components: RarityComponentBreakdown;
+  totalScore: number;
+  tier: DiscoveryTier;
+  formulaVersion: string;
+  golden: boolean;
+  revealedAt: Instant;
+}
+
+export interface DreamListItem {
+  id: Id;
+  speciesId: Id;
+  /** FR-R08: dream-list status must predate the encounter to score. */
+  addedAt: Instant;
+  source: 'search' | 'collection-browse' | 'manual';
+  notes?: string;
+  /** Set when an encounter finally fulfils it; the item is not deleted. */
+  fulfilledBySpecimenId?: Id;
+}
+
+// ---------------------------------------------------------------------------
+// Tanks, holdings, residency, lifecycle
+// ---------------------------------------------------------------------------
+
+export type AquariumStatus = 'planned' | 'active' | 'retired';
+export type AquariumKind = 'display' | 'tote' | 'quarantine' | 'grow-out' | 'pond' | 'virtual';
+/** FR-E06 / 5.1: user-set, never a fabricated bioload calculation. */
+export type StockingState = 'low' | 'moderate' | 'crowded';
+
+export interface Aquarium {
+  id: Id;
+  name: string;
+  kind: AquariumKind;
+  volume?: VolumeMeasurement;
+  dimensions?: Dimensions;
+  status: AquariumStatus;
+  stockingState?: StockingState;
+  water?: WaterRange;
+  photoMediaId?: Id;
+  notes?: string;
+  createdAt: Instant;
+}
+
+export interface Holding {
+  id: Id;
+  /** Null for opening-balance rows imported without an encounter (FR-T02). */
+  specimenId?: Id;
+  speciesId?: Id;
+  /** Preserved verbatim from the source spreadsheet (FR-O05, 6.2). */
+  rawLabel?: string;
+  kind: SpecimenKind;
+  /** Derived from life events; see deriveQuantity(). */
+  openingQuantity: number;
+  category?: string;
+  /** True when created by inventory import rather than a tracked acquisition. */
+  openingBalance: boolean;
+  notes?: string;
+  createdAt: Instant;
+}
+
+/** FR-T03: a move closes one interval and opens another. Never a single tank field. */
+export interface Residency {
+  id: Id;
+  holdingId: Id;
+  aquariumId: Id;
+  startDate: CalendarDate;
+  /** Null while the holding currently lives here. */
+  endDate?: CalendarDate;
+  note?: string;
+}
+
+/** FR-T05. */
+export type LifeEventType =
+  | 'opening-balance'
+  | 'reserved'
+  | 'acquired'
+  | 'quantity-adjusted'
+  | 'birth'
+  | 'moved'
+  | 'rehomed'
+  | 'sold'
+  | 'returned'
+  | 'missing'
+  | 'escaped'
+  | 'deceased';
+
+export interface LifeEvent {
+  id: Id;
+  holdingId: Id;
+  type: LifeEventType;
+  occurredOn: CalendarDate;
+  /** Signed change to the holding's live count. 0 for non-quantity events. */
+  quantityDelta: number;
+  fromAquariumId?: Id;
+  toAquariumId?: Id;
+  notes?: string;
+  createdAt: Instant;
+}
+
+// ---------------------------------------------------------------------------
+// Compatibility assessment
+// ---------------------------------------------------------------------------
+
+/** PRD 5.2 verdict scale. Ordered least to most severe; "insufficient" is separate. */
+export type Verdict = 'suitable' | 'conditional' | 'high-risk' | 'extreme-risk' | 'insufficient-data';
+
+export type FactorId =
+  | 'minimum-enclosure'
+  | 'adult-size'
+  | 'aggression'
+  | 'predation'
+  | 'water-overlap'
+  | 'social-needs'
+  | 'crowding';
+
+export interface FactorResult {
+  factor: FactorId;
+  verdict: Verdict;
+  /** Human-readable reason. Empty for a clean pass. */
+  reason?: string;
+  /** FR-E04: exactly which stored values produced this outcome. */
+  inputsUsed: Array<{ label: string; value: string }>;
+  /** FR-E05: what is missing, when the factor could not be evaluated. */
+  missingInputs: string[];
+  /** Residents implicated, for pairwise factors. */
+  relatedHoldingIds?: Id[];
+}
+
+/**
+ * Immutable snapshot. FR-E07: a rerun creates a new one; the encounter-day
+ * result stays readable forever.
+ */
+export interface CompatibilityAssessment {
+  id: Id;
+  specimenId: Id;
+  aquariumId: Id;
+  verdict: Verdict;
+  /** FR-E03: the long-term adult result is the headline. */
+  headline: string;
+  /** FR-E03: shown only as visibly secondary, and time-bounded. */
+  temporaryJuvenileFit?: { verdict: Verdict; note: string };
+  factors: FactorResult[];
+  missingInputs: string[];
+  rulesVersion: string;
+  assessedAt: Instant;
+  /** FR-E08: an override records a decision without erasing the calculated risk. */
+  userOverride?: { decision: string; reason: string; overriddenAt: Instant };
+}
+
+// ---------------------------------------------------------------------------
+// Legacy: Fish Heaven and Keeper's Code
+// ---------------------------------------------------------------------------
+
+export type CauseConfidence = 'unknown' | 'suspected' | 'likely' | 'confirmed';
+
+export interface Memorial {
+  id: Id;
+  holdingId: Id;
+  specimenId?: Id;
+  occurredOn: CalendarDate;
+  quantity: number;
+  story?: string;
+  /** FR-L02: several possibilities are valid; there is no required diagnosis. */
+  suspectedContributors: string[];
+  causeConfidence: CauseConfidence;
+  lesson?: string;
+  keeperPrincipleId?: Id;
+  createdAt: Instant;
+}
+
+export interface KeeperPrinciple {
+  id: Id;
+  text: string;
+  /** FR-L04: links back to the fish that inspired it. */
+  sourceMemorialId?: Id;
+  sourceSpecimenId?: Id;
+  createdAt: Instant;
+}

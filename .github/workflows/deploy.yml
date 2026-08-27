@@ -1,0 +1,61 @@
+# Build the PWA and publish it to GitHub Pages.
+#
+# NOTE: Pages on a PRIVATE repository requires a paid GitHub plan. On the free
+# plan this workflow builds fine but the deploy step fails until either the
+# repository is made public or the plan is upgraded. See README, "Running it as
+# a live web app", for the alternatives.
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never let two deploys race; let a newer commit supersede an in-flight one.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # The engines are the product's honesty guarantee - a deploy that skips
+      # them is not worth shipping.
+      - name: Test
+        run: npm test
+
+      - name: Build
+        env:
+          # Project Pages serves from https://<user>.github.io/<repo>/
+          VITE_BASE: /${{ github.event.repository.name }}/
+        run: npm run build
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,220 @@
+/*
+ * Structural styles. Every visual value here reads a token from tokens.css -
+ * there are no literal colours, radii or durations below, which is the
+ * mechanical guarantee behind PRD 7.3.
+ */
+@import './theme/tokens.css';
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body, #root { height: 100%; }
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--size-md);
+  color: var(--color-text);
+  background-color: var(--color-canvas);
+  background-image: var(--texture-canvas);
+  background-repeat: no-repeat;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* NFR-07: iPhone portrait first, usable on desktop. */
+.app {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  min-height: 100%;
+  padding: var(--space-4) var(--space-4) calc(var(--nav-height) + var(--space-6));
+  padding-bottom: calc(var(--nav-height) + var(--space-6) + env(safe-area-inset-bottom));
+}
+
+h1, h2, h3 { font-family: var(--font-display); margin: 0 0 var(--space-3); line-height: 1.2; }
+h1 { font-size: var(--size-2xl); }
+h2 { font-size: var(--size-xl); }
+h3 { font-size: var(--size-lg); }
+p { line-height: 1.55; margin: 0 0 var(--space-3); }
+
+a { color: var(--color-primary); }
+
+.muted { color: var(--color-muted); }
+.small { font-size: var(--size-sm); }
+.xs { font-size: var(--size-xs); }
+.data { font-family: var(--font-data); font-variant-numeric: tabular-nums; }
+.sci { font-style: var(--font-scientific-style); font-weight: var(--font-scientific-weight); }
+.stack { display: flex; flex-direction: column; gap: var(--space-3); }
+.row { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.spread { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.grow { flex: 1; }
+
+/* --- Surfaces ---------------------------------------------------------- */
+.card {
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--elevation-surface);
+  padding: var(--space-4);
+}
+.card--raised { background: var(--color-surface-raised); box-shadow: var(--elevation-raised); }
+
+hr { border: 0; border-top: var(--border-width) var(--divider-style) var(--color-border); margin: var(--space-4) 0; }
+
+/* --- Controls ---------------------------------------------------------- */
+button, .btn {
+  font: inherit;
+  font-weight: var(--weight-medium);
+  color: var(--color-text);
+  background: var(--color-surface-raised);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-control);
+  padding: var(--space-3) var(--space-4);
+  cursor: pointer;
+  transition: transform var(--duration-fast) var(--ease-standard),
+              background var(--duration-fast) var(--ease-standard);
+}
+button:hover:not(:disabled) { background: var(--color-surface); }
+button:active:not(:disabled) { transform: scale(0.98); }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+.btn--primary {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-canvas);
+}
+.btn--big { width: 100%; padding: var(--space-4); font-size: var(--size-lg); }
+.btn--ghost { background: transparent; }
+
+input, select, textarea {
+  font: inherit;
+  width: 100%;
+  color: var(--color-text);
+  background: var(--color-canvas);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-control);
+  padding: var(--space-3);
+}
+label { display: block; font-size: var(--size-sm); color: var(--color-muted); margin-bottom: var(--space-1); }
+fieldset { border: 0; padding: 0; margin: 0 0 var(--space-3); }
+
+/* --- Verdict badges ---------------------------------------------------- */
+/*
+ * NFR-06 requires non-colour rarity and status cues. Every badge therefore
+ * carries a glyph and a word as well as a hue, and the border style differs
+ * per severity so the distinction survives greyscale.
+ */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-medium);
+  border: var(--border-width) solid currentColor;
+}
+.badge__glyph { font-family: var(--font-data); font-weight: var(--weight-bold); }
+.badge--suitable { color: var(--color-positive); }
+.badge--conditional { color: var(--color-caution); border-style: dashed; }
+.badge--high-risk { color: var(--color-danger); border-style: double; border-width: 3px; }
+.badge--extreme-risk { color: var(--color-danger); background: color-mix(in srgb, var(--color-danger) 16%, transparent); border-width: 2px; }
+.badge--insufficient-data { color: var(--color-muted); border-style: dotted; }
+
+/* --- Rarity ------------------------------------------------------------ */
+.tier {
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  border: var(--border-width) solid currentColor;
+  font-size: var(--size-sm); font-weight: var(--weight-bold);
+  letter-spacing: 0.04em; text-transform: uppercase;
+}
+.tier--familiar { color: var(--color-muted); }
+.tier--uncommon { color: var(--color-primary); }
+.tier--rare { color: var(--color-accent); }
+.tier--epic { color: var(--color-caution); border-style: double; border-width: 3px; }
+.tier--legendary { color: var(--color-legendary); border-width: 2px; }
+
+.golden {
+  position: relative;
+  border-radius: var(--rarity-frame-radius);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-legendary) calc(var(--foil-strength) * 100%), transparent);
+}
+
+/* --- Media ------------------------------------------------------------- */
+.media {
+  width: 100%;
+  border-radius: var(--image-mask);
+  display: block;
+  background: var(--color-canvas);
+  box-shadow: var(--media-glow);
+}
+.media--scene { padding: var(--space-4); border-radius: var(--radius-card); }
+[data-scene='moon-sand'] .media--scene {
+  background: linear-gradient(180deg, var(--color-canvas) 60%, color-mix(in srgb, var(--color-muted) 35%, var(--color-canvas)) 100%);
+}
+[data-scene='planted'] .media--scene {
+  background: linear-gradient(180deg, var(--color-canvas) 55%, color-mix(in srgb, var(--color-positive) 28%, var(--color-canvas)) 100%);
+}
+
+/* --- Nav --------------------------------------------------------------- */
+.nav {
+  position: fixed; inset: auto 0 0 0;
+  height: calc(var(--nav-height) + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
+  display: grid; grid-template-columns: repeat(5, 1fr);
+  background: var(--color-surface);
+  border-top: var(--border-width) solid var(--color-border);
+  z-index: 10;
+}
+.nav a {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px; text-decoration: none; color: var(--color-muted);
+  font-size: var(--size-xs); font-weight: var(--weight-medium);
+}
+.nav a[aria-current='page'] { color: var(--color-primary); }
+.nav__glyph { font-size: var(--size-lg); line-height: 1; }
+.nav a.nav__catch .nav__glyph { color: var(--color-accent); }
+
+/* --- Reveal ceremony (PRD 7.5) ----------------------------------------- */
+/* Short, skippable, and flattened to nothing when motion is reduced. */
+@keyframes card-rise {
+  from { opacity: 0; transform: translateY(calc(24px * var(--reveal-intensity))) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes foil-sweep {
+  from { background-position: -200% 0; }
+  to { background-position: 200% 0; }
+}
+.reveal-card { animation: card-rise var(--duration-base) var(--ease-rise) both; }
+.reveal-card--golden {
+  background-image: linear-gradient(
+    100deg,
+    transparent 40%,
+    color-mix(in srgb, var(--color-legendary) calc(var(--foil-strength) * 100%), transparent) 50%,
+    transparent 60%
+  );
+  background-size: 200% 100%;
+  animation: card-rise var(--duration-base) var(--ease-rise) both,
+             foil-sweep var(--duration-reveal) var(--ease-standard) both;
+}
+
+/* --- Utility ----------------------------------------------------------- */
+.list { list-style: none; padding: 0; margin: 0; }
+.list > li + li { margin-top: var(--space-3); }
+.kv { display: grid; grid-template-columns: 1fr auto; gap: var(--space-2); font-size: var(--size-sm); }
+.kv dt { color: var(--color-muted); }
+.kv dd { margin: 0; font-family: var(--font-data); }
+.empty { text-align: center; color: var(--color-muted); padding: var(--space-6) var(--space-4); }
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+}
+.warn {
+  border-left: 3px solid var(--color-caution);
+  padding-left: var(--space-3);
+  color: var(--color-muted);
+  font-size: var(--size-sm);
+}
