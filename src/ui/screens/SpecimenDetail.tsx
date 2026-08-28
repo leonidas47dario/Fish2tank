@@ -21,6 +21,10 @@ import type { Species } from '@/domain/types';
 import { useSpecimenMedia } from '../hooks';
 import { IdentityBadge, TierBadge, VerdictBadge } from '../components/Badges';
 import { FactorList, MissingInputsNotice } from '../components/FactorList';
+import { MarketPanel } from '../components/MarketPanel';
+import { ScarcityBadge } from '../components/Badges';
+import { bandForSize, marketFor } from '@/data/market';
+import { computeMarketScarcity } from '@/engine/rarity/market-scarcity';
 import { usePrefersReducedMotion } from '@/theme/ThemeProvider';
 
 export default function SpecimenDetail() {
@@ -96,6 +100,11 @@ export default function SpecimenDetail() {
     setBusy(false);
   }
 
+  // Market context, auto-populated from the shipped index. No network call.
+  const marketStats = marketFor(specimen.speciesId);
+  const marketScarcity = computeMarketScarcity(marketStats);
+  const marketBand = marketStats ? bandForSize(marketStats, latest?.observedSize) : undefined;
+
   const priceFit = prices?.[0] && allPricesForSpecies
     ? evaluatePriceFit({ subject: prices[0], candidates: allPricesForSpecies })
     : undefined;
@@ -130,6 +139,7 @@ export default function SpecimenDetail() {
         <div className="row">
           <IdentityBadge status={specimen.identityStatus} />
           {snapshot && <TierBadge tier={snapshot.tier} golden={Boolean(specimen.golden)} />}
+          {marketScarcity.available && <ScarcityBadge band={marketScarcity.band} />}
         </div>
       </header>
 
@@ -176,7 +186,12 @@ export default function SpecimenDetail() {
       {/* --- Size and price (PRD 4.5) ------------------------------------- */}
       <section className="card stack">
         <h2>Size and price</h2>
-        <PriceForm specimenId={id} speciesId={specimen.speciesId} encounterId={latest?.id} />
+        <PriceForm
+          specimenId={id}
+          speciesId={specimen.speciesId}
+          encounterId={latest?.id}
+          marketEstimate={marketBand?.medianPrice}
+        />
         {prices && prices.length > 0 && (
           <dl className="kv">
             {prices[0]!.askingPrice !== undefined && (<><dt>Asking</dt><dd>${prices[0]!.askingPrice}</dd></>)}
@@ -193,6 +208,13 @@ export default function SpecimenDetail() {
           </p>
         )}
       </section>
+
+      {/* --- Market reference (PRD 4.5, FR-P06) --------------------------- */}
+      <MarketPanel
+        speciesId={specimen.speciesId}
+        observedSize={latest?.observedSize}
+        yourPrice={prices?.[0]?.memberPrice ?? prices?.[0]?.askingPrice}
+      />
 
       {/* --- Evaluate (PRD 4.4) ------------------------------------------- */}
       <section className="stack">
@@ -308,7 +330,9 @@ export default function SpecimenDetail() {
   );
 }
 
-function PriceForm({ specimenId, speciesId, encounterId }: { specimenId: string; speciesId?: string; encounterId?: string }) {
+function PriceForm({ specimenId, speciesId, encounterId, marketEstimate }: {
+  specimenId: string; speciesId?: string; encounterId?: string; marketEstimate?: number;
+}) {
   const [asking, setAsking] = useState('');
   const [member, setMember] = useState('');
   const [size, setSize] = useState('');
@@ -335,7 +359,13 @@ function PriceForm({ specimenId, speciesId, encounterId }: { specimenId: string;
       <div className="row">
         <div className="grow">
           <label htmlFor="asking">Asking price</label>
-          <input id="asking" inputMode="decimal" value={asking} onChange={(e) => setAsking(e.target.value)} placeholder="100" />
+          <input
+            id="asking" inputMode="decimal" value={asking}
+            onChange={(e) => setAsking(e.target.value)}
+            // A placeholder, never a prefilled value: the market figure must
+            // not be saved as if it were a price seen in the store.
+            placeholder={marketEstimate !== undefined ? String(marketEstimate) : '100'}
+          />
         </div>
         <div className="grow">
           <label htmlFor="member">Member price</label>
@@ -349,6 +379,12 @@ function PriceForm({ specimenId, speciesId, encounterId }: { specimenId: string;
       <button type="button" onClick={() => void save()} disabled={saving || (!asking && !member && !size)}>
         Record
       </button>
+      {marketEstimate !== undefined && (
+        <p className="xs muted" style={{ marginBottom: 0 }}>
+          Online stores listed this size around <strong>${marketEstimate.toFixed(2)}</strong>. Shown for
+          reference only — it is not filled in for you, because what you type should be what the tag says.
+        </p>
+      )}
       <p className="xs muted" style={{ marginBottom: 0 }}>
         No price tag? Leave both blank. Blank means unknown, not free.
       </p>

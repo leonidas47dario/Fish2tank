@@ -10,3 +10,4 @@ coverage/
 .env.*
 !.env.example
 smoke-shots/
+etl/raw/

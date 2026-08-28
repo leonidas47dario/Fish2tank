@@ -9,7 +9,9 @@ import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/data/db';
 import { addToDreamList } from '@/data/repositories';
-import { TierBadge } from '../components/Badges';
+import { ScarcityBadge, TierBadge } from '../components/Badges';
+import { marketFor } from '@/data/market';
+import { computeMarketScarcity } from '@/engine/rarity/market-scarcity';
 
 export default function Collection() {
   const data = useLiveQuery(async () => {
@@ -52,6 +54,13 @@ export default function Collection() {
               {!unlocked && <span className="muted"> · not yet confirmed</span>}
               <br />
               {species.scientificName && <span className="xs muted sci">{species.scientificName}</span>}
+              {/* Auto-populated from the shipped market index. */}
+              {(() => {
+                const scarcity = computeMarketScarcity(marketFor(species.id));
+                return scarcity.available
+                  ? <div style={{ marginTop: 'var(--space-2)' }}><ScarcityBadge band={scarcity.band} /></div>
+                  : null;
+              })()}
             </span>
             {!onDreamList && !unlocked && (
               <button type="button" className="btn--ghost" onClick={() => void addToDreamList(species.id)}>

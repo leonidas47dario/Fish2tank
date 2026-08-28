@@ -1,0 +1,1757 @@
+{
+  "schemaVersion": 1,
+  "builtAt": "2026-08-28T05:03:39.503Z",
+  "minimumSampleCount": 3,
+  "sources": [
+    {
+      "id": "global-exoticquatics",
+      "name": "Global Exoticquatics",
+      "host": "globalexoticquatics.com",
+      "currency": "USD",
+      "listingsFetched": 331,
+      "retrievedAt": "2026-08-28T05:03:39.365Z"
+    },
+    {
+      "id": "j4-flowerhorns",
+      "name": "J4 Flowerhorns",
+      "host": "www.j4flowerhorns.com",
+      "currency": "USD",
+      "listingsFetched": 635,
+      "retrievedAt": "2026-08-28T05:03:39.386Z"
+    },
+    {
+      "id": "predatory-fins",
+      "name": "Predatory Fins",
+      "host": "www.predatoryfins.com",
+      "currency": "USD",
+      "listingsFetched": 2429,
+      "retrievedAt": "2026-08-28T05:03:39.423Z"
+    }
+  ],
+  "species": {
+    "sp_raphael_catfish": {
+      "speciesId": "sp_raphael_catfish",
+      "comparableCount": 4,
+      "totalListings": 4,
+      "inStock": 1,
+      "soldOut": 3,
+      "price": {
+        "median": 48,
+        "min": 10,
+        "max": 95,
+        "currency": "USD"
+      },
+      "sizeRangeIn": {
+        "min": 3,
+        "max": 7.5
+      },
+      "priceBySize": [
+        {
+          "sizeIn": 3,
+          "medianPrice": 19,
+          "listings": 2
+        },
+        {
+          "sizeIn": 4,
+          "medianPrice": 68,
+          "listings": 1
+        },
+        {
+          "sizeIn": 7,
+          "medianPrice": 95,
+          "listings": 1
+        }
+      ],
+      "stores": [
+        {
+          "storeId": "predatory-fins",
+          "listings": 3,
+          "inStock": 0,
+          "medianPrice": 68
+        },
+        {
+          "storeId": "global-exoticquatics",
+          "listings": 1,
+          "inStock": 1,
+          "medianPrice": 10
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2021-09-03",
+        "latest": "2026-08-10"
+      }
+    },
+    "sp_tire_track_eel": {
+      "speciesId": "sp_tire_track_eel",
+      "comparableCount": 3,
+      "totalListings": 3,
+      "inStock": 2,
+      "soldOut": 1,
+      "price": {
+        "median": 25,
+        "min": 20,
+        "max": 45,
+        "currency": "USD"
+      },
+      "sizeRangeIn": {
+        "min": 3.5,
+        "max": 6.5
+      },
+      "priceBySize": [
+        {
+          "sizeIn": 3,
+          "medianPrice": 25,
+          "listings": 1
+        },
+        {
+          "sizeIn": 4,
+          "medianPrice": 20,
+          "listings": 1
+        },
+        {
+          "sizeIn": 6,
+          "medianPrice": 45,
+          "listings": 1
+        }
+      ],
+      "stores": [
+        {
+          "storeId": "predatory-fins",
+          "listings": 2,
+          "inStock": 1,
+          "medianPrice": 35
+        },
+        {
+          "storeId": "global-exoticquatics",
+          "listings": 1,
+          "inStock": 1,
+          "medianPrice": 20
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2021-09-04",
+        "latest": "2026-08-09"
+      }
+    },
+    "sp_delhezi_bichir": {
+      "speciesId": "sp_delhezi_bichir",
+      "comparableCount": 7,
+      "totalListings": 7,
+      "inStock": 1,
+      "soldOut": 6,
+      "price": {
+        "median": 48,
+        "min": 20,
+        "max": 385,
+        "currency": "USD"
+      },
+      "sizeRangeIn": {
+        "min": 3,
+        "max": 6
+      },
+      "priceBySize": [
+        {
+          "sizeIn": 3,
+          "medianPrice": 30,
+          "listings": 2
+        },
+        {
+          "sizeIn": 4,
+          "medianPrice": 48,
+          "listings": 3
+        },
+        {
+          "sizeIn": 5,
+          "medianPrice": 60,
+          "listings": 1
+        },
+        {
+          "sizeIn": 6,
+          "medianPrice": 72,
+          "listings": 1
+        }
+      ],
+      "stores": [
+        {
+          "storeId": "predatory-fins",
+          "listings": 5,
+          "inStock": 0,
+          "medianPrice": 60
+        },
+        {
+          "storeId": "global-exoticquatics",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 25
+        },
+        {
+          "storeId": "j4-flowerhorns",
+          "listings": 1,
+          "inStock": 1,
+          "medianPrice": 20
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2021-09-04",
+        "latest": "2026-06-05"
+      }
+    },
+    "sp_geophagus_sveni": {
+      "speciesId": "sp_geophagus_sveni",
+      "comparableCount": 12,
+      "totalListings": 16,
+      "inStock": 4,
+      "soldOut": 12,
+      "price": {
+        "median": 97.5,
+        "min": 18,
+        "max": 250,
+        "currency": "USD"
+      },
+      "sizeRangeIn": {
+        "min": 1.5,
+        "max": 7.75
+      },
+      "priceBySize": [
+        {
+          "sizeIn": 1,
+          "medianPrice": 18,
+          "listings": 1
+        },
+        {
+          "sizeIn": 2,
+          "medianPrice": 26.5,
+          "listings": 2
+        },
+        {
+          "sizeIn": 3,
+          "medianPrice": 99,
+          "listings": 2
+        },
+        {
+          "sizeIn": 4,
+          "medianPrice": 110,
+          "listings": 3
+        },
+        {
+          "sizeIn": 5,
+          "medianPrice": 140,
+          "listings": 2
+        },
+        {
+          "sizeIn": 6,
+          "medianPrice": 175,
+          "listings": 1
+        },
+        {
+          "sizeIn": 7,
+          "medianPrice": 250,
+          "listings": 1
+        }
+      ],
+      "stores": [
+        {
+          "storeId": "predatory-fins",
+          "listings": 11,
+          "inStock": 1,
+          "medianPrice": 110
+        },
+        {
+          "storeId": "j4-flowerhorns",
+          "listings": 3,
+          "inStock": 2,
+          "medianPrice": 0
+        },
+        {
+          "storeId": "global-exoticquatics",
+          "listings": 2,
+          "inStock": 1,
+          "medianPrice": 25
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2021-09-04",
+        "latest": "2026-08-05"
+      }
+    },
+    "sp_geophagus_tapajos": {
+      "speciesId": "sp_geophagus_tapajos",
+      "comparableCount": 11,
+      "totalListings": 12,
+      "inStock": 1,
+      "soldOut": 11,
+      "price": {
+        "median": 65,
+        "min": 15,
+        "max": 175,
+        "currency": "USD"
+      },
+      "sizeRangeIn": {
+        "min": 1,
+        "max": 5.75
+      },
+      "priceBySize": [
+        {
+          "sizeIn": 1,
+          "medianPrice": 30,
+          "listings": 2
+        },
+        {
+          "sizeIn": 2,
+          "medianPrice": 65,
+          "listings": 3
+        },
+        {
+          "sizeIn": 3,
+          "medianPrice": 50,
+          "listings": 3
+        },
+        {
+          "sizeIn": 4,
+          "medianPrice": 90,
+          "listings": 2
+        },
+        {
+          "sizeIn": 5,
+          "medianPrice": 175,
+          "listings": 1
+        }
+      ],
+      "stores": [
+        {
+          "storeId": "predatory-fins",
+          "listings": 8,
+          "inStock": 0,
+          "medianPrice": 67.5
+        },
+        {
+          "storeId": "global-exoticquatics",
+          "listings": 3,
+          "inStock": 1,
+          "medianPrice": 50
+        },
+        {
+          "storeId": "j4-flowerhorns",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 0
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2021-05-04",
+        "latest": "2025-12-30"
+      }
+    },
+    "sp_jack_dempsey": {
+      "speciesId": "sp_jack_dempsey",
+      "comparableCount": 10,
+      "totalListings": 11,
+      "inStock": 2,
+      "soldOut": 9,
+      "price": {
+        "median": 26.5,
+        "min": 10,
+        "max": 85,
+        "currency": "USD"
+      },
+      "sizeRangeIn": {
+        "min": 1.25,
+        "max": 6.5
+      },
+      "priceBySize": [
+        {
+          "sizeIn": 1,
+          "medianPrice": 14,
+          "listings": 2
+        },
+        {
+          "sizeIn": 2,
+          "medianPrice": 25,
+          "listings": 4
+        },
+        {
+          "sizeIn": 4,
+          "medianPrice": 40,
+          "listings": 2
+        },
+        {
+          "sizeIn": 5,
+          "medianPrice": 55,
+          "listings": 1
+        },
+        {
+          "sizeIn": 6,
+          "medianPrice": 85,
+          "listings": 1
+        }
+      ],
+      "stores": [
+        {
+          "storeId": "predatory-fins",
+          "listings": 8,
+          "inStock": 0,
+          "medianPrice": 31.5
+        },
+        {
+          "storeId": "global-exoticquatics",
+          "listings": 2,
+          "inStock": 1,
+          "medianPrice": 17.5
+        },
+        {
+          "storeId": "j4-flowerhorns",
+          "listings": 1,
+          "inStock": 1,
+          "medianPrice": 0
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2021-09-06",
+        "latest": "2025-11-12"
+      }
+    },
+    "sp_electric_blue_acara": {
+      "speciesId": "sp_electric_blue_acara",
+      "comparableCount": 7,
+      "totalListings": 10,
+      "inStock": 5,
+      "soldOut": 5,
+      "price": {
+        "median": 25,
+        "min": 10,
+        "max": 45,
+        "currency": "USD"
+      },
+      "sizeRangeIn": {
+        "min": 1,
+        "max": 4.5
+      },
+      "priceBySize": [
+        {
+          "sizeIn": 1,
+          "medianPrice": 15,
+          "listings": 3
+        },
+        {
+          "sizeIn": 2,
+          "medianPrice": 28,
+          "listings": 1
+        },
+        {
+          "sizeIn": 3,
+          "medianPrice": 30,
+          "listings": 2
+        },
+        {
+          "sizeIn": 4,
+          "medianPrice": 45,
+          "listings": 1
+        }
+      ],
+      "stores": [
+        {
+          "storeId": "predatory-fins",
+          "listings": 4,
+          "inStock": 1,
+          "medianPrice": 31.5
+        },
+        {
+          "storeId": "global-exoticquatics",
+          "listings": 3,
+          "inStock": 2,
+          "medianPrice": 15
+        },
+        {
+          "storeId": "j4-flowerhorns",
+          "listings": 3,
+          "inStock": 2,
+          "medianPrice": 0
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2022-04-27",
+        "latest": "2026-08-06"
+      }
+    },
+    "sp_vampire_shrimp": {
+      "speciesId": "sp_vampire_shrimp",
+      "comparableCount": 3,
+      "totalListings": 4,
+      "inStock": 0,
+      "soldOut": 4,
+      "price": {
+        "median": 35,
+        "min": 28,
+        "max": 55,
+        "currency": "USD"
+      },
+      "sizeRangeIn": {
+        "min": 3.25,
+        "max": 5.25
+      },
+      "priceBySize": [
+        {
+          "sizeIn": 3,
+          "medianPrice": 28,
+          "listings": 1
+        },
+        {
+          "sizeIn": 4,
+          "medianPrice": 35,
+          "listings": 1
+        },
+        {
+          "sizeIn": 5,
+          "medianPrice": 55,
+          "listings": 1
+        }
+      ],
+      "stores": [
+        {
+          "storeId": "predatory-fins",
+          "listings": 3,
+          "inStock": 0,
+          "medianPrice": 35
+        },
+        {
+          "storeId": "j4-flowerhorns",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 0
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2023-12-14",
+        "latest": "2026-06-19"
+      }
+    },
+    "sp_wolf_fish": {
+      "speciesId": "sp_wolf_fish",
+      "comparableCount": 6,
+      "totalListings": 9,
+      "inStock": 0,
+      "soldOut": 9,
+      "price": {
+        "median": 60,
+        "min": 45,
+        "max": 135,
+        "currency": "USD"
+      },
+      "sizeRangeIn": {
+        "min": 3.25,
+        "max": 8.5
+      },
+      "priceBySize": [
+        {
+          "sizeIn": 3,
+          "medianPrice": 45,
+          "listings": 1
+        },
+        {
+          "sizeIn": 4,
+          "medianPrice": 50,
+          "listings": 2
+        },
+        {
+          "sizeIn": 5,
+          "medianPrice": 65,
+          "listings": 1
+        },
+        {
+          "sizeIn": 6,
+          "medianPrice": 75,
+          "listings": 1
+        },
+        {
+          "sizeIn": 8,
+          "medianPrice": 135,
+          "listings": 1
+        }
+      ],
+      "stores": [
+        {
+          "storeId": "predatory-fins",
+          "listings": 6,
+          "inStock": 0,
+          "medianPrice": 60
+        },
+        {
+          "storeId": "j4-flowerhorns",
+          "listings": 3,
+          "inStock": 0,
+          "medianPrice": 0
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2022-06-22",
+        "latest": "2026-06-19"
+      }
+    },
+    "sp_true_parrot_cichlid": {
+      "speciesId": "sp_true_parrot_cichlid",
+      "comparableCount": 6,
+      "totalListings": 7,
+      "inStock": 0,
+      "soldOut": 7,
+      "price": {
+        "median": 80,
+        "min": 35,
+        "max": 145,
+        "currency": "USD"
+      },
+      "sizeRangeIn": {
+        "min": 2.25,
+        "max": 7
+      },
+      "priceBySize": [
+        {
+          "sizeIn": 2,
+          "medianPrice": 35,
+          "listings": 1
+        },
+        {
+          "sizeIn": 3,
+          "medianPrice": 45,
+          "listings": 1
+        },
+        {
+          "sizeIn": 4,
+          "medianPrice": 65,
+          "listings": 1
+        },
+        {
+          "sizeIn": 5,
+          "medianPrice": 95,
+          "listings": 1
+        },
+        {
+          "sizeIn": 6,
+          "medianPrice": 115,
+          "listings": 1
+        },
+        {
+          "sizeIn": 7,
+          "medianPrice": 145,
+          "listings": 1
+        }
+      ],
+      "stores": [
+        {
+          "storeId": "predatory-fins",
+          "listings": 6,
+          "inStock": 0,
+          "medianPrice": 80
+        },
+        {
+          "storeId": "j4-flowerhorns",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 0
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2021-05-04",
+        "latest": "2026-04-10"
+      }
+    },
+    "sp_teugelsi_bichir": {
+      "speciesId": "sp_teugelsi_bichir",
+      "comparableCount": 7,
+      "totalListings": 8,
+      "inStock": 1,
+      "soldOut": 7,
+      "price": {
+        "median": 110,
+        "min": 50,
+        "max": 450,
+        "currency": "USD"
+      },
+      "sizeRangeIn": {
+        "min": 3,
+        "max": 19
+      },
+      "priceBySize": [
+        {
+          "sizeIn": 3,
+          "medianPrice": 50,
+          "listings": 1
+        },
+        {
+          "sizeIn": 4,
+          "medianPrice": 70,
+          "listings": 1
+        },
+        {
+          "sizeIn": 5,
+          "medianPrice": 85,
+          "listings": 1
+        },
+        {
+          "sizeIn": 6,
+          "medianPrice": 110,
+          "listings": 1
+        },
+        {
+          "sizeIn": 9,
+          "medianPrice": 275,
+          "listings": 1
+        },
+        {
+          "sizeIn": 13,
+          "medianPrice": 325,
+          "listings": 1
+        },
+        {
+          "sizeIn": 19,
+          "medianPrice": 450,
+          "listings": 1
+        }
+      ],
+      "stores": [
+        {
+          "storeId": "predatory-fins",
+          "listings": 7,
+          "inStock": 1,
+          "medianPrice": 110
+        },
+        {
+          "storeId": "j4-flowerhorns",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 0
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2021-05-04",
+        "latest": "2025-11-24"
+      }
+    },
+    "sp_bristlenose_pleco": {
+      "speciesId": "sp_bristlenose_pleco",
+      "comparableCount": 4,
+      "totalListings": 6,
+      "inStock": 1,
+      "soldOut": 5,
+      "price": {
+        "median": 40,
+        "min": 25,
+        "max": 58,
+        "currency": "USD"
+      },
+      "sizeRangeIn": {
+        "min": 1.75,
+        "max": 2.88
+      },
+      "priceBySize": [
+        {
+          "sizeIn": 1,
+          "medianPrice": 25,
+          "listings": 1
+        },
+        {
+          "sizeIn": 2,
+          "medianPrice": 45,
+          "listings": 3
+        }
+      ],
+      "stores": [
+        {
+          "storeId": "predatory-fins",
+          "listings": 4,
+          "inStock": 1,
+          "medianPrice": 40
+        },
+        {
+          "storeId": "j4-flowerhorns",
+          "listings": 2,
+          "inStock": 0,
+          "medianPrice": 0
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2023-11-24",
+        "latest": "2026-07-24"
+      }
+    },
+    "sp_ornate_bichir": {
+      "speciesId": "sp_ornate_bichir",
+      "comparableCount": 8,
+      "totalListings": 11,
+      "inStock": 2,
+      "soldOut": 9,
+      "price": {
+        "median": 105,
+        "min": 38,
+        "max": 295,
+        "currency": "USD"
+      },
+      "sizeRangeIn": {
+        "min": 2,
+        "max": 15
+      },
+      "priceBySize": [
+        {
+          "sizeIn": 2,
+          "medianPrice": 38,
+          "listings": 1
+        },
+        {
+          "sizeIn": 3,
+          "medianPrice": 50,
+          "listings": 1
+        },
+        {
+          "sizeIn": 4,
+          "medianPrice": 65,
+          "listings": 1
+        },
+        {
+          "sizeIn": 5,
+          "medianPrice": 85,
+          "listings": 1
+        },
+        {
+          "sizeIn": 7,
+          "medianPrice": 125,
+          "listings": 1
+        },
+        {
+          "sizeIn": 8,
+          "medianPrice": 175,
+          "listings": 1
+        },
+        {
+          "sizeIn": 10,
+          "medianPrice": 195,
+          "listings": 1
+        },
+        {
+          "sizeIn": 15,
+          "medianPrice": 295,
+          "listings": 1
+        }
+      ],
+      "stores": [
+        {
+          "storeId": "predatory-fins",
+          "listings": 8,
+          "inStock": 0,
+          "medianPrice": 105
+        },
+        {
+          "storeId": "j4-flowerhorns",
+          "listings": 3,
+          "inStock": 2,
+          "medianPrice": 0
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2021-09-04",
+        "latest": "2025-04-01"
+      }
+    },
+    "sp_senegal_bichir": {
+      "speciesId": "sp_senegal_bichir",
+      "comparableCount": 10,
+      "totalListings": 11,
+      "inStock": 0,
+      "soldOut": 11,
+      "price": {
+        "median": 60,
+        "min": 12,
+        "max": 165,
+        "currency": "USD"
+      },
+      "sizeRangeIn": {
+        "min": 3.25,
+        "max": 6.5
+      },
+      "priceBySize": [
+        {
+          "sizeIn": 3,
+          "medianPrice": 28,
+          "listings": 3
+        },
+        {
+          "sizeIn": 4,
+          "medianPrice": 125,
+          "listings": 3
+        },
+        {
+          "sizeIn": 5,
+          "medianPrice": 55,
+          "listings": 1
+        },
+        {
+          "sizeIn": 6,
+          "medianPrice": 65,
+          "listings": 3
+        }
+      ],
+      "stores": [
+        {
+          "storeId": "predatory-fins",
+          "listings": 10,
+          "inStock": 0,
+          "medianPrice": 60
+        },
+        {
+          "storeId": "j4-flowerhorns",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 0
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2021-09-03",
+        "latest": "2025-07-09"
+      }
+    },
+    "sp_congo_puffer": {
+      "speciesId": "sp_congo_puffer",
+      "comparableCount": 8,
+      "totalListings": 9,
+      "inStock": 0,
+      "soldOut": 9,
+      "price": {
+        "median": 102.5,
+        "min": 45,
+        "max": 195,
+        "currency": "USD"
+      },
+      "sizeRangeIn": {
+        "min": 1,
+        "max": 3.25
+      },
+      "priceBySize": [
+        {
+          "sizeIn": 1,
+          "medianPrice": 135,
+          "listings": 4
+        },
+        {
+          "sizeIn": 2,
+          "medianPrice": 87.5,
+          "listings": 2
+        },
+        {
+          "sizeIn": 3,
+          "medianPrice": 110,
+          "listings": 2
+        }
+      ],
+      "stores": [
+        {
+          "storeId": "predatory-fins",
+          "listings": 8,
+          "inStock": 0,
+          "medianPrice": 102.5
+        },
+        {
+          "storeId": "j4-flowerhorns",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 0
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2021-09-04",
+        "latest": "2023-04-02"
+      }
+    },
+    "sp_flowerhorn": {
+      "speciesId": "sp_flowerhorn",
+      "comparableCount": 8,
+      "totalListings": 19,
+      "inStock": 1,
+      "soldOut": 18,
+      "price": {
+        "median": 115,
+        "min": 95,
+        "max": 250,
+        "currency": "USD"
+      },
+      "sizeRangeIn": {
+        "min": 2.25,
+        "max": 7.5
+      },
+      "priceBySize": [
+        {
+          "sizeIn": 2,
+          "medianPrice": 98.5,
+          "listings": 2
+        },
+        {
+          "sizeIn": 3,
+          "medianPrice": 107.5,
+          "listings": 2
+        },
+        {
+          "sizeIn": 4,
+          "medianPrice": 122.5,
+          "listings": 2
+        },
+        {
+          "sizeIn": 5,
+          "medianPrice": 150,
+          "listings": 1
+        },
+        {
+          "sizeIn": 7,
+          "medianPrice": 250,
+          "listings": 1
+        }
+      ],
+      "stores": [
+        {
+          "storeId": "predatory-fins",
+          "listings": 19,
+          "inStock": 1,
+          "medianPrice": 115
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2021-09-04",
+        "latest": "2025-05-28"
+      }
+    },
+    "sp_green_severum": {
+      "speciesId": "sp_green_severum",
+      "comparableCount": 20,
+      "totalListings": 20,
+      "inStock": 1,
+      "soldOut": 19,
+      "price": {
+        "median": 66.5,
+        "min": 12,
+        "max": 250,
+        "currency": "USD"
+      },
+      "sizeRangeIn": {
+        "min": 1.13,
+        "max": 7.75
+      },
+      "priceBySize": [
+        {
+          "sizeIn": 1,
+          "medianPrice": 18,
+          "listings": 3
+        },
+        {
+          "sizeIn": 2,
+          "medianPrice": 38,
+          "listings": 3
+        },
+        {
+          "sizeIn": 3,
+          "medianPrice": 50,
+          "listings": 2
+        },
+        {
+          "sizeIn": 4,
+          "medianPrice": 95,
+          "listings": 5
+        },
+        {
+          "sizeIn": 5,
+          "medianPrice": 95,
+          "listings": 3
+        },
+        {
+          "sizeIn": 6,
+          "medianPrice": 150,
+          "listings": 2
+        },
+        {
+          "sizeIn": 7,
+          "medianPrice": 217.5,
+          "listings": 2
+        }
+      ],
+      "stores": [
+        {
+          "storeId": "predatory-fins",
+          "listings": 20,
+          "inStock": 1,
+          "medianPrice": 66.5
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2021-09-06",
+        "latest": "2024-12-09"
+      }
+    },
+    "sp_guppy": {
+      "speciesId": "sp_guppy",
+      "comparableCount": 12,
+      "totalListings": 12,
+      "inStock": 0,
+      "soldOut": 12,
+      "price": {
+        "median": 35,
+        "min": 25,
+        "max": 45,
+        "currency": "USD"
+      },
+      "sizeRangeIn": {
+        "min": 1.75,
+        "max": 1.75
+      },
+      "priceBySize": [
+        {
+          "sizeIn": 1,
+          "medianPrice": 35,
+          "listings": 12
+        }
+      ],
+      "stores": [
+        {
+          "storeId": "predatory-fins",
+          "listings": 12,
+          "inStock": 0,
+          "medianPrice": 35
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2021-09-06",
+        "latest": "2023-11-30"
+      }
+    },
+    "sp_largemouth_bass": {
+      "speciesId": "sp_largemouth_bass",
+      "comparableCount": 4,
+      "totalListings": 4,
+      "inStock": 0,
+      "soldOut": 4,
+      "price": {
+        "median": 43,
+        "min": 25,
+        "max": 58,
+        "currency": "USD"
+      },
+      "sizeRangeIn": {
+        "min": 2.75,
+        "max": 6.25
+      },
+      "priceBySize": [
+        {
+          "sizeIn": 2,
+          "medianPrice": 25,
+          "listings": 1
+        },
+        {
+          "sizeIn": 4,
+          "medianPrice": 38,
+          "listings": 1
+        },
+        {
+          "sizeIn": 5,
+          "medianPrice": 48,
+          "listings": 1
+        },
+        {
+          "sizeIn": 6,
+          "medianPrice": 58,
+          "listings": 1
+        }
+      ],
+      "stores": [
+        {
+          "storeId": "predatory-fins",
+          "listings": 4,
+          "inStock": 0,
+          "medianPrice": 43
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2023-09-02",
+        "latest": "2023-09-02"
+      }
+    },
+    "sp_wolf_cichlid": {
+      "speciesId": "sp_wolf_cichlid",
+      "comparableCount": 10,
+      "totalListings": 10,
+      "inStock": 0,
+      "soldOut": 10,
+      "price": {
+        "median": 36.5,
+        "min": 15,
+        "max": 295,
+        "currency": "USD"
+      },
+      "sizeRangeIn": {
+        "min": 1,
+        "max": 12.5
+      },
+      "priceBySize": [
+        {
+          "sizeIn": 1,
+          "medianPrice": 20,
+          "listings": 2
+        },
+        {
+          "sizeIn": 2,
+          "medianPrice": 31.5,
+          "listings": 2
+        },
+        {
+          "sizeIn": 3,
+          "medianPrice": 30,
+          "listings": 1
+        },
+        {
+          "sizeIn": 4,
+          "medianPrice": 37.5,
+          "listings": 2
+        },
+        {
+          "sizeIn": 6,
+          "medianPrice": 95,
+          "listings": 2
+        },
+        {
+          "sizeIn": 12,
+          "medianPrice": 295,
+          "listings": 1
+        }
+      ],
+      "stores": [
+        {
+          "storeId": "predatory-fins",
+          "listings": 10,
+          "inStock": 0,
+          "medianPrice": 36.5
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2021-12-16",
+        "latest": "2022-05-23"
+      }
+    },
+    "sp_pinktail_chalceus": {
+      "speciesId": "sp_pinktail_chalceus",
+      "comparableCount": 3,
+      "totalListings": 3,
+      "inStock": 0,
+      "soldOut": 3,
+      "price": {
+        "median": 16,
+        "min": 10,
+        "max": 20,
+        "currency": "USD"
+      },
+      "sizeRangeIn": {
+        "min": 2.5,
+        "max": 4.25
+      },
+      "priceBySize": [
+        {
+          "sizeIn": 2,
+          "medianPrice": 16,
+          "listings": 1
+        },
+        {
+          "sizeIn": 3,
+          "medianPrice": 20,
+          "listings": 1
+        },
+        {
+          "sizeIn": 4,
+          "medianPrice": 10,
+          "listings": 1
+        }
+      ],
+      "stores": [
+        {
+          "storeId": "predatory-fins",
+          "listings": 3,
+          "inStock": 0,
+          "medianPrice": 16
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2021-09-06",
+        "latest": "2021-09-06"
+      }
+    },
+    "sp_jaguar_cichlid": {
+      "speciesId": "sp_jaguar_cichlid",
+      "comparableCount": 9,
+      "totalListings": 9,
+      "inStock": 0,
+      "soldOut": 9,
+      "price": {
+        "median": 55,
+        "min": 12,
+        "max": 250,
+        "currency": "USD"
+      },
+      "sizeRangeIn": {
+        "min": 1.25,
+        "max": 12
+      },
+      "priceBySize": [
+        {
+          "sizeIn": 1,
+          "medianPrice": 12,
+          "listings": 1
+        },
+        {
+          "sizeIn": 2,
+          "medianPrice": 18,
+          "listings": 1
+        },
+        {
+          "sizeIn": 3,
+          "medianPrice": 25,
+          "listings": 1
+        },
+        {
+          "sizeIn": 4,
+          "medianPrice": 38,
+          "listings": 1
+        },
+        {
+          "sizeIn": 5,
+          "medianPrice": 55,
+          "listings": 1
+        },
+        {
+          "sizeIn": 6,
+          "medianPrice": 85,
+          "listings": 1
+        },
+        {
+          "sizeIn": 7,
+          "medianPrice": 150,
+          "listings": 1
+        },
+        {
+          "sizeIn": 9,
+          "medianPrice": 195,
+          "listings": 1
+        },
+        {
+          "sizeIn": 12,
+          "medianPrice": 250,
+          "listings": 1
+        }
+      ],
+      "stores": [
+        {
+          "storeId": "predatory-fins",
+          "listings": 9,
+          "inStock": 0,
+          "medianPrice": 55
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2021-09-04",
+        "latest": "2021-09-04"
+      }
+    }
+  },
+  "unmatchedScientificNames": [
+    {
+      "scientificName": "Pterophyllum scalare",
+      "listings": 60
+    },
+    {
+      "scientificName": "Potamotrygon leopoldi",
+      "listings": 48
+    },
+    {
+      "scientificName": "Astronotus ocellatus",
+      "listings": 44
+    },
+    {
+      "scientificName": "Phractocephalus hemioliopterus",
+      "listings": 37
+    },
+    {
+      "scientificName": "Potamotrygon jabuti",
+      "listings": 34
+    },
+    {
+      "scientificName": "Carassius auratus",
+      "listings": 24
+    },
+    {
+      "scientificName": "Lepisosteus platyrhincus",
+      "listings": 23
+    },
+    {
+      "scientificName": "Datnioides microlepis",
+      "listings": 21
+    },
+    {
+      "scientificName": "Osteoglossum bicirrhosum",
+      "listings": 20
+    },
+    {
+      "scientificName": "Ambystoma mexicanum",
+      "listings": 20
+    },
+    {
+      "scientificName": "Cichla kelberi",
+      "listings": 20
+    },
+    {
+      "scientificName": "Lithobates catesbeiana",
+      "listings": 18
+    },
+    {
+      "scientificName": "Atractosteus spatula",
+      "listings": 18
+    },
+    {
+      "scientificName": "Panaque nigrolineatus laurafabianae",
+      "listings": 16
+    },
+    {
+      "scientificName": "Cyphotilapia frontosa",
+      "listings": 15
+    },
+    {
+      "scientificName": "Chitala ornata",
+      "listings": 15
+    },
+    {
+      "scientificName": "Pseudoplatystoma fasciatum",
+      "listings": 14
+    },
+    {
+      "scientificName": "Myxocyprinus asiaticus",
+      "listings": 13
+    },
+    {
+      "scientificName": "Baryancistrus xanthellus",
+      "listings": 13
+    },
+    {
+      "scientificName": "Polypterus endlicheri",
+      "listings": 12
+    },
+    {
+      "scientificName": "Cyprinus carpio",
+      "listings": 12
+    },
+    {
+      "scientificName": "Panaque armbrusteri",
+      "listings": 12
+    },
+    {
+      "scientificName": "Acestrorhynchus falcatus",
+      "listings": 12
+    },
+    {
+      "scientificName": "Mastacembelus erythrotaenia",
+      "listings": 12
+    },
+    {
+      "scientificName": "Osphronemus septemfasciatus",
+      "listings": 11
+    },
+    {
+      "scientificName": "Symphysodon aequifasciatus",
+      "listings": 11
+    },
+    {
+      "scientificName": "Oxydoras niger",
+      "listings": 11
+    },
+    {
+      "scientificName": "Siniperca chuatsi",
+      "listings": 11
+    },
+    {
+      "scientificName": "Siniperca scherzeri",
+      "listings": 11
+    },
+    {
+      "scientificName": "Potamotrygon motoro",
+      "listings": 11
+    },
+    {
+      "scientificName": "Tetraodon mbu",
+      "listings": 10
+    },
+    {
+      "scientificName": "Cichla monoculus",
+      "listings": 10
+    },
+    {
+      "scientificName": "Silurus merdionalis",
+      "listings": 10
+    },
+    {
+      "scientificName": "Poecilia sphenops",
+      "listings": 9
+    },
+    {
+      "scientificName": "Pterophyllum altum",
+      "listings": 9
+    },
+    {
+      "scientificName": "Cichla marinae",
+      "listings": 9
+    },
+    {
+      "scientificName": "Piaractus brachypomum",
+      "listings": 9
+    },
+    {
+      "scientificName": "Myleus schomburgkii",
+      "listings": 9
+    },
+    {
+      "scientificName": "Megalops atlanticus",
+      "listings": 9
+    },
+    {
+      "scientificName": "Chitala blanci",
+      "listings": 9
+    },
+    {
+      "scientificName": "Cichla piquiti",
+      "listings": 9
+    },
+    {
+      "scientificName": "Leporacanthicus galaxias",
+      "listings": 9
+    },
+    {
+      "scientificName": "Toxotes jaculatrix",
+      "listings": 8
+    },
+    {
+      "scientificName": "Auchenoglanis occidentalis",
+      "listings": 8
+    },
+    {
+      "scientificName": "Symphysodon aequifaciatus",
+      "listings": 8
+    },
+    {
+      "scientificName": "Sahyadria denisonii",
+      "listings": 8
+    },
+    {
+      "scientificName": "Bagarius yarrelli",
+      "listings": 8
+    },
+    {
+      "scientificName": "Osphronemus goramy",
+      "listings": 8
+    },
+    {
+      "scientificName": "Cichla orinocensis",
+      "listings": 8
+    },
+    {
+      "scientificName": "Panaque nigrolineatus",
+      "listings": 8
+    },
+    {
+      "scientificName": "Semaprochilodus taeniurus",
+      "listings": 8
+    },
+    {
+      "scientificName": "Neolissochilus stracheyi",
+      "listings": 8
+    },
+    {
+      "scientificName": "Scobiancistrus aureautus",
+      "listings": 8
+    },
+    {
+      "scientificName": "Glyptoperichthys gibbiceps",
+      "listings": 8
+    },
+    {
+      "scientificName": "Tetraodon lineatus",
+      "listings": 8
+    },
+    {
+      "scientificName": "Brachyplatystoma tigrinum",
+      "listings": 8
+    },
+    {
+      "scientificName": "Polypterus lapradei",
+      "listings": 7
+    },
+    {
+      "scientificName": "Amatitlania nigrofasciata",
+      "listings": 7
+    },
+    {
+      "scientificName": "Synodontis decorus",
+      "listings": 7
+    },
+    {
+      "scientificName": "Cichla melaniae",
+      "listings": 7
+    },
+    {
+      "scientificName": "Lates calcarifer",
+      "listings": 7
+    },
+    {
+      "scientificName": "Tetraodon pustulatus",
+      "listings": 7
+    },
+    {
+      "scientificName": "Dorado brasiliense",
+      "listings": 7
+    },
+    {
+      "scientificName": "Mormyrus longirostris",
+      "listings": 7
+    },
+    {
+      "scientificName": "Hydrocynus goliath",
+      "listings": 7
+    },
+    {
+      "scientificName": "Acarichthys heckelii",
+      "listings": 7
+    },
+    {
+      "scientificName": "Scleropages jardinii",
+      "listings": 7
+    },
+    {
+      "scientificName": "Electrophorus electricus",
+      "listings": 7
+    },
+    {
+      "scientificName": "Heterotis niloticus",
+      "listings": 7
+    },
+    {
+      "scientificName": "Gymnarchus niloticus",
+      "listings": 7
+    },
+    {
+      "scientificName": "Asterophysus batrachus",
+      "listings": 7
+    },
+    {
+      "scientificName": "Peckoltia sabaji",
+      "listings": 6
+    },
+    {
+      "scientificName": "Barbonymus schwanenfeldii",
+      "listings": 6
+    },
+    {
+      "scientificName": "Sorubimichthys planiceps",
+      "listings": 6
+    },
+    {
+      "scientificName": "Pao suvattii",
+      "listings": 6
+    },
+    {
+      "scientificName": "Herichthys cyanoguttatus",
+      "listings": 6
+    },
+    {
+      "scientificName": "Pseudoplatystoma corruscans",
+      "listings": 6
+    },
+    {
+      "scientificName": "Panaque titan",
+      "listings": 6
+    },
+    {
+      "scientificName": "Polypterus weeksii",
+      "listings": 6
+    },
+    {
+      "scientificName": "Hoplias aimara",
+      "listings": 6
+    },
+    {
+      "scientificName": "Pangasius hypophthalmus",
+      "listings": 6
+    },
+    {
+      "scientificName": "Pseudopimelodus bufonius",
+      "listings": 6
+    },
+    {
+      "scientificName": "Elopichthys bambusa",
+      "listings": 6
+    },
+    {
+      "scientificName": "Osphronemus laticlavius",
+      "listings": 6
+    },
+    {
+      "scientificName": "Chromobotia macracanthus",
+      "listings": 6
+    },
+    {
+      "scientificName": "Leptobotia elongata",
+      "listings": 6
+    },
+    {
+      "scientificName": "Megalops cyprinoides",
+      "listings": 6
+    },
+    {
+      "scientificName": "Uaru fernandezyepezi",
+      "listings": 6
+    },
+    {
+      "scientificName": "Cichla intermedia",
+      "listings": 6
+    },
+    {
+      "scientificName": "Cichla temensis",
+      "listings": 6
+    },
+    {
+      "scientificName": "Protopterus aethiopicus",
+      "listings": 6
+    },
+    {
+      "scientificName": "Acanthicus adonis",
+      "listings": 6
+    },
+    {
+      "scientificName": "Vieja melanura",
+      "listings": 6
+    },
+    {
+      "scientificName": "Crenicichla zebrina",
+      "listings": 6
+    },
+    {
+      "scientificName": "Hemiancistrus subviridis",
+      "listings": 6
+    },
+    {
+      "scientificName": "Leporacanthicus triactis",
+      "listings": 6
+    },
+    {
+      "scientificName": "Guianacara dacrya",
+      "listings": 5
+    },
+    {
+      "scientificName": "Arapaima gigas",
+      "listings": 5
+    },
+    {
+      "scientificName": "Labeobarbus malagarisi",
+      "listings": 5
+    },
+    {
+      "scientificName": "Pseudoplatystoma tigrinum",
+      "listings": 5
+    }
+  ]
+}

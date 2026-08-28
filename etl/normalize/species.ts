@@ -1,0 +1,149 @@
+/**
+ * Resolve a store listing title to a catalog species.
+ *
+ * 886 of the 1,868 listings carry a scientific name in parentheses, e.g.
+ * "Black Kumpay Goby (Stiphodon atropurpureus)". That is the high-precision
+ * path and is tried first.
+ *
+ * THE FAILURE MODE THIS GUARDS AGAINST. Naive substring matching on common
+ * names is actively dangerous here. "Bass" is an alias of Largemouth Bass, and
+ * "Peacock Bass" is an entirely different fish (Cichla, not Micropterus) that
+ * is not in the catalog. A substring match would file peacock bass listings
+ * under largemouth bass and quietly corrupt both medians.
+ *
+ * So a single-word common name only matches when the title is essentially just
+ * that word. Multi-word names match as a whole phrase on word boundaries.
+ * Anything else stays unresolved - the same rule the inventory importer
+ * follows (FR-O05), for the same reason.
+ */
+import type { Species } from '@/domain/types';
+
+export type MatchMethod = 'scientific-name' | 'common-name' | 'alias';
+
+export interface SpeciesMatch {
+  speciesId?: string;
+  method?: MatchMethod;
+  /** Scientific name found in the title, whether or not it matched the catalog. */
+  scientificNameInTitle?: string;
+}
+
+/**
+ * Binomial (or trinomial) inside parentheses: "(Stiphodon atropurpureus)".
+ * Requires the capitalised-genus / lowercase-species shape, so it does not
+ * fire on "( Male )" or "(Grade A)".
+ */
+const SCIENTIFIC_IN_PARENS = /\(\s*([A-Z][a-z]{2,})\s+([a-z]{2,})(?:\s+([a-z]{2,}))?\s*\)/;
+
+/**
+ * Open-nomenclature qualifiers, not species epithets. "Cichlasoma sp." means
+ * "some Cichlasoma we have not identified" - treating `sp` as an epithet
+ * invented a species called "Cichlasoma sp" that 57 listings then pooled into.
+ */
+const NOT_AN_EPITHET = new Set(['sp', 'spp', 'cf', 'aff', 'var', 'nov', 'indet']);
+
+export function extractScientificName(title: string): string | undefined {
+  const m = SCIENTIFIC_IN_PARENS.exec(title);
+  if (!m) return undefined;
+  const [, genus, epithet, sub] = m;
+  if (!epithet || NOT_AN_EPITHET.has(epithet)) return undefined;
+  const parts = [genus, epithet];
+  // A trailing qualifier ("Pterophyllum scalare sp") is dropped, not kept.
+  if (sub && !NOT_AN_EPITHET.has(sub)) parts.push(sub);
+  return parts.join(' ');
+}
+
+function normalize(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/\(.*?\)/g, ' ')          // drop parenthesised asides
+    .replace(/#\w+/g, ' ')             // drop stock codes like "#M1"
+    .replace(/[^a-z0-9\s]/g, ' ')      // punctuation to space
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** Whole-phrase, word-boundary containment. Not substring. */
+function containsPhrase(haystack: string, phrase: string): boolean {
+  const words = haystack.split(' ');
+  const target = phrase.split(' ');
+  for (let i = 0; i + target.length <= words.length; i += 1) {
+    if (target.every((w, j) => words[i + j] === w)) return true;
+  }
+  return false;
+}
+
+/**
+ * Grading and quality words stores put around a name. Stripped before the
+ * "is the title essentially just this name" test, so "Premium Betta" still
+ * resolves while "Peacock Bass" still does not.
+ */
+const DECORATORS = new Set([
+  'hq', 'premium', 'grade', 'a', 'aa', 'aaa', 'super', 'high', 'quality',
+  'live', 'fish', 'juvenile', 'juvie', 'adult', 'young', 'male', 'female',
+  'unsexed', 'pair', 'rare', 'imported', 'wild', 'caught', 'tank', 'raised',
+  'the', 'and', 'with', 'for', 'sale', 'new', 'sold', 'out',
+]);
+
+function contentWords(title: string): string[] {
+  return normalize(title).split(' ').filter((w) => w && !DECORATORS.has(w) && !/^\d+$/.test(w));
+}
+
+export interface MatcherOptions {
+  /**
+   * A single-word name must account for the whole title (after decorators are
+   * stripped) to count. Multi-word names are specific enough to match inside a
+   * longer title.
+   */
+  minWordsForPhraseMatch?: number;
+}
+
+export function buildMatcher(catalog: Species[], options: MatcherOptions = {}) {
+  const minWords = options.minWordsForPhraseMatch ?? 2;
+
+  const byScientific = new Map<string, string>();
+  for (const s of catalog) {
+    if (s.scientificName) byScientific.set(s.scientificName.toLowerCase(), s.id);
+  }
+
+  // Longest names first: "Electric Blue Acara" must win over "Acara".
+  const names: Array<{ id: string; name: string; words: number; method: MatchMethod }> = [];
+  for (const s of catalog) {
+    names.push({ id: s.id, name: normalize(s.commonName), words: normalize(s.commonName).split(' ').length, method: 'common-name' });
+    for (const a of s.aliases) {
+      names.push({ id: s.id, name: normalize(a), words: normalize(a).split(' ').length, method: 'alias' });
+    }
+  }
+  names.sort((a, b) => b.name.length - a.name.length);
+
+  return function match(title: string): SpeciesMatch {
+    const scientificNameInTitle = extractScientificName(title);
+
+    if (scientificNameInTitle) {
+      const hit = byScientific.get(scientificNameInTitle.toLowerCase());
+      if (hit) return { speciesId: hit, method: 'scientific-name', scientificNameInTitle };
+      // A scientific name we do not stock is still worth reporting, but it must
+      // not fall through to a loose common-name match: the title has already
+      // told us precisely what it is, and it is not in the catalog.
+      return { scientificNameInTitle };
+    }
+
+    const normalized = normalize(title);
+    const content = contentWords(title);
+
+    for (const cand of names) {
+      if (!cand.name) continue;
+      if (cand.words >= minWords) {
+        if (containsPhrase(normalized, cand.name)) {
+          return { speciesId: cand.id, method: cand.method, scientificNameInTitle };
+        }
+      } else {
+        // Single word: the title must be essentially just this name.
+        if (content.length === 1 && content[0] === cand.name) {
+          return { speciesId: cand.id, method: cand.method, scientificNameInTitle };
+        }
+      }
+    }
+
+    return { scientificNameInTitle };
+  };
+}

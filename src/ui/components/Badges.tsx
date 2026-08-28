@@ -6,6 +6,7 @@
  * meaning survives greyscale, colour blindness and a monochrome screenshot.
  */
 import type { DiscoveryTier, Verdict } from '@/domain/types';
+import { SCARCITY_LABELS, type MarketScarcityBand } from '@/engine/rarity/market-scarcity';
 
 const VERDICT_TEXT: Record<Verdict, { glyph: string; label: string }> = {
   suitable: { glyph: '✓', label: 'Suitable' },
@@ -63,6 +64,31 @@ export function IdentityBadge({ status }: { status: keyof typeof IDENTITY_TEXT }
     <span className={`badge badge--${tone}`}>
       <span className="badge__glyph" aria-hidden="true">{glyph}</span>
       {label}
+    </span>
+  );
+}
+
+const SCARCITY_GLYPH: Record<MarketScarcityBand, string> = {
+  'widely-available': '▪',
+  available: '▫',
+  uncommon: '◇',
+  scarce: '◆',
+  'rarely-listed': '✦',
+};
+
+/**
+ * Market scarcity, shown alongside — never merged into — the personal tier.
+ * Non-colour cues per NFR-06: glyph and word, not hue alone.
+ */
+export function ScarcityBadge({ band }: { band: MarketScarcityBand }) {
+  const tone =
+    band === 'rarely-listed' || band === 'scarce' ? 'tier--legendary'
+    : band === 'uncommon' ? 'tier--rare'
+    : 'tier--familiar';
+  return (
+    <span className={`tier ${tone}`} title="How hard this is to buy from the tracked stores">
+      <span aria-hidden="true">{SCARCITY_GLYPH[band]}</span>
+      {SCARCITY_LABELS[band]}
     </span>
   );
 }
