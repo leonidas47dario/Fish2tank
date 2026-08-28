@@ -21,6 +21,7 @@ import type { Species } from '@/domain/types';
 import { useSpecimenMedia } from '../hooks';
 import { IdentityBadge, TierBadge, VerdictBadge } from '../components/Badges';
 import { FactorList, MissingInputsNotice } from '../components/FactorList';
+import { MarketPanel } from '../components/MarketPanel';
 import { usePrefersReducedMotion } from '@/theme/ThemeProvider';
 
 export default function SpecimenDetail() {
@@ -193,6 +194,13 @@ export default function SpecimenDetail() {
           </p>
         )}
       </section>
+
+      {/* --- Market reference (PRD 4.5, FR-P06) --------------------------- */}
+      <MarketPanel
+        speciesId={specimen.speciesId}
+        observedSize={latest?.observedSize}
+        yourPrice={prices?.[0]?.memberPrice ?? prices?.[0]?.askingPrice}
+      />
 
       {/* --- Evaluate (PRD 4.4) ------------------------------------------- */}
       <section className="stack">
