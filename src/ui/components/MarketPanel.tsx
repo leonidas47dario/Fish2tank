@@ -11,6 +11,10 @@ import { formatLength } from '@/domain/units';
 import {
   bandForSize, isStale, marketAgeDays, marketFor, MARKET_INDEX, STORE_NAMES,
 } from '@/data/market';
+import {
+  computeMarketScarcity, SCARCITY_COMPONENT_LABELS,
+} from '@/engine/rarity/market-scarcity';
+import { ScarcityBadge } from './Badges';
 
 interface Props {
   speciesId?: string;
@@ -26,15 +30,20 @@ export function MarketPanel({ speciesId, observedSize, yourPrice }: Props) {
     return (
       <section className="card stack">
         <h2>Market reference</h2>
-        <p className="muted small" style={{ marginBottom: 0 }}>
+        <p className="muted small">
           No listings for this species across the {MARKET_INDEX.sources.length} tracked stores, or too few
           to compare ({MARKET_INDEX.minimumSampleCount} needed). Nothing is estimated from an empty sample.
+        </p>
+        <p className="xs muted" style={{ marginBottom: 0 }}>
+          That is not a scarcity signal. Most listing titles do not resolve to a known species, so absence
+          here almost always means the title did not match — not that the fish is rare.
         </p>
       </section>
     );
   }
 
   const band = bandForSize(stats, observedSize);
+  const scarcity = computeMarketScarcity(stats);
   const stale = isStale(stats);
   const ageDays = marketAgeDays(stats);
   const maxPrice = Math.max(...stats.priceBySize.map((b) => b.medianPrice), 1);
@@ -45,6 +54,33 @@ export function MarketPanel({ speciesId, observedSize, yourPrice }: Props) {
         <h2 style={{ marginBottom: 0 }}>Market reference</h2>
         <span className="xs muted data">{stats.comparableCount} listings</span>
       </div>
+
+      {/* Auto-populated scarcity. Deliberately its own rating, not folded into
+          the Discovery Tier - see market-scarcity.ts for why. */}
+      {scarcity.available && (
+        <details className="card card--raised">
+          <summary className="spread" style={{ cursor: 'pointer', listStyle: 'none' }}>
+            <span>
+              <span className="xs muted">Market scarcity</span><br />
+              <ScarcityBadge band={scarcity.band} />
+            </span>
+            <span className="data">{scarcity.score} / 100</span>
+          </summary>
+          <dl className="kv" style={{ marginTop: 'var(--space-3)' }}>
+            {(Object.keys(scarcity.components) as Array<keyof typeof scarcity.components>).map((k) => (
+              <div key={k} style={{ display: 'contents' }}>
+                <dt>{SCARCITY_COMPONENT_LABELS[k]}</dt>
+                <dd>+{scarcity.components[k]}</dd>
+              </div>
+            ))}
+          </dl>
+          <p className="xs muted" style={{ marginTop: 'var(--space-3)', marginBottom: 0 }}>
+            How hard this is to buy from {MARKET_INDEX.sources.length} mail-order stores. That is a different
+            question from how rarely you run into one locally, so it is kept out of your Discovery tier.
+          </p>
+          <p className="xs muted data" style={{ marginBottom: 0 }}>Formula {scarcity.formulaVersion}</p>
+        </details>
+      )}
 
       {/* The size-matched comparison is the headline, not the pooled median. */}
       {band ? (
