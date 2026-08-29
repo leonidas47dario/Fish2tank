@@ -11,29 +11,29 @@
  * moments, and mixing them means a guest tapping around your tank can retire
  * a fish by accident.
  */
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { db } from '@/data/db';
 import {
   adjustHoldingQuantity, clearTankPhoto, deleteTank, moveHolding, planDeleteTank, recordDeath,
-  searchSpecies, setAquariumStatus, stockTank,
+  removeHolding, setAquariumStatus, stockTank,
   type DeleteTankPlan,
 } from '@/data/repositories';
+import { CATALOG, type CatalogSpecies } from '@/data/catalog';
+import { identifyFromText } from '@/data/identify';
 import { formatVolume } from '@/domain/units';
-import type { Aquarium, Species, StockingState } from '@/domain/types';
+import type { Aquarium, StockingState } from '@/domain/types';
 import {
   AGGRESSION_LABEL, forDisplay, summariseTank,
   type TankResident, type TankStats,
 } from '@/domain/tank-stats';
 import { useTankResidents } from '../hooks';
 
-type Mode = 'view' | 'manage';
-
 export default function TankDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [mode, setMode] = useState<Mode>('view');
+  const [editing, setEditing] = useState(false);
   const data = useTankResidents(id);
   const allTanks = useLiveQuery(() => db.aquariums.toArray(), []);
 
@@ -57,31 +57,65 @@ export default function TankDetail() {
         </p>
       </header>
 
-      <div className="filters" role="group" aria-label="Tank mode">
-        <button type="button" className="chip" aria-pressed={mode === 'view'} onClick={() => setMode('view')}>
-          Viewer
-        </button>
-        <button type="button" className="chip" aria-pressed={mode === 'manage'} onClick={() => setMode('manage')}>
-          Manage
+      {/* One switch, not two tabs.
+​
+          The tabs made editing a different screen: to add a fish you left the
+          dashboard, worked in a list that showed none of it, and came back.
+          Everything now happens on the page you are already looking at, and
+          the switch decides whether it can be touched.
+
+          Off by default and unlatched by every reload, because the reason it
+          exists is the guest holding your phone. */}
+      <div className="spread tankedit__bar">
+        <span className="xs muted">{editing ? 'Editing — tap a fish to change it' : 'Viewing'}</span>
+        <button
+          type="button"
+          className="chip"
+          role="switch"
+          aria-checked={editing}
+          onClick={() => setEditing(!editing)}
+        >
+          {editing ? '✓ Done' : '✎ Edit'}
         </button>
       </div>
 
-      {mode === 'view'
-        ? <TankViewer aquarium={aquarium} residents={residents} stats={stats} />
-        : <TankManage aquarium={aquarium} residents={residents} allTanks={allTanks ?? []} />}
+      {editing && <TankProfile aquarium={aquarium} />}
+
+      <TankViewer
+        aquarium={aquarium}
+        residents={residents}
+        stats={stats}
+        editing={editing}
+        allTanks={allTanks ?? []}
+      />
+
+      {editing && <TankLifecycle aquarium={aquarium} />}
     </div>
   );
 }
 
 // ── Viewer ───────────────────────────────────────────────────────────────
 
-function TankViewer({ aquarium, residents, stats }: {
-  aquarium: { name: string; volume?: { value: number; unit: string } };
+function TankViewer({ aquarium, residents, stats, editing, allTanks }: {
+  aquarium: Aquarium;
   residents: TankResident[];
   stats: TankStats;
+  editing: boolean;
+  allTanks: Array<{ id: string; name: string }>;
 }) {
+  // An empty tank still needs its way in, or a new tank is a dead end.
   if (stats.fish === 0) {
-    return <p className="empty">Nothing lives in {aquarium.name} yet.</p>;
+    return (
+      <div className="stack">
+        <p className="empty">Nothing lives in {aquarium.name} yet.</p>
+        {editing && (
+          <ResidentGrid
+            residents={residents} editing={editing} allTanks={allTanks}
+            aquarium={aquarium}
+          />
+        )}
+      </div>
+    );
   }
 
   return (
@@ -90,7 +124,10 @@ function TankViewer({ aquarium, residents, stats }: {
       <WaterColumn stats={stats} />
       <Temperament stats={stats} />
       <GrowsInto residents={residents} />
-      <ResidentGrid residents={residents} />
+      <ResidentGrid
+        residents={residents} editing={editing} allTanks={allTanks}
+        aquarium={aquarium}
+      />
       <Coverage stats={stats} />
     </div>
   );
@@ -239,12 +276,35 @@ function GrowsInto({ residents }: { residents: TankResident[] }) {
 }
 
 /** The fish themselves — the part a guest actually wants to tap. */
-function ResidentGrid({ residents }: { residents: TankResident[] }) {
+/**
+ * Who lives here - and, with the switch on, the place you change it.
+ *
+ * A tile is small and a phone is smaller, so editing does NOT cram controls
+ * into every tile. Tapping one opens a panel for that fish alone: how many,
+ * where it lives, and out. One thing at a time, in a target the size of the
+ * whole tile.
+ *
+ * The plus is a tile in the same grid rather than a button below it, because
+ * "add a fish" belongs where the fish are, and an empty tank then shows a grid
+ * containing exactly one thing to do.
+ */
+function ResidentGrid({ residents, editing, allTanks, aquarium }: {
+  residents: TankResident[];
+  editing: boolean;
+  allTanks: Array<{ id: string; name: string }>;
+  aquarium: Aquarium;
+}) {
+  const [openHolding, setOpenHolding] = useState<string>();
+  const [adding, setAdding] = useState(false);
+
+  const shown = forDisplay(residents);
+  const open = shown.find((r) => r.holding.id === openHolding);
+
   return (
     <section className="stack">
       <h2>Who lives here</h2>
       <div className="tank-grid">
-        {forDisplay(residents).map((r) => {
+        {shown.map((r) => {
           const inner = (
             <>
               {r.portraitUrl
@@ -257,6 +317,21 @@ function ResidentGrid({ residents }: { residents: TankResident[] }) {
               </span>
             </>
           );
+
+          // Editing: the tile edits. Not editing: it opens the species, as before.
+          if (editing) {
+            return (
+              <button
+                key={r.holding.id}
+                type="button"
+                className={`tank-tile tank-tile--editable${openHolding === r.holding.id ? ' tank-tile--open' : ''}`}
+                aria-expanded={openHolding === r.holding.id}
+                onClick={() => setOpenHolding(openHolding === r.holding.id ? undefined : r.holding.id)}
+              >
+                {inner}
+              </button>
+            );
+          }
           return r.speciesId ? (
             <Link key={r.holding.id} to={`/species/${r.speciesId}`} className="tank-tile">{inner}</Link>
           ) : (
@@ -265,8 +340,170 @@ function ResidentGrid({ residents }: { residents: TankResident[] }) {
             <div key={r.holding.id} className="tank-tile tank-tile--plain">{inner}</div>
           );
         })}
+
+        {editing && (
+          <button
+            type="button"
+            className="tank-tile tank-tile--add"
+            onClick={() => { setAdding(true); setOpenHolding(undefined); }}
+          >
+            <span className="tank-tile__art tank-tile__art--empty" aria-hidden="true">＋</span>
+            <span className="tank-tile__body"><strong>Add a fish</strong></span>
+          </button>
+        )}
       </div>
+
+      {editing && open && (
+        <ResidentEditor
+          key={open.holding.id}
+          resident={open}
+          aquarium={aquarium}
+          allTanks={allTanks}
+          onDone={() => setOpenHolding(undefined)}
+        />
+      )}
+
+      {editing && adding && (
+        <AddFish
+          aquariumId={aquarium.id}
+          tankName={aquarium.name}
+          onDone={() => setAdding(false)}
+        />
+      )}
     </section>
+  );
+}
+
+/**
+ * One fish, and everything you can do to it.
+ *
+ * "Take out of the tank" is the control this screen never had. The only way to
+ * empty a slot was to record a loss, so a fish you rehomed, sold, or typed in
+ * twice had to be filed as dead - which put it in Fish Heaven and then blocked
+ * deleting its catch record. Removing and mourning are different acts and are
+ * now different buttons, worded so nobody reaches for the wrong one.
+ */
+function ResidentEditor({ resident, aquarium, allTanks, onDone }: {
+  resident: TankResident;
+  aquarium: Aquarium;
+  allTanks: Array<{ id: string; name: string }>;
+  onDone: () => void;
+}) {
+  const panel = useRef<HTMLDivElement>(null);
+  /*
+   * The panel sits under the grid, so tapping a fish in the first row of
+   * twenty leaves its controls off-screen and the tap looks like it did
+   * nothing. Bring it to the reader instead of making them hunt for it.
+   */
+  useEffect(() => {
+    panel.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, [resident.holding.id]);
+
+  const [busy, setBusy] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const [error, setError] = useState<string>();
+  const name = resident.holding.rawLabel ?? resident.commonName;
+
+  async function run(what: string, fn: () => Promise<unknown>, after?: () => void) {
+    setBusy(true);
+    setError(undefined);
+    try {
+      await fn();
+      after?.();
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
+      console.error(`[stock] ${what} failed`, { holdingId: resident.holding.id, error: message });
+      setError(message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="card stack" ref={panel}>
+      <div className="spread">
+        <strong>{name}</strong>
+        <button type="button" className="btn--ghost" onClick={onDone}>Close</button>
+      </div>
+
+      <div className="spread">
+        <span className="muted small">How many</span>
+        <span className="row">
+          <button
+            type="button" className="btn--ghost" disabled={busy}
+            aria-label={`One fewer ${name}`}
+            onClick={() => void run('decrement', () =>
+              adjustHoldingQuantity({ holdingId: resident.holding.id, delta: -1 }))}
+          >
+            −
+          </button>
+          <strong className="data" aria-live="polite">{resident.quantity}</strong>
+          <button
+            type="button" className="btn--ghost" disabled={busy}
+            aria-label={`One more ${name}`}
+            onClick={() => void run('increment', () =>
+              adjustHoldingQuantity({ holdingId: resident.holding.id, delta: 1 }))}
+          >
+            +
+          </button>
+        </span>
+      </div>
+
+      {allTanks.length > 1 && (
+        <div>
+          <label htmlFor={`move-${resident.holding.id}`}>Move to another tank</label>
+          <select
+            id={`move-${resident.holding.id}`}
+            defaultValue=""
+            disabled={busy}
+            onChange={(e) => {
+              if (e.target.value) void run('move', () => moveHolding(resident.holding.id, e.target.value), onDone);
+            }}
+          >
+            <option value="" disabled>Choose a tank…</option>
+            {allTanks.filter((t) => t.id !== aquarium.id).map((t) => (
+              <option key={t.id} value={t.id}>{t.name}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {error && <p className="warn small">{error}</p>}
+
+      {!confirming ? (
+        <div className="row">
+          <button
+            type="button" className="btn--ghost" disabled={busy}
+            onClick={() => void run('record a loss', () =>
+              recordDeath({ holdingId: resident.holding.id, quantity: 1 }))}
+          >
+            Record a loss
+          </button>
+          <button type="button" className="btn--ghost" disabled={busy} onClick={() => setConfirming(true)}>
+            Take out of tank…
+          </button>
+        </div>
+      ) : (
+        <>
+          <p className="warn small">
+            Take {name} out of {aquarium.name} entirely? This removes it from the tank and its
+            stocking history. It is not recorded as a death, and any catch record and photos are
+            kept.
+          </p>
+          <div className="row">
+            <button
+              type="button" className="btn--danger" disabled={busy}
+              onClick={() => void run('remove', () => removeHolding(resident.holding.id), onDone)}
+            >
+              {busy ? 'Removing…' : 'Yes, take it out'}
+            </button>
+            <button type="button" className="btn--ghost" disabled={busy} onClick={() => setConfirming(false)}>
+              Keep it
+            </button>
+          </div>
+        </>
+      )}
+    </div>
   );
 }
 
@@ -287,84 +524,34 @@ function Coverage({ stats }: { stats: TankStats }) {
   );
 }
 
-// ── Manage ───────────────────────────────────────────────────────────────
-
-function TankManage({ aquarium, residents, allTanks }: {
-  aquarium: Aquarium;
-  residents: TankResident[];
-  allTanks: Array<{ id: string; name: string }>;
-}) {
-  const [editing, setEditing] = useState(false);
+/**
+ * The tank's own record, editable in place.
+ *
+ * Was behind the Manage tab with the residents; it is the tank's profile, so
+ * it belongs at the top of the tank's page the moment editing is on.
+ */
+function TankProfile({ aquarium }: { aquarium: Aquarium }) {
+  const [open, setOpen] = useState(false);
   return (
-    <div className="stack">
-      <section className="card stack">
-        <div className="spread">
-          <strong>Measurements</strong>
-          <button type="button" className="btn--ghost" onClick={() => setEditing(!editing)}>
-            {editing ? 'Done' : 'Edit'}
-          </button>
-        </div>
-        {editing && <TankForm aquarium={aquarium} onDone={() => setEditing(false)} />}
-        {aquarium.photoMediaId && (
-          <button type="button" className="btn--ghost" onClick={() => void clearTankPhoto(aquarium.id)}>
-            Remove tank photo
-          </button>
-        )}
-      </section>
-
-      <TankLifecycle aquarium={aquarium} />
-
+    <section className="card stack">
+      <div className="spread">
+        <strong>Tank profile</strong>
+        <button type="button" className="btn--ghost" onClick={() => setOpen(!open)}>
+          {open ? 'Done' : 'Edit'}
+        </button>
+      </div>
+      {open && <TankForm aquarium={aquarium} onDone={() => setOpen(false)} />}
       {!aquarium.volume && (
-        <p className="warn">
-          Without a volume and footprint this tank can only ever return “Not enough data”. Measuring it
-          once is what makes every future check real.
+        <p className="xs warn" style={{ marginBottom: 0 }}>
+          Without a volume and footprint this tank can only ever return “Not enough data”.
         </p>
       )}
-      {residents.length === 0 && <p className="muted small">Empty.</p>}
-      <ul className="list">
-        {residents.map((r) => (
-          <li key={r.holding.id} className="card card--raised stack">
-            <div className="spread">
-              <span>
-                <strong>{r.holding.rawLabel ?? r.commonName}</strong>
-                <span className="muted data"> ×{r.quantity}</span>
-              </span>
-            </div>
-            <div className="row">
-              <select
-                defaultValue=""
-                aria-label={`Move ${r.holding.rawLabel ?? r.commonName} to another tank`}
-                onChange={(e) => { if (e.target.value) void moveHolding(r.holding.id, e.target.value); }}
-              >
-                <option value="" disabled>Move to…</option>
-                {allTanks.filter((t) => t.id !== aquarium.id).map((t) => (
-                  <option key={t.id} value={t.id}>{t.name}</option>
-                ))}
-              </select>
-              {/* recordDeath has always written a negative delta and nothing
-                  wrote a positive one, so buying three more of a fish you
-                  already keep was unrecordable. */}
-              <button
-                type="button"
-                className="btn--ghost"
-                onClick={() => void adjustHoldingQuantity({ holdingId: r.holding.id, delta: 1 })}
-              >
-                Add one
-              </button>
-              <button
-                type="button"
-                className="btn--ghost"
-                onClick={() => void recordDeath({ holdingId: r.holding.id, quantity: 1 })}
-              >
-                Record a loss
-              </button>
-            </div>
-          </li>
-        ))}
-      </ul>
-
-      <AddFish aquariumId={aquarium.id} tankName={aquarium.name} />
-    </div>
+      {aquarium.photoMediaId && (
+        <button type="button" className="btn--ghost" onClick={() => void clearTankPhoto(aquarium.id)}>
+          Remove tank photo
+        </button>
+      )}
+    </section>
   );
 }
 
@@ -380,11 +567,15 @@ function TankManage({ aquarium, residents, allTanks }: {
  * you add a photo, so eagerly creating one here would duplicate that path and
  * invent an encounter that never happened.
  */
-function AddFish({ aquariumId, tankName }: { aquariumId: string; tankName: string }) {
-  const [open, setOpen] = useState(false);
+function AddFish({ aquariumId, tankName, onDone }: {
+  aquariumId: string; tankName: string; onDone: () => void;
+}) {
+  const panel = useRef<HTMLDivElement>(null);
+  useEffect(() => { panel.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, []);
+
   const [query, setQuery] = useState('');
-  const [matches, setMatches] = useState<Species[]>([]);
-  const [picked, setPicked] = useState<Species | undefined>();
+  const [matches, setMatches] = useState<CatalogSpecies[]>([]);
+  const [picked, setPicked] = useState<CatalogSpecies | undefined>();
   const [qty, setQty] = useState('1');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | undefined>();
@@ -393,10 +584,27 @@ function AddFish({ aquariumId, tankName }: { aquariumId: string; tankName: strin
   const n = Number(qty);
   const validQty = Number.isInteger(n) && n >= 1;
 
-  async function onSearch(value: string) {
+  /*
+   * Searches the CATALOG, not the species table.
+   *
+   * The species table holds the 47 curated profiles that ship with care data;
+   * the catalog holds 2,176. Searching the former meant "Congo Tetra" returned
+   * nothing at all from the one control whose whole job is finding a fish, and
+   * "tetra" offered two. stockTank stores the id and the resident list resolves
+   * names through the catalog, so nothing downstream needed a species row for
+   * this to work - it was only ever the wrong index.
+   *
+   * identifyFromText rather than a second matcher: it is what the identify
+   * screen uses, so searching for a fish behaves the same way in both places.
+   */
+  function onSearch(value: string) {
     setQuery(value);
     setPicked(undefined);
-    setMatches(value.trim() ? await searchSpecies(value) : []);
+    setMatches(
+      value.trim()
+        ? identifyFromText(value, CATALOG.species).slice(0, 8).map((c) => c.species)
+        : [],
+    );
   }
 
   function reset() {
@@ -408,31 +616,23 @@ function AddFish({ aquariumId, tankName }: { aquariumId: string; tankName: strin
     setBusy(true);
     setError(undefined);
     try {
-      await stockTank({ aquariumId, speciesId: picked.id, rawLabel: picked.commonName, quantity: n });
+      await stockTank({ aquariumId, speciesId: picked.speciesId, rawLabel: picked.commonName, quantity: n });
       setAdded(`${picked.commonName} ×${n}`);
       reset();
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);
-      console.error('[stock] add fish failed', { aquariumId, speciesId: picked.id, quantity: n, error: message });
+      console.error('[stock] add fish failed', { aquariumId, speciesId: picked.speciesId, quantity: n, error: message });
       setError(message);
     } finally {
       setBusy(false);
     }
   }
 
-  if (!open) {
-    return (
-      <button type="button" className="btn" onClick={() => { setOpen(true); setAdded(undefined); }}>
-        ⊕  Add a fish
-      </button>
-    );
-  }
-
   return (
-    <div className="card stack">
+    <div className="card stack" ref={panel}>
       <div className="spread">
         <strong>Add a fish to {tankName}</strong>
-        <button type="button" className="btn--ghost" onClick={() => { setOpen(false); reset(); }}>
+        <button type="button" className="btn--ghost" onClick={() => { reset(); onDone(); }}>
           Done
         </button>
       </div>
@@ -444,14 +644,14 @@ function AddFish({ aquariumId, tankName }: { aquariumId: string; tankName: strin
         <input
           id={`add-q-${aquariumId}`}
           value={picked ? picked.commonName : query}
-          onChange={(e) => void onSearch(e.target.value)}
+          onChange={(e) => onSearch(e.target.value)}
           placeholder="congo puffer, rocket gar, cory…"
         />
       </div>
 
-      {!picked && matches.slice(0, 8).map((s) => (
+      {!picked && matches.map((s) => (
         <button
-          key={s.id} type="button" className="tankrow"
+          key={s.speciesId} type="button" className="tankrow"
           onClick={() => { setPicked(s); setMatches([]); }}
         >
           <span className="grow">
