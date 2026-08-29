@@ -19,7 +19,7 @@ npm run dev          # http://localhost:5173
 ```
 
 ```bash
-npm test             # 332 unit + integration tests across 15 files
+npm test             # 478 unit + integration tests across 25 files
 npm run build        # type-check, bundle, generate the service worker
 npm run preview      # serve the production build on :4173
 
@@ -46,10 +46,10 @@ real UI.
 | PRD slice (11.1) | State |
 |---|---|
 | **1 — Private shell** | PWA installs and runs offline; drafts are created before media finishes writing; retries never duplicate a catch. No auth — see *No backend* below. |
-| **2 — Catalog** | Species / specimen / encounter modelled separately; Unknown / Provisional / Confirmed identity; reveal ceremony; Dream List. The library is a **card grid of 1,076 species**, filterable by where a fish lives in the tank, what kind of thing it is, and temperament. |
+| **2 — Catalog** | Species / specimen / encounter modelled separately; Unknown / Provisional / Confirmed identity; reveal ceremony; Dream List. The library is a **card grid of 2,178 species**, filterable by where a fish lives in the tank, what kind of thing it is, and temperament. |
 | **3 — Real tanks** | Aquariums, holdings, dated residencies, full lifecycle events, inventory importer. |
 | **4 — Evaluation** | Seven-factor deterministic screening over a versioned rule set, with immutable snapshots. |
-| **5 — Price + journal** | Ask / member / paid kept separate, comparability filtering, story chapters. Prices come from **10 tracked vendors**, each store row linking straight to its product page. |
+| **5 — Price + journal** | Ask / member / paid kept separate, comparability filtering, story chapters. Prices come from **12 tracked vendors**, each store row linking straight to its product page, and **8 Chicago PetSmart branches report what is in the tank today**. |
 | **6 — Legacy + hardening** | Fish Heaven, Keeper's Code, JSON export, reduced-motion and mute, non-colour status cues. |
 
 ### Deliberately not built yet
@@ -110,6 +110,7 @@ src/
 └── ui/            Screens and components — consume tokens only, never literals
 
 etl/               The refresh pipeline: vendor scrape → normalize → warehouse → marts
+                   sources/ holds one reader per platform over a shared polite client
 warehouse/         Parquet star schema + schema.sql, the portable migration contract
 scripts/           smoke.mjs (full-UI walkthrough), verify-sw-update.mjs
 docs/              PRD, plus DATA_WAREHOUSE / MARKET_ETL / INVENTORY_IMPORT / RELEASING
@@ -150,8 +151,8 @@ Gem positions are borrowed deliberately. A card game trains the eye to find
 cost at the top-left, so that holds market price; adult size and minimum tank
 volume sit bottom-right — the three numbers a keeper actually decides on.
 
-**The tiles are landscape, because the photographs are.** 612 of the 695
-bundled portraits (88%) are wider than they are tall, at a median aspect ratio
+**The tiles are landscape, because the photographs are.** 879 of the 1,011
+bundled portraits (87%) are wider than they are tall, at a median aspect ratio
 of 1.50. The card used to be 3:4 with `object-fit: cover`, so a 3:2 photograph
 kept about 37% of its width and the crop went straight through the fish — head
 and tail outside the frame, a belly in the middle. Matching the tile to the
@@ -161,12 +162,28 @@ so it is also just the right shape for the subject.
 
 | | |
 |---|---|
-| Species in the catalog | **1,076** |
-| With a licensed portrait on Wikimedia Commons | 699 (65%) |
-| Portraits bundled | 695 — 14.9 MB at 480 px, ~21 KB each |
-| Rendering a silhouette | 377, plus 5 downloads that failed |
-| With a water-column zone | 956 (89%) |
+| Species in the catalog | **2,178** |
+| Of those, sold only by marine vendors | 1,057 |
+| Portraits bundled | **1,011 (46%)** — 22.3 MB at 480 px, ~22 KB each |
+| ↳ from Wikimedia Commons, under a stated licence | 851 |
+| ↳ from the open web, credited to the site | 100 |
+| ↳ from a vendor product listing, credited to the shop | 60 |
+| Rendering a silhouette | 1,167, most of them the newly added marine species |
+| With a water-column zone | 1,080 — **977 of 1,121 (87%) freshwater**, 103 of 1,057 marine |
 | With a curated care profile | 47 |
+
+**Two of those numbers moved sharply on 2026-08-29 and neither is a
+regression to hide.** Adding PetSmart and Petco meant re-reading every existing
+vendor, and their catalogues had grown — LiveAquaria alone went from a sampled
+slice to 3,256 products. The species dimension doubled to 2,178, half of it
+reef fish. So portrait coverage fell from 65% to 32% and pooled water-zone
+coverage from 89% to 50%, purely by denominator. Backfilling ~1,100 portraits
+is a separate, deliberate act (see `docs/plans/002-portrait-backfill.md`) — it
+roughly doubles the 14.9 MB precache budget, which is a product decision rather
+than a build step. Extending the taxonomy map to reef families is likewise real
+taxonomy work, not a threshold tweak, and `taxonomy.test.ts` now asserts the
+freshwater coverage and the marine gap separately so neither can hide inside an
+average.
 
 The species dimension is derived from **what the vendors actually sell**, with
 the curated care profiles as an enrichment layer on top. Building it the other
@@ -178,13 +195,16 @@ vendor stated explicitly. Note what this is not: it never guesses that one fish
 is another. Discovered species carry no care data, deliberately, so the
 compatibility engine returns *Not enough data* for them.
 
-Portraits are precached (~14.9 MB) so the library draws itself
-offline per NFR-02. The install happens in the background after first paint and
-cards lazy-load, so it does not sit in front of the first render.
+Portraits are precached (~22.3 MB, up from 14.9 MB when coverage went from 695
+species to 1,011) so the library draws itself offline per NFR-02. The install
+happens in the background after first paint and cards lazy-load, so it does not
+sit in front of the first render.
 
 **Known performance debt, logged rather than quietly accepted:** the marts are
-inlined into the JS bundle (1,185 KB raw / 262 KB gzip) and should be separate
-fetched assets, and all 1,076 cards render at once.
+inlined into the JS bundle (2,649 KB raw / 410 KB gzip, up from 1,185/262 —
+the catalog doubled and the index now publishes 2,176 species rather than 310)
+and should be separate fetched assets, and all 2,178 cards render at once. That
+growth makes both halves of the sentence considerably more urgent.
 
 ---
 
@@ -223,6 +243,25 @@ canonical record**, because that needs a full vendor re-scrape.
 **Result: 254 quality problems → 0, with 0 species falling back to a bare
 binomial.**
 
+### The gate earning its keep, a second time
+
+The 2026-08-29 refresh re-read every vendor and the catalog doubled. The gate
+caught 29 new problems and refused to build, which is exactly what it is for.
+Two different causes, two different fixes:
+
+- **A parser bug, worth 246 listings.** Imperial Tropicals had started filing
+  its odds and ends under `product_type` values like `"Other catfish"` and
+  `"Other loricariids"`. Both have the exact Capitalised-word lowercase-word
+  shape of a binomial, so the product-type path minted them as species — one
+  of them a bucket holding eight unrelated fish under the name "Catfish". The
+  fix is a `NOT_A_GENUS` guard: an English determiner is never a genus.
+- **28 species that simply needed a person.** Six different fish had derived
+  down to "Cichlid", three to "Gourami". Each was looked up and given a sourced
+  override — Wikipedia where it names a vernacular, the vendor's own title
+  marked `viaVendor` where it does not, and `null` for two *Caridina* and
+  *Neocaridina* shrimp whose only names on offer are contradictory colour
+  strains, so the card shows the binomial.
+
 ## Where a fish lives
 
 Every card carries a glyph for its water column zone — top, mid, bottom or all
@@ -236,9 +275,23 @@ using the phrase "bottom-dwelling". What **is** reliable is taxonomy: the
 binomial gives you the genus, genus→family is stable and checkable, and
 water-column habit is overwhelmingly a family-level trait. So
 [`taxonomy.ts`](src/data/seed/taxonomy.ts) maps 560 genera to 221 families and
-each family to a zone with the reason attached. **956 of 1,076 species (89%)**
-get one; the rest say "not recorded" and are excluded from every zone filter
-rather than defaulted into one.
+each family to a zone with the reason attached. **977 of the 1,121 freshwater
+species (87%)** get one; the rest say "not recorded" and are excluded from every
+zone filter rather than defaulted into one.
+
+**It is a freshwater map, and the catalog now says so out loud.** The 2026-08-29
+refresh brought LiveAquaria's full marine catalogue — 1,057 reef species, whole
+genera the map was never built for: *Chaetodon*, *Cirrhilabrus*, *Acropora*.
+Pooled zone coverage therefore reads 50% while the freshwater half stayed at
+87%. Averaging those two would have reported a stale genus map when nothing
+had gone stale, so `dim_species` now carries a `water_type` tagged **from the
+vendors that list a species, never inferred from the fish** — `StoreConfig`
+has declared that intent since LiveAquaria was added and this is where it
+finally gets applied. `taxonomy.test.ts` asserts the two halves separately: the
+freshwater catalog above 85%, and the marine gap as a known, sized hole that
+must stay unclassified rather than be defaulted into "mid" because most fish
+are. Extending the map to reef families is real taxonomy work, not a threshold
+tweak.
 
 **Temperament is deliberately not derived this way.** Cichlidae holds both the
 ram and the jaguar cichlid, so a family-level aggression rating would be exactly
@@ -272,11 +325,67 @@ faster one.
 
 ## Data pipeline
 
-Ten Shopify storefronts are tracked: Global Exoticquatics, J4 Flowerhorns,
-Predatory Fins, Imperial Tropicals, Aquatic Arts, Aquarium Co-Op, Flip Aquatics,
-AquaHuna, **Nu Aqua** (Orland Park IL, the first one you can walk into) and
-**LiveAquaria**. Each was verified individually — Shopify, `robots.txt` permits
-public product data, `/products.json` not disallowed. **15,434 listings.**
+Twelve vendors are tracked. Ten are Shopify storefronts: Global Exoticquatics,
+J4 Flowerhorns, Predatory Fins, Imperial Tropicals, Aquatic Arts, Aquarium
+Co-Op, Flip Aquatics, AquaHuna, **Nu Aqua** (Orland Park IL, the first one you
+can walk into) and **LiveAquaria**. Each was verified individually — Shopify,
+`robots.txt` permits public product data, `/products.json` not disallowed.
+
+The other two are big-box chains, added 2026-08-29, and they gave opposite
+answers to the same question. **Permission was checked per host, not per
+brand.**
+
+**PetSmart** publishes everything needed and says so in `robots.txt`: the
+sitemap index, schema.org `Product` JSON-LD on every product page, and — named
+explicitly as `Allow:` for every user agent — an inventory search endpoint that
+reports **on-hand counts per sku per store**. That is a first for this dataset.
+Every other vendor answers *can this be shipped to me*; PetSmart answers *is it
+in a tank twenty minutes away right now*. 254 live listings, and 2,032 on-hand
+rows across all eight Chicago branches.
+
+**Petco is one brand behind two different doors.** `stores.petco.com` is wide
+open — no `Disallow` rules at all — and publishes each branch as schema.org
+`PetStore` including the departments it runs, which answers something the
+prices never could: **seven of the eight Chicago branches keep fish.**
+`www.petco.com` is the opposite: HTTP 403 from the CDN edge to every automated
+request, `/robots.txt` included, identically with a browser User-Agent.
+
+The listings reader is built and wired in anyway, because **that block is a
+property of the network, not of the code** — bot managers of that class refuse
+cloud egress and pass ordinary residential traffic, so the same run from your
+laptop may go straight through. `probeStorefront()` asks on every run and the
+answer becomes data: allowed → walk the sitemap and read the product JSON-LD;
+refused → keep the locations and write the reason into `market-index.json` as
+`sources[].accessNote`, so a zero next to Petco is always explained rather than
+mistaken for a broken pipeline. From this machine it currently reads *403 — the
+CDN edge refuses automated clients from this network.*
+
+Two rules that do not bend: permission is checked **per host, not per brand**,
+and a refusal is never routed around — no disguised User-Agent, no proxy, no
+scraping a cache. Until it says yes, the nearest honest stand-in for Petco's
+prices is LiveAquaria, Petco's own aquatics brand, already tracked.
+
+**Neither chain is Shopify, and that shaped the design.** There is no
+`/products.json` and no shared platform, so the pipeline is built around what
+they *do* maintain for machines: schema.org `Product` JSON-LD, which every
+SEO-driven retailer publishes because Google needs it to show a price. That
+contract lives in `etl/sources/schema-org.ts` and both readers share it — a
+third non-Shopify vendor needs a sitemap filter and a store-number rule, not a
+new parser.
+
+**24,624 listings.**
+
+Chicago is the sampled city because that is where the owner shops. Both chains
+are read city-wide — eight branches each — rather than hand-picked, so "no
+Chicago store has it" means something. `SAMPLED_CITY` moves the sample in one
+line.
+
+Two things the branch data deliberately does *not* do. It never feeds the
+Discovery Tier: eight branches of one chain measures that chain's buying, not
+how hard a fish is to find (`FR-P05`, `FR-R07`). And it never flattens "the
+store carries this and has none today" into "the store does not carry this" —
+the vendor reports those differently, they answer "is it worth driving there"
+differently, and they are stored differently.
 
 ```bash
 npm run refresh            # etl → images → portraits → warehouse → marts
@@ -291,10 +400,12 @@ honours `Retry-After`, backs off on 429/5xx, and caps pagination. Do not raise
 the concurrency.
 
 Output lands in a **Parquet star schema** under `warehouse/`: `dim_store`,
-`dim_species` (Type 2 SCD), `dim_date`, `dim_image`, `fact_listing`,
-`fact_price_observation`. The grain is one row per (store, variant,
-snapshot_date), so re-running accumulates a real time series that no single
-pull could contain. `warehouse/schema.sql` is portable DDL — Athena, BigQuery,
+`dim_species` (Type 2 SCD), `dim_date`, `dim_image`, `dim_local_store`,
+`fact_listing`, `fact_store_inventory`, `fact_price_observation`. The listing
+grain is one row per (store, variant, snapshot_date), so re-running accumulates
+a real time series that no single pull could contain; the branch-stock grain is
+one row per (branch, sku, snapshot_date), kept apart because a count in one
+building that changes hourly is not the same kind of fact as a published price. `warehouse/schema.sql` is portable DDL — Athena, BigQuery,
 Snowflake, Databricks or Postgres can run it unchanged.
 
 Details in [`docs/MARKET_ETL.md`](docs/MARKET_ETL.md) and
@@ -346,8 +457,20 @@ face.
 
 Per your decision, **Wikipedia is the placeholder source** until a licensed
 care database is chosen (PRD 12.1). Every curated profile carries a real
-article URL, and every portrait carries licence, artist and attribution URL —
-an image whose licence cannot be stated is dropped rather than shipped
+article URL.
+
+**Portraits come from three places, and each says which.** Wikimedia Commons
+files carry a stated licence and credit the photographer. Vendor product
+listings and open-web photos carry no licence, and are used by your decision
+(spec 002) for the species Commons will never cover: line-bred colour morphs,
+hybrids, and fish described too recently for anyone to have photographed them
+freely. Those render as `Photo: Imperial Tropicals (product listing)` rather
+than borrowing the shape of a licence line, because implying a licence nobody
+granted would be the actual dishonesty.
+
+The rule an image must pass is **traceability, not licensing**: every shipped
+portrait carries a provenance and a URL you can open to see where it came
+from. An image we cannot account for is still dropped rather than shipped
 hopefully.
 
 One caveat worth keeping in view: Wikipedia species articles are good on
