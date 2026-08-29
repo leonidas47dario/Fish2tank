@@ -18,7 +18,8 @@ host.
                     │   shopify.ts    10 storefronts       │
                     │   petsmart.ts   sitemap + JSON-LD +  │
                     │                 per-store inventory  │
-                    │   petco.ts      store directory only │
+                    │   petco.ts      open directory +     │
+                    │                 probed storefront    │
                     │   wikimedia.ts  licensed images      │
                     └──────────────────┬───────────────────┘
                                        │  raw JSON snapshots (gitignored)
@@ -131,7 +132,7 @@ would destroy the distinction the app's price engine depends on.
 | Table | Grain | Notes |
 |---|---|---|
 | `dim_species` | one row per species | Type 2 SCD on name changes, so a re-identification does not rewrite history. `water_type` is tagged from the vendors that list it, never inferred from the fish |
-| `dim_store` | one row per vendor | currency lives here; pooling prices across currencies is only valid because of it. `data_scope` says whether the vendor contributes listings at all |
+| `dim_store` | one row per vendor | currency lives here; pooling prices across currencies is only valid because of it. `data_scope` says what the pipeline *attempts*; whether an attempt succeeded is a per-run fact in `market-index.json` `sources[].accessNote`, not a column |
 | `dim_local_store` | one row per physical branch | the first rows here that are not mail order. `has_aquatics` is nullable: `FALSE` means the branch publishes a department list without fish on it, `NULL` means it publishes no list and we did not check |
 | `dim_image` | one row per image | source, license, artist, URL — a 图鉴 image without attribution is not usable |
 | `dim_date` | one row per day | conventional, makes time-series joins trivial in any destination |

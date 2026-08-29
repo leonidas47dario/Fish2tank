@@ -153,6 +153,7 @@ async function main() {
     SELECT s.species_id, s.common_name, s.scientific_name, s.aliases,
            s.adult_size_in, s.min_volume_gal, s.aggression,
            s.temp_min_c, s.temp_max_c, s.predation_tags, s.water_type,
+           s.temp_min_c, s.temp_max_c, s.predation_tags,
            s.source_label, s.source_url,
            i.url AS img_url, i.license AS img_license, i.artist AS img_artist,
            i.attribution_url AS img_attribution, i.width AS img_width, i.height AS img_height
@@ -239,6 +240,8 @@ async function main() {
   console.log(`    with a water zone         ${zoned}  (${Math.round((zoned / species.length) * 100)}%)`);
   console.log(`      freshwater / undeclared ${zonedRest} of ${rest.length}  (${Math.round((zonedRest / rest.length) * 100)}%)`);
   console.log(`      marine-only vendors     ${marine.filter((s) => s.waterZone).length} of ${marine.length}  <- the taxonomy map is freshwater`);
+  console.log('\n  habitat (derived from family)');
+  console.log(`    with a water zone         ${zoned}  (${Math.round((zoned / species.length) * 100)}%)`);
   console.log(`    family unmapped           ${species.filter((s) => !s.family).length}`);
   for (const k of ['fish', 'plant', 'invertebrate', 'amphibian', 'reptile'] as const) {
     const n = species.filter((s) => s.organismKind === k).length;

@@ -19,7 +19,7 @@ npm run dev          # http://localhost:5173
 ```
 
 ```bash
-npm test             # 456 unit + integration tests across 23 files
+npm test             # 478 unit + integration tests across 25 files
 npm run build        # type-check, bundle, generate the service worker
 npm run preview      # serve the production build on :4173
 
@@ -46,7 +46,7 @@ real UI.
 | PRD slice (11.1) | State |
 |---|---|
 | **1 — Private shell** | PWA installs and runs offline; drafts are created before media finishes writing; retries never duplicate a catch. No auth — see *No backend* below. |
-| **2 — Catalog** | Species / specimen / encounter modelled separately; Unknown / Provisional / Confirmed identity; reveal ceremony; Dream List. The library is a **card grid of 2,149 species**, filterable by where a fish lives in the tank, what kind of thing it is, and temperament. |
+| **2 — Catalog** | Species / specimen / encounter modelled separately; Unknown / Provisional / Confirmed identity; reveal ceremony; Dream List. The library is a **card grid of 2,178 species**, filterable by where a fish lives in the tank, what kind of thing it is, and temperament. |
 | **3 — Real tanks** | Aquariums, holdings, dated residencies, full lifecycle events, inventory importer. |
 | **4 — Evaluation** | Seven-factor deterministic screening over a versioned rule set, with immutable snapshots. |
 | **5 — Price + journal** | Ask / member / paid kept separate, comparability filtering, story chapters. Prices come from **12 tracked vendors**, each store row linking straight to its product page, and **8 Chicago PetSmart branches report what is in the tank today**. |
@@ -162,18 +162,19 @@ so it is also just the right shape for the subject.
 
 | | |
 |---|---|
-| Species in the catalog | **2,149** |
-| Of those, sold only by marine vendors | 1,064 |
-| With a licensed portrait on Wikimedia Commons | 699 (33%) |
+| Species in the catalog | **2,178** |
+| Of those, sold only by marine vendors | 1,057 |
+| With a licensed portrait on Wikimedia Commons | 699 (32%) |
 | Portraits bundled | 695 — 14.9 MB at 480 px, ~21 KB each |
-| With a water-column zone | 1,066 — **965 of 1,085 (89%) freshwater**, 101 of 1,064 marine |
+| Rendering a silhouette | 1,479 |
+| With a water-column zone | 1,080 — **977 of 1,121 (87%) freshwater**, 103 of 1,057 marine |
 | With a curated care profile | 47 |
 
 **Two of those numbers moved sharply on 2026-08-29 and neither is a
 regression to hide.** Adding PetSmart and Petco meant re-reading every existing
 vendor, and their catalogues had grown — LiveAquaria alone went from a sampled
-slice to 3,256 products. The species dimension doubled to 2,149, half of it
-reef fish. So portrait coverage fell from 65% to 33% and pooled water-zone
+slice to 3,256 products. The species dimension doubled to 2,178, half of it
+reef fish. So portrait coverage fell from 65% to 32% and pooled water-zone
 coverage from 89% to 50%, purely by denominator. Backfilling ~1,100 portraits
 is a separate, deliberate act (see `docs/plans/002-portrait-backfill.md`) — it
 roughly doubles the 14.9 MB precache budget, which is a product decision rather
@@ -197,10 +198,10 @@ offline per NFR-02. The install happens in the background after first paint and
 cards lazy-load, so it does not sit in front of the first render.
 
 **Known performance debt, logged rather than quietly accepted:** the marts are
-inlined into the JS bundle (1,699 KB raw / 318 KB gzip, up from 1,185/262 when
-the catalog doubled) and should be separate fetched assets, and all 2,149 cards
-render at once. The doubling makes the second half of that sentence the more
-urgent one.
+inlined into the JS bundle (2,649 KB raw / 410 KB gzip, up from 1,185/262 —
+the catalog doubled and the index now publishes 2,176 species rather than 310)
+and should be separate fetched assets, and all 2,178 cards render at once. That
+growth makes both halves of the sentence considerably more urgent.
 
 ---
 
@@ -271,15 +272,15 @@ using the phrase "bottom-dwelling". What **is** reliable is taxonomy: the
 binomial gives you the genus, genus→family is stable and checkable, and
 water-column habit is overwhelmingly a family-level trait. So
 [`taxonomy.ts`](src/data/seed/taxonomy.ts) maps 560 genera to 221 families and
-each family to a zone with the reason attached. **965 of the 1,085 freshwater
-species (89%)** get one; the rest say "not recorded" and are excluded from every
+each family to a zone with the reason attached. **977 of the 1,121 freshwater
+species (87%)** get one; the rest say "not recorded" and are excluded from every
 zone filter rather than defaulted into one.
 
 **It is a freshwater map, and the catalog now says so out loud.** The 2026-08-29
-refresh brought LiveAquaria's full marine catalogue — 1,064 reef species, whole
+refresh brought LiveAquaria's full marine catalogue — 1,057 reef species, whole
 genera the map was never built for: *Chaetodon*, *Cirrhilabrus*, *Acropora*.
-Pooled zone coverage therefore reads 50% while the freshwater half never moved
-off 89%. Averaging those two would have reported a stale genus map when nothing
+Pooled zone coverage therefore reads 50% while the freshwater half stayed at
+87%. Averaging those two would have reported a stale genus map when nothing
 had gone stale, so `dim_species` now carries a `water_type` tagged **from the
 vendors that list a species, never inferred from the fish** — `StoreConfig`
 has declared that intent since LiveAquaria was added and this is where it

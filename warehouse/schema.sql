@@ -27,11 +27,11 @@ CREATE TABLE dim_store (
   region         VARCHAR,
   -- Which reader the vendor needs: 'shopify' | 'petsmart' | 'petco'.
   platform       VARCHAR     NOT NULL,
-  -- 'listings' or 'store-locations'. Stated so a vendor contributing no
-  -- listings reads as a deliberate scope rather than a failed run. Petco is
-  -- the only 'store-locations' case: its storefront answers 403 to every
-  -- automated request, robots.txt included, so there is no permitted route to
-  -- its catalogue and none is invented.
+  -- 'listings' or 'store-locations'. Declares what the pipeline ATTEMPTS, so a
+  -- vendor contributing nothing reads as a scope rather than a failed run.
+  -- Whether an attempt succeeds is a per-run fact, not a column: Petco
+  -- declares 'listings' and its storefront is probed every run, with a refusal
+  -- recorded as market-index.json sources[].accessNote.
   data_scope     VARCHAR     NOT NULL,
   PRIMARY KEY (store_key)
 );
@@ -79,6 +79,12 @@ CREATE TABLE dim_species (
   temp_max_c        DOUBLE,
   predation_tags    VARCHAR,
   profile_version   INTEGER,
+  -- 'freshwater' | 'marine', tagged from the vendors that list the species and
+  -- NEVER inferred from the fish. NULL is most of the table and is not a claim
+  -- that a species is freshwater - it means no vendor listing it declared one.
+  -- It exists because the genus-to-zone map is a freshwater map: without the
+  -- tag, a marine catalogue arriving reads as the map having gone stale.
+  water_type        VARCHAR,
   source_label      VARCHAR,
   source_url        VARCHAR,
   valid_from        DATE     NOT NULL,

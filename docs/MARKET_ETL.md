@@ -249,10 +249,10 @@ because `Bass` is an alias of Largemouth Bass and *Peacock Bass* is an
 entirely different fish. A substring match would have filed one under the
 other and corrupted both medians. There is a test named for that trap.
 
-Currently **11,592 of 24,624 listings (47%)** resolve to a species, giving
-**310 species** with enough sized listings to publish price stats. Only 20% of
-listings carry a usable size, which is the real ceiling on that number, and the
-big-box vendors state none at all.
+Currently **12,084 of 24,624 listings (49%)** resolve to a species, giving
+**2,176 species** with enough listings to publish price stats. 24% of listings
+carry a usable size, which is the ceiling on how many can be *size-compared*,
+and the big-box vendors state no size at all.
 
 ## The size ladder
 

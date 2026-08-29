@@ -209,6 +209,17 @@ export const SPECIES_OVERRIDES: SpeciesOverride[] = [
  * shows until the next `npm run refresh`. That is a known, bounded loss - a
  * handful of listings on three fish - and it is recorded here rather than
  * being quietly papered over.
+ * WHAT HAPPENS TO THEM. The listing normalizer folds them onto the canonical
+ * id at mint time (see canonicalSpeciesId in etl/normalize/derive-species.ts),
+ * so the JSONL, the CSV, the fact table and the market index all agree with
+ * the catalog. build-marts.ts still drops the non-canonical record, which is
+ * now a safety net rather than the only line of defence.
+ *
+ * It was not always so, and the loss was bigger than "a handful": before the
+ * fold, 43 of the 65 Green Swordtail listings were discarded with the dropped
+ * records, and the shipped Discus median was $95 from the 11 listings under
+ * the canonical spelling while 13 listings under `aequifasciata` said $59.99.
+ * A fold only takes effect on the next `npm run refresh`.
  */
 export interface SpeciesSynonym {
   /** The id to drop. */

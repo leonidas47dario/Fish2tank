@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { deriveCommonName, derivedSpeciesId, discoverSpecies } from './derive-species';
+import { canonicalSpeciesId, deriveCommonName, derivedSpeciesId, discoverSpecies } from './derive-species';
+import { SPECIES_SYNONYMS, SYNONYM_IDS } from '@/data/seed/species-overrides';
 
 describe('derivedSpeciesId', () => {
   it('is a stable, readable slug', () => {
@@ -13,6 +14,37 @@ describe('derivedSpeciesId', () => {
     expect(derivedSpeciesId('Panaque nigrolineatus laurafabianae'))
       .toBe('sp_panaque_nigrolineatus_laurafabianae');
     expect(derivedSpeciesId('  Heros  efasciatus ')).toBe('sp_heros_efasciatus');
+  });
+});
+
+describe('canonicalSpeciesId', () => {
+  it('folds a misspelled binomial onto the record the catalog actually shows', () => {
+    // Three spellings of one fish. build-marts drops the first two from the
+    // catalog, so any listing left pointing at them is a price nobody can see.
+    expect(canonicalSpeciesId('sp_symphysodon_aequifaciatus')).toBe('sp_symphysodon_aequifasciatus');
+    expect(canonicalSpeciesId('sp_symphysodon_aequifasciata')).toBe('sp_symphysodon_aequifasciatus');
+    expect(canonicalSpeciesId('sp_xiphophorus_helleri')).toBe('sp_xiphophorus_hellerii');
+    expect(canonicalSpeciesId('sp_xiphophorus_helleri_hybrid')).toBe('sp_xiphophorus_hellerii');
+  });
+
+  it('leaves every other id exactly as it found it', () => {
+    expect(canonicalSpeciesId('sp_pterophyllum_scalare')).toBe('sp_pterophyllum_scalare');
+    expect(canonicalSpeciesId('sp_symphysodon_discus')).toBe('sp_symphysodon_discus');
+  });
+
+  it('resolves in one hop, because no synonym points at another synonym', () => {
+    // A chain would make the result depend on iteration order. Assert the data
+    // has none rather than writing a loop to survive one.
+    for (const s of SPECIES_SYNONYMS) {
+      expect(SYNONYM_IDS.has(s.canonicalId)).toBe(false);
+    }
+  });
+
+  it('sends every synonym somewhere the catalog will keep', () => {
+    for (const s of SPECIES_SYNONYMS) {
+      expect(canonicalSpeciesId(s.speciesId)).toBe(s.canonicalId);
+      expect(SYNONYM_IDS.has(canonicalSpeciesId(s.speciesId))).toBe(false);
+    }
   });
 });
 

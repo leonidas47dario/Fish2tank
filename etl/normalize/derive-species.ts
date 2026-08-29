@@ -14,6 +14,7 @@
  */
 
 import { isUsableName } from '@/data/seed/catalog-quality';
+import { SPECIES_SYNONYMS } from '@/data/seed/species-overrides';
 
 /** Stable, readable id from a binomial. Same input always yields the same id. */
 export function derivedSpeciesId(scientificName: string): string {
@@ -22,6 +23,33 @@ export function derivedSpeciesId(scientificName: string): string {
     .replace(/[^a-z0-9]+/g, '_')
     .replace(/^_+|_+$/g, '');
   return `sp_${slug}`;
+}
+
+const CANONICAL_BY_SYNONYM: ReadonlyMap<string, string> = new Map(
+  SPECIES_SYNONYMS.map((s) => [s.speciesId, s.canonicalId]),
+);
+
+/**
+ * Fold a species minted from a misspelled binomial onto the record the catalog
+ * actually keeps.
+ *
+ * WHY THIS IS APPLIED AT MINT TIME rather than in the index. build-marts.ts
+ * drops non-canonical records from the catalog, but the market index is built
+ * by an earlier, separate stage that never knew about the drop. So the prices
+ * stayed attached to ids the catalog no longer shows: 43 of the 65 Green
+ * Swordtail listings were discarded outright, and the shipped Discus median
+ * came from the minority spelling, $95 against the $59.99 that 13 listings
+ * under `aequifasciata` actually supported.
+ *
+ * Folding here fixes every consumer at once - the JSONL, the CSV, the fact
+ * table and the index all carry the canonical id - and leaves the drop in
+ * build-marts.ts as a safety net rather than the only line of defence.
+ *
+ * `scientificNameInTitle` is deliberately left as the vendor wrote it, so the
+ * fold is auditable from the listing rather than being lost in it.
+ */
+export function canonicalSpeciesId(speciesId: string): string {
+  return CANONICAL_BY_SYNONYM.get(speciesId) ?? speciesId;
 }
 
 /**
