@@ -10,7 +10,7 @@ import type { ShopifyProduct, ShopifyVariant } from '../sources/shopify';
 import { productUrl } from '../sources/shopify';
 import { parseSize } from './size';
 import { buildMatcher } from './species';
-import { derivedSpeciesId } from './derive-species';
+import { canonicalSpeciesId, derivedSpeciesId } from './derive-species';
 
 /**
  * The size can appear on any of the three option slots depending on how the
@@ -43,8 +43,13 @@ export function normalizeProduct(
    * Note what this is NOT: it never guesses that one fish is another. It only
    * mints a new species from a name the vendor stated explicitly.
    */
-  const speciesId = m.speciesId
+  /**
+   * Folded onto the canonical record before anything downstream sees it, so a
+   * fish the vendors spelled three ways is priced once. See canonicalSpeciesId.
+   */
+  const minted = m.speciesId
     ?? (m.scientificNameInTitle ? derivedSpeciesId(m.scientificNameInTitle) : undefined);
+  const speciesId = minted ? canonicalSpeciesId(minted) : undefined;
   const matchMethod: MarketListing['matchMethod'] = m.speciesId
     ? m.method
     : (m.scientificNameInTitle ? 'derived-binomial' : undefined);
