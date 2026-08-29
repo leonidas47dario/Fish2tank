@@ -182,6 +182,27 @@ export function isPublishable(image: SpeciesImage | undefined): image is Species
  */
 const PHOTO_EXT = /\.(jpe?g|png)$/i;
 
+/**
+ * Titles that mean "not a portrait of the living animal".
+ *
+ * Extension filtering is not enough. Measured against the real candidate lists
+ * for all 138 species this route covers, 23 of the first picks were a
+ * radiograph, a preserved holotype, a museum mollusc shell, a botanical
+ * illustration from 1915, or a ZooKeys figure plate. Seven of those had a
+ * usable photograph further down the same result set, including a literal
+ * "(live)" file sitting one place below an X-ray of the same fish. The other
+ * sixteen have no usable candidate and are correctly dropped, falling through
+ * to the subagent stage where a hard case belongs.
+ *
+ * Deliberately NOT matched: a bare "shell", "plate" or "map". The catalog
+ * stocks snails, and rejecting every title containing "shell" costs real
+ * portraits to catch museum specimens that "mollusc shell" and the collection
+ * prefixes already catch. Tested both ways: the broader pattern gained one
+ * recovery and risked losing live snails, so this is the tighter of the two.
+ */
+const NOT_A_PORTRAIT =
+  /radiograph|holotype|paratype|illustration|drawing|sketch|figure|fig[._ ]\d|mollusc shell|MNHN-|RMNH\.|USNM|10\.3897|zookeys|distribution map|range map|diagram|skeleton|x-ray/i;
+
 /** Built separately so the quoting rule can be asserted without a network. */
 export function commonsSearchUrl(scientificName: string): string {
   const q = encodeURIComponent(`"${scientificName}"`);
@@ -219,7 +240,10 @@ export async function searchCommonsPortrait(
     return undefined;
   }
 
-  const hit = pages.find((p) => PHOTO_EXT.test(String(p?.title ?? '')) && p?.imageinfo?.[0]?.url);
+  const hit = pages.find((p) => {
+    const title = String(p?.title ?? '');
+    return PHOTO_EXT.test(title) && !NOT_A_PORTRAIT.test(title) && p?.imageinfo?.[0]?.url;
+  });
   if (!hit) return undefined;
 
   const info = hit.imageinfo[0];

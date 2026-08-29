@@ -178,4 +178,39 @@ describe('searchCommonsPortrait', () => {
     });
     expect(got).toBeUndefined();
   });
+
+  it('skips a radiograph in favour of the live fish lower down the results', async () => {
+    // Not hypothetical. This is the real Commons result order for Hyphessobrycon
+    // margitae: an X-ray of the holotype ranks above a photograph of the living
+    // animal, and extension filtering cannot tell them apart.
+    const got = await searchCommonsPortrait('sp_x', 'Hyphessobrycon margitae', {
+      fetchImpl: stub([
+        page('File:Hyphessobrycon margitae radiograph (holotype).png'),
+        page('File:Hyphessobrycon margitae (live).png'),
+      ]),
+    });
+    expect(got?.url).toContain('live');
+  });
+
+  it('returns undefined when every candidate is a specimen or a figure', async () => {
+    // The right answer is no picture. These species fall through to the subagent
+    // stage; a museum shell on a field guide card is worse than an empty frame.
+    const got = await searchCommonsPortrait('sp_x', 'Vittina variegata', {
+      fetchImpl: stub([
+        page('File:Vittina variegata (MNHN-IM-2000-32808).jpeg'),
+        page('File:Vittina jovis - Neritidae - Mollusc shell.jpeg'),
+      ]),
+    });
+    expect(got).toBeUndefined();
+  });
+
+  it('does not reject a live snail just because its title says shell', async () => {
+    // The catalog stocks snails. "mollusc shell" and the museum collection
+    // prefixes catch the specimen scans; a bare "shell" would cost real
+    // portraits, so it is excluded from the pattern on purpose.
+    const got = await searchCommonsPortrait('sp_x', 'Clithon corona', {
+      fetchImpl: stub([page('File:Clithon corona shell detail.jpg')]),
+    });
+    expect(got?.url).toContain('Clithon');
+  });
 });
