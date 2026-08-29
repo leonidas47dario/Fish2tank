@@ -19,7 +19,7 @@
  */
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { db } from '@/data/db';
 import {
   acquireSpecimen, addEncounterChapter, assertIdentity, awardGolden, deleteCatch,
@@ -30,9 +30,10 @@ import {
 import { deriveQuantity } from '@/domain/holdings';
 import { evaluatePriceFit } from '@/engine/pricing/price-fit';
 import { COMPONENT_LABELS, LOCAL_RARITY_UNAVAILABLE } from '@/engine/rarity/discovery-tier';
-import { formatLength } from '@/domain/units';
+import { formatLength, formatVolume } from '@/domain/units';
 import type { Specimen, Species, Verdict } from '@/domain/types';
 import { useSpecimenMedia } from '../hooks';
+import { CATALOG_BY_SPECIES, portraitAsset, type CatalogSpecies } from '@/data/catalog';
 import { IdentityBadge, TierBadge, VerdictBadge, ScarcityBadge } from '../components/Badges';
 import { FactorList, MissingInputsNotice } from '../components/FactorList';
 import { MarketPanel } from '../components/MarketPanel';
@@ -339,6 +340,9 @@ export default function SpecimenDetail() {
 
       {/* --- Identity (PRD 4.3) ------------------------------------------- */}
       <IdentityPanel specimen={specimen} species={species} />
+
+      {/* Directly under the name, because it is what the name makes you ask. */}
+      {specimen.speciesId && <SpeciesBrief speciesId={specimen.speciesId} />}
 
       {/* --- Size and price (PRD 4.5) ------------------------------------- */}
       <section className="panel">
@@ -1015,6 +1019,86 @@ function lede(verdicts: Verdict[]): string {
  * store label is recorded verbatim and the record proceeds, but it is shown as
  * the weaker identification it is rather than being dressed up as a match.
  */
+/**
+ * The species profile, on the page where the fish actually is.
+ *
+ * WHAT WAS WRONG. The catch journal never linked to the species page - not
+ * once, anywhere on 1,200 lines. Identify a fish, read its reveal, and you
+ * land in a form with a name at the top and none of the facts behind it. In a
+ * shop, holding the phone in front of the tank, the questions are "how big
+ * does it get" and "what size tank", and the answers were two screens away
+ * with no route to them.
+ *
+ * WHY BOTH INLINE AND A LINK. The four or five numbers that decide whether you
+ * buy the fish are small enough to sit right here, so most of the time the
+ * question is answered without going anywhere. The full profile - portrait
+ * credits, card art, every store that sells it, the sourced quote behind each
+ * care value - is a page, and stays one. ScrollMemory already restores this
+ * page's scroll position on Back, so the round trip lands where it left.
+ *
+ * READS THE CATALOG, NOT THE SPECIES TABLE. The species table holds the 47
+ * curated profiles; the catalog holds 2,176. The header above reads the
+ * former, which is fine for a name and useless for care data that most of the
+ * catalog only has in the latter.
+ */
+function SpeciesBrief({ speciesId }: { speciesId: string }) {
+  const species: CatalogSpecies | undefined = CATALOG_BY_SPECIES.get(speciesId);
+  if (!species) return null;
+
+  const art = portraitAsset(speciesId);
+  const facts = [
+    species.adultSizeIn !== undefined
+      && { k: 'Adult size', v: `${Math.round(species.adultSizeIn * 10) / 10}"` },
+    species.minVolumeGal !== undefined
+      && { k: 'Minimum tank', v: formatVolume({ value: species.minVolumeGal, unit: 'gal' }) },
+    species.aggression && { k: 'Temperament', v: species.aggression },
+    species.tempMinC !== undefined && species.tempMaxC !== undefined
+      && { k: 'Temperature', v: `${species.tempMinC}\u2013${species.tempMaxC}\u00b0C` },
+    species.waterZone && { k: 'Water column', v: species.waterZone.replace('-', ' ') },
+    species.predationTags.length > 0 && { k: 'Predation', v: species.predationTags.join(', ') },
+  ].filter((f): f is { k: string; v: string } => Boolean(f));
+
+  return (
+    <section className="panel">
+      <div className="spread" style={{ marginBottom: 'var(--space-3)' }}>
+        <h2 className="sec-head" style={{ margin: 0 }}>About this species</h2>
+        {/* One tap out, and Back lands you here again. */}
+        <Link to={`/species/${speciesId}`} className="prompt__act">
+          Full profile <CaretRightIcon size={14} aria-hidden="true" />
+        </Link>
+      </div>
+
+      <div className="brief">
+        {art && <img className="brief__art" src={art} alt="" loading="lazy" />}
+        <div className="grow">
+          {facts.length > 0 ? (
+            <dl className="kv">
+              {facts.map((f) => (
+                <div key={f.k} style={{ display: 'contents' }}>
+                  <dt>{f.k}</dt>
+                  <dd>{f.v}</dd>
+                </div>
+              ))}
+            </dl>
+          ) : (
+            /* Named, not blank. The absence has a cause, and the full profile
+               says the same thing at greater length. */
+            <p className="panel__note" style={{ marginTop: 0 }}>
+              Nobody has recorded how big this gets or what it needs. It is in the catalog because
+              a store listed it, and nothing here is guessed from the family.
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* The line that earns its place in a shop: what the tag might call it. */}
+      {species.aliases.length > 0 && (
+        <p className="panel__note panel__note--tight">Also sold as: {species.aliases.join(', ')}</p>
+      )}
+    </section>
+  );
+}
+
 function IdentityPanel({ specimen, species }: {
   specimen: Specimen;
   species?: { commonName: string; scientificName?: string };
