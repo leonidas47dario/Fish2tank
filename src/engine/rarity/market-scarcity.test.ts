@@ -196,7 +196,12 @@ describe('the store count cannot drift from the vendor list', () => {
     // Read from the data, never hardcoded: adding a vendor updates both at once.
     expect(TRACKED_STORES).toBe(MARKET_INDEX.sources.length);
 
-    const speciesId = Object.keys(MARKET_INDEX.species)[0]!;
+    // The index now also publishes species it cannot price, so that their
+    // vendors and links are visible; those deliberately do not rate. Pick one
+    // that does, because the drift being guarded against is in the score.
+    const speciesId = Object.keys(MARKET_INDEX.species)
+      .find((id) => MARKET_INDEX.species[id]!.price)!;
+    expect(speciesId).toBeDefined();
     const viaEntryPoint = scarcityFor(speciesId);
     const viaStaleDefault = computeMarketScarcity(MARKET_INDEX.species[speciesId], {
       ...DEFAULT_SCARCITY_CONFIG,

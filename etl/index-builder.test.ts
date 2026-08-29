@@ -18,21 +18,59 @@ function listing(over: Partial<MarketListing> = {}): MarketListing {
 const opts = { builtAt: '2026-08-28T00:00:00.000Z' };
 
 describe('sample threshold', () => {
-  it('publishes nothing for a species below the minimum sample count', () => {
+  /**
+   * WHAT THE THRESHOLD GATES, AND WHAT IT DOES NOT.
+   *
+   * It gates the ESTIMATE - the median, the size range, the price ladder -
+   * because those are claims about what a fish is worth and one listing cannot
+   * support one. It does not gate the OBSERVATIONS. A vendor's page, its
+   * asking price and whether it is in stock are facts, and withholding them
+   * because there is only one left 779 of 1,076 species looking like nobody
+   * sells them when the listings were sitting right there.
+   */
+  it('publishes the observations below the minimum sample count, but no estimate', () => {
     const idx = buildMarketIndex([listing(), listing()], opts);
-    expect(idx.species['sp_jaguar_cichlid']).toBeUndefined();
+    const s = idx.species['sp_jaguar_cichlid']!;
+    expect(s).toBeDefined();
+    expect(s.totalListings).toBe(2);
+    expect(s.comparableCount).toBe(2);
+    expect(s.stores[0]!.productUrl).toBeTruthy();
+    // No claim about what it is worth.
+    expect(s.price).toBeUndefined();
+    expect(s.sizeRangeIn).toBeUndefined();
+    expect(s.priceBySize).toEqual([]);
     expect(idx.minimumSampleCount).toBe(DEFAULT_MIN_SAMPLE);
   });
 
-  it('publishes once the threshold is met', () => {
+  it('publishes a single listing, with the price of that listing', () => {
+    const idx = buildMarketIndex(
+      [listing({ storeId: 'j4-flowerhorns', price: 25, size: undefined, sizeLabel: 'Default Title', available: true })],
+      opts,
+    );
+    const s = idx.species['sp_jaguar_cichlid']!;
+    expect(s.totalListings).toBe(1);
+    expect(s.price).toBeUndefined();
+    const store = s.stores[0]!;
+    expect(store.storeId).toBe('j4-flowerhorns');
+    expect(store.productPrice).toBe(25);
+    expect(store.productSizeLabel).toBe('Default Title');
+    expect(store.productInStock).toBe(true);
+  });
+
+  it('adds the estimate once the threshold is met', () => {
     const idx = buildMarketIndex([listing(), listing(), listing()], opts);
-    expect(idx.species['sp_jaguar_cichlid']!.comparableCount).toBe(3);
+    const s = idx.species['sp_jaguar_cichlid']!;
+    expect(s.comparableCount).toBe(3);
+    expect(s.price?.median).toBe(50);
   });
 
   it('counts only size-bearing listings toward the threshold', () => {
-    // Three listings but only two have a size: not comparable enough.
+    // Three listings but only two have a size: shown, but not priced.
     const idx = buildMarketIndex([listing(), listing(), listing({ size: undefined })], opts);
-    expect(idx.species['sp_jaguar_cichlid']).toBeUndefined();
+    const s = idx.species['sp_jaguar_cichlid']!;
+    expect(s.totalListings).toBe(3);
+    expect(s.comparableCount).toBe(2);
+    expect(s.price).toBeUndefined();
   });
 
   it('still reports unsized listings in the totals once published', () => {
@@ -44,9 +82,15 @@ describe('sample threshold', () => {
     expect(s.totalListings).toBe(4);
   });
 
-  it('ignores a zero-priced listing', () => {
+  it('ignores a zero-priced listing when counting comparables', () => {
+    // A £0 listing is a placeholder, not a bargain. It still counts as a
+    // listing the store published, so the species is shown; it just cannot
+    // help support an estimate.
     const idx = buildMarketIndex([listing(), listing(), listing({ price: 0 })], opts);
-    expect(idx.species['sp_jaguar_cichlid']).toBeUndefined();
+    const s = idx.species['sp_jaguar_cichlid']!;
+    expect(s.totalListings).toBe(3);
+    expect(s.comparableCount).toBe(2);
+    expect(s.price).toBeUndefined();
   });
 });
 

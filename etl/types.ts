@@ -99,7 +99,12 @@ export interface MarketSpeciesStats {
   totalListings: number;
   inStock: number;
   soldOut: number;
-  price: {
+  /**
+   * What the fish is worth, or absent when too few listings carry a size to
+   * say. Absent does NOT mean unsold: the stores below are still real, and
+   * still linked. See the threshold note in index-builder.ts.
+   */
+  price?: {
     median: number;
     min: number;
     max: number;
@@ -133,6 +138,10 @@ export interface MarketSpeciesStats {
     productUrl?: string;
     /** Whether productUrl points at something in stock. Never implied. */
     productInStock?: boolean;
+    /** That listing's own asking price. One observation, not an aggregate. */
+    productPrice?: number;
+    /** And the option text it is priced for - "3 Fish", "4 - 4.5 inches". */
+    productSizeLabel?: string;
   }>;
   /** Earliest and latest publish date seen, as a rough catalogue span. */
   listedBetween?: { earliest: string; latest: string };
@@ -144,6 +153,16 @@ export interface MarketIndex {
   /** Minimum comparable listings before stats are published at all. */
   minimumSampleCount: number;
   sources: Array<StoreConfig & { listingsFetched: number; retrievedAt: string }>;
+  /**
+   * Stores that STORES declares but that did not contribute to this build.
+   *
+   * Present only on an index published with --allow-partial. Every median here
+   * and the market-scarcity denominator behind it were computed over the
+   * stores that answered, so an index missing a vendor is a different
+   * measurement, not the same one with a gap. Recorded in the artifact rather
+   * than only in a console line nobody kept.
+   */
+  partial?: Array<{ storeId: string; reason: string }>;
   species: Record<string, MarketSpeciesStats>;
   /**
    * Titles that look like a species we do not have in the catalog. Surfaced so
