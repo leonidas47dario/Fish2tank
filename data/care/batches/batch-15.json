@@ -1,0 +1,181 @@
+{
+  "batch": "15",
+  "species": [
+    {
+      "speciesId": "sp_neolamprologus_sexfasciatus",
+      "commonName": "Gold Kipili",
+      "scientificName": "Neolamprologus sexfasciatus",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_neolamprologus_sexfasciatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_ptychochromis_grandidieri",
+      "commonName": "Gold Madagascar Cichlid",
+      "scientificName": "Ptychochromis grandidieri",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_ptychochromis_grandidieri.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hemigrammus_rodwayi",
+      "commonName": "Gold Tetra",
+      "scientificName": "Hemigrammus rodwayi",
+      "family": "Acestrorhamphidae",
+      "wikipediaFile": "data/care/text/sp_hemigrammus_rodwayi.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_neolissochilus_benasi",
+      "commonName": "Golden Arrow Mahseer",
+      "scientificName": "Neolissochilus benasi",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_neolissochilus_benasi.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_acrossocheilus_longipinnis",
+      "commonName": "Golden Bumblebee Barb",
+      "scientificName": "Acrossocheilus longipinnis",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_acrossocheilus_longipinnis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_anabas_testudineus",
+      "commonName": "Golden Climbing Perch",
+      "scientificName": "Anabas testudineus",
+      "family": "Anabantidae",
+      "wikipediaFile": "data/care/text/sp_anabas_testudineus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_scobinancistrus_pariolispos",
+      "commonName": "Golden Cloud Pleco",
+      "scientificName": "Scobinancistrus pariolispos",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_scobinancistrus_pariolispos.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_phenacogrammus_aurantiacus",
+      "commonName": "Golden Congo Tetra",
+      "scientificName": "Phenacogrammus aurantiacus",
+      "family": "Alestidae",
+      "wikipediaFile": "data/care/text/sp_phenacogrammus_aurantiacus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_tor_putitora",
+      "commonName": "Golden Mahseer",
+      "scientificName": "Tor putitora",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_tor_putitora.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_leptobarbus_hoevenii",
+      "commonName": "Golden Shark",
+      "scientificName": "Leptobarbus hoevenii",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_leptobarbus_hoevenii.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_sarcocheilichthys_parvus",
+      "commonName": "Golden Stripe Sharks",
+      "scientificName": "Sarcocheilichthys parvus",
+      "family": "Gobionidae",
+      "wikipediaFile": "data/care/text/sp_sarcocheilichthys_parvus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_fundulus_chrysotus",
+      "commonName": "Golden Topminnow",
+      "scientificName": "Fundulus chrysotus",
+      "family": "Fundulidae",
+      "wikipediaFile": "data/care/text/sp_fundulus_chrysotus.wikipedia.txt",
+      "vendorFile": "data/care/text/sp_fundulus_chrysotus.vendor.txt"
+    },
+    {
+      "speciesId": "sp_leporacanthicus_heterodon",
+      "commonName": "Golden Vampire Pleco",
+      "scientificName": "Leporacanthicus heterodon",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_leporacanthicus_heterodon.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_carassius_auratus",
+      "commonName": "Goldfish",
+      "scientificName": "Carassius auratus",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_carassius_auratus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_bagarius_yarrelli",
+      "commonName": "Goonch Catfish",
+      "scientificName": "Bagarius yarrelli",
+      "family": "Sisoridae",
+      "wikipediaFile": "data/care/text/sp_bagarius_yarrelli.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_osphronemus_septemfasciatus",
+      "commonName": "Borneo Giant Gourami",
+      "scientificName": "Osphronemus septemfasciatus",
+      "family": "Osphronemidae",
+      "wikipediaFile": "data/care/text/sp_osphronemus_septemfasciatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_trichopsis_pumila",
+      "commonName": "Sparkling Dwarf Gourami",
+      "scientificName": "Trichopsis pumila",
+      "family": "Osphronemidae",
+      "wikipediaFile": "data/care/text/sp_trichopsis_pumila.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_sphaerichthys_selatanensis",
+      "commonName": "Crossband Chocolate Gourami",
+      "scientificName": "Sphaerichthys selatanensis",
+      "family": "Osphronemidae",
+      "wikipediaFile": "data/care/text/sp_sphaerichthys_selatanensis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_trichogaster_chuna",
+      "commonName": "Honey Gourami",
+      "scientificName": "Trichogaster chuna",
+      "family": "Osphronemidae",
+      "wikipediaFile": "data/care/text/sp_trichogaster_chuna.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_trichogaster_lalius",
+      "commonName": "Dwarf Gourami",
+      "scientificName": "Trichogaster lalius",
+      "family": "Osphronemidae",
+      "wikipediaFile": "data/care/text/sp_trichogaster_lalius.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pterodoras_granulosus",
+      "commonName": "Granulosus Catfish",
+      "scientificName": "Pterodoras granulosus",
+      "family": "Doradidae",
+      "wikipediaFile": "data/care/text/sp_pterodoras_granulosus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_cabomba_caroliniana",
+      "commonName": "Green Cabomba Bunched",
+      "scientificName": "Cabomba caroliniana",
+      "family": "Cabombaceae",
+      "wikipediaFile": "data/care/text/sp_cabomba_caroliniana.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hemiancistrus_subviridis",
+      "commonName": "Green Phantom Pleco",
+      "scientificName": "Hemiancistrus subviridis",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_hemiancistrus_subviridis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_crenicichla_cincta",
+      "commonName": "Green Pike Cichlid",
+      "scientificName": "Crenicichla cincta",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_crenicichla_cincta.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_xiphophorus_montezumae",
+      "commonName": "Montezuma Green Swordtail",
+      "scientificName": "Xiphophorus montezumae",
+      "family": "Poeciliidae",
+      "wikipediaFile": "data/care/text/sp_xiphophorus_montezumae.wikipedia.txt"
+    }
+  ]
+}

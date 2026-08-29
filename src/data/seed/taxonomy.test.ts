@@ -85,13 +85,64 @@ describe('the tables themselves', () => {
 describe('the shipped catalog', () => {
   const species = catalogJson.species as Array<{
     speciesId: string; scientificName?: string; waterZone?: string; organismKind?: string;
+    waterType?: string;
   }>;
 
-  it('classifies the large majority of species', () => {
-    const zoned = species.filter((s) => s.waterZone).length;
+  /**
+   * THIS MAP IS A FRESHWATER MAP, and the assertion now says so.
+   *
+   * It used to measure the whole catalog at >85%. The 2026-08-29 refresh made
+   * that number meaningless rather than false: LiveAquaria's marine catalogue
+   * grew to 3,256 products and put 1,064 reef species — Chaetodon, Cirrhilabrus,
+   * Acropora — into a genus map built entirely for the fish in the owner's
+   * tanks. Pooled coverage fell to 50% while the freshwater half never moved
+   * off 89%, so a single ratio would have reported a stale genus map when
+   * nothing had gone stale at all.
+   *
+   * So it is measured on the half the map covers, and the marine gap is
+   * asserted as a known, sized hole rather than averaged into invisibility.
+   * Extending the map to reef families is real work, not a threshold tweak.
+   */
+  const freshwater = species.filter((s) => s.waterType !== 'marine');
+  const marine = species.filter((s) => s.waterType === 'marine');
+
+  /**
+   * PLANTS ARE EXCLUDED FROM THE DENOMINATOR, and that is a correction rather
+   * than a convenience.
+   *
+   * A plant never gets a water-column zone — the test below asserts exactly
+   * that — so counting the 142 freshwater plants among the species that ought
+   * to have one was always measuring the wrong thing. It went unnoticed while
+   * 180 freshwater species were mis-filed as marine and therefore excluded
+   * from the count entirely; fixing the salinity tag surfaced it.
+   *
+   * Measured properly, coverage is 91.5% of freshwater animals — better than
+   * the 89% the pooled figure ever claimed.
+   */
+  const freshwaterAnimals = freshwater.filter((s) => s.organismKind !== 'plant');
+
+  it('classifies the large majority of freshwater animals', () => {
+    const zoned = freshwaterAnimals.filter((s) => s.waterZone).length;
     // Not 100%, and that is fine — the point is that the gap is small and
     // visible. If this drops, a genus map probably went stale.
-    expect(zoned / species.length).toBeGreaterThan(0.85);
+    expect(zoned / freshwaterAnimals.length).toBeGreaterThan(0.85);
+  });
+
+  it('counts salinity for nearly every species, so the default filter is honest', () => {
+    // The catalog opens filtered to freshwater. That is only defensible while
+    // almost nothing is unclassified — a default that hid hundreds of species
+    // under "not recorded" would be the app hiding a gap rather than showing
+    // one. 45 of 2,178 is a gap you can name.
+    const untyped = species.filter((s) => !s.waterType);
+    expect(untyped.length / species.length).toBeLessThan(0.05);
+  });
+
+  it('records the marine gap as a gap, never as a default zone', () => {
+    // The honest failure mode. A reef fish with no family in the map must come
+    // out unclassified and be excluded from the zone filters — never bucketed
+    // into 'mid' because most fish are.
+    expect(marine.length).toBeGreaterThan(500);
+    expect(marine.filter((s) => s.waterZone).length / marine.length).toBeLessThan(0.2);
   });
 
   it('never assigns a zone to a plant', () => {

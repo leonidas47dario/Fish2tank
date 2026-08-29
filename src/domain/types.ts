@@ -110,6 +110,16 @@ export interface Species {
 }
 
 export type AggressionRating = 'peaceful' | 'semi-aggressive' | 'aggressive' | 'highly-aggressive';
+
+/**
+ * The water an animal is sold to live in.
+ *
+ * A property of the trade rather than of the fish, and sourced that way: it
+ * comes from what the vendors tag, never inferred from taxonomy. See
+ * etl/normalize/water-type.ts for why inferring it would be the same invented
+ * fact the aggression rating refuses to be.
+ */
+export type WaterType = 'freshwater' | 'brackish' | 'marine';
 export type SocialNeed = 'solitary' | 'pair' | 'schooling' | 'shoaling' | 'colony' | 'territorial';
 export type PredationTag =
   | 'piscivore'

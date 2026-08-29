@@ -464,13 +464,18 @@ describe('End-to-end acceptance: the Panther (PRD 10)', () => {
     expect(snapshot!.components.dreamListHit).toBe(0);
     // Cold start: no history yet, so personal scarcity honestly scores nothing.
     expect(snapshot!.components.personalEncounterScarcity).toBe(0);
-    // Formula v0.2.0: market scarcity now contributes. Asserted against the
-    // live index rather than a hardcoded number, because the score moves
-    // whenever a vendor is added - which is expected, not a regression.
+    // Formula v0.2.0: market scarcity contributes when it is available.
+    // Asserted against the live index rather than a hardcoded number, because
+    // the score moves whenever a vendor is added - expected, not a regression.
+    //
     const expectedMarket = snapshot!.components.marketScarcity;
     expect(expectedMarket).toBeGreaterThan(0);
     expect(expectedMarket).toBeLessThanOrEqual(15);
     expect(snapshot!.totalScore).toBe(35 + expectedMarket);
+    // The acceptance criterion itself. Asserting only "total == 35 + whatever
+    // the snapshot says" is circular and would survive the market component
+    // silently going to zero, which is exactly what happened while the
+    // scarcity rewrite was mid-flight.
     expect(snapshot!.tier).toBe('rare');
     expect(snapshot!.formulaVersion).toBe('discovery-tier-v0.2.0');
 

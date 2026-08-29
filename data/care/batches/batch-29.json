@@ -1,0 +1,180 @@
+{
+  "batch": "29",
+  "species": [
+    {
+      "speciesId": "sp_rasbora_borapetensis",
+      "commonName": "Red Tail Rasbora",
+      "scientificName": "Rasbora borapetensis",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_rasbora_borapetensis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_agamyxis_pectinifrons",
+      "commonName": "Spotted Raphael",
+      "scientificName": "Agamyxis pectinifrons",
+      "family": "Doradidae",
+      "wikipediaFile": "data/care/text/sp_agamyxis_pectinifrons.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_puntius_tambraparniei",
+      "commonName": "Tambraparni Barb",
+      "scientificName": "Puntius tambraparniei",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_puntius_tambraparniei.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_lamprichthys_tanganicanus",
+      "commonName": "Tanganyika Killifish",
+      "scientificName": "Lamprichthys tanganicanus",
+      "family": "Procatopodidae",
+      "wikipediaFile": "data/care/text/sp_lamprichthys_tanganicanus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_tanichthys_albonubes",
+      "commonName": "White Cloud Mountain Minnow",
+      "scientificName": "Tanichthys albonubes",
+      "family": "Tanichthyidae",
+      "wikipediaFile": "data/care/text/sp_tanichthys_albonubes.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_trichopodus_trichopterus",
+      "commonName": "Three Spot Gourami",
+      "scientificName": "Trichopodus trichopterus",
+      "family": "Osphronemidae",
+      "wikipediaFile": "data/care/text/sp_trichopodus_trichopterus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_corydoras_sterbai",
+      "commonName": "Cory Catfish",
+      "scientificName": "Corydoras sterbai",
+      "family": "Callichthyidae",
+      "wikipediaFile": "data/care/text/sp_corydoras_sterbai.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_apistogramma_cacatuoides",
+      "commonName": "Cockatoo Dwarf Cichlid",
+      "scientificName": "Apistogramma cacatuoides",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_apistogramma_cacatuoides.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_inpaichthys_kerri",
+      "commonName": "Emperor Tetra",
+      "scientificName": "Inpaichthys kerri",
+      "family": "Acestrorhamphidae",
+      "wikipediaFile": "data/care/text/sp_inpaichthys_kerri.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_poecilia_wingei",
+      "commonName": "Endler S Livebearer",
+      "scientificName": "Poecilia wingei",
+      "family": "Poeciliidae",
+      "wikipediaFile": "data/care/text/sp_poecilia_wingei.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pseudomugil_gertrudae",
+      "commonName": "Blue Eye Rainbowfish",
+      "scientificName": "Pseudomugil gertrudae",
+      "family": "Pseudomugilidae",
+      "wikipediaFile": "data/care/text/sp_pseudomugil_gertrudae.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_oryzias_latipes",
+      "commonName": "Medaka Ricefish",
+      "scientificName": "Oryzias latipes",
+      "family": "Adrianichthyidae",
+      "wikipediaFile": "data/care/text/sp_oryzias_latipes.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_panaqolus_tankei",
+      "commonName": "Tankei Tiger Pleco",
+      "scientificName": "Panaqolus tankei",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_panaqolus_tankei.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_terminalia_catappa",
+      "commonName": "Tannins Without Debris",
+      "scientificName": "Terminalia catappa",
+      "family": "Combretaceae",
+      "wikipediaFile": "data/care/text/sp_terminalia_catappa.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hemianthus_micranthemoides",
+      "commonName": "Tears Tissue Culture",
+      "scientificName": "Hemianthus micranthemoides",
+      "family": "Linderniaceae",
+      "wikipediaFile": "data/care/text/sp_hemianthus_micranthemoides.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_melanotaenia_herbertaxelrodi",
+      "commonName": "Lake Tebera Rainbowfish",
+      "scientificName": "Melanotaenia herbertaxelrodi",
+      "family": "Melanotaeniidae",
+      "wikipediaFile": "data/care/text/sp_melanotaenia_herbertaxelrodi.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_cichla_temensis",
+      "commonName": "Temensis Peacock Bass",
+      "scientificName": "Cichla temensis",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_cichla_temensis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hygrophila_corymbosa",
+      "commonName": "Temple Plant Potted",
+      "scientificName": "Hygrophila corymbosa",
+      "family": "Acanthaceae",
+      "wikipediaFile": "data/care/text/sp_hygrophila_corymbosa.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_poecilocharax_weitzmani",
+      "commonName": "Black Darter Tetra",
+      "scientificName": "Poecilocharax weitzmani",
+      "family": "Crenuchidae",
+      "wikipediaFile": "data/care/text/sp_poecilocharax_weitzmani.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hyphessobrycon_pulchripinnis",
+      "commonName": "Lemon Tetra",
+      "scientificName": "Hyphessobrycon pulchripinnis",
+      "family": "Characidae",
+      "wikipediaFile": "data/care/text/sp_hyphessobrycon_pulchripinnis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_aphyocharax_anisitsi",
+      "commonName": "Bloodfin Tetra",
+      "scientificName": "Aphyocharax anisitsi",
+      "family": "Characidae",
+      "wikipediaFile": "data/care/text/sp_aphyocharax_anisitsi.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_paracheirodon_simulans",
+      "commonName": "Green Neon Tetra",
+      "scientificName": "Paracheirodon simulans",
+      "family": "Acestrorhamphidae",
+      "wikipediaFile": "data/care/text/sp_paracheirodon_simulans.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_moenkhausia_pittieri",
+      "commonName": "Diamond Tetra",
+      "scientificName": "Moenkhausia pittieri",
+      "family": "Acestrorhamphidae",
+      "wikipediaFile": "data/care/text/sp_moenkhausia_pittieri.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_thayeria_boehlkei",
+      "commonName": "Penguin Tetra",
+      "scientificName": "Thayeria boehlkei",
+      "family": "Acestrorhamphidae",
+      "wikipediaFile": "data/care/text/sp_thayeria_boehlkei.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hyphessobrycon_herbertaxelrodi",
+      "commonName": "Black Neon Tetra",
+      "scientificName": "Hyphessobrycon herbertaxelrodi",
+      "family": "Characidae",
+      "wikipediaFile": "data/care/text/sp_hyphessobrycon_herbertaxelrodi.wikipedia.txt"
+    }
+  ]
+}

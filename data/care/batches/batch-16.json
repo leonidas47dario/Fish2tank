@@ -1,0 +1,182 @@
+{
+  "batch": "16",
+  "species": [
+    {
+      "speciesId": "sp_andinoacara_rivulatus",
+      "commonName": "Green Terror Cichlid",
+      "scientificName": "Andinoacara rivulatus",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_andinoacara_rivulatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_herichthys_carpintis",
+      "commonName": "Green Texas Cichlid",
+      "scientificName": "Herichthys carpintis",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_herichthys_carpintis.wikipedia.txt",
+      "vendorFile": "data/care/text/sp_herichthys_carpintis.vendor.txt"
+    },
+    {
+      "speciesId": "sp_hoplias_lacerdae",
+      "commonName": "Green Wolf Fish",
+      "scientificName": "Hoplias lacerdae",
+      "family": "Erythrinidae",
+      "wikipediaFile": "data/care/text/sp_hoplias_lacerdae.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_asterophysus_batrachus",
+      "commonName": "Gulper Catfish",
+      "scientificName": "Asterophysus batrachus",
+      "family": "Auchenipteridae",
+      "wikipediaFile": "data/care/text/sp_asterophysus_batrachus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pao_baileyi",
+      "commonName": "Hairy Puffer",
+      "scientificName": "Pao baileyi",
+      "family": "Tetraodontidae",
+      "wikipediaFile": "data/care/text/sp_pao_baileyi.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_crenicichla_geayi",
+      "commonName": "Half-Banded Pike Cichlid",
+      "scientificName": "Crenicichla geayi",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_crenicichla_geayi.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_dermogenys_pusilla",
+      "commonName": "Gold Wrestling Halfbeak",
+      "scientificName": "Dermogenys pusilla",
+      "family": "Zenarchopteridae",
+      "wikipediaFile": "data/care/text/sp_dermogenys_pusilla.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_haludaria_fasciata",
+      "commonName": "Melon Barb",
+      "scientificName": "Haludaria fasciata",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_haludaria_fasciata.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hampala_macrolepidota",
+      "commonName": "Hampala Barb",
+      "scientificName": "Hampala macrolepidota",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_hampala_macrolepidota.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_trigonostigma_heteromorpha",
+      "commonName": "Harlequin Rasbora",
+      "scientificName": "Trigonostigma heteromorpha",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_trigonostigma_heteromorpha.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hasemania_nana",
+      "commonName": "Silvertip Tetra",
+      "scientificName": "Hasemania nana",
+      "family": "Acestrorhamphidae",
+      "wikipediaFile": "data/care/text/sp_hasemania_nana.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_symphysodon_discus",
+      "commonName": "Heckel Discus Nhamunda",
+      "scientificName": "Symphysodon discus",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_symphysodon_discus.wikipedia.txt",
+      "vendorFile": "data/care/text/sp_symphysodon_discus.vendor.txt"
+    },
+    {
+      "speciesId": "sp_potamotrygon_henlei",
+      "commonName": "Henlei Stingray",
+      "scientificName": "Potamotrygon henlei",
+      "family": "Potamotrygonidae",
+      "wikipediaFile": "data/care/text/sp_potamotrygon_henlei.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_brotia_herculea",
+      "commonName": "Hercules Snail",
+      "scientificName": "Brotia herculea",
+      "family": "Pachychilidae",
+      "wikipediaFile": "data/care/text/sp_brotia_herculea.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_sicyopus_cebuensis",
+      "commonName": "Hifin Rainbow Goby",
+      "scientificName": "Sicyopus cebuensis",
+      "family": "Oxudercidae",
+      "wikipediaFile": "data/care/text/sp_sicyopus_cebuensis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_myxocyprinus_asiaticus",
+      "commonName": "High Fin Loach",
+      "scientificName": "Myxocyprinus asiaticus",
+      "family": "Catostomidae",
+      "wikipediaFile": "data/care/text/sp_myxocyprinus_asiaticus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_myloplus_arnoldi",
+      "commonName": "Hook Silver Dollar",
+      "scientificName": "Myloplus arnoldi",
+      "family": "Serrasalmidae",
+      "wikipediaFile": "data/care/text/sp_myloplus_arnoldi.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_myloplus_rubripinnis",
+      "commonName": "Hook Silver Dollar",
+      "scientificName": "Myloplus rubripinnis",
+      "family": "Serrasalmidae",
+      "wikipediaFile": "data/care/text/sp_myloplus_rubripinnis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_ceratophyllum_demersum",
+      "commonName": "Hornwort",
+      "scientificName": "Ceratophyllum demersum",
+      "family": "Ceratophyllaceae",
+      "wikipediaFile": "data/care/text/sp_ceratophyllum_demersum.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pao_palembangensis",
+      "commonName": "Humpback Dragon Puffer",
+      "scientificName": "Pao palembangensis",
+      "family": "Tetraodontidae",
+      "wikipediaFile": "data/care/text/sp_pao_palembangensis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_parambassis_pulcinella",
+      "commonName": "Humphead Glassfish",
+      "scientificName": "Parambassis pulcinella",
+      "family": "Ambassidae",
+      "wikipediaFile": "data/care/text/sp_parambassis_pulcinella.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_morone_saxatilis",
+      "commonName": "Hybrid Striped Bass",
+      "scientificName": "Morone saxatilis",
+      "family": "Moronidae",
+      "wikipediaFile": "data/care/text/sp_morone_saxatilis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_betta_imbellis",
+      "commonName": "Betta Imbellis",
+      "scientificName": "Betta imbellis",
+      "family": "Osphronemidae",
+      "wikipediaFile": "data/care/text/sp_betta_imbellis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_leptobotia_elongata",
+      "commonName": "Imperial Loach",
+      "scientificName": "Leptobotia elongata",
+      "family": "Botiidae",
+      "wikipediaFile": "data/care/text/sp_leptobotia_elongata.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_erethistes_hara",
+      "commonName": "Indian Butterfly Catfish",
+      "scientificName": "Erethistes hara",
+      "family": "Sisoridae",
+      "wikipediaFile": "data/care/text/sp_erethistes_hara.wikipedia.txt"
+    }
+  ]
+}

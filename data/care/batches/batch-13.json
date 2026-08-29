@@ -1,0 +1,179 @@
+{
+  "batch": "13",
+  "species": [
+    {
+      "speciesId": "sp_dichotomyctere_ocellatus",
+      "commonName": "Figure Puffer",
+      "scientificName": "Dichotomyctere ocellatus",
+      "family": "Tetraodontidae",
+      "wikipediaFile": "data/care/text/sp_dichotomyctere_ocellatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_dawkinsia_filamentosa",
+      "commonName": "Filament Barb",
+      "scientificName": "Dawkinsia filamentosa",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_dawkinsia_filamentosa.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_acrossocheilus_fasciatus",
+      "commonName": "Fin Torpedo Barb",
+      "scientificName": "Acrossocheilus fasciatus",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_acrossocheilus_fasciatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hemichromis_lifalili",
+      "commonName": "Blood Red Jewel",
+      "scientificName": "Hemichromis lifalili",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_hemichromis_lifalili.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_mastacembelus_erythrotaenia",
+      "commonName": "Fire Eel",
+      "scientificName": "Mastacembelus erythrotaenia",
+      "family": "Mastacembelidae",
+      "wikipediaFile": "data/care/text/sp_mastacembelus_erythrotaenia.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_devario_sondhii",
+      "commonName": "Fireline Danio",
+      "scientificName": "Devario sondhii",
+      "family": "Danionidae",
+      "wikipediaFile": "data/care/text/sp_devario_sondhii.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_thorichthys_meeki",
+      "commonName": "Firemouth Cichlid",
+      "scientificName": "Thorichthys meeki",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_thorichthys_meeki.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_sorubimichthys_planiceps",
+      "commonName": "Firewood Catfish",
+      "scientificName": "Sorubimichthys planiceps",
+      "family": "Pimelodidae",
+      "wikipediaFile": "data/care/text/sp_sorubimichthys_planiceps.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_trachelyopterus_fisheri",
+      "commonName": "Fishers Wood Catfish",
+      "scientificName": "Trachelyopterus fisheri",
+      "family": "Auchenipteridae",
+      "wikipediaFile": "data/care/text/sp_trachelyopterus_fisheri.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_crenicichla_multispinosa",
+      "commonName": "Flame Pike Cichlid",
+      "scientificName": "Crenicichla multispinosa",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_crenicichla_multispinosa.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_crenicichla_acutirostris",
+      "commonName": "Flamengo Pike Cichlid",
+      "scientificName": "Crenicichla acutirostris",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_crenicichla_acutirostris.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_brachyplatystoma_juruense",
+      "commonName": "Flash Zebra Catfish",
+      "scientificName": "Brachyplatystoma juruense",
+      "family": "Pimelodidae",
+      "wikipediaFile": "data/care/text/sp_brachyplatystoma_juruense.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pinirampus_pirinampu",
+      "commonName": "Flat Whiskered Catfish",
+      "scientificName": "Pinirampus pirinampu",
+      "family": "Pimelodidae",
+      "wikipediaFile": "data/care/text/sp_pinirampus_pirinampu.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_lobelia_cardinalis",
+      "commonName": "Flower Tissue Culture",
+      "scientificName": "Lobelia cardinalis",
+      "family": "Campanulaceae",
+      "wikipediaFile": "data/care/text/sp_lobelia_cardinalis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_cichlasoma_trimaculatum",
+      "commonName": "Flowerhorn Parrot Cichlid",
+      "scientificName": "Cichlasoma trimaculatum",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_cichlasoma_trimaculatum.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_carettochelys_insculpta",
+      "commonName": "Fly River Turtle",
+      "scientificName": "Carettochelys insculpta",
+      "wikipediaFile": "data/care/text/sp_carettochelys_insculpta.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pseudolithoxus_anthrax",
+      "commonName": "Flyer Cat Pleco",
+      "scientificName": "Pseudolithoxus anthrax",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_pseudolithoxus_anthrax.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_epalzeorhynchos_kalopterus",
+      "commonName": "Fox Algae Eater",
+      "scientificName": "Epalzeorhynchos kalopterus",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_epalzeorhynchos_kalopterus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_brachygobius_xanthomelas",
+      "commonName": "Freshwater Bumblebee Goby",
+      "scientificName": "Brachygobius xanthomelas",
+      "family": "Oxudercidae",
+      "wikipediaFile": "data/care/text/sp_brachygobius_xanthomelas.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_mormyrus_longirostris",
+      "commonName": "Freshwater Dolphin Fish",
+      "scientificName": "Mormyrus longirostris",
+      "family": "Mormyridae",
+      "wikipediaFile": "data/care/text/sp_mormyrus_longirostris.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_batrachomoeus_trispinosus",
+      "commonName": "Freshwater Lionfish",
+      "scientificName": "Batrachomoeus trispinosus",
+      "family": "Batrachoididae",
+      "wikipediaFile": "data/care/text/sp_batrachomoeus_trispinosus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_limnobium_laevigatum",
+      "commonName": "Frogbit Aka Spongeplant",
+      "scientificName": "Limnobium laevigatum",
+      "family": "Hydrocharitaceae",
+      "wikipediaFile": "data/care/text/sp_limnobium_laevigatum.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_limnobium_spongia",
+      "commonName": "Frogbit Aka Spongeplant",
+      "scientificName": "Limnobium spongia",
+      "family": "Hydrocharitaceae",
+      "wikipediaFile": "data/care/text/sp_limnobium_spongia.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_cyphotilapia_frontosa",
+      "commonName": "Frontosa",
+      "scientificName": "Cyphotilapia frontosa",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_cyphotilapia_frontosa.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_takifugu_ocellatus",
+      "commonName": "Fugu Puffer Fish",
+      "scientificName": "Takifugu ocellatus",
+      "family": "Tetraodontidae",
+      "wikipediaFile": "data/care/text/sp_takifugu_ocellatus.wikipedia.txt"
+    }
+  ]
+}

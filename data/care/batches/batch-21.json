@@ -1,0 +1,181 @@
+{
+  "batch": "21",
+  "species": [
+    {
+      "speciesId": "sp_nematobrycon_palmeri",
+      "commonName": "Emperor Tetra",
+      "scientificName": "Nematobrycon palmeri",
+      "family": "Characidae",
+      "wikipediaFile": "data/care/text/sp_nematobrycon_palmeri.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_neocaridina_davidi",
+      "commonName": "Cherry Shrimp",
+      "scientificName": "Neocaridina davidi",
+      "family": "Atyidae",
+      "wikipediaFile": "data/care/text/sp_neocaridina_davidi.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_stiphodon_percnopterygionus",
+      "commonName": "Neon Dwarf Goby",
+      "scientificName": "Stiphodon percnopterygionus",
+      "family": "Gobiidae",
+      "wikipediaFile": "data/care/text/sp_stiphodon_percnopterygionus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hypsophrys_nicaraguensis",
+      "commonName": "Nicaragua Cichlid",
+      "scientificName": "Hypsophrys nicaraguensis",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_hypsophrys_nicaraguensis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_campylomormyrus_numenius",
+      "commonName": "Nose Elephantnose Fish",
+      "scientificName": "Campylomormyrus numenius",
+      "family": "Mormyridae",
+      "wikipediaFile": "data/care/text/sp_campylomormyrus_numenius.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hemigrammus_bleheri",
+      "commonName": "Rummy Nose Tetra",
+      "scientificName": "Hemigrammus bleheri",
+      "family": "Acestrorhamphidae",
+      "wikipediaFile": "data/care/text/sp_hemigrammus_bleheri.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_semilabeo_notabilis",
+      "commonName": "Notabilis Barbel",
+      "scientificName": "Semilabeo notabilis",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_semilabeo_notabilis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_notropis_chrosomus",
+      "commonName": "Rainbow Shiner",
+      "scientificName": "Notropis chrosomus",
+      "family": "Leuciscidae",
+      "wikipediaFile": "data/care/text/sp_notropis_chrosomus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_synodontis_ocellifer",
+      "commonName": "Ocellifer Catfish",
+      "scientificName": "Synodontis ocellifer",
+      "family": "Mochokidae",
+      "wikipediaFile": "data/care/text/sp_synodontis_ocellifer.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_neritina_reclivata",
+      "commonName": "Olive Nerite Snail",
+      "scientificName": "Neritina reclivata",
+      "family": "Neritidae",
+      "wikipediaFile": "data/care/text/sp_neritina_reclivata.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hemiancistrus_guahiborum",
+      "commonName": "Orange Seam Pleco",
+      "scientificName": "Hemiancistrus guahiborum",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_hemiancistrus_guahiborum.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_synodontis_flavitaeniatus",
+      "commonName": "Orange Striped Synodontis",
+      "scientificName": "Synodontis flavitaeniatus",
+      "family": "Mochokidae",
+      "wikipediaFile": "data/care/text/sp_synodontis_flavitaeniatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_potamotrygon_orbignyi",
+      "commonName": "Orbignyi Stingray",
+      "scientificName": "Potamotrygon orbignyi",
+      "family": "Potamotrygonidae",
+      "wikipediaFile": "data/care/text/sp_potamotrygon_orbignyi.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_biotodoma_wavrini",
+      "commonName": "Orinoco Cupid Cichlid",
+      "scientificName": "Biotodoma wavrini",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_biotodoma_wavrini.wikipedia.txt",
+      "vendorFile": "data/care/text/sp_biotodoma_wavrini.vendor.txt"
+    },
+    {
+      "speciesId": "sp_cichla_orinocensis",
+      "commonName": "Orinoco Peacock Bass",
+      "scientificName": "Cichla orinocensis",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_cichla_orinocensis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pimelodus_ornatus",
+      "commonName": "Ornate Catfish",
+      "scientificName": "Pimelodus ornatus",
+      "family": "Pimelodidae",
+      "wikipediaFile": "data/care/text/sp_pimelodus_ornatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_microctenopoma_ansorgii",
+      "commonName": "Ornate Ctenopoma",
+      "scientificName": "Microctenopoma ansorgii",
+      "family": "Anabantidae",
+      "wikipediaFile": "data/care/text/sp_microctenopoma_ansorgii.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_protomelas_ornatus",
+      "commonName": "Ornate Hap",
+      "scientificName": "Protomelas ornatus",
+      "family": "Cichlidae",
+      "vendorFile": "data/care/text/sp_protomelas_ornatus.vendor.txt"
+    },
+    {
+      "speciesId": "sp_otocinclus_macrospilus",
+      "commonName": "Otocinclus Catfish",
+      "scientificName": "Otocinclus macrospilus",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_otocinclus_macrospilus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_barbodes_lateristriga",
+      "commonName": "Spanner T Barb",
+      "scientificName": "Barbodes lateristriga",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_barbodes_lateristriga.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_lophiosilurus_alexandri",
+      "commonName": "Pacman Catfish",
+      "scientificName": "Lophiosilurus alexandri",
+      "family": "Pseudopimelodidae",
+      "wikipediaFile": "data/care/text/sp_lophiosilurus_alexandri.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_polyodon_spathula",
+      "commonName": "Paddlefish",
+      "scientificName": "Polyodon spathula",
+      "family": "Polyodontidae",
+      "wikipediaFile": "data/care/text/sp_polyodon_spathula.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_limnophila_aromatica",
+      "commonName": "Limnophila Aromatica",
+      "scientificName": "Limnophila aromatica",
+      "family": "Plantaginaceae",
+      "wikipediaFile": "data/care/text/sp_limnophila_aromatica.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_brotia_pagodula",
+      "commonName": "Pagoda Snails",
+      "scientificName": "Brotia pagodula",
+      "family": "Pachychilidae",
+      "wikipediaFile": "data/care/text/sp_brotia_pagodula.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_apistogramma_nijsseni",
+      "commonName": "Panda Dwarf Cichlid",
+      "scientificName": "Apistogramma nijsseni",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_apistogramma_nijsseni.wikipedia.txt"
+    }
+  ]
+}

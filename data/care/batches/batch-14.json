@@ -1,0 +1,181 @@
+{
+  "batch": "14",
+  "species": [
+    {
+      "speciesId": "sp_lepisosteus_platyrhincus",
+      "commonName": "Gar",
+      "scientificName": "Lepisosteus platyrhincus",
+      "family": "Lepisosteidae",
+      "wikipediaFile": "data/care/text/sp_lepisosteus_platyrhincus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_satanoperca_jurupari",
+      "commonName": "Geophagus Jurupari Cichlid",
+      "scientificName": "Satanoperca jurupari",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_satanoperca_jurupari.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_palaemonetes_paludosus",
+      "commonName": "Ghost Shrimp",
+      "scientificName": "Palaemonetes paludosus",
+      "family": "Palaemonidae",
+      "wikipediaFile": "data/care/text/sp_palaemonetes_paludosus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_boulengerella_cuvieri",
+      "commonName": "Giant Bicuda Pike",
+      "scientificName": "Boulengerella cuvieri",
+      "family": "Ctenoluciidae",
+      "wikipediaFile": "data/care/text/sp_boulengerella_cuvieri.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_sphaerichthys_acrostoma",
+      "commonName": "Giant Chocolate Gourami",
+      "scientificName": "Sphaerichthys acrostoma",
+      "family": "Osphronemidae",
+      "wikipediaFile": "data/care/text/sp_sphaerichthys_acrostoma.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_devario_aequipinnatus",
+      "commonName": "Giant Danio",
+      "scientificName": "Devario aequipinnatus",
+      "family": "Danionidae",
+      "wikipediaFile": "data/care/text/sp_devario_aequipinnatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_chitala_lopis",
+      "commonName": "Giant Featherback Knifefish",
+      "scientificName": "Chitala lopis",
+      "family": "Notopteridae",
+      "wikipediaFile": "data/care/text/sp_chitala_lopis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_osphronemus_goramy",
+      "commonName": "Giant Gourami",
+      "scientificName": "Osphronemus goramy",
+      "family": "Osphronemidae",
+      "wikipediaFile": "data/care/text/sp_osphronemus_goramy.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pangio_myersi",
+      "commonName": "Giant Kuhli Loach",
+      "scientificName": "Pangio myersi",
+      "family": "Cobitidae",
+      "wikipediaFile": "data/care/text/sp_pangio_myersi.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hypoptopoma_gulare",
+      "commonName": "Giant Otocinclus Catfish",
+      "scientificName": "Hypoptopoma gulare",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_hypoptopoma_gulare.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_macrochirichthys_macrochirus",
+      "commonName": "Giant Sword Minnow",
+      "scientificName": "Macrochirichthys macrochirus",
+      "family": "Xenocyprididae",
+      "wikipediaFile": "data/care/text/sp_macrochirichthys_macrochirus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_caranx_ignobilis",
+      "commonName": "Giant Trevally",
+      "scientificName": "Caranx ignobilis",
+      "family": "Carangidae",
+      "wikipediaFile": "data/care/text/sp_caranx_ignobilis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_auchenoglanis_occidentalis",
+      "commonName": "Giraffe Catfish",
+      "scientificName": "Auchenoglanis occidentalis",
+      "family": "Auchenoglanididae",
+      "wikipediaFile": "data/care/text/sp_auchenoglanis_occidentalis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_nimbochromis_venustus",
+      "commonName": "Giraffe Cichlid",
+      "scientificName": "Nimbochromis venustus",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_nimbochromis_venustus.wikipedia.txt",
+      "vendorFile": "data/care/text/sp_nimbochromis_venustus.vendor.txt"
+    },
+    {
+      "speciesId": "sp_pethia_conchonius",
+      "commonName": "Red Glass Barb",
+      "scientificName": "Pethia conchonius",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_pethia_conchonius.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_kryptopterus_bicirrhis",
+      "commonName": "Glass Catfish",
+      "scientificName": "Kryptopterus bicirrhis",
+      "family": "Siluridae",
+      "wikipediaFile": "data/care/text/sp_kryptopterus_bicirrhis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_charax_gibbosus",
+      "commonName": "Glass Headstander",
+      "scientificName": "Charax gibbosus",
+      "family": "Characidae",
+      "wikipediaFile": "data/care/text/sp_charax_gibbosus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_glossostigma_elatinoides",
+      "commonName": "Glosso Tissue Culture",
+      "scientificName": "Glossostigma elatinoides",
+      "family": "Phrymaceae",
+      "wikipediaFile": "data/care/text/sp_glossostigma_elatinoides.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_trigonostigma_hengeli",
+      "commonName": "Glowlight Rasbora",
+      "scientificName": "Trigonostigma hengeli",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_trigonostigma_hengeli.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hemigrammus_erythrozonus",
+      "commonName": "Glowlight Tetra",
+      "scientificName": "Hemigrammus erythrozonus",
+      "family": "Acestrorhamphidae",
+      "wikipediaFile": "data/care/text/sp_hemigrammus_erythrozonus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_stiphodon_atropurpureus",
+      "commonName": "Blue Neon Dwarf Goby",
+      "scientificName": "Stiphodon atropurpureus",
+      "family": "Gobiidae",
+      "wikipediaFile": "data/care/text/sp_stiphodon_atropurpureus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_stiphodon_annieae",
+      "commonName": "Annie's Dwarf Goby",
+      "scientificName": "Stiphodon annieae",
+      "family": "Gobiidae",
+      "wikipediaFile": "data/care/text/sp_stiphodon_annieae.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_barbodes_semifasciolatus",
+      "commonName": "Gold Barb",
+      "scientificName": "Barbodes semifasciolatus",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_barbodes_semifasciolatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_puntius_sachsii",
+      "commonName": "Gold Barb",
+      "scientificName": "Puntius sachsii",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_puntius_sachsii.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_trichogaster_trichopterus",
+      "commonName": "Gold Gourami",
+      "scientificName": "Trichogaster trichopterus",
+      "family": "Osphronemidae",
+      "wikipediaFile": "data/care/text/sp_trichogaster_trichopterus.wikipedia.txt"
+    }
+  ]
+}

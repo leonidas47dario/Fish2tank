@@ -1,0 +1,180 @@
+{
+  "batch": "28",
+  "species": [
+    {
+      "speciesId": "sp_leporinus_octomaculatus",
+      "commonName": "Spotted Leporinus",
+      "scientificName": "Leporinus octomaculatus",
+      "family": "Anostomidae",
+      "wikipediaFile": "data/care/text/sp_leporinus_octomaculatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_homaloptera_ocellata",
+      "commonName": "Spotted Saddleback Loach",
+      "scientificName": "Homaloptera ocellata",
+      "family": "Balitoridae",
+      "wikipediaFile": "data/care/text/sp_homaloptera_ocellata.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_metynnis_maculatus",
+      "commonName": "Spotted Silver Dollar",
+      "scientificName": "Metynnis maculatus",
+      "family": "Serrasalmidae",
+      "wikipediaFile": "data/care/text/sp_metynnis_maculatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_ancistrus_dolichopterus",
+      "commonName": "Starlight Bristlenose Pleco",
+      "scientificName": "Ancistrus dolichopterus",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_ancistrus_dolichopterus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_paratilapia_polleni",
+      "commonName": "Starry Night Cichlid",
+      "scientificName": "Paratilapia polleni",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_paratilapia_polleni.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_acipenser_stellatus",
+      "commonName": "Starry Sturgeon",
+      "scientificName": "Acipenser stellatus",
+      "family": "Acipenseridae",
+      "wikipediaFile": "data/care/text/sp_acipenser_stellatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_staurogyne_repens",
+      "commonName": "Staurogyne Repens Clump",
+      "scientificName": "Staurogyne repens",
+      "family": "Acanthaceae",
+      "wikipediaFile": "data/care/text/sp_staurogyne_repens.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_acipenser_ruthenus",
+      "commonName": "Sterlet Sturgeon",
+      "scientificName": "Acipenser ruthenus",
+      "family": "Acipenseridae",
+      "wikipediaFile": "data/care/text/sp_acipenser_ruthenus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_neolissochilus_stevensonii",
+      "commonName": "Stevensonii Mahseer",
+      "scientificName": "Neolissochilus stevensonii",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_neolissochilus_stevensonii.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_potamotrygon_leopoldi",
+      "commonName": "Black Diamond Stingray",
+      "scientificName": "Potamotrygon leopoldi",
+      "family": "Potamotrygonidae",
+      "wikipediaFile": "data/care/text/sp_potamotrygon_leopoldi.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_potamotrygon_motoro",
+      "commonName": "Ocellate River Stingray",
+      "scientificName": "Potamotrygon motoro",
+      "family": "Potamotrygonidae",
+      "wikipediaFile": "data/care/text/sp_potamotrygon_motoro.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_boraras_naevus",
+      "commonName": "Strawberry Rasbora",
+      "scientificName": "Boraras naevus",
+      "family": "Danionidae",
+      "wikipediaFile": "data/care/text/sp_boraras_naevus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_gastromyzon_zebrinus",
+      "commonName": "Striped Borneo Sucker",
+      "scientificName": "Gastromyzon zebrinus",
+      "family": "Gastromyzontidae",
+      "wikipediaFile": "data/care/text/sp_gastromyzon_zebrinus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_brevidens_striatus",
+      "commonName": "Striped Leporinus",
+      "scientificName": "Brevidens striatus",
+      "family": "Anostomidae",
+      "wikipediaFile": "data/care/text/sp_brevidens_striatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_wallagonia_leerii",
+      "commonName": "Striped Wallago Catfish",
+      "scientificName": "Wallagonia leerii",
+      "family": "Siluridae",
+      "wikipediaFile": "data/care/text/sp_wallagonia_leerii.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_bagarius_suchus",
+      "commonName": "Suchus Goonch Catfish",
+      "scientificName": "Bagarius suchus",
+      "family": "Sisoridae",
+      "wikipediaFile": "data/care/text/sp_bagarius_suchus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_tylomelania_towutensis",
+      "commonName": "Sulawesi Rabbit Snail",
+      "scientificName": "Tylomelania towutensis",
+      "family": "Pachychilidae",
+      "wikipediaFile": "data/care/text/sp_tylomelania_towutensis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pangio_bitaimac",
+      "commonName": "Sumatran Neon Loach",
+      "scientificName": "Pangio bitaimac",
+      "family": "Cobitidae",
+      "wikipediaFile": "data/care/text/sp_pangio_bitaimac.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_helanthium_tenellum",
+      "commonName": "Sword Tissue Culture",
+      "scientificName": "Helanthium tenellum",
+      "family": "Alismataceae",
+      "wikipediaFile": "data/care/text/sp_helanthium_tenellum.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_synodontis_nigrita",
+      "commonName": "False Upside-Down Catfish",
+      "scientificName": "Synodontis nigrita",
+      "family": "Mochokidae",
+      "wikipediaFile": "data/care/text/sp_synodontis_nigrita.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_synodontis_nigriventris",
+      "commonName": "Blotched Upside-Down Catfish",
+      "scientificName": "Synodontis nigriventris",
+      "family": "Mochokidae",
+      "wikipediaFile": "data/care/text/sp_synodontis_nigriventris.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_amatitlania_sajica",
+      "commonName": "T-Bar Cichlid",
+      "scientificName": "Amatitlania sajica",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_amatitlania_sajica.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_acestrorhynchus_falcatus",
+      "commonName": "Tail Barracuda",
+      "scientificName": "Acestrorhynchus falcatus",
+      "family": "Acestrorhynchidae",
+      "wikipediaFile": "data/care/text/sp_acestrorhynchus_falcatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_gastromyzon_ornaticauda",
+      "commonName": "Tail Borneo Loach",
+      "scientificName": "Gastromyzon ornaticauda",
+      "family": "Gastromyzontidae",
+      "wikipediaFile": "data/care/text/sp_gastromyzon_ornaticauda.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_holopristis_ocellifer",
+      "commonName": "Tail Light Tetra",
+      "scientificName": "Holopristis ocellifer",
+      "family": "Characidae",
+      "wikipediaFile": "data/care/text/sp_holopristis_ocellifer.wikipedia.txt"
+    }
+  ]
+}

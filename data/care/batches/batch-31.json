@@ -1,0 +1,180 @@
+{
+  "batch": "31",
+  "species": [
+    {
+      "speciesId": "sp_brachyplatystoma_filamentosum",
+      "commonName": "True Piraiba Catfish",
+      "scientificName": "Brachyplatystoma filamentosum",
+      "family": "Pimelodidae",
+      "wikipediaFile": "data/care/text/sp_brachyplatystoma_filamentosum.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_cryptarius_truncatus",
+      "commonName": "Golden Trunkhead Catfish",
+      "scientificName": "Cryptarius truncatus",
+      "family": "Ariidae",
+      "wikipediaFile": "data/care/text/sp_cryptarius_truncatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_tomocichla_tuba",
+      "commonName": "Tuba Cichlid",
+      "scientificName": "Tomocichla tuba",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_tomocichla_tuba.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_melanotaenia_lacustris",
+      "commonName": "Turquoise Rainbowfish",
+      "scientificName": "Melanotaenia lacustris",
+      "family": "Melanotaeniidae",
+      "wikipediaFile": "data/care/text/sp_melanotaenia_lacustris.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_astyanax_bimaculatus",
+      "commonName": "Two Spot Tetra",
+      "scientificName": "Astyanax bimaculatus",
+      "family": "Acestrorhamphidae",
+      "wikipediaFile": "data/care/text/sp_astyanax_bimaculatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_tylomelania_gemmifera",
+      "commonName": "Orange Giant Sulawesi Rabbit Snail",
+      "scientificName": "Tylomelania gemmifera",
+      "family": "Pachychilidae",
+      "wikipediaFile": "data/care/text/sp_tylomelania_gemmifera.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_kronoheros_umbriferus",
+      "commonName": "Umbee Cichlid",
+      "scientificName": "Kronoheros umbriferus",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_kronoheros_umbriferus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_ageneiosus_magoi",
+      "commonName": "Unicorn Dolphin Catfish",
+      "scientificName": "Ageneiosus magoi",
+      "family": "Auchenipteridae",
+      "wikipediaFile": "data/care/text/sp_ageneiosus_magoi.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_melanotaenia_splendida",
+      "commonName": "Eastern Rainbowfish",
+      "scientificName": "Melanotaenia splendida",
+      "family": "Melanotaeniidae",
+      "wikipediaFile": "data/care/text/sp_melanotaenia_splendida.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_brachyplatystoma_vaillantii",
+      "commonName": "Vaillanti Catfish",
+      "scientificName": "Brachyplatystoma vaillantii",
+      "family": "Pimelodidae",
+      "wikipediaFile": "data/care/text/sp_brachyplatystoma_vaillantii.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_vallisneria_spiralis",
+      "commonName": "Straight Vallisneria",
+      "scientificName": "Vallisneria spiralis",
+      "family": "Hydrocharitaceae",
+      "wikipediaFile": "data/care/text/sp_vallisneria_spiralis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_vieja_melanura",
+      "commonName": "Vieja Synspilum Cichlid",
+      "scientificName": "Vieja melanura",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_vieja_melanura.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_syngonium_podophyllum",
+      "commonName": "Vine Tissue Culture",
+      "scientificName": "Syngonium podophyllum",
+      "family": "Araceae",
+      "wikipediaFile": "data/care/text/sp_syngonium_podophyllum.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_rasbora_vulcanus",
+      "commonName": "Volcano Rasbora",
+      "scientificName": "Rasbora vulcanus",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_rasbora_vulcanus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_calophysus_macropterus",
+      "commonName": "Vulture Catfish",
+      "scientificName": "Calophysus macropterus",
+      "family": "Pimelodidae",
+      "wikipediaFile": "data/care/text/sp_calophysus_macropterus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hygrophila_difformis",
+      "commonName": "Water Wisteria",
+      "scientificName": "Hygrophila difformis",
+      "family": "Acanthaceae",
+      "wikipediaFile": "data/care/text/sp_hygrophila_difformis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_proserpinaca_palustris",
+      "commonName": "Weed Tissue Culture",
+      "scientificName": "Proserpinaca palustris",
+      "family": "Haloragaceae",
+      "wikipediaFile": "data/care/text/sp_proserpinaca_palustris.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_polypterus_weeksii",
+      "commonName": "Weeksii Bichir",
+      "scientificName": "Polypterus weeksii",
+      "family": "Polypteridae",
+      "wikipediaFile": "data/care/text/sp_polypterus_weeksii.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_sturisomatichthys_panamensis",
+      "commonName": "Farlowella Whiptail Catfish",
+      "scientificName": "Sturisomatichthys panamensis",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_sturisomatichthys_panamensis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_filopaludina_martensi",
+      "commonName": "Wizard Piano Snail",
+      "scientificName": "Filopaludina martensi",
+      "family": "Viviparidae",
+      "wikipediaFile": "data/care/text/sp_filopaludina_martensi.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hoplerythrinus_unitaeniatus",
+      "commonName": "Gold Wolf Fish",
+      "scientificName": "Hoplerythrinus unitaeniatus",
+      "family": "Erythrinidae",
+      "wikipediaFile": "data/care/text/sp_hoplerythrinus_unitaeniatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_tubifex_tubifex",
+      "commonName": "Live Tubifex Worms",
+      "scientificName": "Tubifex tubifex",
+      "family": "Naididae",
+      "wikipediaFile": "data/care/text/sp_tubifex_tubifex.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_xiphophorus_hellerii",
+      "commonName": "Green Swordtail",
+      "scientificName": "Xiphophorus hellerii",
+      "family": "Poeciliidae",
+      "wikipediaFile": "data/care/text/sp_xiphophorus_hellerii.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_xiphophorus_maculatus",
+      "commonName": "Southern Platyfish",
+      "scientificName": "Xiphophorus maculatus",
+      "family": "Poeciliidae",
+      "wikipediaFile": "data/care/text/sp_xiphophorus_maculatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_tachysurus_fulvidraco",
+      "commonName": "Yellow Amur Catfish",
+      "scientificName": "Tachysurus fulvidraco",
+      "family": "Bagridae",
+      "wikipediaFile": "data/care/text/sp_tachysurus_fulvidraco.wikipedia.txt"
+    }
+  ]
+}

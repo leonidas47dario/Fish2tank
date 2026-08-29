@@ -11,13 +11,16 @@
 import { DuckDBInstance, type DuckDBConnection } from '@duckdb/node-api';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { SPECIES_CATALOG } from '@/data/seed/species-catalog';
-import { STORES, type MarketListing } from './types';
+import { STORES, type LocalStore, type MarketListing, type StoreInventory } from './types';
 import { discoverSpecies } from './normalize/derive-species';
+import { waterTypeBySpecies, type WaterType } from './normalize/water-type';
 import { surrogateKey } from './surrogate-key';
 
 const WAREHOUSE = 'warehouse';
 const LISTINGS = 'data/market/listings.jsonl';
 const IMAGES = 'data/market/images.jsonl';
+const LOCAL_STORES = 'data/market/local-stores.jsonl';
+const STORE_INVENTORY = 'data/market/store-inventory.jsonl';
 
 export const dateKey = (iso: string): number => Number(iso.slice(0, 10).replace(/-/g, ''));
 
@@ -49,6 +52,24 @@ async function main() {
     `CREATE TABLE stg_listing AS SELECT * FROM read_json_auto('${LISTINGS}', format='newline_delimited')`,
   );
 
+  /**
+   * Fresh, brackish or salt, resolved once over every listing and applied to
+   * curated and discovered species alike.
+   *
+   * It has to happen here rather than inside discoverSpecies, because the
+   * curated 47 never go through discovery - and an earlier pass that tagged
+   * only the discovered half left the fish actually in the owner's tanks as
+   * the ones the filter could say least about.
+   */
+  const listingRowsForWater: MarketListing[] = readFileSync(LISTINGS, 'utf8')
+    .trim().split('\n').filter(Boolean).map((l) => JSON.parse(l));
+  const vendorWater = new Map<string, WaterType>(
+    STORES
+      .filter((s) => s.waterType === 'freshwater' || s.waterType === 'marine')
+      .map((s) => [s.id, s.waterType as WaterType]),
+  );
+  const waterBySpecies = waterTypeBySpecies(listingRowsForWater, vendorWater);
+
   const stores = STORES.map((s) => ({
     store_key: surrogateKey(s.id).toString(),
     store_id: s.id,
@@ -56,6 +77,10 @@ async function main() {
     host: s.host,
     currency: s.currency,
     region: s.region ?? null,
+    platform: s.platform ?? 'shopify',
+    // Stated on the dimension so a vendor with no listings reads as a
+    // deliberate scope rather than a broken run. Petco is the only one.
+    data_scope: s.dataScope ?? 'listings',
   }));
 
   const species = SPECIES_CATALOG.map(({ species: sp, profile }) => ({
@@ -75,6 +100,9 @@ async function main() {
     temp_max_c: profile.water?.temperatureC?.max ?? null,
     predation_tags: profile.predationTags.join('|'),
     profile_version: profile.profileVersion,
+    // Same source as every other species: what the vendors selling it said.
+    // Never inferred from the fact that the owner keeps it in fresh water.
+    water_type: waterBySpecies.get(sp.id) ?? null,
     source_label: profile.sources[0]?.label ?? null,
     source_url: profile.sources[0]?.url ?? null,
     valid_from: validFrom,
@@ -92,8 +120,7 @@ async function main() {
   const curatedScientific = new Set(
     SPECIES_CATALOG.map((e) => e.species.scientificName?.toLowerCase()).filter(Boolean) as string[],
   );
-  const listingRows: MarketListing[] = readFileSync(LISTINGS, 'utf8')
-    .trim().split('\n').filter(Boolean).map((l) => JSON.parse(l));
+  const listingRows = listingRowsForWater;
   const discovered = discoverSpecies(listingRows, curatedScientific);
 
   for (const d of discovered) {
@@ -110,6 +137,7 @@ async function main() {
       adult_size_in: null, min_volume_gal: null, aggression: null,
       temp_min_c: null, temp_max_c: null, predation_tags: '',
       profile_version: 0,
+      water_type: waterBySpecies.get(d.speciesId) ?? null,
       source_label: 'Discovered from vendor listings - no care profile yet',
       source_url: null,
       valid_from: validFrom, valid_to: null, is_current: true,
@@ -127,14 +155,60 @@ async function main() {
 
   // --- Dimensions --------------------------------------------------------
   await c.run(`CREATE TABLE dim_store AS
-    SELECT CAST(store_key AS BIGINT) AS store_key, store_id, name, host, currency, region
+    SELECT CAST(store_key AS BIGINT) AS store_key, store_id, name, host, currency, region,
+           platform, data_scope
     FROM stg_store`);
+
+  /**
+   * Physical branches, and the first rows in this warehouse that are not mail
+   * order. Created even when empty so a query against it never fails before
+   * the big-box vendors have been run.
+   *
+   * has_aquatics is NULLABLE on purpose. False must mean "the branch publishes
+   * a department list and fish are not on it"; a vendor that publishes no list
+   * at all gets NULL, because "we did not check" and "there are no fish here"
+   * are not the same claim.
+   */
+  await c.run(`CREATE TABLE dim_local_store (
+    local_store_key BIGINT, store_key BIGINT, vendor_id VARCHAR, store_number VARCHAR,
+    name VARCHAR, street VARCHAR, city VARCHAR, state VARCHAR, postal_code VARCHAR,
+    phone VARCHAR, latitude DOUBLE, longitude DOUBLE, url VARCHAR,
+    departments VARCHAR, has_aquatics BOOLEAN)`);
+
+  if (existsSync(LOCAL_STORES) && readFileSync(LOCAL_STORES, 'utf8').trim()) {
+    const branches: LocalStore[] = readFileSync(LOCAL_STORES, 'utf8')
+      .trim().split('\n').filter(Boolean).map((l) => JSON.parse(l));
+    const rows = branches.map((b) => ({
+      local_store_key: surrogateKey(b.vendorId, b.storeNumber).toString(),
+      store_key: surrogateKey(b.vendorId).toString(),
+      vendor_id: b.vendorId,
+      store_number: b.storeNumber,
+      name: b.name,
+      street: b.street,
+      city: b.city,
+      state: b.state,
+      postal_code: b.postalCode,
+      phone: b.phone ?? null,
+      latitude: b.latitude ?? null,
+      longitude: b.longitude ?? null,
+      url: b.url,
+      departments: b.departments.join('|'),
+      has_aquatics: b.departments.length ? b.departments.some((d) => /aquatic/i.test(d)) : null,
+    }));
+    writeFileSync('/tmp/_local_stores.jsonl', rows.map((r) => JSON.stringify(r)).join('\n'));
+    await c.run(`INSERT INTO dim_local_store SELECT
+      CAST(local_store_key AS BIGINT), CAST(store_key AS BIGINT), vendor_id, store_number,
+      name, street, city, state, postal_code, phone,
+      CAST(latitude AS DOUBLE), CAST(longitude AS DOUBLE), url, departments,
+      CAST(has_aquatics AS BOOLEAN)
+      FROM read_json_auto('/tmp/_local_stores.jsonl', format='newline_delimited')`);
+  }
 
   await c.run(`CREATE TABLE dim_species AS
     SELECT CAST(species_key AS BIGINT) AS species_key, species_id, common_name, scientific_name,
            aliases, adult_size_in, min_volume_gal, aggression, temp_min_c, temp_max_c,
            predation_tags, CAST(profile_version AS INTEGER) AS profile_version,
-           source_label, source_url,
+           water_type, source_label, source_url,
            CAST(valid_from AS DATE) AS valid_from, CAST(valid_to AS DATE) AS valid_to, is_current
     FROM stg_species`);
 
@@ -153,13 +227,15 @@ async function main() {
   // Created even when empty: the schema must be complete so queries against
   // dim_image do not fail before the image ETL has ever run.
   await c.run(`CREATE TABLE dim_image (
-    image_key BIGINT, species_id VARCHAR, role VARCHAR, source VARCHAR, url VARCHAR,
+    image_key BIGINT, species_id VARCHAR, role VARCHAR, source VARCHAR,
+    provenance VARCHAR, url VARCHAR,
     license VARCHAR, artist VARCHAR, attribution_url VARCHAR,
     width INTEGER, height INTEGER, retrieved_at TIMESTAMP)`);
 
   if (existsSync(IMAGES) && readFileSync(IMAGES, 'utf8').trim()) {
     await c.run(`INSERT INTO dim_image SELECT
-      CAST(image_key AS BIGINT), species_id, role, source, url, license, artist,
+      CAST(image_key AS BIGINT), species_id, role, source,
+      coalesce(provenance, 'wikimedia'), url, license, artist,
       attribution_url, CAST(width AS INTEGER), CAST(height AS INTEGER),
       CAST(retrieved_at AS TIMESTAMP)
       FROM read_json_auto('${IMAGES}', format='newline_delimited')`);
@@ -192,6 +268,52 @@ async function main() {
     LEFT JOIN dim_store   st ON st.store_id = l.storeId
     LEFT JOIN dim_species sp ON sp.species_id = l.speciesId AND sp.is_current`);
 
+  /**
+   * GRAIN: one row per (branch, sku, snapshot_date).
+   *
+   * Separate from fact_listing because it is a different kind of fact. A
+   * listing is a price the vendor publishes nationally and freezes; this is a
+   * count in one building that changes hourly. Same reason fact_price_
+   * observation is separate: pooling them would let a stale count read as a
+   * price, and the grain of fact_listing would stop being true.
+   *
+   * on_hand NULL with carried FALSE is the vendor saying the branch does not
+   * stock the sku at all, which is not the same as stocking it and having none
+   * today (on_hand 0, carried TRUE).
+   */
+  await c.run(`CREATE TABLE fact_store_inventory (
+    inventory_key BIGINT, snapshot_date_key INTEGER, local_store_key BIGINT,
+    store_key BIGINT, species_key BIGINT, sku VARCHAR,
+    on_hand INTEGER, carried BOOLEAN)`);
+
+  if (existsSync(STORE_INVENTORY) && readFileSync(STORE_INVENTORY, 'utf8').trim()) {
+    const rows: StoreInventory[] = readFileSync(STORE_INVENTORY, 'utf8')
+      .trim().split('\n').filter(Boolean).map((l) => JSON.parse(l));
+    writeFileSync(
+      '/tmp/_store_inventory.jsonl',
+      rows.map((r) => JSON.stringify({
+        inventory_key: surrogateKey(r.vendorId, r.storeNumber, r.sku, r.retrievedAt.slice(0, 10)).toString(),
+        snapshot_date_key: dateKey(r.retrievedAt),
+        local_store_key: surrogateKey(r.vendorId, r.storeNumber).toString(),
+        store_key: surrogateKey(r.vendorId).toString(),
+        sku: r.sku,
+        on_hand: r.onHand,
+        carried: r.carried,
+      })).join('\n'),
+    );
+    // The species is joined through the listing that shares the sku, so an
+    // on-hand count inherits whatever the listing resolved to - including
+    // resolving to nothing, which is the common case for trade names.
+    await c.run(`INSERT INTO fact_store_inventory
+      SELECT CAST(i.inventory_key AS BIGINT), CAST(i.snapshot_date_key AS INTEGER),
+             CAST(i.local_store_key AS BIGINT), CAST(i.store_key AS BIGINT),
+             f.species_key, i.sku, CAST(i.on_hand AS INTEGER), i.carried
+      FROM read_json_auto('/tmp/_store_inventory.jsonl', format='newline_delimited') i
+      LEFT JOIN (SELECT DISTINCT CAST(variant_id AS VARCHAR) AS sku, store_key, species_key
+                 FROM fact_listing) f
+        ON f.sku = i.sku AND f.store_key = CAST(i.store_key AS BIGINT)`);
+  }
+
   await c.run(`CREATE TABLE fact_price_observation (
     observation_key BIGINT, date_key INTEGER, species_key BIGINT, place_name VARCHAR,
     asking_price DOUBLE, member_price DOUBLE, paid_price DOUBLE, currency VARCHAR,
@@ -199,18 +321,18 @@ async function main() {
 
   // --- Write -------------------------------------------------------------
   const written: string[] = [];
-  for (const t of ['dim_store', 'dim_species', 'dim_date', 'dim_image'] as const) {
+  for (const t of ['dim_store', 'dim_species', 'dim_date', 'dim_image', 'dim_local_store'] as const) {
     written.push(await writeTable(c, t, 'dim'));
   }
-  for (const t of ['fact_listing', 'fact_price_observation'] as const) {
+  for (const t of ['fact_listing', 'fact_store_inventory', 'fact_price_observation'] as const) {
     written.push(await writeTable(c, t, 'fact'));
   }
 
   // --- Report ------------------------------------------------------------
   console.log('─── warehouse ───');
   for (const t of [
-    'dim_store', 'dim_species', 'dim_date', 'dim_image',
-    'fact_listing', 'fact_price_observation',
+    'dim_store', 'dim_species', 'dim_date', 'dim_image', 'dim_local_store',
+    'fact_listing', 'fact_store_inventory', 'fact_price_observation',
   ]) {
     const r = await c.runAndReadAll(`SELECT count(*) AS n FROM ${t}`);
     console.log(`  ${t.padEnd(24)} ${String(r.getRowObjects()[0]!.n).padStart(7)} rows`);
@@ -227,6 +349,25 @@ async function main() {
       `    ${String(row.size_band_in).padStart(3)}in  $${Number(row.median_price).toFixed(2).padStart(7)}  (${row.listings} listings)`,
     );
   }
+  const local = await c.runAndReadAll(`
+    SELECT s.vendor_id, s.name, s.has_aquatics,
+           count(i.sku) FILTER (WHERE i.carried) AS skus_carried,
+           coalesce(sum(i.on_hand), 0) AS fish_on_hand
+    FROM dim_local_store s
+    LEFT JOIN fact_store_inventory i ON i.local_store_key = s.local_store_key
+    GROUP BY 1, 2, 3 ORDER BY 1, fish_on_hand DESC`);
+  const branches = local.getRowObjects();
+  if (branches.length) {
+    console.log('\n  sample query - what the sampled Chicago branches actually hold:');
+    for (const row of branches) {
+      const aquatics = row.has_aquatics === null ? 'not published' : row.has_aquatics ? 'aquatics' : 'no aquatics';
+      console.log(
+        `    ${String(row.vendor_id).padEnd(9)} ${String(row.name).slice(0, 34).padEnd(35)}` +
+        `${aquatics.padEnd(14)} ${String(row.skus_carried).padStart(4)} skus  ${String(row.fish_on_hand).padStart(5)} on hand`,
+      );
+    }
+  }
+
   console.log(`\n  wrote ${written.length} parquet files under ${WAREHOUSE}/`);
 }
 

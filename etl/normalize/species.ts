@@ -88,6 +88,24 @@ const EXPLICIT_HYBRID = /\(\s*[A-Z][a-z]{2,}\s+[a-z]{2,}[^)]*?\s[xX×]\s/;
 const NOT_AN_EPITHET = new Set(['sp', 'spp', 'cf', 'aff', 'var', 'nov', 'indet']);
 
 /**
+ * English determiners a vendor uses to label a catch-all bucket. Never a genus.
+ *
+ * Imperial Tropicals files its odds and ends under product_type "Other
+ * catfish" and "Other loricariids", which have the exact Capitalised-word
+ * lowercase-word shape of a binomial. Before this guard those minted two
+ * species that 246 listings pooled into - one of them holding eight
+ * unrelated fish under the name "Catfish", which is the ambiguous-generic
+ * failure the catalog quality gate exists to catch.
+ *
+ * 'other' is the one observed in the wild; the rest are the same construction
+ * and are listed so the next vendor bucket does not have to break the build
+ * first.
+ */
+const NOT_A_GENUS = new Set([
+  'other', 'assorted', 'misc', 'miscellaneous', 'mixed', 'various', 'unknown', 'unsorted',
+]);
+
+/**
  * English words that sit exactly where an epithet would, once the closing
  * paren stops guarding the position. "(Pack of 10 fish)" is a genus "Pack" and
  * an epithet "of" as far as the shape is concerned.
@@ -108,6 +126,7 @@ export function extractScientificName(title: string): string | undefined {
   const m = title.match(SCIENTIFIC_IN_PARENS);
   if (m) {
     const [, genus, epithet, sub] = m;
+    if (!genus || NOT_A_GENUS.has(genus.toLowerCase())) return undefined;
     if (!epithet || notAnEpithet(epithet)) return undefined;
     const parts = [genus, epithet];
     // A trailing qualifier ("Pterophyllum scalare sp") is dropped, not kept.
@@ -120,6 +139,7 @@ export function extractScientificName(title: string): string | undefined {
   const q = title.match(SCIENTIFIC_BEFORE_QUALIFIER);
   if (!q) return undefined;
   const [, genus, epithet] = q;
+  if (!genus || NOT_A_GENUS.has(genus.toLowerCase())) return undefined;
   if (!epithet || notAnEpithet(epithet)) return undefined;
   return `${genus} ${epithet}`;
 }
@@ -136,7 +156,7 @@ export function extractScientificName(title: string): string | undefined {
  * The field is structured metadata rather than marketing copy, so it is a
  * cleaner signal than the title - but it is also frequently a bare genus
  * ("Sarcophyton sp.") or empty, both of which must resolve to nothing rather
- * than mint a fake species. Same NOT_AN_EPITHET guard as the title path.
+ * than mint a fake species. Same NOT_A_GENUS / epithet guards as the title path.
  */
 const BINOMIAL_BARE = /^([A-Z][a-z]{2,})\s+([a-z]{2,})(?:\s+([a-z]{2,}))?\.?$/;
 
@@ -144,9 +164,10 @@ export function extractProductTypeBinomial(productType: string | undefined): str
   const m = productType?.trim().match(BINOMIAL_BARE);
   if (!m) return undefined;
   const [, genus, epithet, sub] = m;
-  if (!epithet || NOT_AN_EPITHET.has(epithet)) return undefined;
+  if (!genus || NOT_A_GENUS.has(genus.toLowerCase())) return undefined;
+  if (!epithet || notAnEpithet(epithet)) return undefined;
   const parts = [genus, epithet];
-  if (sub && !NOT_AN_EPITHET.has(sub)) parts.push(sub);
+  if (sub && !notAnEpithet(sub)) parts.push(sub);
   return parts.join(' ');
 }
 
