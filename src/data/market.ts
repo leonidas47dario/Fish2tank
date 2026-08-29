@@ -11,7 +11,10 @@
  */
 import type { LengthMeasurement } from '@/domain/types';
 import { toCm } from '@/domain/units';
-import { computeMarketScarcity, DEFAULT_SCARCITY_CONFIG } from '@/engine/rarity/market-scarcity';
+import {
+  computeMarketScarcity, DEFAULT_SCARCITY_CONFIG, type ScarcityWitness,
+} from '@/engine/rarity/market-scarcity';
+import { STORE_CHANNELS } from './store-channels';
 import indexJson from './seed/marts/market-index.json';
 
 export interface MarketSizeBand {
@@ -90,26 +93,65 @@ export function hasPriceEstimate(
 /**
  * How many vendors produced this index.
  *
- * Read from the data rather than configured, because the scarcity rating
- * divides by it. A hardcoded count that drifts from the real vendor list
- * silently mis-rates every species - and it drifts the moment someone adds a
- * store without remembering there is a second place to update.
+ * Read from the data rather than configured. The UI quotes it; it no longer
+ * drives the rating, which counts witnesses instead - see WITNESS_STORES.
  */
 export const TRACKED_STORES = MARKET_INDEX.sources.length;
 
+/** Listings each store actually contributed to the published index. */
+function publishedListingsByStore(): Record<string, number> {
+  const counts: Record<string, number> = {};
+  for (const stats of Object.values(MARKET_INDEX.species)) {
+    for (const s of stats.stores) counts[s.storeId] = (counts[s.storeId] ?? 0) + s.listings;
+  }
+  return counts;
+}
+
 /**
- * Rate a species' market scarcity with the store count the index was actually
- * built from.
+ * What share of each store's catalogue the index could actually read.
+ *
+ * The number the witness gate turns on, and derived rather than declared so it
+ * can never disagree with the index it describes.
+ *
+ * It counts PUBLISHED listings, so it excludes species buildMarketIndex
+ * dropped. That makes it a little lower than the ETL's own match rate, which
+ * is the conservative direction for a gate: a store whose match was dropped
+ * genuinely cannot testify about that species either.
+ */
+export const STORE_RESOLVE_RATES: Record<string, number> = (() => {
+  const published = publishedListingsByStore();
+  return Object.fromEntries(
+    MARKET_INDEX.sources.map((s) => [
+      s.id,
+      s.listingsFetched > 0 ? (published[s.id] ?? 0) / s.listingsFetched : 0,
+    ]),
+  );
+})();
+
+/** Every community-channel store in the index, gate not yet applied. */
+export const COMMUNITY_WITNESSES: ScarcityWitness[] = MARKET_INDEX.sources
+  .filter((s) => STORE_CHANNELS[s.id] === 'community')
+  .map((s) => ({ storeId: s.id, resolveRate: STORE_RESOLVE_RATES[s.id] ?? 0 }));
+
+/**
+ * The community stores that clear the gate - the actual denominator.
+ *
+ * Exported so the UI can say how many shelves the rating rests on, rather than
+ * implying it consulted every vendor in the list.
+ */
+export const WITNESS_STORES: ScarcityWitness[] = COMMUNITY_WITNESSES.filter(
+  (w) => w.resolveRate >= DEFAULT_SCARCITY_CONFIG.witnessMinResolveRate,
+);
+
+/**
+ * Rate a species' local-shelf scarcity.
  *
  * The single entry point the UI should use. Calling computeMarketScarcity
- * directly with the default config works, but risks the drift above; this
- * cannot.
+ * directly works but risks passing a witness list that drifted from the index;
+ * this cannot.
  */
 export function scarcityFor(speciesId: string | undefined) {
-  return computeMarketScarcity(marketFor(speciesId), {
-    ...DEFAULT_SCARCITY_CONFIG,
-    trackedStores: TRACKED_STORES,
-  });
+  return computeMarketScarcity(marketFor(speciesId), COMMUNITY_WITNESSES);
 }
 
 /**

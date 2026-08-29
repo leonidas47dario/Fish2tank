@@ -1,26 +1,50 @@
 /**
- * Market scarcity - how hard a fish is to BUY from the tracked stores.
+ * Local-shelf scarcity - would you see this fish in a normal shop?
  *
- * This is a second, separate rating that sits alongside the Personal Discovery
- * Tier. It is not folded into it, and that separation is deliberate:
+ * A second, separate rating alongside the Personal Discovery Tier, and
+ * deliberately not folded into it:
  *
  *   - Discovery Tier (PRD 5.3) answers "how novel is this to ME" from Ryan's
  *     own catch history and Dream List.
- *   - Market scarcity answers "how hard is this to source online" from 3,395
- *     listings across three mail-order retailers.
+ *   - This answers "how likely am I to find one on a shelf" from the stores
+ *     that resemble a shelf.
  *
- * They genuinely differ. A fish Predatory Fins stocks continuously may still
- * be one Ryan has never seen in a Chicago shop, and a flowerhorn that is
- * always sold out online may be on every local shelf. Averaging the two would
- * produce a number that answers neither question, which is what FR-P05
- * ("online availability never increases collecting rarity") is protecting
- * against. Showing both, labelled, gives strictly more information.
+ * FR-P05 ("online availability never increases collecting rarity") is what
+ * keeps them apart.
  *
- * THE MOST IMPORTANT RULE HERE. Absence from the index is NOT evidence of
- * scarcity. Only 7% of listings resolve to a catalog species, so a fish
- * missing from the index is overwhelmingly likely to be an unmatched title
- * rather than a rare animal. Missing data returns "not enough data", never
- * "rarely listed" - the same discipline the compatibility engine follows.
+ * WHAT CHANGED IN v1.0.0, AND WHY. The v0.1.0 formula summed four signals and
+ * called Betta "uncommon", Fancy Guppy "scarce", and nothing at all widely
+ * available - 89% of the catalogue sat in the bottom two bands. Three of the
+ * four signals were measuring something other than scarcity:
+ *
+ *   - Stock pressure tracked Shopify leaving sold-out products published. 84%
+ *     of the dataset is dead back catalogue and 180 of 299 species had zero in
+ *     stock, so it handed 25 points to nearly everyone. DELETED.
+ *   - Price level tracked a consequence of rarity rather than evidence of it,
+ *     and let a big adult oscar read as rare for being expensive. DELETED.
+ *     (This also retires the `!stats.price` refusal the previous version
+ *     needed. A species the vendors never sized can now be rated on breadth,
+ *     which is what the note there asked a version bump to do.)
+ *   - Store breadth tracked which vendors write binomials in their titles
+ *     rather than who stocks the fish, so 275 of 299 species came from
+ *     Predatory Fins and 198 were sole-source there. REBUILT on community
+ *     stores only.
+ *
+ * THE WITNESS GATE. A store's silence is evidence only if that store can
+ * speak. A community store joins the denominator only once its resolve rate
+ * clears `witnessMinResolveRate`; below that its absence is discarded rather
+ * than counted against the fish. This is what makes absence usable at all,
+ * and it is self-repairing - as ETL matching improves, stores rejoin and the
+ * scale gains rungs.
+ *
+ * THE CEILING RISES WITH THE SAMPLE. A sole-witness species scores
+ * 100 * (1 - 1/N). On two witnesses that is 50, so the app *cannot* call
+ * anything rarely listed; on five it is 80 and sole-source lands in the top
+ * band, which is the whole point of the rating. The formula has to earn its
+ * strongest word. Do not "fix" thin coverage by lowering the threshold - the
+ * ceiling test exists to make that trade visible rather than quiet.
+ *
+ * See docs/specs/004-local-shelf-scarcity.md.
  */
 import type { MarketSpeciesStats } from '@/data/market';
 
@@ -31,51 +55,55 @@ export type MarketScarcityBand =
   | 'scarce'
   | 'rarely-listed';
 
+/** A community store, and how much of its own catalogue it resolves. */
+export interface ScarcityWitness {
+  storeId: string;
+  /**
+   * Published listings over livestock listings fetched. Derived in
+   * data/market.ts from the index itself, never hardcoded.
+   */
+  resolveRate: number;
+}
+
 export interface MarketScarcityComponents {
-  /** Fewer of the tracked stores carrying it means narrower supply. */
+  /** The rating. Fewer witnesses carrying it means harder to find. */
   storeBreadth: number;
-  /** A thin back catalogue means it is seldom offered. */
+  /** Always <= 0: a deep catalogue makes a fish more findable, never less. */
   listingDepth: number;
-  /** Consistently sold out means you cannot get one when you want one. */
-  stockPressure: number;
-  /** Priced well above the typical indexed species. */
-  priceLevel: number;
 }
 
 export interface MarketScarcityConfig {
   formulaVersion: string;
-  points: {
-    storeBreadthMax: number;
-    listingDepthMax: number;
-    stockPressureMax: number;
-    priceLevelMax: number;
-  };
+  /** A community store below this resolve rate is not a witness. */
+  witnessMinResolveRate: number;
   /**
-   * Total vendors behind the index.
+   * Fewest witnesses that can produce a rating at all.
    *
-   * Do not rely on the default: callers should pass the real count, which
-   * `scarcityFor()` in data/market.ts reads from the index itself. The default
-   * exists only so the engine is usable standalone in tests.
+   * Two, because breadth is a comparison and one store cannot make one. With a
+   * single witness, every species it carries scores 0 and every species it
+   * does not is unrated - the badge would have exactly one value while
+   * implying it had consulted a market.
    */
-  trackedStores: number;
-  /** Listings at or above which a species counts as freely offered. */
-  depthSaturation: number;
-  /** Median price at or above which the price signal maxes out. */
-  priceCeiling: number;
-  /** Below this many listings we decline to rate at all. */
-  minimumListings: number;
+  minimumWitnesses: number;
+  /** Largest discount a deep catalogue can earn. */
+  depthNudgeMax: number;
+  /** Multiplier on ln(1 + listings). */
+  depthNudgeScale: number;
   bands: Array<{ band: MarketScarcityBand; minScore: number }>;
 }
 
 export const DEFAULT_SCARCITY_CONFIG: MarketScarcityConfig = {
-  formulaVersion: 'market-scarcity-v0.1.0',
-  points: { storeBreadthMax: 30, listingDepthMax: 30, stockPressureMax: 25, priceLevelMax: 15 },
-  trackedStores: 8,
-  depthSaturation: 20,
-  priceCeiling: 200,
-  minimumListings: 3,
+  formulaVersion: 'market-scarcity-v1.0.0',
+  witnessMinResolveRate: 0.1,
+  minimumWitnesses: 2,
+  depthNudgeMax: 12,
+  depthNudgeScale: 4,
   bands: [
-    { band: 'rarely-listed', minScore: 80 },
+    // 75, not 80. The depth nudge subtracts up to 12, so at an 80 cut a
+    // sole-source fish would never reach the top band even on six witnesses -
+    // the nudge pushes it back into "scarce" - which would quietly defeat the
+    // one thing this rating exists to say.
+    { band: 'rarely-listed', minScore: 75 },
     { band: 'scarce', minScore: 60 },
     { band: 'uncommon', minScore: 40 },
     { band: 'available', minScore: 20 },
@@ -89,13 +117,12 @@ export interface MarketScarcityResult {
   band: MarketScarcityBand;
   components: MarketScarcityComponents;
   formulaVersion: string;
-  /** Carried through so the UI can show what the rating rests on. */
+  /** What the rating rests on, so the UI can show its working. */
   basis: {
-    storesCarrying: number;
-    totalListings: number;
-    inStock: number;
-    medianPrice: number;
-    currency: string;
+    witnessesCarrying: number;
+    witnessesTracked: number;
+    witnessListings: number;
+    carriedBy: string[];
   };
 }
 
@@ -107,22 +134,21 @@ export interface MarketScarcityUnavailable {
 
 export type MarketScarcity = MarketScarcityResult | MarketScarcityUnavailable;
 
-const clamp01 = (n: number) => Math.max(0, Math.min(1, n));
-
 export function bandForScore(score: number, cfg: MarketScarcityConfig): MarketScarcityBand {
   for (const b of cfg.bands) if (score >= b.minScore) return b.band;
   return 'widely-available';
 }
 
 /**
- * Rate a species from its market index entry.
+ * Rate a species against the community stores.
  *
- * Pass `undefined` for a species with no entry - the result is explicitly
- * "not enough data", because absence here means "we could not match the
- * title", not "nobody sells it".
+ * `community` is every community-channel store in the index paired with its
+ * resolve rate; this function applies the gate itself, so a caller cannot
+ * forget to.
  */
 export function computeMarketScarcity(
   stats: MarketSpeciesStats | undefined,
+  community: ScarcityWitness[],
   cfg: MarketScarcityConfig = DEFAULT_SCARCITY_CONFIG,
 ): MarketScarcity {
   if (!stats) {
@@ -130,60 +156,46 @@ export function computeMarketScarcity(
       available: false,
       reason: 'Not enough data',
       explanation:
-        'This species does not appear in the tracked stores. That most likely means its listing title did not match the catalog, not that it is rare - only a small share of listings resolve to a known species. Absence is not evidence of scarcity.',
+        'This species does not appear in the tracked stores. That most likely means its listing title did not match the catalog, not that it is rare - only a share of listings resolve to a known species. Absence is not evidence of scarcity.',
     };
   }
-  if (stats.totalListings < cfg.minimumListings) {
+
+  const witnesses = community.filter((w) => w.resolveRate >= cfg.witnessMinResolveRate);
+  if (witnesses.length < cfg.minimumWitnesses) {
+    return {
+      available: false,
+      reason: 'No local-shelf sample',
+      explanation:
+        `Rating a shelf takes at least ${cfg.minimumWitnesses} general stores that resolve enough of their own catalog to be worth believing, and there ${witnesses.length === 1 ? 'is 1' : `are ${witnesses.length}`}. Nothing is rated rather than guessed.`,
+    };
+  }
+
+  const witnessIds = new Set(witnesses.map((w) => w.storeId));
+  const carrying = stats.stores.filter((s) => witnessIds.has(s.storeId));
+
+  // The single refusal rule. With no witness carrying it, every scrap of
+  // evidence we hold comes from a store that cannot resolve its own catalog,
+  // and "rare" is indistinguishable from "the matcher missed it".
+  if (carrying.length === 0) {
+    const others = stats.stores.map((s) => s.storeId);
     return {
       available: false,
       reason: 'Not enough data',
-      explanation: `Only ${stats.totalListings} listing${stats.totalListings === 1 ? '' : 's'} found, below the ${cfg.minimumListings} needed to say anything useful.`,
-    };
-  }
-  /**
-   * The index now publishes species it cannot price, so that their vendors and
-   * links are visible. Those entries reach here for the first time, and they
-   * have no median for the price component.
-   *
-   * Declining to rate is deliberate rather than lazy. Scoring the missing
-   * price as zero would quietly award every unpriced species the "cheap" end
-   * of a 15-point component and drift it toward "widely available" - a rating
-   * made worse by the data we lack, which is the exact inversion this engine
-   * exists to avoid. Rescaling over the three computable components is the
-   * better answer and changes the formula, so it waits for a version bump.
-   *
-   * Until then these return what they returned before they were published at
-   * all, so no existing rating or Discovery Tier moves on this change.
-   */
-  if (!stats.price) {
-    return {
-      available: false,
-      reason: 'Not enough data',
-      explanation: `Found ${stats.totalListings} listing${stats.totalListings === 1 ? '' : 's'}, but too few state a size to compare prices, so this cannot be rated. The stores carrying it are still listed.`,
+      explanation: others.length
+        ? `Listed only by ${others.join(', ')}, none of which is a qualifying local-shelf store. A fish only specialist importers carry may well be rare locally, but against ${witnesses.length} witness stores that is not yet distinguishable from an unmatched title.`
+        : 'No tracked store lists this species.',
     };
   }
 
-  const storesCarrying = stats.stores.length;
-  const { points } = cfg;
+  const witnessListings = carrying.reduce((n, s) => n + s.listings, 0);
 
-  // Narrower supply scores higher. Carried by every tracked store scores zero.
-  const breadthFraction = clamp01((cfg.trackedStores - storesCarrying) / Math.max(1, cfg.trackedStores - 1));
-  const storeBreadth = Math.round(points.storeBreadthMax * breadthFraction);
+  const storeBreadth = Math.round(100 * (1 - carrying.length / witnesses.length));
+  const listingDepth = -Math.round(
+    Math.min(cfg.depthNudgeMax, cfg.depthNudgeScale * Math.log1p(witnessListings)),
+  );
 
-  // A thin catalogue scores higher; past saturation it is freely offered.
-  const depthFraction = clamp01(1 - stats.totalListings / cfg.depthSaturation);
-  const listingDepth = Math.round(points.listingDepthMax * depthFraction);
-
-  // Consistently sold out scores higher.
-  const inStockRatio = stats.totalListings > 0 ? stats.inStock / stats.totalListings : 0;
-  const stockPressure = Math.round(points.stockPressureMax * clamp01(1 - inStockRatio));
-
-  // Expensive relative to the ceiling. A weak signal, weighted lowest.
-  const priceFraction = clamp01(stats.price.median / cfg.priceCeiling);
-  const priceLevel = Math.round(points.priceLevelMax * priceFraction);
-
-  const components: MarketScarcityComponents = { storeBreadth, listingDepth, stockPressure, priceLevel };
-  const score = Math.max(0, Math.min(100, storeBreadth + listingDepth + stockPressure + priceLevel));
+  const components: MarketScarcityComponents = { storeBreadth, listingDepth };
+  const score = Math.max(0, Math.min(100, storeBreadth + listingDepth));
 
   return {
     available: true,
@@ -192,11 +204,10 @@ export function computeMarketScarcity(
     components,
     formulaVersion: cfg.formulaVersion,
     basis: {
-      storesCarrying,
-      totalListings: stats.totalListings,
-      inStock: stats.inStock,
-      medianPrice: stats.price.median,
-      currency: stats.price.currency,
+      witnessesCarrying: carrying.length,
+      witnessesTracked: witnesses.length,
+      witnessListings,
+      carriedBy: carrying.map((s) => s.storeId),
     },
   };
 }
@@ -210,8 +221,6 @@ export const SCARCITY_LABELS: Record<MarketScarcityBand, string> = {
 };
 
 export const SCARCITY_COMPONENT_LABELS: Record<keyof MarketScarcityComponents, string> = {
-  storeBreadth: 'Carried by few of the tracked stores',
-  listingDepth: 'Seldom offered',
-  stockPressure: 'Usually sold out',
-  priceLevel: 'Priced above the typical species',
+  storeBreadth: 'Carried by few local-shelf stores',
+  listingDepth: 'Offered often where it is carried',
 };
