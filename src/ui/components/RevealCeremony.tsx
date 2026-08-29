@@ -110,7 +110,8 @@ export function RevealCeremony({
 }: Props) {
   const reducedMotion = usePrefersReducedMotion();
   const { muted } = useTheme();
-  const { art, ownUrl } = useCardArt(card);
+  // The catalog's portrait, not the photo just taken - see useCardArt.
+  const { art, ownUrl } = useCardArt(card, { artSource: 'portrait' });
   const species = card.species;
   const facts = careFacts(species);
 

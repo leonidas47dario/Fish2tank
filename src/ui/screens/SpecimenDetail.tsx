@@ -23,9 +23,11 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { db } from '@/data/db';
 import {
   acquireSpecimen, addEncounterChapter, assertIdentity, awardGolden, deleteCatch,
-  evaluateSpecimen, planDeleteCatch, recordPrice, revealSpecimen, searchSpecies, updateCatch,
+  evaluateSpecimen, moveHolding, planDeleteCatch, recordPrice, revealSpecimen, searchSpecies,
+  stockTank, updateCatch,
   type DeleteCatchPlan,
 } from '@/data/repositories';
+import { deriveQuantity } from '@/domain/holdings';
 import { evaluatePriceFit } from '@/engine/pricing/price-fit';
 import { COMPONENT_LABELS, LOCAL_RARITY_UNAVAILABLE } from '@/engine/rarity/discovery-tier';
 import { formatLength } from '@/domain/units';
@@ -75,8 +77,37 @@ export default function SpecimenDetail() {
   const places = useLiveQuery(() => db.places.toArray(), []);
   const media = useSpecimenMedia(id);
 
+  /**
+   * Where this fish actually is, which is a question about residencies rather
+   * than about `specimen.status`.
+   *
+   * A holding is in a tank only while it has a residency with no end date;
+   * one that has never been placed, or whose residency was closed, is in no
+   * tank at all and was invisible on every screen before spec 005.
+   */
+  const placement = useLiveQuery(async () => {
+    if (!id) return undefined;
+    const holdings = await db.holdings.where('specimenId').equals(id).toArray();
+    if (holdings.length === 0) return [];
+    const [residencies, tanks, events] = await Promise.all([
+      db.residencies.toArray(), db.aquariums.toArray(), db.lifeEvents.toArray(),
+    ]);
+    return holdings.map((holding) => {
+      const open = residencies.find((r) => r.holdingId === holding.id && !r.endDate);
+      return {
+        holding,
+        aquarium: open ? tanks.find((t) => t.id === open.aquariumId) : undefined,
+        quantity: deriveQuantity(holding, events),
+      };
+    });
+  }, [id]);
+
+  const placed = placement?.filter((p) => p.aquarium) ?? [];
+  const unplaced = placement?.filter((p) => !p.aquarium) ?? [];
+
   const [busy, setBusy] = useState(false);
   const [openTank, setOpenTank] = useState<string | undefined>();
+  const [revealError, setRevealError] = useState<string | undefined>();
 
   if (!id) return <p className="empty">No specimen.</p>;
   if (specimen === undefined) return <p className="empty muted">Loading…</p>;
@@ -92,10 +123,33 @@ export default function SpecimenDetail() {
     setBusy(false);
   }
 
+  /**
+   * Reveal, and say so when it declines.
+   *
+   * The old version ignored the return value entirely. That was survivable
+   * while every confirmed catch got a snapshot; under v0.3.0 a decline is the
+   * common case, and swallowing it left a button that looked live and did
+   * nothing. The section above should mean this never fires on an unrateable
+   * species - this handles it anyway, because "should never happen" is how the
+   * first bug got shipped.
+   */
   async function onReveal() {
     setBusy(true);
-    await revealSpecimen(id!);
-    setBusy(false);
+    setRevealError(undefined);
+    try {
+      const outcome = await revealSpecimen(id!);
+      if (outcome.status === 'no-market-evidence') {
+        setRevealError(`${outcome.reason}. ${outcome.explanation}`);
+      } else if (outcome.status === 'not-identified') {
+        setRevealError('This catch needs a confirmed species before it can be rated.');
+      }
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
+      console.error('[reveal] failed from the record', { specimenId: id, error: message });
+      setRevealError(message);
+    } finally {
+      setBusy(false);
+    }
   }
 
   // Market context, auto-populated from the shipped index. No network call.
@@ -348,10 +402,29 @@ export default function SpecimenDetail() {
       {specimen.identityStatus === 'user-confirmed' && (
         <section className="panel">
           <h2 className="sec-head">Discovery</h2>
-          {!snapshot ? (
-            <button type="button" className="cta" onClick={() => void onReveal()} disabled={busy}>
-              Reveal
-            </button>
+          {!snapshot && !marketScarcity.available ? (
+            /* NO BUTTON, because pressing it could not do anything.
+​
+               v0.3.0 scores on market evidence alone, and 1,703 of 2,178
+               species have none - so for most of the catalog revealSpecimen
+               declines and writes nothing. The button was still rendered and
+               still enabled, so it sat there doing nothing at all, forever,
+               with no explanation. An affordance that cannot act is worse than
+               no affordance: it reads as a broken app rather than an honest
+               refusal. */
+            <>
+              <p className="panel__note" style={{ marginTop: 0 }}>
+                <strong>Not rated.</strong> {marketScarcity.reason}.
+              </p>
+              <p className="panel__note panel__note--tight">{marketScarcity.explanation}</p>
+            </>
+          ) : !snapshot ? (
+            <>
+              <button type="button" className="cta" onClick={() => void onReveal()} disabled={busy}>
+                {busy ? 'Revealing…' : 'Reveal'}
+              </button>
+              {revealError && <p className="warn">{revealError}</p>}
+            </>
           ) : (
             <div className={specimen.golden ? 'reveal-card reveal-card--golden golden' : 'reveal-card'}>
               <div className="spread" style={{ marginBottom: 'var(--space-3)' }}>
@@ -407,18 +480,67 @@ export default function SpecimenDetail() {
         places={places ?? []}
       />
 
-      {/* --- Bring home (PRD 4.8) ----------------------------------------- */}
-      {specimen.status !== 'resident' && (
-        <section className="panel">
-          <h2 className="sec-head">If it comes home</h2>
-          <p className="panel__note" style={{ marginTop: 0 }}>
-            Nothing here needs to happen. A catch is documentation, not acquisition.
-          </p>
-          <div style={{ marginTop: 'var(--space-3)' }}>
-            <BringHome specimenId={id} aquariums={aquariums ?? []} />
-          </div>
-        </section>
-      )}
+      {/* --- Bring home (PRD 4.8, spec 005) ---------------------------------
+          This used to be gated on `status !== 'resident'`, which is a proxy
+          for "is it in a tank" and a wrong one: ensureSpecimenForHolding
+          stamps a photo-minted specimen `resident` at birth, so adding a photo
+          to a fish you already keep produced a record with the tank section
+          permanently hidden. Asks the real question now. */}
+      <section className="panel">
+        <h2 className="sec-head">If it comes home</h2>
+
+        {placement === undefined ? (
+          <p className="panel__note" style={{ marginTop: 0 }}>Checking…</p>
+        ) : placed.length === 0 ? (
+          <>
+            <p className="panel__note" style={{ marginTop: 0 }}>
+              Nothing here needs to happen. A catch is documentation, not acquisition.
+            </p>
+            <div style={{ marginTop: 'var(--space-3)' }}>
+              {unplaced.length > 0 ? (
+                /* It already has a holding - imported, or minted when you
+                   added a photo - it is just not in a tank. Placing the
+                   holding it has beats minting a second one. */
+                <PlaceHolding
+                  holdingId={unplaced[0]!.holding.id}
+                  aquariums={aquariums ?? []}
+                  defaultQuantity={latest?.quantitySeen}
+                />
+              ) : (
+                <BringHome
+                  specimenId={id}
+                  aquariums={aquariums ?? []}
+                  defaultQuantity={latest?.quantitySeen}
+                />
+              )}
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="panel__note" style={{ marginTop: 0 }}>
+              {placed.map((p) => `${p.aquarium!.name} (×${p.quantity})`).join(', ')}
+            </p>
+            {/* A holding lives in one tank, always - moveHolding closes one
+                residency before opening the next. So the same species in two
+                tanks is two holdings, which is exactly how the inventory
+                import already records it. */}
+            <details style={{ marginTop: 'var(--space-3)' }}>
+              <summary className="prompt__act" style={{ cursor: 'pointer' }}>
+                Also add to another tank
+              </summary>
+              <div style={{ marginTop: 'var(--space-3)' }}>
+                <StockAnotherTank
+                  speciesId={specimen.speciesId}
+                  rawLabel={specimen.nickname ?? specimen.rawLabel}
+                  aquariums={(aquariums ?? []).filter(
+                    (t) => !placed.some((p) => p.aquarium!.id === t.id),
+                  )}
+                />
+              </div>
+            </details>
+          </>
+        )}
+      </section>
 
       {/* --- Delete. Last, and behind a confirmation that states the cost. -- */}
       <DeleteCatch
@@ -444,12 +566,18 @@ export default function SpecimenDetail() {
  * So the tank choice is now just a choice, and a labelled button does the
  * writing - after saying in words what it is about to record.
  */
-function BringHome({ specimenId, aquariums }: {
-  specimenId: string; aquariums: Array<{ id: string; name: string }>;
+function BringHome({ specimenId, aquariums, defaultQuantity }: {
+  specimenId: string;
+  aquariums: Array<{ id: string; name: string }>;
+  defaultQuantity?: number;
 }) {
   const [tankId, setTankId] = useState('');
+  const [qty, setQty] = useState(String(defaultQuantity ?? 1));
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | undefined>();
   const chosen = aquariums.find((t) => t.id === tankId);
+  const n = Number(qty);
+  const validQty = Number.isInteger(n) && n >= 1;
 
   return (
     <>
@@ -461,12 +589,167 @@ function BringHome({ specimenId, aquariums }: {
 
       {chosen && (
         <>
+          {/* acquireSpecimen has always accepted a quantity; this screen was
+              calling it without one and silently recording 1. Defaults to
+              however many the encounter says you saw, rather than asking a
+              question the record has already answered. */}
+          <div style={{ marginTop: 'var(--space-3)' }}>
+            <label htmlFor="acquire-qty">How many</label>
+            <input
+              id="acquire-qty" inputMode="numeric" value={qty}
+              onChange={(e) => setQty(e.target.value)}
+            />
+          </div>
+
           <p className="panel__note panel__note--tight">
-            Records that you own this fish and that it lives in {chosen.name} from today. It then
+            Records that you own {validQty && n > 1 ? `${n} of these` : 'this fish'} and that
+            {validQty && n > 1 ? ' they live' : ' it lives'} in {chosen.name} from today. It then
             appears in that tank, and the catch can no longer be deleted.
           </p>
-          <button type="button" className="btn btn--primary" disabled={busy}
-            onClick={async () => { setBusy(true); await acquireSpecimen(specimenId, chosen.id); setBusy(false); }}>
+          {error && <p className="warn">{error}</p>}
+          <button
+            type="button" className="btn btn--primary" disabled={busy || !validQty}
+            onClick={async () => {
+              setBusy(true);
+              setError(undefined);
+              try {
+                await acquireSpecimen(specimenId, chosen.id, { quantity: n });
+              } catch (e) {
+                const message = e instanceof Error ? e.message : String(e);
+                console.error('[stock] bring home failed', { specimenId, tankId: chosen.id, quantity: n, error: message });
+                setError(message);
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            {busy ? 'Recording…' : `Add to ${chosen.name}`}
+          </button>
+        </>
+      )}
+    </>
+  );
+}
+
+/**
+ * Put a holding that exists but lives nowhere into a tank.
+ *
+ * The case the old screen could not reach at all: an imported opening-balance
+ * row whose residency was closed, or a holding minted by adding a photo. The
+ * fish is already recorded as yours, so this opens a residency on the holding
+ * it has rather than minting a second one.
+ */
+function PlaceHolding({ holdingId, aquariums, defaultQuantity }: {
+  holdingId: string;
+  aquariums: Array<{ id: string; name: string }>;
+  defaultQuantity?: number;
+}) {
+  const [tankId, setTankId] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | undefined>();
+  const chosen = aquariums.find((t) => t.id === tankId);
+  void defaultQuantity; // the holding already carries its own count
+
+  return (
+    <>
+      <label htmlFor="place-tank">This one is yours already. Put it in</label>
+      <select id="place-tank" value={tankId} onChange={(e) => setTankId(e.target.value)}>
+        <option value="">Choose a tank…</option>
+        {aquariums.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+      </select>
+
+      {chosen && (
+        <>
+          <p className="panel__note panel__note--tight">
+            Records that it lives in {chosen.name} from today. The count it already carries is kept.
+          </p>
+          {error && <p className="warn">{error}</p>}
+          <button
+            type="button" className="btn btn--primary" disabled={busy}
+            onClick={async () => {
+              setBusy(true);
+              setError(undefined);
+              try {
+                await moveHolding(holdingId, chosen.id);
+              } catch (e) {
+                const message = e instanceof Error ? e.message : String(e);
+                console.error('[stock] place failed', { holdingId, tankId: chosen.id, error: message });
+                setError(message);
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            {busy ? 'Recording…' : `Put in ${chosen.name}`}
+          </button>
+        </>
+      )}
+    </>
+  );
+}
+
+/**
+ * The same species, in a second tank.
+ *
+ * Not a move. A holding is in one tank for its whole life, so "one in the 75
+ * and one in the 40" is two holdings - which is already how the inventory
+ * import records two spreadsheet rows of the same fish.
+ */
+function StockAnotherTank({ speciesId, rawLabel, aquariums }: {
+  speciesId?: string;
+  rawLabel?: string;
+  aquariums: Array<{ id: string; name: string }>;
+}) {
+  const [tankId, setTankId] = useState('');
+  const [qty, setQty] = useState('1');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | undefined>();
+  const [done, setDone] = useState(false);
+  const chosen = aquariums.find((t) => t.id === tankId);
+  const n = Number(qty);
+  const validQty = Number.isInteger(n) && n >= 1;
+
+  if (aquariums.length === 0) {
+    return <p className="panel__note" style={{ marginTop: 0 }}>It is already in every tank you have.</p>;
+  }
+
+  return (
+    <>
+      <label htmlFor="stock-tank">Also in</label>
+      <select id="stock-tank" value={tankId} onChange={(e) => { setTankId(e.target.value); setDone(false); }}>
+        <option value="">Choose a tank…</option>
+        {aquariums.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+      </select>
+
+      {chosen && (
+        <>
+          <div style={{ marginTop: 'var(--space-3)' }}>
+            <label htmlFor="stock-qty">How many</label>
+            <input id="stock-qty" inputMode="numeric" value={qty} onChange={(e) => setQty(e.target.value)} />
+          </div>
+          <p className="panel__note panel__note--tight">
+            Records {validQty ? n : '—'} more of this species in {chosen.name}, as its own entry.
+            The ones you already have are not moved.
+          </p>
+          {error && <p className="warn">{error}</p>}
+          {done && <p className="panel__note panel__note--tight">Added to {chosen.name}.</p>}
+          <button
+            type="button" className="btn btn--primary" disabled={busy || !validQty}
+            onClick={async () => {
+              setBusy(true);
+              setError(undefined);
+              try {
+                await stockTank({ aquariumId: chosen.id, speciesId, rawLabel, quantity: n });
+                setDone(true);
+              } catch (e) {
+                const message = e instanceof Error ? e.message : String(e);
+                console.error('[stock] second tank failed', { speciesId, tankId: chosen.id, quantity: n, error: message });
+                setError(message);
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
             {busy ? 'Recording…' : `Add to ${chosen.name}`}
           </button>
         </>

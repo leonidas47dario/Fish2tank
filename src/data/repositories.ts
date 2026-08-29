@@ -31,6 +31,7 @@ import type {
   Species,
   SpeciesProfile,
   Specimen,
+  SpecimenKind,
   VolumeMeasurement,
 } from '@/domain/types';
 import { deriveQuantity, planMove } from '@/domain/holdings';
@@ -776,6 +777,148 @@ export async function createOpeningBalanceHolding(
     await database.residencies.add(residency);
   });
   return { holding, residency };
+}
+
+/**
+ * Put fish of a species straight into a tank (spec 005).
+ *
+ * THE GAP THIS FILLS. Until now the only routes into a tank were the inventory
+ * import and the catch journey, so a fish you already keep and never
+ * photographed in a shop could not be recorded at all. That is backwards: the
+ * app is for the fish you have.
+ *
+ * NOT createOpeningBalanceHolding, which is next to this and looks similar.
+ * That one is for a spreadsheet row: `openingBalance: true`, quantity carried
+ * as `openingQuantity`, no life event, and an explicit note that the arrival
+ * date is unknown. This is a dated acquisition you are choosing to record, so
+ * it writes an `acquired` event and the quantity lives in the event where
+ * every later adjustment lives too.
+ *
+ * CREATES NO SPECIMEN, deliberately. `Holding.specimenId` is optional by
+ * design (FR-T02) and ensureSpecimenForHolding already mints one the moment a
+ * photo is added. Minting eagerly here would duplicate that path and invent an
+ * encounter that never happened.
+ *
+ * One species can be stocked into several tanks: each call makes its own
+ * holding, which is how "one in the 75, one in the 40" is recorded. A holding
+ * is in at most one tank ever - moveHolding closes one residency before
+ * opening the next - so a second tank needs a second holding, not a move.
+ */
+export async function stockTank(
+  input: {
+    aquariumId: Id;
+    speciesId?: Id;
+    rawLabel?: string;
+    quantity?: number;
+    kind?: SpecimenKind;
+    on?: CalendarDate;
+    notes?: string;
+  },
+  database: DB = db,
+): Promise<{ holding: Holding; residency: Residency; event: LifeEvent }> {
+  const quantity = input.quantity ?? 1;
+  if (!Number.isInteger(quantity) || quantity < 1) {
+    throw new Error(`A tank cannot be stocked with ${quantity} fish.`);
+  }
+  const aquarium = await database.aquariums.get(input.aquariumId);
+  if (!aquarium) throw new Error(`Unknown tank ${input.aquariumId}`);
+
+  const on = input.on ?? today();
+  const holding: Holding = {
+    id: newId('hold'),
+    speciesId: input.speciesId,
+    rawLabel: input.rawLabel,
+    kind: input.kind ?? (quantity > 1 ? 'group' : 'individual'),
+    // Zero, with the count carried by the acquired event below - the same
+    // shape acquireSpecimen uses, so deriveQuantity needs no special case.
+    openingQuantity: 0,
+    openingBalance: false,
+    notes: input.notes,
+    createdAt: nowIso(),
+  };
+  const residency: Residency = {
+    id: newId('res'), holdingId: holding.id, aquariumId: input.aquariumId, startDate: on,
+  };
+  const event: LifeEvent = {
+    id: newId('evt'),
+    holdingId: holding.id,
+    type: 'acquired',
+    occurredOn: on,
+    quantityDelta: quantity,
+    toAquariumId: input.aquariumId,
+    notes: input.notes,
+    createdAt: nowIso(),
+  };
+
+  await database.transaction(
+    'rw',
+    [database.holdings, database.residencies, database.lifeEvents],
+    async () => {
+      await database.holdings.add(holding);
+      await database.residencies.add(residency);
+      await database.lifeEvents.add(event);
+    },
+  );
+
+  console.info('[stock] added to tank', {
+    holdingId: holding.id, aquariumId: input.aquariumId, tank: aquarium.name,
+    speciesId: input.speciesId, quantity, on,
+  });
+  return { holding, residency, event };
+}
+
+/**
+ * Change how many of a holding are alive, in either direction (FR-T04).
+ *
+ * recordDeath already writes a negative delta. Nothing wrote a positive one,
+ * so buying three more of a fish you keep was unrecordable - the only way to
+ * express it was a second holding, which then read as a separate group in a
+ * separate row of the same tank.
+ */
+export async function adjustHoldingQuantity(
+  input: { holdingId: Id; delta: number; on?: CalendarDate; notes?: string },
+  database: DB = db,
+): Promise<LifeEvent> {
+  if (!Number.isInteger(input.delta) || input.delta === 0) {
+    throw new Error(`A quantity change of ${input.delta} says nothing.`);
+  }
+  const holding = await database.holdings.get(input.holdingId);
+  if (!holding) throw new Error(`Unknown holding ${input.holdingId}`);
+
+  const events = await database.lifeEvents.where('holdingId').equals(input.holdingId).toArray();
+  const before = deriveQuantity(holding, events);
+  if (before + input.delta < 0) {
+    // Refusing beats silently clamping to zero: the user believes they have
+    // more than the record does, and one of those is wrong in a way worth
+    // noticing.
+    throw new Error(`That would take the count below zero — there ${before === 1 ? 'is' : 'are'} ${before} recorded.`);
+  }
+
+  const event: LifeEvent = {
+    id: newId('evt'),
+    holdingId: input.holdingId,
+    // 'acquired' when fish arrive, 'quantity-adjusted' when the record was
+    // simply wrong. Both already exist; using one for the other would make the
+    // journal lie about what happened.
+    type: input.delta > 0 ? 'acquired' : 'quantity-adjusted',
+    occurredOn: input.on ?? today(),
+    quantityDelta: input.delta,
+    notes: input.notes,
+    createdAt: nowIso(),
+  };
+  await database.lifeEvents.add(event);
+
+  const after = deriveQuantity(holding, [...events, event]);
+  if (after !== before + input.delta) {
+    console.error('[stock] quantity did not move as expected', {
+      holdingId: input.holdingId, before, delta: input.delta, after,
+    });
+    throw new Error('That change could not be recorded.');
+  }
+  console.info('[stock] quantity adjusted', {
+    holdingId: input.holdingId, before, delta: input.delta, after, type: event.type,
+  });
+  return event;
 }
 
 /** FR-T03: close the current interval, open the next, log the move. */

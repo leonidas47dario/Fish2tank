@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { blobFor, Fish2TankDB, newId } from './db';
 import {
   acquireSpecimen,
+  adjustHoldingQuantity,
+  stockTank,
   addEncounterChapter,
   addPhotos,
   assertIdentity,
@@ -737,6 +739,146 @@ describe('a reveal declines when there is no shelf evidence (spec 005)', () => {
     // wishes for the 78% of the catalog that has no shelf evidence.
     const wish = await db.dreamList.where('speciesId').equals('sp_liosomadoras_oncinus').first();
     expect(wish!.fulfilledBySpecimenId).toBe(draft.specimen.id);
+  });
+});
+
+describe('stocking a tank directly (spec 005)', () => {
+  async function aTank(name = '75G') {
+    return createAquarium({ name, kind: 'display' }, db);
+  }
+
+  it('records a holding, a residency and a dated acquisition', async () => {
+    const tank = await aTank();
+    const { holding, residency, event } = await stockTank(
+      { aquariumId: tank.id, speciesId: 'sp_jaguar_cichlid', quantity: 3, on: '2026-08-01' }, db,
+    );
+
+    expect(holding.speciesId).toBe('sp_jaguar_cichlid');
+    expect(residency.aquariumId).toBe(tank.id);
+    expect(residency.endDate).toBeUndefined();
+    expect(event.type).toBe('acquired');
+    expect(event.quantityDelta).toBe(3);
+    expect(event.occurredOn).toBe('2026-08-01');
+  });
+
+  it('derives the quantity the caller asked for', async () => {
+    const tank = await aTank();
+    const { holding } = await stockTank({ aquariumId: tank.id, speciesId: 'sp_jaguar_cichlid', quantity: 6 }, db);
+    expect(deriveQuantity(holding, await db.lifeEvents.toArray())).toBe(6);
+  });
+
+  it('mints no specimen: a holding you keep has never been encountered (FR-T02)', async () => {
+    const tank = await aTank();
+    const { holding } = await stockTank({ aquariumId: tank.id, speciesId: 'sp_jaguar_cichlid' }, db);
+    expect(holding.specimenId).toBeUndefined();
+    expect(await db.specimens.count()).toBe(0);
+  });
+
+  it('is not an opening balance: this arrival has a known date', async () => {
+    const tank = await aTank();
+    const { holding } = await stockTank({ aquariumId: tank.id, speciesId: 'sp_jaguar_cichlid' }, db);
+    expect(holding.openingBalance).toBe(false);
+  });
+
+  it('calls a single fish individual and several a group', async () => {
+    const tank = await aTank();
+    const one = await stockTank({ aquariumId: tank.id, speciesId: 'sp_jaguar_cichlid', quantity: 1 }, db);
+    const many = await stockTank({ aquariumId: tank.id, speciesId: 'sp_jaguar_cichlid', quantity: 5 }, db);
+    expect(one.holding.kind).toBe('individual');
+    expect(many.holding.kind).toBe('group');
+  });
+
+  /** The reported bug: one fish in one tank, another in a different tank. */
+  it('puts the same species in two tanks, as two holdings', async () => {
+    const a = await aTank('75G');
+    const b = await aTank('Predator Tank');
+    await stockTank({ aquariumId: a.id, speciesId: 'sp_jaguar_cichlid', quantity: 1 }, db);
+    await stockTank({ aquariumId: b.id, speciesId: 'sp_jaguar_cichlid', quantity: 1 }, db);
+
+    const holdings = await db.holdings.where('speciesId').equals('sp_jaguar_cichlid').toArray();
+    expect(holdings).toHaveLength(2);
+
+    const residencies = await db.residencies.toArray();
+    const tanks = holdings.map((h) => residencies.find((r) => r.holdingId === h.id && !r.endDate)!.aquariumId);
+    // Two open residencies in two different tanks - neither closed the other.
+    expect(new Set(tanks)).toEqual(new Set([a.id, b.id]));
+  });
+
+  it('refuses a tank that does not exist rather than orphaning a holding', async () => {
+    await expect(stockTank({ aquariumId: 'tank_nope', speciesId: 'sp_jaguar_cichlid' }, db))
+      .rejects.toThrow(/unknown tank/i);
+    expect(await db.holdings.count()).toBe(0);
+  });
+
+  it.each([0, -2, 1.5])('refuses a quantity of %s', async (quantity) => {
+    const tank = await aTank();
+    await expect(stockTank({ aquariumId: tank.id, speciesId: 'sp_jaguar_cichlid', quantity }, db))
+      .rejects.toThrow(/cannot be stocked/i);
+  });
+});
+
+describe('raising and lowering a count (spec 005)', () => {
+  async function aHolding(quantity = 2) {
+    const tank = await createAquarium({ name: '75G', kind: 'display' }, db);
+    const { holding } = await stockTank({ aquariumId: tank.id, speciesId: 'sp_jaguar_cichlid', quantity }, db);
+    return holding;
+  }
+
+  async function quantityOf(holdingId: string) {
+    const holding = (await db.holdings.get(holdingId))!;
+    return deriveQuantity(holding, await db.lifeEvents.toArray());
+  }
+
+  it('adds fish you bought later', async () => {
+    const holding = await aHolding(2);
+    await adjustHoldingQuantity({ holdingId: holding.id, delta: 3 }, db);
+    expect(await quantityOf(holding.id)).toBe(5);
+  });
+
+  it('files an increase as an acquisition, not a correction', async () => {
+    const holding = await aHolding();
+    const event = await adjustHoldingQuantity({ holdingId: holding.id, delta: 1 }, db);
+    expect(event.type).toBe('acquired');
+  });
+
+  it('files a decrease as a correction, so the journal does not imply a death', async () => {
+    const holding = await aHolding(4);
+    const event = await adjustHoldingQuantity({ holdingId: holding.id, delta: -1 }, db);
+    expect(event.type).toBe('quantity-adjusted');
+    expect(await quantityOf(holding.id)).toBe(3);
+  });
+
+  it('refuses to go below zero rather than silently clamping', async () => {
+    const holding = await aHolding(2);
+    await expect(adjustHoldingQuantity({ holdingId: holding.id, delta: -5 }, db))
+      .rejects.toThrow(/below zero/i);
+    expect(await quantityOf(holding.id)).toBe(2);
+  });
+
+  it('refuses a change of zero, which says nothing', async () => {
+    const holding = await aHolding();
+    await expect(adjustHoldingQuantity({ holdingId: holding.id, delta: 0 }, db))
+      .rejects.toThrow(/says nothing/i);
+  });
+});
+
+describe('placing a holding that lives nowhere (spec 005)', () => {
+  it('opens a residency without closing one that was never there', async () => {
+    const tank = await createAquarium({ name: '75G', kind: 'display' }, db);
+    // An opening-balance holding with no residency: invisible on every screen
+    // and unplaceable from any of them before spec 005.
+    const holding = {
+      id: newId('hold'), speciesId: 'sp_jaguar_cichlid', kind: 'individual' as const,
+      openingQuantity: 1, openingBalance: true, createdAt: new Date().toISOString(),
+    };
+    await db.holdings.add(holding);
+
+    await moveHolding(holding.id, tank.id, '2026-08-01', db);
+
+    const residencies = await db.residencies.where('holdingId').equals(holding.id).toArray();
+    expect(residencies).toHaveLength(1);
+    expect(residencies[0]!.aquariumId).toBe(tank.id);
+    expect(residencies[0]!.endDate).toBeUndefined();
   });
 });
 
