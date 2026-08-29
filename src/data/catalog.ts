@@ -196,6 +196,49 @@ export function marketAndScarcity(speciesId: string) {
   return { market, scarcityBand: scarcity.available ? scarcity.band : undefined };
 }
 
+/** The stored rows a card is derived from. Whoever has them can build one. */
+export interface CatalogCardRows {
+  specimens: Array<{ id: Id; identityStatus: string; golden?: unknown }>;
+  holdings: Array<{ id: Id }>;
+  /** Holding ids that still hold live fish and sit in an open tank. */
+  keptHoldingIds: Set<Id>;
+  snapshots: Array<{ tier: CatalogUserState['tier'] }>;
+  ownPhotoMediaIds: Id[];
+  onDreamList: boolean;
+}
+
+/**
+ * Assemble a card from stored rows.
+ *
+ * A pure function rather than a hook because the two screens that need a card
+ * fetch different amounts around it - the species page already has these rows
+ * for other reasons, and re-querying them behind a hook would double its work.
+ * Extracting the ASSEMBLY and leaving the fetching to the caller keeps one
+ * definition of what a card means without imposing one way of loading it.
+ *
+ * Worth keeping shared: Plate.tsx records that the last time two screens
+ * derived card art separately, they drifted.
+ */
+export function buildCatalogCard(species: CatalogSpecies, rows: CatalogCardRows): CatalogCard {
+  const confirmed = rows.specimens.filter((s) => s.identityStatus === 'user-confirmed');
+  const { market, scarcityBand } = marketAndScarcity(species.speciesId);
+  return {
+    species,
+    user: {
+      ...ownership(confirmed.length, rows.holdings.length),
+      currentlyKept: rows.holdings.some((h) => rows.keptHoldingIds.has(h.id)),
+      specimenCount: rows.specimens.length,
+      tier: rows.snapshots[0]?.tier,
+      golden: rows.specimens.some((s) => Boolean(s.golden)),
+      onDreamList: rows.onDreamList,
+      ownPhotoMediaIds: rows.ownPhotoMediaIds,
+    },
+    market,
+    price: cardPrice(market),
+    scarcityBand,
+  };
+}
+
 /**
  * The sentence under a portrait, which differs by where the picture came from.
  *

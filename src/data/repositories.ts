@@ -298,6 +298,52 @@ export async function assertIdentity(
   return assertion;
 }
 
+/**
+ * Record what the tag said, for a fish the catalog does not contain (spec 005).
+ *
+ * The escape hatch from mandatory identification. Since "all records must be
+ * identified", the identify flow no longer lets you leave a catch Unknown -
+ * but the catalog holds 2,178 species and a shop will sell one it has never
+ * heard of, so without this a real catch could reach a screen with no exit.
+ *
+ * What makes this an identification rather than a skip: it demands the store's
+ * wording, keeps it verbatim (FR-O05), and records `provisional` - which the
+ * record then displays as weaker than a confirmed match rather than dressing
+ * it up as one. No speciesId is invented, so nothing downstream can mistake
+ * this for a catalog species.
+ */
+export async function recordStoreLabel(
+  specimenId: Id,
+  label: string,
+  database: DB = db,
+): Promise<void> {
+  const text = label.trim();
+  if (!text) throw new Error('A store label cannot be blank.');
+
+  await assertIdentity(
+    {
+      specimenId,
+      rawText: text,
+      source: 'user',
+      status: 'provisional',
+      note: 'Not in the catalog. Recorded as the store labelled it.',
+    },
+    database,
+  );
+  await database.specimens.update(specimenId, { rawLabel: text, updatedAt: nowIso() });
+
+  // Verify, rather than reporting a success nobody checked.
+  const after = await database.specimens.get(specimenId);
+  if (after?.identityStatus !== 'provisional' || after.rawLabel !== text) {
+    console.error('[identify] store label did not stick', {
+      specimenId, wanted: text,
+      gotLabel: after?.rawLabel, gotStatus: after?.identityStatus,
+    });
+    throw new Error('That label could not be saved.');
+  }
+  console.info('[identify] recorded store label', { specimenId, label: text, status: 'provisional' });
+}
+
 /** Full identification history for a specimen, newest first (FR-I06, NFR-09). */
 export async function identityHistory(specimenId: Id, database: DB = db): Promise<IdentificationAssertion[]> {
   const all = await database.identifications.where('specimenId').equals(specimenId).toArray();
@@ -441,44 +487,100 @@ export async function assessmentHistory(specimenId: Id, database: DB = db): Prom
  * Counts of prior confirmed catches come from the specimen table, so the
  * scarcity component reflects the user's real history at reveal time.
  */
-export async function revealSpecimen(specimenId: Id, database: DB = db): Promise<RaritySnapshot | undefined> {
+/**
+ * Every way a reveal can end.
+ *
+ * A discriminated union rather than `RaritySnapshot | undefined`, because as
+ * of formula v0.3.0 there are two distinct reasons no snapshot comes back and
+ * the UI has to say different things about them. Conflating them is not
+ * hypothetical: the old code returned `undefined` for "already revealed", and
+ * a refusal arriving down the same channel would have been announced to the
+ * user as "this one was already revealed" - a plain lie about their record.
+ */
+export type RevealOutcome =
+  | { status: 'revealed'; snapshot: RaritySnapshot }
+  | { status: 'already-revealed'; snapshot: RaritySnapshot }
+  | { status: 'not-identified' }
+  | { status: 'no-market-evidence'; reason: string; explanation: string };
+
+/**
+ * Rate a confirmed catch, or decline to and say why (FR-R05, PRD 4.6).
+ *
+ * DECLINING IS THE COMMON CASE. 1,703 of 2,178 catalog species have no shelf
+ * evidence, so most reveals end in `no-market-evidence`. That is the honest
+ * answer, not a degraded one - see discovery-tier.ts on why absence must never
+ * become a zero.
+ *
+ * Dream List fulfilment is recorded whether or not a snapshot follows. It used
+ * to live inside the snapshot transaction, which was harmless while every
+ * confirmed catch got a snapshot; under v0.3.0 that would have silently
+ * stopped marking wishes fulfilled for 78% of the catalog.
+ */
+export async function revealSpecimen(specimenId: Id, database: DB = db): Promise<RevealOutcome> {
   const specimen = await database.specimens.get(specimenId);
-  if (!specimen || specimen.identityStatus !== 'user-confirmed' || !specimen.speciesId) return undefined;
+  if (!specimen || specimen.identityStatus !== 'user-confirmed' || !specimen.speciesId) {
+    console.info('[reveal] declined', {
+      specimenId,
+      outcome: 'not-identified',
+      identityStatus: specimen?.identityStatus,
+      speciesId: specimen?.speciesId,
+    });
+    return { status: 'not-identified' };
+  }
+
+  const speciesId = specimen.speciesId;
+
+  // Fulfilment first, and outside any snapshot decision. A wish is granted by
+  // meeting the fish, not by the fish scoring well enough to be rated.
+  const dreamItem = await database.dreamList.where('speciesId').equals(speciesId).first();
+  if (dreamItem && !dreamItem.fulfilledBySpecimenId) {
+    await database.dreamList.update(dreamItem.id, { fulfilledBySpecimenId: specimenId });
+    console.info('[reveal] dream list fulfilled', { specimenId, speciesId, dreamItemId: dreamItem.id });
+  }
 
   const existing = await database.raritySnapshots.where('specimenId').equals(specimenId).first();
-  if (existing) return existing;
+  if (existing) {
+    console.info('[reveal] already revealed', {
+      specimenId, speciesId, snapshotId: existing.id, formulaVersion: existing.formulaVersion,
+    });
+    return { status: 'already-revealed', snapshot: existing };
+  }
 
-  const confirmed = await database.specimens.where('identityStatus').equals('user-confirmed').toArray();
-  const priorConfirmed = confirmed.filter((s) => s.id !== specimenId);
-  const priorOfSpecies = priorConfirmed.filter((s) => s.speciesId === specimen.speciesId);
-
-  const dreamItem = await database.dreamList.where('speciesId').equals(specimen.speciesId).first();
-  const encounter = (await database.encounters.where('specimenId').equals(specimenId).toArray())
-    .sort((a, b) => a.observedAt.localeCompare(b.observedAt))[0];
-
-  // Market scarcity is a scored component as of formula v0.2.0.
-  const market = scarcityFor(specimen.speciesId);
+  const market = scarcityFor(speciesId);
+  if (!market.available) {
+    // Logged rather than swallowed: this is the branch that produces no record
+    // at all, so without a line here a missing snapshot is indistinguishable
+    // from a reveal that never ran.
+    console.info('[reveal] declined', {
+      specimenId, speciesId, outcome: 'no-market-evidence', reason: market.reason,
+    });
+    return { status: 'no-market-evidence', reason: market.reason, explanation: market.explanation };
+  }
 
   const snapshot = computeDiscoveryTier({
     specimenId,
-    speciesId: specimen.speciesId,
-    isFirstConfirmedSpecies: priorOfSpecies.length === 0,
-    dreamListAddedAt: dreamItem?.addedAt,
-    encounterAt: encounter?.observedAt ?? specimen.createdAt,
-    priorConfirmedCatches: priorConfirmed.length,
-    priorCatchesOfSpecies: priorOfSpecies.length,
-    isExceptionalSpecimen: specimen.exceptional ?? false,
-    marketScarcityScore: market.available ? market.score : undefined,
+    speciesId,
+    marketScarcityScore: market.score,
     golden: Boolean(specimen.golden),
   });
 
-  await database.transaction('rw', [database.raritySnapshots, database.dreamList], async () => {
-    await database.raritySnapshots.add(snapshot);
-    if (dreamItem && !dreamItem.fulfilledBySpecimenId) {
-      await database.dreamList.update(dreamItem.id, { fulfilledBySpecimenId: specimenId });
-    }
+  await database.raritySnapshots.add(snapshot);
+
+  // Verify the write landed rather than reporting a success we did not check.
+  const written = await database.raritySnapshots.get(snapshot.id);
+  if (!written) {
+    console.error('[reveal] snapshot vanished after add', { specimenId, speciesId, snapshotId: snapshot.id });
+    throw new Error('The reveal could not be saved. Nothing was recorded.');
+  }
+
+  console.info('[reveal] revealed', {
+    specimenId, speciesId, snapshotId: snapshot.id,
+    tier: snapshot.tier, score: snapshot.totalScore,
+    formulaVersion: snapshot.formulaVersion,
+    witnessesCarrying: market.basis.witnessesCarrying,
+    witnessesTracked: market.basis.witnessesTracked,
   });
-  return snapshot;
+  return { status: 'revealed', snapshot };
 }
 
 /** FR-R06: Golden is a personal overlay and never rewrites objective data. */

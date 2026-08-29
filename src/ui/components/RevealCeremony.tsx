@@ -24,8 +24,44 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import type { RaritySnapshot } from '@/domain/types';
+import type { CatalogCard } from '@/data/catalog';
+import { formatVolume } from '@/domain/units';
 import { usePrefersReducedMotion, useTheme } from '@/theme/ThemeProvider';
 import { playBubbles, playStamp, vibrateStamp } from '../sound';
+import { Plate, useCardArt } from './Plate';
+
+const ZONE_LABEL: Record<string, string> = {
+  top: 'Top dweller', mid: 'Mid-water', bottom: 'Bottom dweller', 'all-levels': 'All levels',
+};
+
+/**
+ * The care facts this species actually has.
+ *
+ * Built as a list rather than a fixed set of slots for the reason Tile.tsx
+ * records: the catalog has both adult size and minimum tank for 92 of 2,178
+ * species, so a fixed layout draws a gap on almost every fish. An absent fact
+ * is not rendered at all - never a dash, never "unknown".
+ */
+function careFacts(species: CatalogCard['species']): Array<{ label: string; value: string }> {
+  const facts: Array<{ label: string; value: string }> = [];
+  if (species.adultSizeIn !== undefined) {
+    facts.push({ label: 'Adult size', value: `${Math.round(species.adultSizeIn * 10) / 10}"` });
+  }
+  if (species.minVolumeGal !== undefined) {
+    facts.push({
+      label: 'Minimum tank',
+      value: formatVolume({ value: species.minVolumeGal, unit: 'gal' }),
+    });
+  }
+  if (species.aggression) facts.push({ label: 'Temperament', value: species.aggression });
+  if (species.tempMinC !== undefined && species.tempMaxC !== undefined) {
+    facts.push({ label: 'Temperature', value: `${species.tempMinC}–${species.tempMaxC}°C` });
+  }
+  if (species.waterZone) {
+    facts.push({ label: 'Swims', value: ZONE_LABEL[species.waterZone] ?? species.waterZone });
+  }
+  return facts;
+}
 
 /**
  * The beats, in order. Cumulative milliseconds from the start.
@@ -49,17 +85,34 @@ const BUBBLES = [
 ];
 
 interface Props {
-  snapshot: RaritySnapshot;
-  commonName: string;
-  scientificName?: string;
+  /**
+   * The rating, when there is one.
+   *
+   * Optional as of v0.3.0. 1,703 of 2,178 species have no shelf evidence, so
+   * the common reveal has a profile and no tier - and that is a real outcome
+   * to be shown, not a failure to be hidden. The ceremony still runs; the
+   * fourth beat stamps a refusal instead of a tier.
+   */
+  snapshot?: RaritySnapshot;
+  /** Why there is no tier. Present exactly when `snapshot` is absent. */
+  unrated?: { reason: string; explanation: string };
+  /** The species, so the reveal can show the profile and not just the name. */
+  card: CatalogCard;
+  /** Drives the eyebrow. A fact about the collection, not about the score. */
+  isFirstOfSpecies: boolean;
   golden?: boolean;
   /** Fired once the ceremony reaches its final state, however it got there. */
   onDone?: () => void;
 }
 
-export function RevealCeremony({ snapshot, commonName, scientificName, golden, onDone }: Props) {
+export function RevealCeremony({
+  snapshot, unrated, card, isFirstOfSpecies, golden, onDone,
+}: Props) {
   const reducedMotion = usePrefersReducedMotion();
   const { muted } = useTheme();
+  const { art, ownUrl } = useCardArt(card);
+  const species = card.species;
+  const facts = careFacts(species);
 
   // Reduced motion starts finished. Not a shorter animation - none at all.
   const [beat, setBeat] = useState<Beat>(reducedMotion ? 'done' : 'card');
@@ -132,7 +185,9 @@ export function RevealCeremony({ snapshot, commonName, scientificName, golden, o
           reader should hear the result, not the choreography. */}
       <p className="visually-hidden" aria-live="polite">
         {reached('tier')
-          ? `${commonName}. Discovery tier ${snapshot.tier}, ${snapshot.totalScore} out of 100.`
+          ? snapshot
+            ? `${species.commonName}. Discovery tier ${snapshot.tier}, ${snapshot.totalScore} out of 100.`
+            : `${species.commonName}. Not rated. ${unrated?.reason ?? ''}`
           : ''}
       </p>
 
@@ -154,25 +209,64 @@ export function RevealCeremony({ snapshot, commonName, scientificName, golden, o
       )}
 
       <div className="reveal__card">
-        {/* "New species" is read off the score component that awards it, not
-            recomputed here — one source of truth for what counts as a first. */}
-        <p className="reveal__eyebrow">
-          {snapshot.components.firstConfirmedSpecies > 0 ? 'New species' : 'Caught again'}
-        </p>
+        <p className="reveal__eyebrow">{isFirstOfSpecies ? 'New species' : 'Caught again'}</p>
 
+        {/* The profile, not just the name.
+​
+            Composed from Plate and the conditional fact line rather than the
+            old collectible card, which the Drawer rebuild deleted for a
+            measured reason (see Tile.tsx): its structure was three numbers and
+            nineteen species in twenty have at most one of them. Every fact
+            below is drawn only if it exists. Nothing is a placeholder. */}
         <div className={`reveal__name ${reached('name') ? 'is-in' : ''}`}>
-          <h2>{commonName}</h2>
-          {scientificName && <p className="sci muted small">{scientificName}</p>}
+          <Plate
+            speciesId={species.speciesId}
+            art={art}
+            ownUrl={ownUrl}
+            alt={`${species.commonName}`}
+            className="reveal__plate"
+          />
+          <h2>{species.commonName}</h2>
+          {species.scientificName && <p className="sci muted small">{species.scientificName}</p>}
+
+          {facts.length > 0 && (
+            <dl className="reveal__facts">
+              {facts.map((f) => (
+                <div key={f.label} className="reveal__fact">
+                  <dt>{f.label}</dt>
+                  <dd>{f.value}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
         </div>
 
         <div className={`reveal__tier ${reached('tier') ? 'is-in' : ''}`}>
-          {/* Glyph + word + score. Colour is the fourth cue, never the only one. */}
-          <span className={`tier tier--${snapshot.tier}`}>
-            <span aria-hidden="true">{golden ? '★' : '◆'}</span>
-            {snapshot.tier}
-          </span>
-          <span className="data reveal__score">{snapshot.totalScore} / 100</span>
+          {snapshot ? (
+            <>
+              {/* Glyph + word + score. Colour is the fourth cue, never the only one. */}
+              <span className={`tier tier--${snapshot.tier}`}>
+                <span aria-hidden="true">{golden ? '★' : '◆'}</span>
+                {snapshot.tier}
+              </span>
+              <span className="data reveal__score">{snapshot.totalScore} / 100</span>
+            </>
+          ) : (
+            /* No tier, and the reason rather than a zero. A zero would read as
+               "widely available", which is the opposite of what the silence
+               means - see market-scarcity.ts, "Absence is not evidence". */
+            <span className="tier tier--unrated">
+              <span aria-hidden="true">◇</span>
+              Not rated
+            </span>
+          )}
         </div>
+
+        {!snapshot && unrated && (
+          <p className={`reveal__unrated xs muted ${reached('tier') ? 'is-in' : ''}`}>
+            {unrated.explanation}
+          </p>
+        )}
       </div>
 
       {running && (
