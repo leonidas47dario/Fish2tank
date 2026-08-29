@@ -1,6 +1,6 @@
 # 004 - Local-shelf scarcity
 
-**Status:** proposed
+**Status:** implemented, dormant on the shipped index (see docs/plans/004-local-shelf-scarcity.md)
 **Date:** 2026-08-29
 **Touches:** FR-P05 (online availability never increases collecting rarity), FR-R07 (no objective rarity claim below a sample threshold), FR-P06 (automated pricing retains source and confidence).
 **Introduces:** store `channel` tiering, and the *witness gate* - a store's silence only counts as evidence when that store demonstrably resolves its own catalog.
@@ -105,9 +105,10 @@ calibrated against observed data.
 
 - **`community`** - generalist shops whose catalog approximates a normal local
   shelf. **These are the sample.** Imperial Tropicals, AquaHuna, Aquarium
-  Co-Op, Nu Aqua, LiveAquaria.
-- **`specialist`** - exotics importers and single-species boutiques. Predatory
-  Fins, Aquatic Arts, Global Exoticquatics, J4 Flowerhorns, Flip Aquatics.
+  Co-Op, Nu Aqua.
+- **`specialist`** - exotics importers, aggregators and single-niche
+  boutiques. Predatory Fins, Aquatic Arts, Global Exoticquatics, J4
+  Flowerhorns, Flip Aquatics, LiveAquaria.
   They contribute price data and proof that the animal exists in trade. They
   are **never** in the breadth numerator or denominator.
 
@@ -126,18 +127,27 @@ A store where seven of every ten species are carried by nobody else is
 behaving like an aggregator of unusual stock, not like a shelf. Imperial
 Tropicals, at 45.6%, overlaps the rest of the market roughly twice as much.
 
-Two assignments worth stating explicitly because they are judgement calls:
+Two more assignments worth stating explicitly, because they are judgement calls:
 
-- **Flip Aquatics is `specialist`.** It is a shrimp and invert boutique, not a
+- **Flip Aquatics is `specialist`.** A shrimp and invert boutique, not a
   general shop. Its not carrying a cichlid is not evidence about cichlids.
-- **LiveAquaria is `community`.** It is Petco's aquatics brand, and a big-box
-  chain stocking a fish is the strongest available evidence that the fish is
-  not rare. Its marine skew means it will rarely fire for freshwater species,
-  which is correct rather than a defect.
+- **LiveAquaria is `specialist`**, reversing an earlier draft of this spec. It
+  is Petco's aquatics brand, and a big-box chain stocking a fish *would* be the
+  strongest evidence available that the fish is not rare - which is exactly why
+  it was tempting. It is out because it is overwhelmingly **marine**: 7,714
+  livestock listings dominated by coral and reef fish. A marine store's silence
+  about a freshwater fish is not evidence of anything, and counting it as a
+  witness would push every freshwater species toward "rare" on a technicality.
+  Revisit if the index ever carries water type per species.
 
 `waterType` already exists on `StoreConfig` and is unchanged; `channel`
 answers a different question (what kind of buyer the store serves) and the two
 are deliberately independent.
+
+Note the `channel` field was **not** added to `StoreConfig` in the end. The map
+lives in `src/data/store-channels.ts` so the app can classify the already-built
+index without an ETL re-run, with a test that fails the build on any
+unclassified vendor.
 
 ### The witness gate
 
@@ -155,8 +165,16 @@ also self-repairing: as Phase B raises resolution rates, stores rejoin the
 denominator automatically and the scale gains rungs. One number governs how
 much the app is willing to claim.
 
-Initial threshold: **10%**. Under today's index that admits Aquatic Arts
-(17.6%) and Imperial Tropicals (12.0%) and nobody else.
+Initial threshold: **10%**, plus `minimumWitnesses: 2` - breadth is a
+comparison, and one store cannot make one. With a single witness every species
+it carries would score 0 and every species it does not would be unrated, so the
+badge would have exactly one possible value while implying it had consulted a
+market.
+
+Against a two-pass ETL run of the seven stores that answered, that admits
+Imperial Tropicals (38.7%), AquaHuna (28.8%) and **Nu Aqua (23.1%)**. Against
+the *currently shipped* index it admits only Imperial Tropicals, so the rating
+refuses outright.
 
 ### The formula
 
@@ -226,31 +244,33 @@ support. At five or six witnesses, sole-source lands in the top band exactly
 as asked. The formula earns the right to its strongest word rather than
 assuming it.
 
-### What Phase A alone achieves, stated honestly
+### What this achieves, verified
 
-Simulated over the shipped index at a 10% threshold, denominator of 2:
+Built in memory from the seven store snapshots that answered, using the
+shipped engine:
 
-| Band | Species | Share of catalog |
-|---|---:|---:|
-| Widely available | 24 | 8.0% |
-| Available | 7 | 2.3% |
-| Uncommon | 63 | 21.1% |
-| Scarce | 0 | 0.0% |
-| Rarely listed | 0 | 0.0% |
-| **Not enough data** | **205** | **68.6%** |
+```
+witnesses: imperial-tropicals (38.7%), aquahuna (28.8%), nu-aqua (23.1%)   N=3
 
-94 of 299 species rated, down from 299. Betta, Fancy Guppy, Bristlenose Pleco,
-Oscar and Jack Dempsey all move from "scarce" to widely available - the
-headline bug, fixed. The 205 refusals are overwhelmingly Predatory Fins
-exclusives, which is the ask about PF enforced arithmetically rather than by
-disclaimer.
+species 1464
+   widely-available      55   3.8%
+   available             78   5.3%
+   uncommon              37   2.5%
+   scarce               157  10.7%
+   rarely-listed          0   0.0%
+   not-rated           1137  77.7%
+```
 
-**Phase A makes the badge honest, not smart.** It stops lying about common
-fish, stops laundering the Predatory Fins catalog into a rarity scale, and
-loses the ability to call anything rare until the sample can support it. That
-is a two-thirds cut in coverage, taken deliberately. Phase B is what earns the
-rating back, and it is the phase that turns those 205 refusals into real
-rarity calls.
+Four bands populated and the largest holds 48% of the rated set, so the scale
+discriminates. Oscar reads "available", carried by Imperial Tropicals and Nu
+Aqua. A sole-witness fish scores 63 and reads "scarce" - Ryan's metric, one
+rung short of its ceiling until a fourth witness exists.
+
+**On the currently shipped index it rates nothing.** With Aquatic Arts
+reclassified there is one qualifying witness, and `minimumWitnesses: 2` refuses
+rather than emitting a badge with a single possible value. The feature is
+dormant until the ETL republishes, which is blocked only by three stores
+returning 503. See docs/plans/004-local-shelf-scarcity.md.
 
 ---
 

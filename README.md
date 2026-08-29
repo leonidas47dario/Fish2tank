@@ -309,6 +309,19 @@ Market scarcity is a weighted **component** of the Discovery Tier
 so retuning the weights later leaves every past reveal exactly as the user saw
 it.
 
+That market component is now **local-shelf scarcity**
+(`market-scarcity-v1.0.0`): how many of the general shops that resemble a local
+shelf carry the fish, and nothing else. Specialist importers are excluded from
+the sample, and a shop's silence counts as evidence only where that shop
+demonstrably resolves its own catalogue. Price and stock were dropped - one is
+a consequence of rarity rather than evidence of it, the other tracked Shopify
+leaving sold-out products published. See
+[`docs/specs/004-local-shelf-scarcity.md`](docs/specs/004-local-shelf-scarcity.md).
+
+It rates nothing on the currently shipped index, on purpose: only one store
+qualifies as a witness, and breadth is a comparison. It activates on the next
+full ETL run.
+
 ---
 
 ## Real data, seeded
