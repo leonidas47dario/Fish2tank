@@ -11,6 +11,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "smoke": "node scripts/smoke.mjs",
+    "verify:sw": "node scripts/verify-sw-update.mjs",
     "typecheck": "tsc -b --noEmit false --emitDeclarationOnly false --pretty",
     "etl": "tsx etl/run.ts",
     "warehouse": "tsx etl/build-warehouse.ts",

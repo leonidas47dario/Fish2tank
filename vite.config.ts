@@ -26,6 +26,10 @@ export default defineConfig({
     // FR-O01 / NFR-07: installable, mobile-first, works offline (NFR-02).
     VitePWA({
       registerType: 'autoUpdate',
+      // Registration lives in src/pwa.ts instead: the injected script is a bare
+      // register() that never reloads, which made a new deploy show up only on
+      // the second visit. See the note there.
+      injectRegister: null,
       includeAssets: ['favicon.svg'],
       manifest: {
         // Distinguishable on the home screen, so an installed staging build

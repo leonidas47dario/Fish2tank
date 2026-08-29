@@ -3,8 +3,13 @@ import { createRoot } from 'react-dom/client';
 import { HashRouter } from 'react-router-dom';
 import { ThemeProvider } from './theme/ThemeProvider';
 import { bootstrap } from './data/bootstrap';
+import { registerServiceWorker } from './pwa';
 import App from './App';
 import './app.css';
+
+// Registered before the first paint so a page opened on a stale cached build
+// reloads onto the new one immediately, rather than one visit later.
+registerServiceWorker();
 
 // Seeding the catalog before first paint keeps every screen's empty state
 // meaningful rather than briefly showing "no species known".
