@@ -14,7 +14,10 @@
     "typecheck": "tsc -b --noEmit false --emitDeclarationOnly false --pretty",
     "etl": "tsx etl/run.ts",
     "warehouse": "tsx etl/build-warehouse.ts",
-    "images": "tsx etl/build-images.ts"
+    "images": "tsx etl/build-images.ts",
+    "marts": "tsx etl/build-marts.ts",
+    "refresh": "npm run etl && npm run images && npm run portraits && npm run warehouse && npm run marts",
+    "portraits": "tsx etl/build-portraits.ts"
   },
   "dependencies": {
     "dexie": "^4.0.10",

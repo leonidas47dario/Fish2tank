@@ -47,7 +47,11 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        // Portraits are part of the library, so they are precached: a catalog that
+        // cannot draw itself offline has failed the core promise (NFR-02).
+        globPatterns: ['**/*.{js,css,html,svg,png,jpg,woff2}'],
+        // ~1MB of portraits pushes past the 2MiB default.
+        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
         // Media originals live in IndexedDB, never in the SW cache (NFR-03).
         // /uat/ is excluded from production's scope; see the note above.
         navigateFallbackDenylist,
