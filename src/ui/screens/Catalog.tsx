@@ -6,15 +6,16 @@
  * ones greyed, not a "mine" screen and an "all" screen; two screens iterating
  * the same species list would have diverged within a month.
  *
- * So: every species is a card, the ones you have caught are in colour, the
+ * So: every species is a card, the ones in your collection are in colour, the
  * rest are locked, and the filters let you narrow to just yours when you want
- * that view.
+ * that view. In colour means caught OR kept - a fish in the tank downstairs is
+ * as much yours as one you photographed in a store.
  */
 import { useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useNavigate } from 'react-router-dom';
 import { db } from '@/data/db';
-import { CATALOG, cardPrice, marketAndScarcity, type CatalogCard } from '@/data/catalog';
+import { CATALOG, cardPrice, marketAndScarcity, ownership, type CatalogCard } from '@/data/catalog';
 import { deriveQuantity } from '@/domain/holdings';
 import { FishCard } from '../components/FishCard';
 
@@ -64,8 +65,7 @@ export default function Catalog() {
       return {
         species,
         user: {
-          caught: confirmed.length > 0,
-          kept: speciesHoldings.length > 0,
+          ...ownership(confirmed.length, speciesHoldings.length),
           currentlyKept,
           specimenCount: mine.length,
           tier: tiers[0]?.tier,
@@ -86,7 +86,9 @@ export default function Catalog() {
     return cards
       .filter((c) => {
         if (filter === 'caught' && !c.user.caught) return false;
-        if (filter === 'uncaught' && c.user.caught) return false;
+        // "Not yet" is the complement of the cards in colour, so a fish you
+        // keep never shows up under it.
+        if (filter === 'uncaught' && c.user.inCollection) return false;
         if (filter === 'kept' && !c.user.kept) return false;
         if (!q) return true;
         const s = c.species;
@@ -96,20 +98,20 @@ export default function Catalog() {
           s.aliases.some((a) => a.toLowerCase().includes(q))
         );
       })
-      // Caught first: your own collection leads, the rest is what's out there.
+      // Yours first: your own collection leads, the rest is what's out there.
       .sort((a, b) =>
-        Number(b.user.caught) - Number(a.user.caught) ||
+        Number(b.user.inCollection) - Number(a.user.inCollection) ||
         a.species.commonName.localeCompare(b.species.commonName));
   }, [cards, query, filter]);
 
-  const caught = cards?.filter((c) => c.user.caught).length ?? 0;
+  const mine = cards?.filter((c) => c.user.inCollection).length ?? 0;
   const total = cards?.length ?? 0;
 
   return (
     <div className="stack">
       <header>
         <h1>Catalog</h1>
-        <p className="muted small data">{caught} of {total} caught</p>
+        <p className="muted small data">{mine} of {total} in your collection</p>
       </header>
 
       <input

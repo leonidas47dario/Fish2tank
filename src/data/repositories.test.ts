@@ -4,12 +4,14 @@ import { Fish2TankDB, newId } from './db';
 import {
   acquireSpecimen,
   addEncounterChapter,
+  addPhotos,
   assertIdentity,
   assessmentHistory,
   awardGolden,
   createCatchDraft,
   createKeeperPrinciple,
   createOpeningBalanceHolding,
+  ensureSpecimenForHolding,
   evaluateSpecimen,
   identityHistory,
   moveHolding,
@@ -426,5 +428,100 @@ describe('newId', () => {
   it('produces prefixed unique ids', () => {
     expect(newId('spec')).toMatch(/^spec_[0-9a-f-]{36}$/);
     expect(newId('spec')).not.toBe(newId('spec'));
+  });
+});
+
+/**
+ * The path a fish takes when you never caught it - it was simply already in a
+ * tank when the inventory was imported. Everything downstream (the card's
+ * colour, its art, its photos) hangs off a specimen, and this is where that
+ * specimen comes from.
+ */
+describe('photos on a fish you keep but never caught', () => {
+  const openingBalance = () =>
+    createOpeningBalanceHolding(
+      {
+        aquariumId: 'tank_75g',
+        speciesId: 'sp_neon_tetra',
+        rawLabel: 'Neon Tetra (school)',
+        kind: 'group',
+        openingQuantity: 6,
+      },
+      db,
+    );
+
+  it('mints the specimen the holding implied, and links it back', async () => {
+    const { holding } = await openingBalance();
+    expect(holding.specimenId).toBeUndefined();
+
+    const specimen = await ensureSpecimenForHolding(holding.id, db);
+
+    expect(specimen.status).toBe('resident');
+    expect(specimen.kind).toBe('group');
+    // FR-O05: the store's own wording survives identification.
+    expect(specimen.rawLabel).toBe('Neon Tetra (school)');
+    expect((await db.holdings.get(holding.id))!.specimenId).toBe(specimen.id);
+  });
+
+  it('records where the identity came from rather than stamping it', async () => {
+    const { holding } = await openingBalance();
+    const specimen = await ensureSpecimenForHolding(holding.id, db);
+
+    const stored = await db.specimens.get(specimen.id);
+    expect(stored!.speciesId).toBe('sp_neon_tetra');
+    expect(stored!.identityStatus).toBe('user-confirmed');
+
+    const history = await identityHistory(specimen.id, db);
+    expect(history).toHaveLength(1);
+    expect(history[0]!.source).toBe('import');
+    expect(history[0]!.candidateSpeciesId).toBe('sp_neon_tetra');
+  });
+
+  it('is idempotent - a second photo does not mint a second specimen', async () => {
+    const { holding } = await openingBalance();
+    const first = await ensureSpecimenForHolding(holding.id, db);
+    const second = await ensureSpecimenForHolding(holding.id, db);
+
+    expect(second.id).toBe(first.id);
+    expect(await db.specimens.count()).toBe(1);
+  });
+
+  it('leaves identity unknown when the holding was never matched to a species', async () => {
+    const { holding } = await createOpeningBalanceHolding(
+      { aquariumId: 'tank_75g', rawLabel: 'Mystery pleco', kind: 'individual', openingQuantity: 1 },
+      db,
+    );
+    const specimen = await ensureSpecimenForHolding(holding.id, db);
+
+    expect(specimen.identityStatus).toBe('unknown');
+    expect(await identityHistory(specimen.id, db)).toHaveLength(0);
+  });
+
+  it('stores the photo against the specimen, without inventing an encounter', async () => {
+    const { holding } = await openingBalance();
+    const specimen = await ensureSpecimenForHolding(holding.id, db);
+
+    const media = await addPhotos({ specimenId: specimen.id, files: [photo(), photo()] }, db);
+
+    expect(media).toHaveLength(2);
+    expect(media.every((m) => m.specimenIds.includes(specimen.id))).toBe(true);
+    // A fish already yours was not "encountered" anywhere.
+    expect(media.every((m) => m.encounterId === undefined)).toBe(true);
+    expect(await db.encounters.count()).toBe(0);
+    expect(await db.blobs.count()).toBe(2);
+  });
+
+  it('keeps the original bytes untouched (NFR-03)', async () => {
+    const { holding } = await openingBalance();
+    const specimen = await ensureSpecimenForHolding(holding.id, db);
+    const [media] = await addPhotos({ specimenId: specimen.id, files: [photo()] }, db);
+
+    const stored = await db.blobs.get(media!.originalBlobKey);
+    expect(stored!.bytes).toBe(4);
+    expect(media!.originalBytes).toBe(4);
+  });
+
+  it('refuses to attach a photo to a specimen that does not exist', async () => {
+    await expect(addPhotos({ specimenId: 'spec_nope', files: [photo()] }, db)).rejects.toThrow();
   });
 });

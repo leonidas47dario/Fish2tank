@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CATALOG, cardPrice, resolveCardArt, type CatalogCard, type CatalogSpecies } from './catalog';
+import { CATALOG, cardPrice, ownership, resolveCardArt, type CatalogCard, type CatalogSpecies } from './catalog';
 import type { MarketSpeciesStats } from './market';
 
 function species(over: Partial<CatalogSpecies> = {}): CatalogSpecies {
@@ -15,7 +15,7 @@ function card(over: Partial<CatalogCard> = {}): CatalogCard {
   return {
     species: species(),
     user: {
-      caught: true, kept: false, currentlyKept: false, specimenCount: 1,
+      caught: true, kept: false, inCollection: true, currentlyKept: false, specimenCount: 1,
       golden: false, onDreamList: false, ownPhotoMediaIds: [],
     },
     ...over,
@@ -120,5 +120,25 @@ describe('the shipped catalog mart', () => {
   it('has no duplicate species', () => {
     const ids = CATALOG.species.map((s) => s.speciesId);
     expect(new Set(ids).size).toBe(ids.length);
+  });
+});
+
+describe('ownership', () => {
+  it('a fish you caught is yours', () => {
+    expect(ownership(1, 0)).toEqual({ caught: true, kept: false, inCollection: true });
+  });
+
+  it('a fish you keep but never caught is yours too', () => {
+    // The bug this fixes: 61 imported inventory rows have holdings and no
+    // confirmed specimen, and every one of them rendered greyed out.
+    expect(ownership(0, 1)).toEqual({ caught: false, kept: true, inCollection: true });
+  });
+
+  it('a species you have only read about is not', () => {
+    expect(ownership(0, 0)).toEqual({ caught: false, kept: false, inCollection: false });
+  });
+
+  it('counts both when you caught it and kept it', () => {
+    expect(ownership(2, 3)).toEqual({ caught: true, kept: true, inCollection: true });
   });
 });

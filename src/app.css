@@ -407,3 +407,29 @@ fieldset { border: 0; padding: 0; margin: 0 0 var(--space-3); }
   color: var(--color-canvas);
   font-weight: var(--weight-medium);
 }
+
+/* --- Your own photos of a species ------------------------------------- */
+.photo-strip {
+  display: flex;
+  gap: var(--space-2);
+  /* Scrolls itself rather than widening the page: a keeper with twenty photos
+     of one fish must not give the whole screen a horizontal scrollbar. */
+  overflow-x: auto;
+  padding-bottom: var(--space-1);
+}
+.photo-strip__item {
+  flex: 0 0 auto;
+  width: 64px;
+  height: 64px;
+  padding: 0;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: transparent;
+  overflow: hidden;
+  cursor: pointer;
+}
+.photo-strip__item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.photo-strip__item--on {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 45%, transparent);
+}

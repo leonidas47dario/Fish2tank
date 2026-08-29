@@ -44,8 +44,9 @@ export function FishCard({ card, onOpen }: Props) {
     return stored ? URL.createObjectURL(stored.blob) : undefined;
   }, [art.kind === 'own' ? art.mediaId : undefined]);
 
-  const locked = !user.caught;
-  const label = `${species.commonName}${locked ? ', not yet caught' : ''}`;
+  // Greyed only when you have never had this species - neither met nor kept.
+  const locked = !user.inCollection;
+  const label = `${species.commonName}${locked ? ', not in your collection' : ''}`;
 
   return (
     <button

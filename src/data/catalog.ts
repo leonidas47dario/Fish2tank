@@ -67,10 +67,19 @@ export const CATALOG_BY_SPECIES = new Map(CATALOG.species.map((s) => [s.speciesI
 
 /** What the user has done with this species. Everything here is personal. */
 export interface CatalogUserState {
-  /** Confirmed at least one specimen of it. The "owned" state of the card. */
+  /** Confirmed at least one specimen of it, from an encounter. */
   caught: boolean;
   /** Has, or has had, one at home. */
   kept: boolean;
+  /**
+   * The card's "owned" state: you have met this species or you keep it.
+   *
+   * Not the same as `caught`. A fish imported as an opening balance has a
+   * holding and no specimen (FR-T02), so keying the lock on `caught` alone
+   * greyed out every fish in the tanks downstairs. The lock means "you have
+   * never had this species", which is what the card metaphor actually claims.
+   */
+  inCollection: boolean;
   currentlyKept: boolean;
   specimenCount: number;
   /** Highest tier ever revealed for this species. */
@@ -79,6 +88,21 @@ export interface CatalogUserState {
   onDreamList: boolean;
   /** Your own photos of it, newest first. */
   ownPhotoMediaIds: Id[];
+}
+
+/**
+ * Whether a species is yours, and how.
+ *
+ * Defined once because two screens build this state from the same tables, and
+ * the Catalog exists precisely because a second screen doing the same
+ * derivation drifts from the first. `inCollection` is the card's lock: a fish
+ * imported as an opening balance has holdings and no specimen (FR-T02), so a
+ * lock keyed on `caught` alone greys out everything in your own tanks.
+ */
+export function ownership(confirmedSpecimens: number, holdings: number) {
+  const caught = confirmedSpecimens > 0;
+  const kept = holdings > 0;
+  return { caught, kept, inCollection: caught || kept };
 }
 
 export interface CatalogCard {

@@ -5,19 +5,29 @@
  * rather than an individual: its care profile, what the vendors charge, and
  * where the picture came from.
  *
- * This is also where the art choice lives. A caught species defaults to your
- * own photo - the product's claim is that the exact specimen matters - but the
- * reference portrait is one tap away, because a photo taken through algae at
- * an angle is sometimes genuinely worse than the reference shot.
+ * This is also where the art choice lives. A species in your collection
+ * defaults to your own photo - the product's claim is that the exact specimen
+ * matters - but the reference portrait is one tap away, because a photo taken
+ * through algae at an angle is sometimes genuinely worse than the reference
+ * shot.
+ *
+ * Photos can be added here for anything you have, kept fish included. That is
+ * the only route for a fish imported as an opening balance: it never passed
+ * through the Catch screen, so without this its card could never carry your
+ * own picture.
  */
+import { useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { db } from '@/data/db';
-import { CATALOG_BY_SPECIES, cardPrice, marketAndScarcity, type CatalogCard } from '@/data/catalog';
+import type { Id } from '@/domain/types';
+import { addPhotos, ensureSpecimenForHolding, type CaptureFile } from '@/data/repositories';
+import { CATALOG_BY_SPECIES, cardPrice, marketAndScarcity, ownership, type CatalogCard } from '@/data/catalog';
 import { deriveQuantity } from '@/domain/holdings';
 import { formatVolume } from '@/domain/units';
 import { FishCard } from '../components/FishCard';
 import { MarketPanel } from '../components/MarketPanel';
+import { OwnPhotoStrip } from '../components/OwnPhotoStrip';
 
 export default function SpeciesDetail() {
   const { id } = useParams<{ id: string }>();
@@ -40,6 +50,10 @@ export default function SpeciesDetail() {
 
   const pref = useLiveQuery(() => (id ? db.cardPrefs.get(id) : undefined), [id]);
 
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [saving, setSaving] = useState(false);
+  const [photoError, setPhotoError] = useState<string | undefined>();
+
   if (!id || !species) return <p className="empty">No such species in the catalog.</p>;
   if (!data) return <p className="muted">Loading…</p>;
 
@@ -53,8 +67,7 @@ export default function SpeciesDetail() {
   const card: CatalogCard = {
     species,
     user: {
-      caught: confirmed.length > 0,
-      kept: data.holdings.length > 0,
+      ...ownership(confirmed.length, data.holdings.length),
       currentlyKept,
       specimenCount: data.specimens.length,
       tier: data.snapshots[0]?.tier,
@@ -72,6 +85,44 @@ export default function SpeciesDetail() {
 
   async function setArt(artSource: 'own' | 'portrait') {
     await db.cardPrefs.put({ speciesId: id!, artSource, updatedAt: new Date().toISOString() });
+  }
+
+  /**
+   * Where a new photo goes. A photo is of a fish, not of a species.
+   *
+   * A specimen you already have is the obvious target. Failing that the fish
+   * is one you keep but never caught, so the holding's specimen is minted on
+   * the spot - preferring one still in a tank, because that is the fish you
+   * just pointed a camera at.
+   */
+  async function targetSpecimenId(): Promise<Id> {
+    const newest = [...data!.specimens].sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
+    if (newest) return newest.id;
+
+    const live = data!.holdings.find((h) =>
+      data!.residencies.some((r) => r.holdingId === h.id && !r.endDate));
+    const holding = live ?? data!.holdings[0];
+    if (!holding) throw new Error('Nothing of yours to attach this photo to.');
+    return (await ensureSpecimenForHolding(holding.id)).id;
+  }
+
+  async function onFiles(list: FileList | null) {
+    if (!list || list.length === 0) return;
+    setSaving(true);
+    setPhotoError(undefined);
+    try {
+      const files: CaptureFile[] = Array.from(list).map((f) => ({
+        kind: f.type.startsWith('video') ? 'video' : 'photo',
+        blob: f,
+        mimeType: f.type || 'application/octet-stream',
+      }));
+      await addPhotos({ specimenId: await targetSpecimenId(), files });
+    } catch (e) {
+      setPhotoError(e instanceof Error ? e.message : 'Could not save that photo.');
+    } finally {
+      setSaving(false);
+      if (fileRef.current) fileRef.current.value = '';
+    }
   }
 
   return (
@@ -117,8 +168,46 @@ export default function SpeciesDetail() {
           </>
         ) : (
           <p className="small muted" style={{ marginBottom: 0 }}>
-            Catch one and your own photo becomes this card&apos;s art.
+            {card.user.inCollection
+              ? 'No photo of yours yet. Add one and it becomes this card\u2019s art.'
+              : 'Catch one and your own photo becomes this card\u2019s art.'}
           </p>
+        )}
+
+        {/* Anything you have can take a photo - a fish imported as an opening
+            balance never passed through the Catch screen, so this is its only
+            route to having its own picture. */}
+        {card.user.inCollection && (
+          <>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*,video/*"
+              capture="environment"
+              multiple
+              className="visually-hidden"
+              onChange={(e) => void onFiles(e.target.files)}
+            />
+            <button
+              type="button"
+              className="btn"
+              disabled={saving}
+              onClick={() => fileRef.current?.click()}
+            >
+              {saving ? 'Saving\u2026' : hasOwnPhoto ? '\u2295  Add another photo' : '\u2295  Add your photo'}
+            </button>
+            {photoError && <p className="warn" style={{ marginBottom: 0 }}>{photoError}</p>}
+            {data.ownPhotos.length > 0 && (
+              <OwnPhotoStrip
+                mediaIds={data.ownPhotos.map((m) => m.id)}
+                onPick={(mediaId) => void db.cardPrefs.put({
+                  speciesId: id, artSource: 'own', preferredMediaId: mediaId,
+                  updatedAt: new Date().toISOString(),
+                })}
+                selected={usingOwn ? (pref?.preferredMediaId ?? data.ownPhotos[0]!.id) : undefined}
+              />
+            )}
+          </>
         )}
       </section>
 
@@ -147,9 +236,15 @@ export default function SpeciesDetail() {
 
       {/* --- Your specimens ---------------------------------------------- */}
       <section className="card stack">
-        <h2>Your encounters</h2>
+        {/* Not "encounters": a fish minted from a kept holding was never met
+            anywhere, it has simply always been yours. */}
+        <h2>Your fish</h2>
         {data.specimens.length === 0 && (
-          <p className="muted small" style={{ marginBottom: 0 }}>You haven&apos;t caught one yet.</p>
+          <p className="muted small" style={{ marginBottom: 0 }}>
+            {card.user.kept
+              ? 'Add a photo above and this becomes a record of the one you keep.'
+              : 'You haven\u2019t caught one yet.'}
+          </p>
         )}
         <ul className="list">
           {data.specimens.map((s) => (
