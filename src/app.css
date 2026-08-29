@@ -92,6 +92,10 @@ a { color: var(--color-primary); }
 
 .muted { color: var(--color-muted); }
 .faint { color: var(--color-faint); }
+
+/* The required marker. Never the only cue: every label carrying one also
+   carries a visually-hidden "(required)" for anyone who cannot see it. */
+.req { color: var(--color-caution); }
 .small { font-size: var(--size-sm); }
 .xs { font-size: var(--size-xs); }
 .data, .mono { font-family: var(--font-data); font-variant-numeric: tabular-nums; }

@@ -91,10 +91,11 @@ export default function SpeciesDetail() {
       db.lifeEvents.toArray(), db.residencies.toArray(), db.media.toArray(),
       db.dreamList.where('speciesId').equals(id).first(),
     ]);
+    const aquariums = await db.aquariums.toArray();
     const ownPhotos = media
       .filter((m) => m.kind === 'photo' && m.specimenIds.some((sid) => specimens.some((s) => s.id === sid)))
       .sort((a, b) => b.capturedAt.localeCompare(a.capturedAt));
-    return { specimens, snapshots, holdings, lifeEvents, residencies, ownPhotos, dream };
+    return { specimens, snapshots, holdings, lifeEvents, residencies, ownPhotos, dream, aquariums };
   }, [id]);
 
   const pref = useLiveQuery(() => (id ? db.cardPrefs.get(id) : undefined), [id]);
@@ -102,6 +103,7 @@ export default function SpeciesDetail() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
   const [photoError, setPhotoError] = useState<string | undefined>();
+  const [photoTarget, setPhotoTarget] = useState('');
 
   /* A dead end with no way out is not an empty state. This one is reachable
      from a stale bookmark or a link written before a catalog rebuild renamed
@@ -151,6 +153,25 @@ export default function SpeciesDetail() {
     scarcityBand,
   };
 
+  /**
+   * Holdings of this species that no specimen stands for yet, with where they
+   * live. These are fish you keep that have never been photographed.
+   */
+  const holdingsWithoutSpecimen = data.holdings
+    .filter((h) => !h.specimenId)
+    .map((holding) => {
+      const open = data.residencies.find((r) => r.holdingId === holding.id && !r.endDate);
+      return {
+        holding,
+        aquarium: open ? data.aquariums.find((t) => t.id === open.aquariumId) : undefined,
+        quantity: deriveQuantity(holding, data.lifeEvents),
+      };
+    })
+    .filter((h) => h.quantity > 0);
+
+  /** Ambiguous only when nothing has been photographed AND there are several. */
+  const needsPhotoTarget = data.specimens.length === 0 && holdingsWithoutSpecimen.length > 1;
+
   const hasOwnPhoto = data.ownPhotos.length > 0;
   const usingOwn = pref?.artSource !== 'portrait' && hasOwnPhoto;
 
@@ -169,6 +190,11 @@ export default function SpeciesDetail() {
   async function targetSpecimenId(): Promise<Id> {
     const newest = [...data!.specimens].sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
     if (newest) return newest.id;
+
+    // An explicit choice wins whenever one was needed. Falling back to .find()
+    // is only safe because the picker above is shown for every case where the
+    // answer is not unique.
+    if (photoTarget) return (await ensureSpecimenForHolding(photoTarget)).id;
 
     const live = data!.holdings.find((h) =>
       data!.residencies.some((r) => r.holdingId === h.id && !r.endDate));
@@ -358,11 +384,35 @@ export default function SpeciesDetail() {
               className="visually-hidden"
               onChange={(e) => void onFiles(e.target.files)}
             />
+            {/* Which fish is this a photo OF?
+​
+                Only asked when it is genuinely ambiguous: no specimen exists
+                yet AND you keep this species in more than one place. Before
+                spec 005 the code picked a holding with .find() and attached
+                the photo to whichever came first, which was invisible and
+                wrong as soon as the same species could sit in two tanks. */}
+            {needsPhotoTarget && (
+              <div style={{ marginTop: 'var(--space-3)' }}>
+                <label htmlFor="photo-target">Which one is this?</label>
+                <select
+                  id="photo-target"
+                  value={photoTarget}
+                  onChange={(e) => setPhotoTarget(e.target.value)}
+                >
+                  <option value="">Choose…</option>
+                  {holdingsWithoutSpecimen.map((h) => (
+                    <option key={h.holding.id} value={h.holding.id}>
+                      {h.aquarium ? h.aquarium.name : 'not in a tank'} — {h.holding.rawLabel ?? species.commonName} ×{h.quantity}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
             <button
               type="button"
               className="cta cta--quiet"
               style={{ marginTop: 'var(--space-3)' }}
-              disabled={saving}
+              disabled={saving || (needsPhotoTarget && !photoTarget)}
               onClick={() => fileRef.current?.click()}
             >
               <PlusIcon size={16} aria-hidden="true" />
@@ -392,21 +442,42 @@ export default function SpeciesDetail() {
         {/* Not "encounters": a fish minted from a kept holding was never met
             anywhere, it has simply always been yours. */}
         <h2 className="sec-head">Your fish</h2>
-        {data.specimens.length === 0 ? (
+        {data.specimens.length === 0 && data.holdings.length === 0 ? (
           <p className="panel__note" style={{ padding: '0 var(--space-4)' }}>
-            {card.user.kept
-              ? 'Add a photo above and this becomes a record of the one you keep.'
-              : 'You haven’t caught one yet.'}
+            You haven&apos;t caught one yet.
           </p>
         ) : (
-          data.specimens.map((s) => (
-            <Link key={s.id} to={`/specimen/${s.id}`} className="tankrow">
-              <span className="grow">
-                <span className="tankrow__name">{s.nickname ?? s.rawLabel ?? 'Unnamed specimen'}</span>
-              </span>
-              <span className="tankrow__meta num">{new Date(s.createdAt).toLocaleDateString()}</span>
-            </Link>
-          ))
+          <>
+            {data.specimens.map((s) => (
+              <Link key={s.id} to={`/specimen/${s.id}`} className="tankrow">
+                <span className="grow">
+                  <span className="tankrow__name">{s.nickname ?? s.rawLabel ?? 'Unnamed specimen'}</span>
+                </span>
+                <span className="tankrow__meta num">{new Date(s.createdAt).toLocaleDateString()}</span>
+              </Link>
+            ))}
+
+            {/* Holdings with no specimen behind them. Invisible here before
+                spec 005, which meant a fish you keep but never photographed
+                did not appear on its own species page - and once the same
+                species can sit in two tanks, "your fish" has to be able to say
+                so. Not a link: there is no record to open until a photo mints
+                one. */}
+            {holdingsWithoutSpecimen.map((h) => (
+              <div key={h.holding.id} className="tankrow">
+                <span className="grow">
+                  <span className="tankrow__name">
+                    {h.holding.rawLabel ?? species.commonName}
+                    <span className="muted data"> ×{h.quantity}</span>
+                  </span>
+                  <span className="tankrow__meta" style={{ display: 'block' }}>
+                    {h.aquarium ? h.aquarium.name : 'not in a tank'}
+                  </span>
+                </span>
+                <span className="tankrow__meta">no photo yet</span>
+              </div>
+            ))}
+          </>
         )}
       </section>
 

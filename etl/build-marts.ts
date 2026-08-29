@@ -17,7 +17,7 @@ import { DuckDBInstance } from '@duckdb/node-api';
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { deriveCommonName } from './normalize/derive-species';
 import { findProblems, isUsableName, summarise } from '@/data/seed/catalog-quality';
-import { OVERRIDE_BY_ID, SPECIES_SYNONYMS, SYNONYM_IDS } from '@/data/seed/species-overrides';
+import { NOT_A_SPECIES, OVERRIDE_BY_ID, SPECIES_SYNONYMS, SYNONYM_IDS } from '@/data/seed/species-overrides';
 import { traitsFor, type OrganismKind, type WaterZone } from '@/data/seed/taxonomy';
 import type { WaterType } from '@/domain/types';
 import { loadCareBackfill, type CareRecord } from './care/backfill';
@@ -371,6 +371,8 @@ async function main() {
   console.log(`    not recorded              ${String(untyped).padStart(4)}  (${Math.round((untyped / species.length) * 100)}%)`);
   console.log(`\n  dropped ${SPECIES_SYNONYMS.length} duplicate species minted by vendor typos`);
   for (const s of SPECIES_SYNONYMS) console.log(`      ${s.speciesId} -> ${s.canonicalId}`);
+  console.log(`  dropped ${NOT_A_SPECIES.length} minted entries that are not species at all`);
+  for (const s of NOT_A_SPECIES) console.log(`      ${s.speciesId}  (from "${s.mintedFrom}")`);
 
   console.log('\n  naming');
   console.log(`    from the warehouse as-is  ${species.length - naming.rederived - naming.overridden - naming.fellBack}`);

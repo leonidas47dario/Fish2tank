@@ -13,8 +13,10 @@
  */
 import { describe, expect, it } from 'vitest';
 import catalogJson from './marts/catalog.json';
-import { findProblems, isUsableName, summarise, type NameCheckable } from './catalog-quality';
-import { SPECIES_OVERRIDES } from './species-overrides';
+import {
+  findProblems, isUsableBinomial, isUsableName, summarise, type NameCheckable,
+} from './catalog-quality';
+import { NOT_A_SPECIES, SPECIES_OVERRIDES } from './species-overrides';
 
 const species = catalogJson.species as NameCheckable[];
 
@@ -37,6 +39,65 @@ describe('the shipped catalog', () => {
   it('gives every species something to be identified by', () => {
     const nameless = species.filter((s) => !s.scientificName && !isUsableName(s.commonName));
     expect(nameless.map((s) => s.speciesId)).toEqual([]);
+  });
+});
+
+describe('the binomial gate (spec 005)', () => {
+  it.each([
+    'Parachromis managuensis',
+    'Erythrinus erythrinus',
+    'Melanotaenia splendida inornata',
+    'Geophagus sp.',
+    'Heros sp.',
+  ])('accepts %s', (name) => {
+    expect(isUsableBinomial(name)).toBe(true);
+  });
+
+  it.each([
+    // The two that actually got through, and why each one is not taxonomy.
+    ['Roofvissen fotografie', 'a Dutch photo credit'],
+    ['Fish food', 'not an animal'],
+    // Shape failures.
+    ['Managuensis', 'one word'],
+    ['Red Wolf Fish Four Inch', 'four words'],
+    ['parachromis managuensis', 'lowercase genus'],
+    ['Parachromis Managuensis', 'capitalised epithet'],
+    ['Parachromis managuensis 4', 'a digit'],
+  ])('rejects %s (%s)', (name) => {
+    expect(isUsableBinomial(name)).toBe(false);
+  });
+
+  /**
+   * The regression that matters most. Open nomenclature is valid taxonomy, and
+   * the first draft of this rule rejected both real examples in the catalog
+   * while hunting the two phantoms - it would have deleted two real fish.
+   */
+  it('does not reject a real species to catch a phantom', () => {
+    const rejected = species.filter((s) => s.scientificName && !isUsableBinomial(s.scientificName));
+    expect(rejected.map((s) => `${s.speciesId}="${s.scientificName}"`)).toEqual([]);
+  });
+});
+
+describe('retired non-species (spec 005)', () => {
+  it('keeps them out of the shipped catalog', () => {
+    const ids = new Set(species.map((s) => s.speciesId));
+    const survivors = NOT_A_SPECIES.filter((s) => ids.has(s.speciesId));
+    expect(survivors.map((s) => s.speciesId)).toEqual([]);
+  });
+
+  it('says what each was minted from, so the diagnosis is not lost', () => {
+    const undocumented = NOT_A_SPECIES.filter((s) => !s.mintedFrom.trim() || !s.reason.trim());
+    expect(undocumented.map((s) => s.speciesId)).toEqual([]);
+  });
+
+  it('would now be caught by the gate rather than needing this list', () => {
+    // If a future refresh reintroduces one, isUsableBinomial stops it at the
+    // point of minting. This asserts the gate genuinely covers both, so the
+    // list is a cleanup of past damage and not the only defence.
+    for (const s of NOT_A_SPECIES) {
+      const binomial = s.speciesId.replace(/^sp_/, '').replace(/_/g, ' ');
+      expect(isUsableBinomial(binomial.charAt(0).toUpperCase() + binomial.slice(1))).toBe(false);
+    }
   });
 });
 

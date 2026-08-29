@@ -23,13 +23,15 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { db } from '@/data/db';
 import {
   acquireSpecimen, addEncounterChapter, assertIdentity, awardGolden, deleteCatch,
-  evaluateSpecimen, planDeleteCatch, recordPrice, revealSpecimen, searchSpecies, updateCatch,
+  evaluateSpecimen, moveHolding, planDeleteCatch, recordPrice, revealSpecimen, searchSpecies,
+  stockTank, updateCatch,
   type DeleteCatchPlan,
 } from '@/data/repositories';
+import { deriveQuantity } from '@/domain/holdings';
 import { evaluatePriceFit } from '@/engine/pricing/price-fit';
 import { COMPONENT_LABELS, LOCAL_RARITY_UNAVAILABLE } from '@/engine/rarity/discovery-tier';
 import { formatLength } from '@/domain/units';
-import type { Species, Verdict } from '@/domain/types';
+import type { Specimen, Species, Verdict } from '@/domain/types';
 import { useSpecimenMedia } from '../hooks';
 import { IdentityBadge, TierBadge, VerdictBadge, ScarcityBadge } from '../components/Badges';
 import { FactorList, MissingInputsNotice } from '../components/FactorList';
@@ -75,10 +77,37 @@ export default function SpecimenDetail() {
   const places = useLiveQuery(() => db.places.toArray(), []);
   const media = useSpecimenMedia(id);
 
-  const [query, setQuery] = useState('');
-  const [matches, setMatches] = useState<Species[]>([]);
+  /**
+   * Where this fish actually is, which is a question about residencies rather
+   * than about `specimen.status`.
+   *
+   * A holding is in a tank only while it has a residency with no end date;
+   * one that has never been placed, or whose residency was closed, is in no
+   * tank at all and was invisible on every screen before spec 005.
+   */
+  const placement = useLiveQuery(async () => {
+    if (!id) return undefined;
+    const holdings = await db.holdings.where('specimenId').equals(id).toArray();
+    if (holdings.length === 0) return [];
+    const [residencies, tanks, events] = await Promise.all([
+      db.residencies.toArray(), db.aquariums.toArray(), db.lifeEvents.toArray(),
+    ]);
+    return holdings.map((holding) => {
+      const open = residencies.find((r) => r.holdingId === holding.id && !r.endDate);
+      return {
+        holding,
+        aquarium: open ? tanks.find((t) => t.id === open.aquariumId) : undefined,
+        quantity: deriveQuantity(holding, events),
+      };
+    });
+  }, [id]);
+
+  const placed = placement?.filter((p) => p.aquarium) ?? [];
+  const unplaced = placement?.filter((p) => !p.aquarium) ?? [];
+
   const [busy, setBusy] = useState(false);
   const [openTank, setOpenTank] = useState<string | undefined>();
+  const [revealError, setRevealError] = useState<string | undefined>();
 
   if (!id) return <p className="empty">No specimen.</p>;
   if (specimen === undefined) return <p className="empty muted">Loading…</p>;
@@ -88,29 +117,39 @@ export default function SpecimenDetail() {
   const newest = assessments?.[0];
   const groupedAssessments = assessments?.filter((a) => a.assessedAt === newest?.assessedAt) ?? [];
 
-  async function onSearch(value: string) {
-    setQuery(value);
-    setMatches(value.trim() ? await searchSpecies(value) : []);
-  }
-
-  async function confirm(speciesId: string) {
-    setBusy(true);
-    await assertIdentity({ specimenId: id!, speciesId, source: 'user', status: 'user-confirmed' });
-    setQuery('');
-    setMatches([]);
-    setBusy(false);
-  }
-
   async function onEvaluate() {
     setBusy(true);
     await evaluateSpecimen(id!, { observedSize: latest?.observedSize });
     setBusy(false);
   }
 
+  /**
+   * Reveal, and say so when it declines.
+   *
+   * The old version ignored the return value entirely. That was survivable
+   * while every confirmed catch got a snapshot; under v0.3.0 a decline is the
+   * common case, and swallowing it left a button that looked live and did
+   * nothing. The section above should mean this never fires on an unrateable
+   * species - this handles it anyway, because "should never happen" is how the
+   * first bug got shipped.
+   */
   async function onReveal() {
     setBusy(true);
-    await revealSpecimen(id!);
-    setBusy(false);
+    setRevealError(undefined);
+    try {
+      const outcome = await revealSpecimen(id!);
+      if (outcome.status === 'no-market-evidence') {
+        setRevealError(`${outcome.reason}. ${outcome.explanation}`);
+      } else if (outcome.status === 'not-identified') {
+        setRevealError('This catch needs a confirmed species before it can be rated.');
+      }
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
+      console.error('[reveal] failed from the record', { specimenId: id, error: message });
+      setRevealError(message);
+    } finally {
+      setBusy(false);
+    }
   }
 
   // Market context, auto-populated from the shipped index. No network call.
@@ -124,6 +163,17 @@ export default function SpecimenDetail() {
 
   const price = prices?.[0];
   const title = specimen.nickname ?? specimen.rawLabel ?? 'Mystery Catch';
+
+  /**
+   * Whether this record has a label at all (spec 005).
+   *
+   * `provisional` counts. It is the state for a fish genuinely absent from the
+   * catalog: the store's word, recorded verbatim, and shown as weaker than a
+   * match. Refusing to accept it would leave a real catch with no way forward,
+   * since the catalog cannot contain every fish a shop will sell.
+   */
+  const identified = specimen.identityStatus === 'user-confirmed'
+    || specimen.identityStatus === 'provisional';
 
   return (
     <div className="screen">
@@ -182,6 +232,36 @@ export default function SpecimenDetail() {
         </dl>
       </header>
 
+      {/* --- The gate (spec 005) --------------------------------------------
+          "All records must be identified." Until a label is set, Identity is
+          the only live panel.
+
+          Sealed structurally with an early return rather than by wrapping each
+          section in a condition. There are nine panels below and a per-section
+          guard is one forgotten `&&` away from leaking; this cannot leak.
+
+          Delete stays reachable. A record you cannot identify AND cannot
+          remove would be a genuine trap, and the seal is meant to direct the
+          work, not to hold the user hostage. Nothing here deletes on its own:
+          the media and the draft are intact and stay that way. */}
+      {!identified ? (
+        <>
+          <IdentityPanel specimen={specimen} species={species} />
+          <section className="panel">
+            <p className="panel__note" style={{ marginTop: 0 }}>
+              The rest of this record opens once it has a label. Price, tank screening, Discovery
+              and the story all describe a species, so they have nothing to say until this one has
+              a name. Your photo and the draft are already saved.
+            </p>
+          </section>
+          <DeleteCatch
+            specimenId={id}
+            name={title}
+            onDeleted={() => navigate('/catch', { replace: true })}
+          />
+        </>
+      ) : (
+      <>
       {/* --- Your tanks (PRD 4.4) ------------------------------------------
           First, because standing in the aisle it is the only question that has
           a deadline. */}
@@ -258,61 +338,20 @@ export default function SpecimenDetail() {
       </section>
 
       {/* --- Identity (PRD 4.3) ------------------------------------------- */}
-      <section className="panel">
-        <h2 className="sec-head">Identity</h2>
-        {specimen.identityStatus !== 'user-confirmed' ? (
-          <div className="stack">
-            <p className="panel__note" style={{ marginTop: 0 }}>
-              Unknown is a fine place to leave this. Nothing is lost by not knowing yet.
-            </p>
-            <div>
-              <label htmlFor="species-search">Search species, scientific name or store label</label>
-              <input
-                id="species-search"
-                value={query}
-                onChange={(e) => void onSearch(e.target.value)}
-                placeholder="jaguar cichlid, managuensis, managuense…"
-              />
-            </div>
-            {matches.map((s) => (
-              <button
-                key={s.id}
-                type="button"
-                className="tankrow"
-                disabled={busy}
-                onClick={() => void confirm(s.id)}
-              >
-                <span className="grow">
-                  <span className="tankrow__name">{s.commonName}</span>
-                  {s.scientificName && <span className="tankrow__meta sci" style={{ display: 'block' }}>{s.scientificName}</span>}
-                </span>
-              </button>
-            ))}
-          </div>
-        ) : (
-          <p className="panel__note" style={{ marginTop: 0 }}>
-            You confirmed this yourself. No confidence percentage is recorded, because none was measured.
-          </p>
-        )}
-        <div style={{ marginTop: 'var(--space-3)' }}>
-          <label htmlFor="nickname">Nickname</label>
-          <input
-            id="nickname"
-            defaultValue={specimen.nickname ?? ''}
-            placeholder="the Panther"
-            onBlur={(e) => void db.specimens.update(id, { nickname: e.target.value || undefined })}
-          />
-        </div>
-      </section>
+      <IdentityPanel specimen={specimen} species={species} />
 
       {/* --- Size and price (PRD 4.5) ------------------------------------- */}
       <section className="panel">
         <h2 className="sec-head">Size and price</h2>
 
-        {/* Three prices, kept apart. Ask, member and paid are three different
-            facts and the data model keeps them separate on purpose; collapsing
-            them into "you paid" throws away the distinction PRD 5.4 exists to
-            preserve. */}
+        {/* Ask and paid are two different facts and the data model keeps them
+            apart on purpose; collapsing them into "you paid" throws away the
+            distinction PRD 5.4 exists to preserve.
+
+            Member is no longer captured, but it is still DISPLAYED when a
+            record already carries one. Dropping the field is a decision about
+            what to ask for next time, not a licence to hide a figure the user
+            already wrote down. */}
         {price && (
           <dl className="prices" style={{ marginBottom: 'var(--space-4)' }}>
             <div>
@@ -321,12 +360,12 @@ export default function SpecimenDetail() {
                 {price.askingPrice === undefined ? 'not noted' : `$${price.askingPrice}`}
               </dd>
             </div>
-            <div>
-              <dt>Member</dt>
-              <dd className={price.memberPrice === undefined ? 'is-blank' : undefined}>
-                {price.memberPrice === undefined ? 'not noted' : `$${price.memberPrice}`}
-              </dd>
-            </div>
+            {price.memberPrice !== undefined && (
+              <div>
+                <dt>Member</dt>
+                <dd>${price.memberPrice}</dd>
+              </div>
+            )}
             <div>
               <dt>Paid</dt>
               <dd className={price.paidPrice === undefined ? 'is-blank' : undefined}>
@@ -356,17 +395,36 @@ export default function SpecimenDetail() {
       <MarketPanel
         speciesId={specimen.speciesId}
         observedSize={latest?.observedSize}
-        yourPrice={price?.memberPrice ?? price?.askingPrice}
+        yourPrice={price?.askingPrice}
       />
 
       {/* --- Reveal (PRD 4.6) --------------------------------------------- */}
       {specimen.identityStatus === 'user-confirmed' && (
         <section className="panel">
           <h2 className="sec-head">Discovery</h2>
-          {!snapshot ? (
-            <button type="button" className="cta" onClick={() => void onReveal()} disabled={busy}>
-              Reveal
-            </button>
+          {!snapshot && !marketScarcity.available ? (
+            /* NO BUTTON, because pressing it could not do anything.
+​
+               v0.3.0 scores on market evidence alone, and 1,703 of 2,178
+               species have none - so for most of the catalog revealSpecimen
+               declines and writes nothing. The button was still rendered and
+               still enabled, so it sat there doing nothing at all, forever,
+               with no explanation. An affordance that cannot act is worse than
+               no affordance: it reads as a broken app rather than an honest
+               refusal. */
+            <>
+              <p className="panel__note" style={{ marginTop: 0 }}>
+                <strong>Not rated.</strong> {marketScarcity.reason}.
+              </p>
+              <p className="panel__note panel__note--tight">{marketScarcity.explanation}</p>
+            </>
+          ) : !snapshot ? (
+            <>
+              <button type="button" className="cta" onClick={() => void onReveal()} disabled={busy}>
+                {busy ? 'Revealing…' : 'Reveal'}
+              </button>
+              {revealError && <p className="warn">{revealError}</p>}
+            </>
           ) : (
             <div className={specimen.golden ? 'reveal-card reveal-card--golden golden' : 'reveal-card'}>
               <div className="spread" style={{ marginBottom: 'var(--space-3)' }}>
@@ -417,24 +475,72 @@ export default function SpecimenDetail() {
       {/* --- Correct the record (FR-C03) ----------------------------------- */}
       <EditCatchForm
         specimenId={id}
-        nickname={specimen.nickname}
         rawLabel={specimen.rawLabel}
         encounter={latest}
         places={places ?? []}
       />
 
-      {/* --- Bring home (PRD 4.8) ----------------------------------------- */}
-      {specimen.status !== 'resident' && (
-        <section className="panel">
-          <h2 className="sec-head">If it comes home</h2>
-          <p className="panel__note" style={{ marginTop: 0 }}>
-            Nothing here needs to happen. A catch is documentation, not acquisition.
-          </p>
-          <div style={{ marginTop: 'var(--space-3)' }}>
-            <BringHome specimenId={id} aquariums={aquariums ?? []} />
-          </div>
-        </section>
-      )}
+      {/* --- Bring home (PRD 4.8, spec 005) ---------------------------------
+          This used to be gated on `status !== 'resident'`, which is a proxy
+          for "is it in a tank" and a wrong one: ensureSpecimenForHolding
+          stamps a photo-minted specimen `resident` at birth, so adding a photo
+          to a fish you already keep produced a record with the tank section
+          permanently hidden. Asks the real question now. */}
+      <section className="panel">
+        <h2 className="sec-head">If it comes home</h2>
+
+        {placement === undefined ? (
+          <p className="panel__note" style={{ marginTop: 0 }}>Checking…</p>
+        ) : placed.length === 0 ? (
+          <>
+            <p className="panel__note" style={{ marginTop: 0 }}>
+              Nothing here needs to happen. A catch is documentation, not acquisition.
+            </p>
+            <div style={{ marginTop: 'var(--space-3)' }}>
+              {unplaced.length > 0 ? (
+                /* It already has a holding - imported, or minted when you
+                   added a photo - it is just not in a tank. Placing the
+                   holding it has beats minting a second one. */
+                <PlaceHolding
+                  holdingId={unplaced[0]!.holding.id}
+                  aquariums={aquariums ?? []}
+                  defaultQuantity={latest?.quantitySeen}
+                />
+              ) : (
+                <BringHome
+                  specimenId={id}
+                  aquariums={aquariums ?? []}
+                  defaultQuantity={latest?.quantitySeen}
+                />
+              )}
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="panel__note" style={{ marginTop: 0 }}>
+              {placed.map((p) => `${p.aquarium!.name} (×${p.quantity})`).join(', ')}
+            </p>
+            {/* A holding lives in one tank, always - moveHolding closes one
+                residency before opening the next. So the same species in two
+                tanks is two holdings, which is exactly how the inventory
+                import already records it. */}
+            <details style={{ marginTop: 'var(--space-3)' }}>
+              <summary className="prompt__act" style={{ cursor: 'pointer' }}>
+                Also add to another tank
+              </summary>
+              <div style={{ marginTop: 'var(--space-3)' }}>
+                <StockAnotherTank
+                  speciesId={specimen.speciesId}
+                  rawLabel={specimen.nickname ?? specimen.rawLabel}
+                  aquariums={(aquariums ?? []).filter(
+                    (t) => !placed.some((p) => p.aquarium!.id === t.id),
+                  )}
+                />
+              </div>
+            </details>
+          </>
+        )}
+      </section>
 
       {/* --- Delete. Last, and behind a confirmation that states the cost. -- */}
       <DeleteCatch
@@ -442,6 +548,8 @@ export default function SpecimenDetail() {
         name={specimen.nickname ?? specimen.rawLabel ?? 'this catch'}
         onDeleted={() => navigate('/')}
       />
+      </>
+      )}
     </div>
   );
 }
@@ -458,12 +566,18 @@ export default function SpecimenDetail() {
  * So the tank choice is now just a choice, and a labelled button does the
  * writing - after saying in words what it is about to record.
  */
-function BringHome({ specimenId, aquariums }: {
-  specimenId: string; aquariums: Array<{ id: string; name: string }>;
+function BringHome({ specimenId, aquariums, defaultQuantity }: {
+  specimenId: string;
+  aquariums: Array<{ id: string; name: string }>;
+  defaultQuantity?: number;
 }) {
   const [tankId, setTankId] = useState('');
+  const [qty, setQty] = useState(String(defaultQuantity ?? 1));
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | undefined>();
   const chosen = aquariums.find((t) => t.id === tankId);
+  const n = Number(qty);
+  const validQty = Number.isInteger(n) && n >= 1;
 
   return (
     <>
@@ -475,12 +589,167 @@ function BringHome({ specimenId, aquariums }: {
 
       {chosen && (
         <>
+          {/* acquireSpecimen has always accepted a quantity; this screen was
+              calling it without one and silently recording 1. Defaults to
+              however many the encounter says you saw, rather than asking a
+              question the record has already answered. */}
+          <div style={{ marginTop: 'var(--space-3)' }}>
+            <label htmlFor="acquire-qty">How many</label>
+            <input
+              id="acquire-qty" inputMode="numeric" value={qty}
+              onChange={(e) => setQty(e.target.value)}
+            />
+          </div>
+
           <p className="panel__note panel__note--tight">
-            Records that you own this fish and that it lives in {chosen.name} from today. It then
+            Records that you own {validQty && n > 1 ? `${n} of these` : 'this fish'} and that
+            {validQty && n > 1 ? ' they live' : ' it lives'} in {chosen.name} from today. It then
             appears in that tank, and the catch can no longer be deleted.
           </p>
-          <button type="button" className="btn btn--primary" disabled={busy}
-            onClick={async () => { setBusy(true); await acquireSpecimen(specimenId, chosen.id); setBusy(false); }}>
+          {error && <p className="warn">{error}</p>}
+          <button
+            type="button" className="btn btn--primary" disabled={busy || !validQty}
+            onClick={async () => {
+              setBusy(true);
+              setError(undefined);
+              try {
+                await acquireSpecimen(specimenId, chosen.id, { quantity: n });
+              } catch (e) {
+                const message = e instanceof Error ? e.message : String(e);
+                console.error('[stock] bring home failed', { specimenId, tankId: chosen.id, quantity: n, error: message });
+                setError(message);
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            {busy ? 'Recording…' : `Add to ${chosen.name}`}
+          </button>
+        </>
+      )}
+    </>
+  );
+}
+
+/**
+ * Put a holding that exists but lives nowhere into a tank.
+ *
+ * The case the old screen could not reach at all: an imported opening-balance
+ * row whose residency was closed, or a holding minted by adding a photo. The
+ * fish is already recorded as yours, so this opens a residency on the holding
+ * it has rather than minting a second one.
+ */
+function PlaceHolding({ holdingId, aquariums, defaultQuantity }: {
+  holdingId: string;
+  aquariums: Array<{ id: string; name: string }>;
+  defaultQuantity?: number;
+}) {
+  const [tankId, setTankId] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | undefined>();
+  const chosen = aquariums.find((t) => t.id === tankId);
+  void defaultQuantity; // the holding already carries its own count
+
+  return (
+    <>
+      <label htmlFor="place-tank">This one is yours already. Put it in</label>
+      <select id="place-tank" value={tankId} onChange={(e) => setTankId(e.target.value)}>
+        <option value="">Choose a tank…</option>
+        {aquariums.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+      </select>
+
+      {chosen && (
+        <>
+          <p className="panel__note panel__note--tight">
+            Records that it lives in {chosen.name} from today. The count it already carries is kept.
+          </p>
+          {error && <p className="warn">{error}</p>}
+          <button
+            type="button" className="btn btn--primary" disabled={busy}
+            onClick={async () => {
+              setBusy(true);
+              setError(undefined);
+              try {
+                await moveHolding(holdingId, chosen.id);
+              } catch (e) {
+                const message = e instanceof Error ? e.message : String(e);
+                console.error('[stock] place failed', { holdingId, tankId: chosen.id, error: message });
+                setError(message);
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            {busy ? 'Recording…' : `Put in ${chosen.name}`}
+          </button>
+        </>
+      )}
+    </>
+  );
+}
+
+/**
+ * The same species, in a second tank.
+ *
+ * Not a move. A holding is in one tank for its whole life, so "one in the 75
+ * and one in the 40" is two holdings - which is already how the inventory
+ * import records two spreadsheet rows of the same fish.
+ */
+function StockAnotherTank({ speciesId, rawLabel, aquariums }: {
+  speciesId?: string;
+  rawLabel?: string;
+  aquariums: Array<{ id: string; name: string }>;
+}) {
+  const [tankId, setTankId] = useState('');
+  const [qty, setQty] = useState('1');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | undefined>();
+  const [done, setDone] = useState(false);
+  const chosen = aquariums.find((t) => t.id === tankId);
+  const n = Number(qty);
+  const validQty = Number.isInteger(n) && n >= 1;
+
+  if (aquariums.length === 0) {
+    return <p className="panel__note" style={{ marginTop: 0 }}>It is already in every tank you have.</p>;
+  }
+
+  return (
+    <>
+      <label htmlFor="stock-tank">Also in</label>
+      <select id="stock-tank" value={tankId} onChange={(e) => { setTankId(e.target.value); setDone(false); }}>
+        <option value="">Choose a tank…</option>
+        {aquariums.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+      </select>
+
+      {chosen && (
+        <>
+          <div style={{ marginTop: 'var(--space-3)' }}>
+            <label htmlFor="stock-qty">How many</label>
+            <input id="stock-qty" inputMode="numeric" value={qty} onChange={(e) => setQty(e.target.value)} />
+          </div>
+          <p className="panel__note panel__note--tight">
+            Records {validQty ? n : '—'} more of this species in {chosen.name}, as its own entry.
+            The ones you already have are not moved.
+          </p>
+          {error && <p className="warn">{error}</p>}
+          {done && <p className="panel__note panel__note--tight">Added to {chosen.name}.</p>}
+          <button
+            type="button" className="btn btn--primary" disabled={busy || !validQty}
+            onClick={async () => {
+              setBusy(true);
+              setError(undefined);
+              try {
+                await stockTank({ aquariumId: chosen.id, speciesId, rawLabel, quantity: n });
+                setDone(true);
+              } catch (e) {
+                const message = e instanceof Error ? e.message : String(e);
+                console.error('[stock] second tank failed', { speciesId, tankId: chosen.id, quantity: n, error: message });
+                setError(message);
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
             {busy ? 'Recording…' : `Add to ${chosen.name}`}
           </button>
         </>
@@ -505,16 +774,14 @@ function toLocalInput(iso: string | undefined): string {
  * include the species - changing that goes through the Identity block above,
  * which supersedes the old assertion instead of overwriting it.
  */
-function EditCatchForm({ specimenId, nickname, rawLabel, encounter, places }: {
+function EditCatchForm({ specimenId, rawLabel, encounter, places }: {
   specimenId: string;
-  nickname?: string;
   rawLabel?: string;
   encounter?: { id: string; observedAt: string; placeId?: string; quantitySeen?: number; notes?: string };
   places: Array<{ id: string; name: string }>;
 }) {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
-    nickname: nickname ?? '',
     rawLabel: rawLabel ?? '',
     observedAt: toLocalInput(encounter?.observedAt),
     placeId: encounter?.placeId ?? '',
@@ -529,7 +796,6 @@ function EditCatchForm({ specimenId, nickname, rawLabel, encounter, places }: {
   function reopen() {
     if (!open) {
       setForm({
-        nickname: nickname ?? '',
         rawLabel: rawLabel ?? '',
         observedAt: toLocalInput(encounter?.observedAt),
         placeId: encounter?.placeId ?? '',
@@ -547,8 +813,10 @@ function EditCatchForm({ specimenId, nickname, rawLabel, encounter, places }: {
     await updateCatch({
       specimenId,
       encounterId: encounter?.id,
+      // Nickname is deliberately absent: Identity owns it, and updateCatch
+      // only writes fields the caller mentions. Submitting a stale copy from
+      // here would silently revert a nickname edited above while this was open.
       // Empty means "clear it", which null expresses and undefined does not.
-      nickname: form.nickname.trim() || null,
       rawLabel: form.rawLabel.trim() || null,
       ...(form.observedAt ? { observedAt: new Date(form.observedAt).toISOString() } : {}),
       placeId: form.placeId || null,
@@ -578,13 +846,9 @@ function EditCatchForm({ specimenId, nickname, rawLabel, encounter, places }: {
       {open && (
         <div className="capture" style={{ marginTop: 'var(--space-3)' }}>
           <p className="panel__note" style={{ marginTop: 0, gridColumn: '1 / -1' }}>
-            Corrects what you recorded. To change which species this is, use Identity above, which
-            keeps the earlier answer instead of overwriting it.
+            Corrects what you recorded. The label and the nickname both live in Identity above -
+            changing the species there keeps the earlier answer instead of overwriting it.
           </p>
-
-          <label htmlFor="edit-nickname">Name</label>
-          <input id="edit-nickname" value={form.nickname} onChange={set('nickname')}
-            placeholder="the Panther" />
 
           <label htmlFor="edit-rawlabel">The store&apos;s label, as written</label>
           <input id="edit-rawlabel" value={form.rawLabel} onChange={set('rawLabel')}
@@ -739,11 +1003,131 @@ function lede(verdicts: Verdict[]): string {
   return head + tail;
 }
 
+/**
+ * The two things a record is called: what it is, and what you call it.
+ *
+ * Label is REQUIRED as of spec 005 - "all records must be identified". The
+ * panel is always editable, including after confirmation. It used to collapse
+ * into a sentence once confirmed, which meant the panel that made a
+ * misidentification was the one place you could not correct it.
+ *
+ * `provisional` is the state for a fish genuinely absent from the catalog: the
+ * store label is recorded verbatim and the record proceeds, but it is shown as
+ * the weaker identification it is rather than being dressed up as a match.
+ */
+function IdentityPanel({ specimen, species }: {
+  specimen: Specimen;
+  species?: { commonName: string; scientificName?: string };
+}) {
+  const [query, setQuery] = useState('');
+  const [matches, setMatches] = useState<Species[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [changing, setChanging] = useState(false);
+
+  const confirmed = specimen.identityStatus === 'user-confirmed';
+  const provisional = specimen.identityStatus === 'provisional';
+
+  async function onSearch(value: string) {
+    setQuery(value);
+    setMatches(value.trim() ? await searchSpecies(value) : []);
+  }
+
+  async function confirm(speciesId: string) {
+    setBusy(true);
+    await assertIdentity({ specimenId: specimen.id, speciesId, source: 'user', status: 'user-confirmed' });
+    setQuery('');
+    setMatches([]);
+    setChanging(false);
+    setBusy(false);
+  }
+
+  const searching = !confirmed || changing;
+
+  return (
+    <section className="panel">
+      <h2 className="sec-head">Identity</h2>
+
+      <div>
+        <label htmlFor="species-search">
+          Label <span className="req" aria-hidden="true">*</span>
+          <span className="visually-hidden"> (required)</span>
+        </label>
+
+        {confirmed && species && !changing && (
+          <div className="tankrow" style={{ marginTop: 'var(--space-2)' }}>
+            <span className="grow">
+              <span className="tankrow__name">{species.commonName}</span>
+              {species.scientificName && (
+                <span className="tankrow__meta sci" style={{ display: 'block' }}>{species.scientificName}</span>
+              )}
+            </span>
+            <button type="button" className="prompt__act" onClick={() => setChanging(true)}>
+              Change
+            </button>
+          </div>
+        )}
+
+        {searching && (
+          <>
+            <input
+              id="species-search"
+              value={query}
+              onChange={(e) => void onSearch(e.target.value)}
+              placeholder="jaguar cichlid, managuensis, managuense…"
+            />
+            {matches.map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                className="tankrow"
+                disabled={busy}
+                onClick={() => void confirm(s.id)}
+              >
+                <span className="grow">
+                  <span className="tankrow__name">{s.commonName}</span>
+                  {s.scientificName && <span className="tankrow__meta sci" style={{ display: 'block' }}>{s.scientificName}</span>}
+                </span>
+              </button>
+            ))}
+            {changing && (
+              <button type="button" className="prompt__act" onClick={() => { setChanging(false); setQuery(''); setMatches([]); }}>
+                Keep {species?.commonName ?? 'the current label'}
+              </button>
+            )}
+          </>
+        )}
+      </div>
+
+      {provisional && (
+        <p className="panel__note">
+          Recorded as <strong>{specimen.rawLabel}</strong>, which is what the tag said. Nothing in the
+          catalog matched it, so this is the store&apos;s word rather than a confirmed species. Search
+          above if it turns up later.
+        </p>
+      )}
+      {confirmed && (
+        <p className="panel__note">
+          You confirmed this yourself. No confidence percentage is recorded, because none was measured.
+        </p>
+      )}
+
+      <div style={{ marginTop: 'var(--space-3)' }}>
+        <label htmlFor="nickname">Nickname <span className="faint">(optional)</span></label>
+        <input
+          id="nickname"
+          defaultValue={specimen.nickname ?? ''}
+          placeholder="the Panther"
+          onBlur={(e) => void db.specimens.update(specimen.id, { nickname: e.target.value || undefined })}
+        />
+      </div>
+    </section>
+  );
+}
+
 function PriceForm({ specimenId, speciesId, encounterId, marketEstimate }: {
   specimenId: string; speciesId?: string; encounterId?: string; marketEstimate?: number;
 }) {
   const [asking, setAsking] = useState('');
-  const [member, setMember] = useState('');
   const [size, setSize] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -751,15 +1135,17 @@ function PriceForm({ specimenId, speciesId, encounterId, marketEstimate }: {
     setSaving(true);
     const observedSize = size ? { value: Number(size), unit: 'in' as const, estimate: true } : undefined;
     if (encounterId && observedSize) await db.encounters.update(encounterId, { observedSize });
-    if (asking || member) {
+    if (asking) {
+      // recordPrice still accepts memberPrice and paidPrice. The form stopped
+      // asking; the store did not stop having member pricing, and a record
+      // written before this change keeps its figure.
       await recordPrice({
         specimenId, speciesId, encounterId,
-        askingPrice: asking ? Number(asking) : undefined,
-        memberPrice: member ? Number(member) : undefined,
+        askingPrice: Number(asking),
         observedSize,
       });
     }
-    setAsking(''); setMember(''); setSize('');
+    setAsking(''); setSize('');
     setSaving(false);
   }
 
@@ -776,16 +1162,12 @@ function PriceForm({ specimenId, speciesId, encounterId, marketEstimate }: {
             placeholder={marketEstimate !== undefined ? String(marketEstimate) : '100'}
           />
         </div>
-        <div>
-          <label htmlFor="member">Member price</label>
-          <input id="member" inputMode="decimal" value={member} onChange={(e) => setMember(e.target.value)} placeholder="75" />
-        </div>
         <div className="capture--wide">
           <label htmlFor="size">Approximate size (inches)</label>
           <input id="size" inputMode="decimal" value={size} onChange={(e) => setSize(e.target.value)} placeholder="6" />
         </div>
       </div>
-      <button type="button" onClick={() => void save()} disabled={saving || (!asking && !member && !size)}>
+      <button type="button" onClick={() => void save()} disabled={saving || (!asking && !size)}>
         Record
       </button>
       {marketEstimate !== undefined && (
@@ -795,7 +1177,7 @@ function PriceForm({ specimenId, speciesId, encounterId, marketEstimate }: {
         </p>
       )}
       <p className="xs faint" style={{ marginBottom: 0 }}>
-        No price tag? Leave both blank. Blank means unknown, not free.
+        No price tag? Leave it blank. Blank means unknown, not free.
       </p>
     </div>
   );
