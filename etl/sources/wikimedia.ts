@@ -1,19 +1,25 @@
 /**
  * Species portraits from Wikimedia Commons.
  *
- * WHY WIKIMEDIA AND NOT STORE PHOTOS. A 图鉴 needs a canonical portrait of the
- * SPECIES, and it needs to be one we are actually allowed to publish. Store
- * product photos are neither: they depict one animal that was for sale, they
- * are the vendor's copyrighted work, and hotlinking them would both break when
- * the listing is delisted and consume someone else's bandwidth.
+ * WHY WIKIMEDIA FIRST. A 图鉴 needs a canonical portrait of the SPECIES, not
+ * of one animal that happened to be for sale. Wikimedia images come with
+ * machine-readable licence and author metadata, which is the whole point -
+ * when a stated free licence exists, it beats borrowed art, so this source is
+ * tried before any vendor or web fallback. Every record here still carries
+ * `license` when Commons has one, plus `artist` and an `attribution_url` back
+ * to the file page, and the catalog UI renders them.
  *
- * Wikimedia images come with machine-readable licence and author metadata,
- * which is the whole point - an image whose licence we cannot state is an
- * image we cannot ship. Every record here carries `license`, `artist` and an
- * `attribution_url` back to the file page, and the catalog UI renders them.
- *
- * Store photos still have a place, but attached to the LISTING they depict
- * rather than promoted to the species portrait.
+ * WHY STORE PHOTOS ARE NO LONGER RULED OUT. This module used to also argue
+ * that store photos hotlink a vendor's CDN and rot when the listing is
+ * delisted. Neither holds: `build-portraits.ts` downloads bytes once at build
+ * time and commits them, so a delisting can only break the attribution link,
+ * not the image, and a single build-time fetch is not the same as hotlinking
+ * on every page load. What is left is that a product photo is the vendor's
+ * copyrighted work, and that objection Spec 002 answers with a decision, not
+ * an argument: the product owner chose to accept vendor and web photos for
+ * this personal field guide, credited honestly, to cover the species Commons
+ * has no article for. See `isPublishable` below for what "credited honestly"
+ * requires.
  */
 
 const API = 'https://en.wikipedia.org/w/api.php';

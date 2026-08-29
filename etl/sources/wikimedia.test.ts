@@ -57,6 +57,21 @@ describe('isPublishable', () => {
     })).toBe(true);
   });
 
+  it('accepts a Wikimedia image whose licence lookup failed, because the file page still states it', () => {
+    // Reachable today: fetchSpeciesPortrait wraps the Commons licence lookup in
+    // a try/catch and falls through on failure, so license can be undefined on
+    // a real Wikimedia hit. Spec 002's rule is traceability, and the file page
+    // URL satisfies it - a human can open it and read the licence there. The
+    // credit line never claims a licence it does not have, it just names the
+    // photographer, so shipping this is honest rather than a loophole.
+    expect(isPublishable({
+      ...base, source: 'wikimedia', provenance: 'wikimedia',
+      url: 'https://upload.wikimedia.org/wikipedia/commons/a/b/Fish.jpg',
+      artist: 'H. Zell',
+      attributionUrl: 'https://commons.wikimedia.org/wiki/File:Fish.jpg',
+    })).toBe(true);
+  });
+
   it('accepts a vendor photo with no licence but a stated source', () => {
     // Spec 002: the test is "sourced", not "licensed". A vendor listing photo
     // has no CC licence and never will, but it has a page we can point at.
