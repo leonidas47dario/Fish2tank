@@ -16,11 +16,12 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { db } from '@/data/db';
 import {
-  clearTankPhoto, deleteTank, moveHolding, planDeleteTank, recordDeath, setAquariumStatus,
+  adjustHoldingQuantity, clearTankPhoto, deleteTank, moveHolding, planDeleteTank, recordDeath,
+  searchSpecies, setAquariumStatus, stockTank,
   type DeleteTankPlan,
 } from '@/data/repositories';
 import { formatVolume } from '@/domain/units';
-import type { Aquarium, StockingState } from '@/domain/types';
+import type { Aquarium, Species, StockingState } from '@/domain/types';
 import {
   AGGRESSION_LABEL, forDisplay, summariseTank,
   type TankResident, type TankStats,
@@ -340,6 +341,16 @@ function TankManage({ aquarium, residents, allTanks }: {
                   <option key={t.id} value={t.id}>{t.name}</option>
                 ))}
               </select>
+              {/* recordDeath has always written a negative delta and nothing
+                  wrote a positive one, so buying three more of a fish you
+                  already keep was unrecordable. */}
+              <button
+                type="button"
+                className="btn--ghost"
+                onClick={() => void adjustHoldingQuantity({ holdingId: r.holding.id, delta: 1 })}
+              >
+                Add one
+              </button>
               <button
                 type="button"
                 className="btn--ghost"
@@ -351,6 +362,126 @@ function TankManage({ aquarium, residents, allTanks }: {
           </li>
         ))}
       </ul>
+
+      <AddFish aquariumId={aquarium.id} tankName={aquarium.name} />
+    </div>
+  );
+}
+
+/**
+ * Put a fish in this tank without going through the catch journey.
+ *
+ * The gap this fills: before spec 005 the only routes into a tank were the
+ * inventory import and photographing a fish in a shop. A fish you already keep
+ * and never photographed could not be recorded at all.
+ *
+ * Creates a holding and no specimen, on purpose. Holding.specimenId is
+ * optional by design (FR-T02) and the species page mints a specimen the moment
+ * you add a photo, so eagerly creating one here would duplicate that path and
+ * invent an encounter that never happened.
+ */
+function AddFish({ aquariumId, tankName }: { aquariumId: string; tankName: string }) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const [matches, setMatches] = useState<Species[]>([]);
+  const [picked, setPicked] = useState<Species | undefined>();
+  const [qty, setQty] = useState('1');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | undefined>();
+  const [added, setAdded] = useState<string | undefined>();
+
+  const n = Number(qty);
+  const validQty = Number.isInteger(n) && n >= 1;
+
+  async function onSearch(value: string) {
+    setQuery(value);
+    setPicked(undefined);
+    setMatches(value.trim() ? await searchSpecies(value) : []);
+  }
+
+  function reset() {
+    setQuery(''); setMatches([]); setPicked(undefined); setQty('1'); setError(undefined);
+  }
+
+  async function save() {
+    if (!picked) return;
+    setBusy(true);
+    setError(undefined);
+    try {
+      await stockTank({ aquariumId, speciesId: picked.id, rawLabel: picked.commonName, quantity: n });
+      setAdded(`${picked.commonName} ×${n}`);
+      reset();
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
+      console.error('[stock] add fish failed', { aquariumId, speciesId: picked.id, quantity: n, error: message });
+      setError(message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!open) {
+    return (
+      <button type="button" className="btn" onClick={() => { setOpen(true); setAdded(undefined); }}>
+        ⊕  Add a fish
+      </button>
+    );
+  }
+
+  return (
+    <div className="card stack">
+      <div className="spread">
+        <strong>Add a fish to {tankName}</strong>
+        <button type="button" className="btn--ghost" onClick={() => { setOpen(false); reset(); }}>
+          Done
+        </button>
+      </div>
+
+      {added && <p className="xs muted">Added {added}.</p>}
+
+      <div>
+        <label htmlFor={`add-q-${aquariumId}`}>Which fish</label>
+        <input
+          id={`add-q-${aquariumId}`}
+          value={picked ? picked.commonName : query}
+          onChange={(e) => void onSearch(e.target.value)}
+          placeholder="congo puffer, rocket gar, cory…"
+        />
+      </div>
+
+      {!picked && matches.slice(0, 8).map((s) => (
+        <button
+          key={s.id} type="button" className="tankrow"
+          onClick={() => { setPicked(s); setMatches([]); }}
+        >
+          <span className="grow">
+            <span className="tankrow__name">{s.commonName}</span>
+            {s.scientificName && (
+              <span className="tankrow__meta sci" style={{ display: 'block' }}>{s.scientificName}</span>
+            )}
+          </span>
+        </button>
+      ))}
+
+      {picked && (
+        <>
+          <div>
+            <label htmlFor={`add-n-${aquariumId}`}>How many</label>
+            <input
+              id={`add-n-${aquariumId}`} inputMode="numeric" value={qty}
+              onChange={(e) => setQty(e.target.value)}
+            />
+          </div>
+          <p className="xs muted">
+            Recorded as living in {tankName} from today. No photo is needed — add one later from the
+            species page and it becomes this fish&apos;s own record.
+          </p>
+          {error && <p className="warn">{error}</p>}
+          <button type="button" className="btn btn--primary" disabled={busy || !validQty} onClick={() => void save()}>
+            {busy ? 'Adding…' : `Add ${validQty ? n : ''} ${picked.commonName}`.trim()}
+          </button>
+        </>
+      )}
     </div>
   );
 }

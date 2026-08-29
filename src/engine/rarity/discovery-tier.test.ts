@@ -2,99 +2,96 @@ import { describe, expect, it } from 'vitest';
 import {
   computeDiscoveryTier,
   DEFAULT_TIER_CONFIG,
+  COMPONENT_LABELS,
   LOCAL_RARITY_UNAVAILABLE,
-  scarcityPoints,
   tierForScore,
   type DiscoveryTierInput,
 } from './discovery-tier';
+import type { RaritySnapshot } from '@/domain/types';
 
-const ENCOUNTER = '2026-08-27T15:00:00.000Z';
-const BEFORE = '2026-01-01T00:00:00.000Z';
-const AFTER = '2026-09-01T00:00:00.000Z';
+const REVEALED = '2026-08-27T15:00:00.000Z';
 
 function input(over: Partial<DiscoveryTierInput> = {}): DiscoveryTierInput {
-  return {
-    specimenId: 'spec_1',
-    speciesId: 'sp_1',
-    isFirstConfirmedSpecies: false,
-    encounterAt: ENCOUNTER,
-    priorConfirmedCatches: 0,
-    priorCatchesOfSpecies: 0,
-    isExceptionalSpecimen: false,
-    ...over,
-  };
+  return { specimenId: 'spec_1', speciesId: 'sp_1', marketScarcityScore: 0, ...over };
 }
 
 const reveal = (over: Partial<DiscoveryTierInput> = {}) =>
   computeDiscoveryTier(input(over), DEFAULT_TIER_CONFIG, {
     snapshotId: 'rar_test',
-    revealedAt: ENCOUNTER,
+    revealedAt: REVEALED,
   });
 
-describe('components (PRD 5.3)', () => {
-  it('awards the first-species points', () => {
-    expect(reveal({ isFirstConfirmedSpecies: true }).components.firstConfirmedSpecies)
-      .toBe(DEFAULT_TIER_CONFIG.points.firstConfirmedSpecies);
+describe('the score is the market scarcity score (v0.3.0)', () => {
+  it.each([0, 21, 37, 64, 100])('passes %i through unchanged', (score) => {
+    expect(reveal({ marketScarcityScore: score }).totalScore).toBe(score);
   });
 
-  it('awards nothing for a species already in the collection', () => {
-    expect(reveal({ isFirstConfirmedSpecies: false }).components.firstConfirmedSpecies).toBe(0);
+  it('clamps a score above the range rather than trusting it', () => {
+    expect(reveal({ marketScarcityScore: 140 }).totalScore).toBe(100);
   });
 
-  it('awards the Dream List points when it was listed before the encounter', () => {
-    expect(reveal({ dreamListAddedAt: BEFORE }).components.dreamListHit)
-      .toBe(DEFAULT_TIER_CONFIG.points.dreamListHit);
+  it('clamps a negative score to zero', () => {
+    expect(reveal({ marketScarcityScore: -20 }).totalScore).toBe(0);
   });
 
-  it('awards nothing when the Dream List entry came after the encounter (FR-R08)', () => {
-    expect(reveal({ dreamListAddedAt: AFTER }).components.dreamListHit).toBe(0);
-  });
-
-  it('awards nothing when the species was never on the Dream List', () => {
-    expect(reveal().components.dreamListHit).toBe(0);
-  });
-
-  it('awards 10 for a user-marked exceptional specimen', () => {
-    expect(reveal({ isExceptionalSpecimen: true }).components.exceptionalSpecimen).toBe(10);
+  /**
+   * The whole point of v0.3.0. Personal history used to carry 85 of the 100
+   * points, so these inputs moved the score; now nothing but the market does.
+   */
+  it('ignores personal history entirely', () => {
+    const snap = reveal({ marketScarcityScore: 30 });
+    expect(snap.totalScore).toBe(30);
+    expect(snap.components).toEqual({ marketScarcity: 30 });
   });
 });
 
-describe('personal encounter scarcity', () => {
-  const cfg = DEFAULT_TIER_CONFIG;
-
-  it('scores zero on a cold-start collection with no history', () => {
-    expect(scarcityPoints(0, 0, cfg)).toBe(0);
+describe('retired components (v0.2.0 -> v0.3.0)', () => {
+  it('emits only marketScarcity on a new snapshot', () => {
+    expect(Object.keys(reveal({ marketScarcityScore: 55 }).components)).toEqual(['marketScarcity']);
   });
 
-  it('scores full marks for a never-seen species in a well-established history', () => {
-    expect(scarcityPoints(40, 0, cfg)).toBe(15);
+  it.each([
+    'firstConfirmedSpecies',
+    'dreamListHit',
+    'personalEncounterScarcity',
+    'exceptionalSpecimen',
+  ])('keeps a label for retired component %s, so old snapshots still render', (key) => {
+    expect(COMPONENT_LABELS[key as keyof typeof COMPONENT_LABELS]).toBeTruthy();
   });
 
-  it('scales down when there is too little history to judge scarcity', () => {
-    // 5 prior catches is a quarter of the sample floor.
-    expect(scarcityPoints(5, 0, cfg)).toBe(4);
-  });
-
-  it('drops as the species becomes a routine sighting', () => {
-    expect(scarcityPoints(40, 20, cfg)).toBe(8);
-    expect(scarcityPoints(40, 40, cfg)).toBe(0);
-  });
-
-  it('is monotonic: more sightings of a species never raise its scarcity', () => {
-    let previous = Infinity;
-    for (let seen = 0; seen <= 30; seen += 1) {
-      const points = scarcityPoints(30, seen, cfg);
-      expect(points).toBeLessThanOrEqual(previous);
-      previous = points;
-    }
-  });
-
-  it('never exceeds the configured maximum', () => {
-    expect(scarcityPoints(1000, 0, cfg)).toBe(cfg.points.personalEncounterScarcityMax);
+  /**
+   * FR-R05 and PRD 5.3: "tuning never rewrites a historical reveal snapshot."
+   * A stored v0.2.0 snapshot carries five components and must keep rendering
+   * all five - which is why the retired keys became optional rather than gone.
+   */
+  it('a stored v0.2.0 snapshot still exposes its full breakdown', () => {
+    const stored: RaritySnapshot = {
+      id: 'rar_old',
+      specimenId: 'spec_old',
+      speciesId: 'sp_1',
+      components: {
+        firstConfirmedSpecies: 35,
+        dreamListHit: 0,
+        personalEncounterScarcity: 2,
+        exceptionalSpecimen: 0,
+        marketScarcity: 0,
+      },
+      totalScore: 37,
+      tier: 'uncommon',
+      formulaVersion: 'discovery-tier-v0.2.0',
+      golden: false,
+      revealedAt: REVEALED,
+    };
+    const rendered = Object.keys(stored.components).map(
+      (k) => COMPONENT_LABELS[k as keyof typeof COMPONENT_LABELS],
+    );
+    expect(rendered).toHaveLength(5);
+    expect(rendered.every(Boolean)).toBe(true);
+    expect(stored.totalScore).toBe(37);
   });
 });
 
-describe('tier bands (PRD 5.3)', () => {
+describe('tier bands', () => {
   const cases: Array<[number, string]> = [
     [0, 'familiar'], [19, 'familiar'],
     [20, 'uncommon'], [39, 'uncommon'],
@@ -105,129 +102,53 @@ describe('tier bands (PRD 5.3)', () => {
   it.each(cases)('maps score %i to %s', (score, tier) => {
     expect(tierForScore(score, DEFAULT_TIER_CONFIG)).toBe(tier);
   });
-});
 
-describe('market scarcity component (v0.2.0)', () => {
-  it('scales the 0-100 market score into its point budget', () => {
-    expect(reveal({ marketScarcityScore: 100 }).components.marketScarcity)
-      .toBe(DEFAULT_TIER_CONFIG.points.marketScarcityMax);
-    expect(reveal({ marketScarcityScore: 0 }).components.marketScarcity).toBe(0);
-    // The Panther's live market score.
-    expect(reveal({ marketScarcityScore: 76 }).components.marketScarcity).toBe(11);
+  /**
+   * The measured distribution, from the shipped index at three witness stores.
+   * Breadth can only take N values for N witnesses, so the reachable scores
+   * are 0, 21-29 and 55-64 - see market-scarcity.ts. Legendary needs 80 and is
+   * therefore unreachable until a fourth store clears the witness gate. That
+   * is a property of the sample, not a bug, and it is asserted so that a
+   * future change to the bands has to confront it deliberately.
+   */
+  it.each([
+    [0, 'familiar'], [21, 'uncommon'], [29, 'uncommon'],
+    [55, 'rare'], [59, 'rare'], [60, 'epic'], [64, 'epic'],
+  ])('a reachable market score of %i lands on %s', (score, tier) => {
+    expect(reveal({ marketScarcityScore: score }).tier).toBe(tier);
   });
 
-  it('contributes nothing when there is no market data, rather than guessing', () => {
-    // Absence means the title did not match, not that nobody sells it.
-    expect(reveal({ marketScarcityScore: undefined }).components.marketScarcity).toBe(0);
-  });
-
-  it('cannot exceed its budget even if handed an out-of-range score', () => {
-    expect(reveal({ marketScarcityScore: 5000 }).components.marketScarcity)
-      .toBe(DEFAULT_TIER_CONFIG.points.marketScarcityMax);
-    expect(reveal({ marketScarcityScore: -50 }).components.marketScarcity).toBe(0);
-  });
-
-  it('lifts a familiar fish into a higher band when it is hard to source', () => {
-    const easy = reveal({ priorConfirmedCatches: 30, priorCatchesOfSpecies: 25, marketScarcityScore: 0 });
-    const hard = reveal({ priorConfirmedCatches: 30, priorCatchesOfSpecies: 25, marketScarcityScore: 100 });
-    expect(hard.totalScore).toBeGreaterThan(easy.totalScore);
+  it('no reachable score at three witnesses reaches legendary', () => {
+    const reachable = [0, 21, 22, 23, 24, 25, 26, 27, 29, 55, 56, 57, 58, 59, 60, 61, 63, 64];
+    expect(reachable.some((s) => reveal({ marketScarcityScore: s }).tier === 'legendary')).toBe(false);
   });
 });
 
-describe('total score', () => {
-  it('sums all five components', () => {
-    const r = reveal({
-      isFirstConfirmedSpecies: true,
-      dreamListAddedAt: BEFORE,
-      priorConfirmedCatches: 40,
-      priorCatchesOfSpecies: 0,
-      isExceptionalSpecimen: true,
-      marketScarcityScore: 100,
-    });
-    expect(r.components).toEqual({
-      firstConfirmedSpecies: 35,
-      dreamListHit: 25,
-      personalEncounterScarcity: 15,
-      exceptionalSpecimen: 10,
-      marketScarcity: 15,
-    });
-    expect(r.totalScore).toBe(100);
-    expect(r.tier).toBe('legendary');
+describe('snapshot integrity (FR-R05)', () => {
+  it('stamps the new formula version', () => {
+    expect(reveal().formulaVersion).toBe('discovery-tier-v0.3.0');
   });
 
-  it('still tops out at exactly 100 with every component maxed', () => {
-    const p = DEFAULT_TIER_CONFIG.points;
-    expect(p.firstConfirmedSpecies + p.dreamListHit + p.personalEncounterScarcityMax
-      + p.exceptionalSpecimen + p.marketScarcityMax).toBe(100);
+  it('carries the golden overlay without letting it touch the score', () => {
+    const plain = reveal({ marketScarcityScore: 64 });
+    const gold = reveal({ marketScarcityScore: 64, golden: true });
+    expect(gold.golden).toBe(true);
+    expect(gold.totalScore).toBe(plain.totalScore);
+    expect(gold.tier).toBe(plain.tier);
   });
 
-  it('clamps to the 0-100 range even if weights are retuned upward', () => {
-    const generous = {
-      ...DEFAULT_TIER_CONFIG,
-      points: { firstConfirmedSpecies: 90, dreamListHit: 90, personalEncounterScarcityMax: 90, exceptionalSpecimen: 90, marketScarcityMax: 90 },
-    };
-    const r = computeDiscoveryTier(
-      input({ isFirstConfirmedSpecies: true, dreamListAddedAt: BEFORE, isExceptionalSpecimen: true }),
-      generous,
-      { snapshotId: 'r', revealedAt: ENCOUNTER },
-    );
-    expect(r.totalScore).toBe(100);
+  it('stores the breakdown, not just the total', () => {
+    expect(reveal({ marketScarcityScore: 42 }).components.marketScarcity).toBe(42);
   });
 
-  it('gives a plain repeat sighting a Familiar tier', () => {
-    const r = reveal({ priorConfirmedCatches: 30, priorCatchesOfSpecies: 25 });
-    expect(r.totalScore).toBeLessThan(20);
-    expect(r.tier).toBe('familiar');
+  it('is a pure function of its inputs, so a snapshot is reproducible', () => {
+    expect(reveal({ marketScarcityScore: 61 })).toEqual(reveal({ marketScarcityScore: 61 }));
   });
 });
 
-describe('snapshot integrity (FR-R05, 5.3)', () => {
-  it('stamps the formula version so retuning cannot rewrite history', () => {
-    expect(reveal().formulaVersion).toBe(DEFAULT_TIER_CONFIG.formulaVersion);
-  });
-
-  it('stores the component breakdown, not just the total', () => {
-    const r = reveal({ isFirstConfirmedSpecies: true });
-    expect(Object.keys(r.components).sort()).toEqual([
-      'dreamListHit', 'exceptionalSpecimen', 'firstConfirmedSpecies',
-      'marketScarcity', 'personalEncounterScarcity',
-    ]);
-  });
-
-  it('retuning weights produces a different NEW snapshot and leaves the old one untouched', () => {
-    const original = reveal({ isFirstConfirmedSpecies: true });
-    const retuned = computeDiscoveryTier(
-      input({ isFirstConfirmedSpecies: true }),
-      { ...DEFAULT_TIER_CONFIG, formulaVersion: 'discovery-tier-v0.9.9', points: { ...DEFAULT_TIER_CONFIG.points, firstConfirmedSpecies: 10 } },
-      { snapshotId: 'rar_test_2', revealedAt: ENCOUNTER },
-    );
-    expect(original.totalScore).toBe(35);
-    expect(retuned.totalScore).toBe(10);
-    expect(retuned.formulaVersion).not.toBe(original.formulaVersion);
-  });
-
-  it('treats Golden as an overlay that does not move the score (FR-R06)', () => {
-    const plain = reveal({ isFirstConfirmedSpecies: true });
-    const golden = reveal({ isFirstConfirmedSpecies: true, golden: true });
-    expect(golden.totalScore).toBe(plain.totalScore);
-    expect(golden.tier).toBe(plain.tier);
-    expect(golden.golden).toBe(true);
-  });
-
-  it('is deterministic for identical inputs', () => {
-    expect(reveal({ isFirstConfirmedSpecies: true })).toEqual(reveal({ isFirstConfirmedSpecies: true }));
-  });
-});
-
-describe('local rarity (FR-R07)', () => {
-  it('refuses to claim objective local rarity in the MVP', () => {
+describe('FR-R07', () => {
+  it('still refuses to claim local rarity', () => {
     expect(LOCAL_RARITY_UNAVAILABLE.available).toBe(false);
-    expect(LOCAL_RARITY_UNAVAILABLE.message).toBe('Local rarity unavailable');
-    expect(LOCAL_RARITY_UNAVAILABLE.explanation).toMatch(/minimum sample/i);
-  });
-
-  it('keeps local rarity out of the score entirely', () => {
-    const r = reveal({ isFirstConfirmedSpecies: true });
-    expect(Object.keys(r.components)).not.toContain('localRarity');
+    expect(LOCAL_RARITY_UNAVAILABLE.message).toMatch(/local rarity unavailable/i);
   });
 });

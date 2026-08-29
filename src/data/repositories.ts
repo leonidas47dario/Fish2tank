@@ -31,6 +31,7 @@ import type {
   Species,
   SpeciesProfile,
   Specimen,
+  SpecimenKind,
   VolumeMeasurement,
 } from '@/domain/types';
 import { deriveQuantity, planMove } from '@/domain/holdings';
@@ -298,6 +299,52 @@ export async function assertIdentity(
   return assertion;
 }
 
+/**
+ * Record what the tag said, for a fish the catalog does not contain (spec 005).
+ *
+ * The escape hatch from mandatory identification. Since "all records must be
+ * identified", the identify flow no longer lets you leave a catch Unknown -
+ * but the catalog holds 2,178 species and a shop will sell one it has never
+ * heard of, so without this a real catch could reach a screen with no exit.
+ *
+ * What makes this an identification rather than a skip: it demands the store's
+ * wording, keeps it verbatim (FR-O05), and records `provisional` - which the
+ * record then displays as weaker than a confirmed match rather than dressing
+ * it up as one. No speciesId is invented, so nothing downstream can mistake
+ * this for a catalog species.
+ */
+export async function recordStoreLabel(
+  specimenId: Id,
+  label: string,
+  database: DB = db,
+): Promise<void> {
+  const text = label.trim();
+  if (!text) throw new Error('A store label cannot be blank.');
+
+  await assertIdentity(
+    {
+      specimenId,
+      rawText: text,
+      source: 'user',
+      status: 'provisional',
+      note: 'Not in the catalog. Recorded as the store labelled it.',
+    },
+    database,
+  );
+  await database.specimens.update(specimenId, { rawLabel: text, updatedAt: nowIso() });
+
+  // Verify, rather than reporting a success nobody checked.
+  const after = await database.specimens.get(specimenId);
+  if (after?.identityStatus !== 'provisional' || after.rawLabel !== text) {
+    console.error('[identify] store label did not stick', {
+      specimenId, wanted: text,
+      gotLabel: after?.rawLabel, gotStatus: after?.identityStatus,
+    });
+    throw new Error('That label could not be saved.');
+  }
+  console.info('[identify] recorded store label', { specimenId, label: text, status: 'provisional' });
+}
+
 /** Full identification history for a specimen, newest first (FR-I06, NFR-09). */
 export async function identityHistory(specimenId: Id, database: DB = db): Promise<IdentificationAssertion[]> {
   const all = await database.identifications.where('specimenId').equals(specimenId).toArray();
@@ -441,44 +488,100 @@ export async function assessmentHistory(specimenId: Id, database: DB = db): Prom
  * Counts of prior confirmed catches come from the specimen table, so the
  * scarcity component reflects the user's real history at reveal time.
  */
-export async function revealSpecimen(specimenId: Id, database: DB = db): Promise<RaritySnapshot | undefined> {
+/**
+ * Every way a reveal can end.
+ *
+ * A discriminated union rather than `RaritySnapshot | undefined`, because as
+ * of formula v0.3.0 there are two distinct reasons no snapshot comes back and
+ * the UI has to say different things about them. Conflating them is not
+ * hypothetical: the old code returned `undefined` for "already revealed", and
+ * a refusal arriving down the same channel would have been announced to the
+ * user as "this one was already revealed" - a plain lie about their record.
+ */
+export type RevealOutcome =
+  | { status: 'revealed'; snapshot: RaritySnapshot }
+  | { status: 'already-revealed'; snapshot: RaritySnapshot }
+  | { status: 'not-identified' }
+  | { status: 'no-market-evidence'; reason: string; explanation: string };
+
+/**
+ * Rate a confirmed catch, or decline to and say why (FR-R05, PRD 4.6).
+ *
+ * DECLINING IS THE COMMON CASE. 1,703 of 2,178 catalog species have no shelf
+ * evidence, so most reveals end in `no-market-evidence`. That is the honest
+ * answer, not a degraded one - see discovery-tier.ts on why absence must never
+ * become a zero.
+ *
+ * Dream List fulfilment is recorded whether or not a snapshot follows. It used
+ * to live inside the snapshot transaction, which was harmless while every
+ * confirmed catch got a snapshot; under v0.3.0 that would have silently
+ * stopped marking wishes fulfilled for 78% of the catalog.
+ */
+export async function revealSpecimen(specimenId: Id, database: DB = db): Promise<RevealOutcome> {
   const specimen = await database.specimens.get(specimenId);
-  if (!specimen || specimen.identityStatus !== 'user-confirmed' || !specimen.speciesId) return undefined;
+  if (!specimen || specimen.identityStatus !== 'user-confirmed' || !specimen.speciesId) {
+    console.info('[reveal] declined', {
+      specimenId,
+      outcome: 'not-identified',
+      identityStatus: specimen?.identityStatus,
+      speciesId: specimen?.speciesId,
+    });
+    return { status: 'not-identified' };
+  }
+
+  const speciesId = specimen.speciesId;
+
+  // Fulfilment first, and outside any snapshot decision. A wish is granted by
+  // meeting the fish, not by the fish scoring well enough to be rated.
+  const dreamItem = await database.dreamList.where('speciesId').equals(speciesId).first();
+  if (dreamItem && !dreamItem.fulfilledBySpecimenId) {
+    await database.dreamList.update(dreamItem.id, { fulfilledBySpecimenId: specimenId });
+    console.info('[reveal] dream list fulfilled', { specimenId, speciesId, dreamItemId: dreamItem.id });
+  }
 
   const existing = await database.raritySnapshots.where('specimenId').equals(specimenId).first();
-  if (existing) return existing;
+  if (existing) {
+    console.info('[reveal] already revealed', {
+      specimenId, speciesId, snapshotId: existing.id, formulaVersion: existing.formulaVersion,
+    });
+    return { status: 'already-revealed', snapshot: existing };
+  }
 
-  const confirmed = await database.specimens.where('identityStatus').equals('user-confirmed').toArray();
-  const priorConfirmed = confirmed.filter((s) => s.id !== specimenId);
-  const priorOfSpecies = priorConfirmed.filter((s) => s.speciesId === specimen.speciesId);
-
-  const dreamItem = await database.dreamList.where('speciesId').equals(specimen.speciesId).first();
-  const encounter = (await database.encounters.where('specimenId').equals(specimenId).toArray())
-    .sort((a, b) => a.observedAt.localeCompare(b.observedAt))[0];
-
-  // Market scarcity is a scored component as of formula v0.2.0.
-  const market = scarcityFor(specimen.speciesId);
+  const market = scarcityFor(speciesId);
+  if (!market.available) {
+    // Logged rather than swallowed: this is the branch that produces no record
+    // at all, so without a line here a missing snapshot is indistinguishable
+    // from a reveal that never ran.
+    console.info('[reveal] declined', {
+      specimenId, speciesId, outcome: 'no-market-evidence', reason: market.reason,
+    });
+    return { status: 'no-market-evidence', reason: market.reason, explanation: market.explanation };
+  }
 
   const snapshot = computeDiscoveryTier({
     specimenId,
-    speciesId: specimen.speciesId,
-    isFirstConfirmedSpecies: priorOfSpecies.length === 0,
-    dreamListAddedAt: dreamItem?.addedAt,
-    encounterAt: encounter?.observedAt ?? specimen.createdAt,
-    priorConfirmedCatches: priorConfirmed.length,
-    priorCatchesOfSpecies: priorOfSpecies.length,
-    isExceptionalSpecimen: specimen.exceptional ?? false,
-    marketScarcityScore: market.available ? market.score : undefined,
+    speciesId,
+    marketScarcityScore: market.score,
     golden: Boolean(specimen.golden),
   });
 
-  await database.transaction('rw', [database.raritySnapshots, database.dreamList], async () => {
-    await database.raritySnapshots.add(snapshot);
-    if (dreamItem && !dreamItem.fulfilledBySpecimenId) {
-      await database.dreamList.update(dreamItem.id, { fulfilledBySpecimenId: specimenId });
-    }
+  await database.raritySnapshots.add(snapshot);
+
+  // Verify the write landed rather than reporting a success we did not check.
+  const written = await database.raritySnapshots.get(snapshot.id);
+  if (!written) {
+    console.error('[reveal] snapshot vanished after add', { specimenId, speciesId, snapshotId: snapshot.id });
+    throw new Error('The reveal could not be saved. Nothing was recorded.');
+  }
+
+  console.info('[reveal] revealed', {
+    specimenId, speciesId, snapshotId: snapshot.id,
+    tier: snapshot.tier, score: snapshot.totalScore,
+    formulaVersion: snapshot.formulaVersion,
+    witnessesCarrying: market.basis.witnessesCarrying,
+    witnessesTracked: market.basis.witnessesTracked,
   });
-  return snapshot;
+  return { status: 'revealed', snapshot };
 }
 
 /** FR-R06: Golden is a personal overlay and never rewrites objective data. */
@@ -674,6 +777,148 @@ export async function createOpeningBalanceHolding(
     await database.residencies.add(residency);
   });
   return { holding, residency };
+}
+
+/**
+ * Put fish of a species straight into a tank (spec 005).
+ *
+ * THE GAP THIS FILLS. Until now the only routes into a tank were the inventory
+ * import and the catch journey, so a fish you already keep and never
+ * photographed in a shop could not be recorded at all. That is backwards: the
+ * app is for the fish you have.
+ *
+ * NOT createOpeningBalanceHolding, which is next to this and looks similar.
+ * That one is for a spreadsheet row: `openingBalance: true`, quantity carried
+ * as `openingQuantity`, no life event, and an explicit note that the arrival
+ * date is unknown. This is a dated acquisition you are choosing to record, so
+ * it writes an `acquired` event and the quantity lives in the event where
+ * every later adjustment lives too.
+ *
+ * CREATES NO SPECIMEN, deliberately. `Holding.specimenId` is optional by
+ * design (FR-T02) and ensureSpecimenForHolding already mints one the moment a
+ * photo is added. Minting eagerly here would duplicate that path and invent an
+ * encounter that never happened.
+ *
+ * One species can be stocked into several tanks: each call makes its own
+ * holding, which is how "one in the 75, one in the 40" is recorded. A holding
+ * is in at most one tank ever - moveHolding closes one residency before
+ * opening the next - so a second tank needs a second holding, not a move.
+ */
+export async function stockTank(
+  input: {
+    aquariumId: Id;
+    speciesId?: Id;
+    rawLabel?: string;
+    quantity?: number;
+    kind?: SpecimenKind;
+    on?: CalendarDate;
+    notes?: string;
+  },
+  database: DB = db,
+): Promise<{ holding: Holding; residency: Residency; event: LifeEvent }> {
+  const quantity = input.quantity ?? 1;
+  if (!Number.isInteger(quantity) || quantity < 1) {
+    throw new Error(`A tank cannot be stocked with ${quantity} fish.`);
+  }
+  const aquarium = await database.aquariums.get(input.aquariumId);
+  if (!aquarium) throw new Error(`Unknown tank ${input.aquariumId}`);
+
+  const on = input.on ?? today();
+  const holding: Holding = {
+    id: newId('hold'),
+    speciesId: input.speciesId,
+    rawLabel: input.rawLabel,
+    kind: input.kind ?? (quantity > 1 ? 'group' : 'individual'),
+    // Zero, with the count carried by the acquired event below - the same
+    // shape acquireSpecimen uses, so deriveQuantity needs no special case.
+    openingQuantity: 0,
+    openingBalance: false,
+    notes: input.notes,
+    createdAt: nowIso(),
+  };
+  const residency: Residency = {
+    id: newId('res'), holdingId: holding.id, aquariumId: input.aquariumId, startDate: on,
+  };
+  const event: LifeEvent = {
+    id: newId('evt'),
+    holdingId: holding.id,
+    type: 'acquired',
+    occurredOn: on,
+    quantityDelta: quantity,
+    toAquariumId: input.aquariumId,
+    notes: input.notes,
+    createdAt: nowIso(),
+  };
+
+  await database.transaction(
+    'rw',
+    [database.holdings, database.residencies, database.lifeEvents],
+    async () => {
+      await database.holdings.add(holding);
+      await database.residencies.add(residency);
+      await database.lifeEvents.add(event);
+    },
+  );
+
+  console.info('[stock] added to tank', {
+    holdingId: holding.id, aquariumId: input.aquariumId, tank: aquarium.name,
+    speciesId: input.speciesId, quantity, on,
+  });
+  return { holding, residency, event };
+}
+
+/**
+ * Change how many of a holding are alive, in either direction (FR-T04).
+ *
+ * recordDeath already writes a negative delta. Nothing wrote a positive one,
+ * so buying three more of a fish you keep was unrecordable - the only way to
+ * express it was a second holding, which then read as a separate group in a
+ * separate row of the same tank.
+ */
+export async function adjustHoldingQuantity(
+  input: { holdingId: Id; delta: number; on?: CalendarDate; notes?: string },
+  database: DB = db,
+): Promise<LifeEvent> {
+  if (!Number.isInteger(input.delta) || input.delta === 0) {
+    throw new Error(`A quantity change of ${input.delta} says nothing.`);
+  }
+  const holding = await database.holdings.get(input.holdingId);
+  if (!holding) throw new Error(`Unknown holding ${input.holdingId}`);
+
+  const events = await database.lifeEvents.where('holdingId').equals(input.holdingId).toArray();
+  const before = deriveQuantity(holding, events);
+  if (before + input.delta < 0) {
+    // Refusing beats silently clamping to zero: the user believes they have
+    // more than the record does, and one of those is wrong in a way worth
+    // noticing.
+    throw new Error(`That would take the count below zero — there ${before === 1 ? 'is' : 'are'} ${before} recorded.`);
+  }
+
+  const event: LifeEvent = {
+    id: newId('evt'),
+    holdingId: input.holdingId,
+    // 'acquired' when fish arrive, 'quantity-adjusted' when the record was
+    // simply wrong. Both already exist; using one for the other would make the
+    // journal lie about what happened.
+    type: input.delta > 0 ? 'acquired' : 'quantity-adjusted',
+    occurredOn: input.on ?? today(),
+    quantityDelta: input.delta,
+    notes: input.notes,
+    createdAt: nowIso(),
+  };
+  await database.lifeEvents.add(event);
+
+  const after = deriveQuantity(holding, [...events, event]);
+  if (after !== before + input.delta) {
+    console.error('[stock] quantity did not move as expected', {
+      holdingId: input.holdingId, before, delta: input.delta, after,
+    });
+    throw new Error('That change could not be recorded.');
+  }
+  console.info('[stock] quantity adjusted', {
+    holdingId: input.holdingId, before, delta: input.delta, after, type: event.type,
+  });
+  return event;
 }
 
 /** FR-T03: close the current interval, open the next, log the move. */

@@ -24,10 +24,10 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { blobFor, db } from '@/data/db';
 import { CATALOG } from '@/data/catalog';
 import { canShareFiles, identifyFromText, isConfident, shareForLens, type Candidate } from '@/data/identify';
-import { assertIdentity, revealSpecimen } from '@/data/repositories';
-import type { RaritySnapshot } from '@/domain/types';
+import { assertIdentity, recordStoreLabel, revealSpecimen } from '@/data/repositories';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useSpecimenMedia } from '../hooks';
+import { useCatalogCard, useIsFirstOfSpecies, useSpecimenMedia } from '../hooks';
+import type { RevealOutcome } from '@/data/repositories';
 import { RevealCeremony } from '../components/RevealCeremony';
 
 type Step = 'identify' | 'reveal';
@@ -50,12 +50,14 @@ export default function IdentifyFlow() {
   );
   const specimen = found?.specimen;
   const media = useSpecimenMedia(specimenId);
+  const card = useCatalogCard(specimen?.speciesId) ?? undefined;
+  const isFirst = useIsFirstOfSpecies(specimenId, specimen?.speciesId);
 
   const [step, setStep] = useState<Step>('identify');
   const [query, setQuery] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | undefined>();
-  const [snapshot, setSnapshot] = useState<RaritySnapshot | undefined>();
+  const [outcome, setOutcome] = useState<RevealOutcome | undefined>();
   const [shareFile, setShareFile] = useState<File | undefined>();
 
   const photo = media?.[0];
@@ -102,11 +104,33 @@ export default function IdentifyFlow() {
       // Supersedes any earlier assertion rather than overwriting it (FR-I06),
       // and is recorded as user-confirmed, never as an AI percentage (FR-I04).
       await assertIdentity({ specimenId, speciesId, source: 'user', status: 'user-confirmed' });
-      const snap = await revealSpecimen(specimenId);
-      setSnapshot(snap);
+      setOutcome(await revealSpecimen(specimenId));
       setStep('reveal');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not save that identification.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /**
+   * The escape for a fish the catalog does not contain.
+   *
+   * Writes the store's wording to rawLabel and leaves identityStatus
+   * `provisional`. Deliberately does NOT reveal: Discovery needs a speciesId
+   * to look up market evidence, and there is none.
+   */
+  async function onRecordStoreLabel(label: string) {
+    if (!specimenId) return;
+    setBusy(true);
+    setError(undefined);
+    try {
+      await recordStoreLabel(specimenId, label);
+      navigate(`/specimen/${specimenId}`, { replace: true });
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
+      console.error('[identify] could not record the store label', { specimenId, label, error: message });
+      setError('Could not save that label.');
     } finally {
       setBusy(false);
     }
@@ -125,20 +149,28 @@ export default function IdentifyFlow() {
   }
 
   if (step === 'reveal') {
+    /* Four outcomes, and each says a different true thing. The old code had
+       two and collapsed a refusal into "already revealed", which told the user
+       something false about their own record. */
+    const rated = outcome?.status === 'revealed' || outcome?.status === 'already-revealed';
     return (
       <div className="stack identify">
-        {snapshot ? (
-          <RevealCeremony
-            snapshot={snapshot}
-            commonName={CATALOG.species.find((s) => s.speciesId === specimen.speciesId)?.commonName ?? 'Unknown'}
-            scientificName={CATALOG.species.find((s) => s.speciesId === specimen.speciesId)?.scientificName}
-            golden={Boolean(specimen.golden)}
-          />
+        {card && outcome ? (
+          rated || outcome.status === 'no-market-evidence' ? (
+            <RevealCeremony
+              card={card}
+              isFirstOfSpecies={Boolean(isFirst)}
+              snapshot={rated ? outcome.snapshot : undefined}
+              unrated={outcome.status === 'no-market-evidence'
+                ? { reason: outcome.reason, explanation: outcome.explanation }
+                : undefined}
+              golden={Boolean(specimen.golden)}
+            />
+          ) : (
+            <p className="empty">Identity saved.</p>
+          )
         ) : (
-          /* revealSpecimen returns nothing if a snapshot already existed. The
-             identification still saved, so say that plainly rather than
-             showing an empty stage. */
-          <p className="empty">Identity saved. This one was already revealed.</p>
+          <p className="empty">Identity saved.</p>
         )}
         <button type="button" className="btn--primary btn--big" onClick={done}>
           See the full record
@@ -152,22 +184,24 @@ export default function IdentifyFlow() {
       <header>
         <h1>What is it?</h1>
         <p className="muted small">
-          Already saved as a draft. Name it now or leave it Unknown — both are fine.
+          Already saved as a draft, and safe. Every record carries a label, so this is the one
+          question the catch needs answered.
         </p>
       </header>
 
       {photo?.url && <img className="identify__shot media" src={photo.url} alt="The fish you just caught" />}
 
-      <div className="row">
-        {canShare && (
+      {/* "Not yet" used to sit here. It is gone by direct instruction - "all
+          records must be identified" - and the way out for a fish the catalog
+          does not contain is at the bottom of this screen, where it costs the
+          store label rather than a tap. */}
+      {canShare && (
+        <div className="row">
           <button type="button" className="btn--primary grow" onClick={() => void onShare()}>
             🔍 Look it up
           </button>
-        )}
-        <button type="button" className={canShare ? '' : 'grow'} onClick={done}>
-          Not yet
-        </button>
-      </div>
+        </div>
+      )}
 
       {canShare && (
         <p className="xs muted">
@@ -191,11 +225,31 @@ export default function IdentifyFlow() {
 
       {error && <p className="warn">{error}</p>}
 
+      {/* The one way past this screen without a catalog match.
+​
+          Not a skip. The catalog holds 2,178 species and a shop will sell one
+          it has never heard of, so refusing every unmatched fish would strand
+          a real catch on a screen with no exit. What it asks for is the store
+          label, verbatim, recorded as `provisional` - the weaker of two
+          identifications, and displayed as weaker on the record. */}
       {query.trim() && candidates.length === 0 && (
-        <p className="empty">
-          Nothing in the catalog matches that. Leave it Unknown and the record still keeps your
-          photo and the store label.
-        </p>
+        <div className="stack">
+          <p className="empty" style={{ marginBottom: 0 }}>
+            Nothing in the catalog matches that.
+          </p>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => void onRecordStoreLabel(query.trim())}
+          >
+            Record it as &ldquo;{query.trim()}&rdquo;
+          </button>
+          <p className="xs muted">
+            Keeps the store&apos;s wording exactly, and marks the identity provisional rather than
+            confirmed. If the species turns up in the catalog later, you can set it properly from
+            the record.
+          </p>
+        </div>
       )}
 
       {candidates.length > 0 && (

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "builtAt": "2026-08-29T16:25:59.514Z",
+  "builtAt": "2026-08-29T19:31:05.412Z",
   "species": [
     {
       "speciesId": "sp_gymnarchus_niloticus",
@@ -16500,24 +16500,6 @@
       ],
       "predationTags": [],
       "waterType": "marine",
-      "sourceLabel": "Discovered from vendor listings - no care profile yet"
-    },
-    {
-      "speciesId": "sp_fish_food",
-      "commonName": "Fish food",
-      "scientificName": "Fish food",
-      "aliases": [
-        "Jumbo CarniSticks",
-        "Hikari Sinking Wafers",
-        "Hikari Micro Wafers",
-        "Hikari Sinking Cichlid Excel",
-        "Hikari Sinking Cichlid Gold Mini",
-        "Hikari Sinking Cichlid Gold Medium",
-        "Hikari Vibra-Bites Baby",
-        "Hikari Vibra-Bites"
-      ],
-      "predationTags": [],
-      "waterType": "freshwater",
       "sourceLabel": "Discovered from vendor listings - no care profile yet"
     },
     {
@@ -33788,26 +33770,6 @@
           "source": "wikipedia",
           "url": "https://en.wikipedia.org/wiki/Geosesarma_larsi"
         }
-      }
-    },
-    {
-      "speciesId": "sp_roofvissen_fotografie",
-      "commonName": "Red Wolf Fish",
-      "scientificName": "Roofvissen fotografie",
-      "aliases": [
-        "Red Wolf Fish ( Roofvissen fotografie ) 4\""
-      ],
-      "predationTags": [],
-      "waterType": "freshwater",
-      "sourceLabel": "Discovered from vendor listings - no care profile yet",
-      "portrait": {
-        "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/687473767/original.jpg",
-        "provenance": "web",
-        "license": "CC BY-NC 4.0",
-        "artist": "David M. Hillis",
-        "attributionUrl": "https://www.inaturalist.org/observations/376024216",
-        "width": 2048,
-        "height": 822
       }
     },
     {

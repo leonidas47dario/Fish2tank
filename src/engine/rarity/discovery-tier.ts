@@ -1,21 +1,37 @@
 /**
- * Discovery Tier - PRD 5.3, extended in v0.2.0.
+ * Discovery Tier - PRD 5.3, rewritten in v0.3.0.
  *
  * PRD status note, still true: "This formula is a testable MVP hypothesis.
  * Weights live in configuration, the breakdown is shown to the user, and
  * tuning never rewrites a historical reveal snapshot."
  *
- * DEVIATION FROM THE PRD, RECORDED ONCE. PRD FR-P05 says "online availability
- * never increases collecting rarity in the MVP", and v0.1.0 of this formula
- * honoured that by keeping market data in a separate rating. The product owner
- * has since decided the two should be one number, and v0.2.0 implements that:
- * `marketScarcity` is now a scored component.
+ * WHAT v0.3.0 IS. The tier is the market scarcity score and nothing else, at
+ * the product owner's direction: "the rating score is solely relying on market
+ * reference for the tagging." Personal history - first sighting, Dream List,
+ * encounter scarcity, exceptional - no longer scores.
  *
- * What that costs, so it is not forgotten: the score now mixes "how novel is
- * this to me" with "how hard is this to mail-order", and those can disagree
- * sharply - a fish that is trivially available online may still be one the
- * user has never encountered locally. The component breakdown stays visible
- * precisely so that disagreement is legible rather than hidden inside a total.
+ * HOW THIS FORMULA GOT HERE, because the direction has now reversed twice and
+ * the next reader deserves the whole arc:
+ *
+ *   v0.1.0  Personal history only. Market data lived in a separate rating,
+ *           because FR-P05 says "online availability never increases
+ *           collecting rarity in the MVP".
+ *   v0.2.0  Market folded in as one component of five, worth 15 of 100. The
+ *           docstring recorded the cost: the score now mixed "how novel is
+ *           this to me" with "how hard is this to mail-order", and those can
+ *           disagree sharply.
+ *   v0.3.0  That disagreement resolved by keeping only the second. The score
+ *           is now a claim about shelves, not about the collector.
+ *
+ * FR-P05 is therefore superseded rather than honoured, and this is the third
+ * spec to say so. See docs/specs/005-catch-journey-and-backfill.md.
+ *
+ * WHAT THIS FORMULA CANNOT DO, and must not pretend to. Absence of market
+ * evidence is not a score of zero. 1,703 of 2,178 catalog species have no
+ * shelf evidence at all, and a zero would read as "widely available" - the
+ * opposite of what the silence means. So there is no "unrated" tier here and
+ * no zero standing in for one: computeDiscoveryTier REQUIRES a real score, and
+ * the decision not to rate is made before it is called. See revealSpecimen.
  *
  * FR-R07 still holds: no claim about LOCAL (Chicago) rarity is made anywhere,
  * because that needs a community dataset this product does not have.
@@ -30,42 +46,25 @@ import type {
 
 export interface DiscoveryTierConfig {
   formulaVersion: string;
-  points: {
-    firstConfirmedSpecies: number;
-    dreamListHit: number;
-    /** Maximum awardable for personal encounter scarcity. */
-    personalEncounterScarcityMax: number;
-    exceptionalSpecimen: number;
-    /**
-     * Maximum awardable for market scarcity. The 0-100 market score is scaled
-     * into this budget, so retuning the market formula cannot blow past its
-     * share of the total.
-     */
-    marketScarcityMax: number;
-  };
-  /**
-   * How many prior confirmed catches the user needs before the scarcity
-   * component carries full weight. Below this the component is scaled down,
-   * so a brand-new collection cannot manufacture rarity out of a thin history
-   * (PRD 12: "Rarity cold start ... personal novelty/Dream List only in MVP").
-   */
-  scarcitySampleFloor: number;
   /** Lower bound of each tier, highest first. */
   tiers: Array<{ tier: DiscoveryTier; minScore: number }>;
 }
 
 export const DEFAULT_TIER_CONFIG: DiscoveryTierConfig = {
-  formulaVersion: 'discovery-tier-v0.2.0',
-  // Rebalanced from v0.1.0 (45/30/15/10) to make room for market scarcity
-  // while keeping the total at 100.
-  points: {
-    firstConfirmedSpecies: 35,
-    dreamListHit: 25,
-    personalEncounterScarcityMax: 15,
-    exceptionalSpecimen: 10,
-    marketScarcityMax: 15,
-  },
-  scarcitySampleFloor: 20,
+  formulaVersion: 'discovery-tier-v0.3.0',
+  /**
+   * Unchanged from v0.2.0, deliberately.
+   *
+   * At three witness stores the market score can only take the values 0, 21-29
+   * and 55-64 (market-scarcity.ts explains why: N witnesses give exactly N
+   * breadth values). So legendary is unreachable today, and epic holds 52% of
+   * rated species. Both are properties of the sample, and both correct
+   * themselves as stores clear the witness gate - at four witnesses the top
+   * breadth value is 75, at five it is 80.
+   *
+   * Do not re-cut these bands to flatter the current distribution. That would
+   * bake a temporary sample size into the meaning of the word "legendary".
+   */
   tiers: [
     { tier: 'legendary', minScore: 80 },
     { tier: 'epic', minScore: 60 },
@@ -78,48 +77,17 @@ export const DEFAULT_TIER_CONFIG: DiscoveryTierConfig = {
 export interface DiscoveryTierInput {
   specimenId: Id;
   speciesId?: Id;
-  /** True when this species has never been User Confirmed before (FR-R01). */
-  isFirstConfirmedSpecies: boolean;
   /**
-   * When the species was added to the Dream List, if ever. FR-R08 requires the
-   * Dream List entry to PREDATE the encounter to count.
+   * Market scarcity score, 0-100, from the market index.
+   *
+   * Required, and not optional as it was in v0.2.0. A species with no market
+   * evidence does not get a snapshot at all, so there is no caller with
+   * nothing to pass - and making it optional would invite exactly the zero
+   * this formula must never award.
    */
-  dreamListAddedAt?: Instant;
-  encounterAt: Instant;
-  /** Confirmed catches logged before this one, across all species. */
-  priorConfirmedCatches: number;
-  /** Confirmed catches of THIS species before this one. */
-  priorCatchesOfSpecies: number;
-  /** FR-R06 / 5.3: user-selected attribute for an unusually compelling fish. */
-  isExceptionalSpecimen: boolean;
-  /**
-   * Market scarcity score, 0-100, from the market index. Leave undefined when
-   * the species is not in the index - absence of market data contributes
-   * nothing rather than being read as either common or rare.
-   */
-  marketScarcityScore?: number;
+  marketScarcityScore: number;
   /** Personal foil overlay. An overlay only - it does not change the score. */
   golden?: boolean;
-}
-
-/**
- * Personal encounter scarcity, 0..max.
- *
- * "Higher when the user has logged many catches but rarely/never this
- * species" (PRD 5.3). Two factors multiply:
- *   - confidence: how much history exists to judge scarcity at all
- *   - unfamiliarity: how little of that history is this species
- */
-export function scarcityPoints(
-  priorConfirmedCatches: number,
-  priorCatchesOfSpecies: number,
-  cfg: DiscoveryTierConfig,
-): number {
-  if (priorConfirmedCatches <= 0) return 0;
-  const confidence = Math.min(1, priorConfirmedCatches / cfg.scarcitySampleFloor);
-  const familiarity = Math.min(1, priorCatchesOfSpecies / priorConfirmedCatches);
-  const raw = cfg.points.personalEncounterScarcityMax * confidence * (1 - familiarity);
-  return Math.round(raw);
 }
 
 export function tierForScore(score: number, cfg: DiscoveryTierConfig): DiscoveryTier {
@@ -130,33 +98,8 @@ export function tierForScore(score: number, cfg: DiscoveryTierConfig): Discovery
   return 'familiar';
 }
 
-export function computeComponents(
-  input: DiscoveryTierInput,
-  cfg: DiscoveryTierConfig = DEFAULT_TIER_CONFIG,
-): RarityComponentBreakdown {
-  const dreamListCounts =
-    input.dreamListAddedAt !== undefined &&
-    Date.parse(input.dreamListAddedAt) < Date.parse(input.encounterAt);
-
-  // Absence of market data scores zero. It is not evidence either way: most
-  // listing titles never resolve to a known species, so a missing entry means
-  // "we could not match it", not "nobody sells it".
-  const market = input.marketScarcityScore;
-  const marketScarcity = market === undefined
-    ? 0
-    : Math.round(cfg.points.marketScarcityMax * Math.max(0, Math.min(1, market / 100)));
-
-  return {
-    firstConfirmedSpecies: input.isFirstConfirmedSpecies ? cfg.points.firstConfirmedSpecies : 0,
-    dreamListHit: dreamListCounts ? cfg.points.dreamListHit : 0,
-    personalEncounterScarcity: scarcityPoints(
-      input.priorConfirmedCatches,
-      input.priorCatchesOfSpecies,
-      cfg,
-    ),
-    exceptionalSpecimen: input.isExceptionalSpecimen ? cfg.points.exceptionalSpecimen : 0,
-    marketScarcity,
-  };
+export function computeComponents(input: DiscoveryTierInput): RarityComponentBreakdown {
+  return { marketScarcity: Math.max(0, Math.min(100, Math.round(input.marketScarcityScore))) };
 }
 
 /**
@@ -170,18 +113,8 @@ export function computeDiscoveryTier(
   cfg: DiscoveryTierConfig = DEFAULT_TIER_CONFIG,
   options: { snapshotId?: Id; revealedAt?: Instant } = {},
 ): RaritySnapshot {
-  const components = computeComponents(input, cfg);
-  const total = Math.max(
-    0,
-    Math.min(
-      100,
-      components.firstConfirmedSpecies +
-        components.dreamListHit +
-        components.personalEncounterScarcity +
-        components.exceptionalSpecimen +
-        components.marketScarcity,
-    ),
-  );
+  const components = computeComponents(input);
+  const total = components.marketScarcity ?? 0;
   const revealedAt = options.revealedAt ?? new Date().toISOString();
 
   return {
@@ -197,13 +130,21 @@ export function computeDiscoveryTier(
   };
 }
 
-/** Labels for the user-facing breakdown (FR-R05: the breakdown must be shown). */
+/**
+ * Labels for the user-facing breakdown (FR-R05: the breakdown must be shown).
+ *
+ * The four retired components keep their labels on purpose. A v0.2.0 snapshot
+ * stored on the device still carries all five, and the breakdown UI renders
+ * whatever keys the snapshot has - so deleting these labels would blank out
+ * every reveal the user has already seen.
+ */
 export const COMPONENT_LABELS: Record<keyof RarityComponentBreakdown, string> = {
+  marketScarcity: 'Hard to source from the tracked vendors',
+  // Retired in v0.3.0. Present for historical snapshots only.
   firstConfirmedSpecies: 'First time confirming this species',
   dreamListHit: 'Was on your Dream List',
   personalEncounterScarcity: 'Rare in your own catch history',
   exceptionalSpecimen: 'You marked this one exceptional',
-  marketScarcity: 'Hard to source from the tracked vendors',
 };
 
 /**
@@ -214,5 +155,5 @@ export const LOCAL_RARITY_UNAVAILABLE = {
   available: false as const,
   message: 'Local rarity unavailable',
   explanation:
-    'Chicago-area rarity needs a community dataset above a documented minimum sample size, with privacy-safe store and time disclosures. Until then this score reflects your own history only.',
+    'Chicago-area rarity needs a community dataset above a documented minimum sample size, with privacy-safe store and time disclosures. Until then this score reflects the tracked vendors only.',
 };

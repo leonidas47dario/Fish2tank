@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { blobFor, Fish2TankDB, newId } from './db';
 import {
   acquireSpecimen,
+  adjustHoldingQuantity,
+  stockTank,
   addEncounterChapter,
   addPhotos,
   assertIdentity,
@@ -27,6 +29,7 @@ import {
   moveHolding,
   recordDeath,
   recordPrice,
+  recordStoreLabel,
   revealSpecimen,
   searchSpecies,
   upsertAquarium,
@@ -467,32 +470,38 @@ describe('End-to-end acceptance: the Panther (PRD 10)', () => {
     expect(byFactor.get('adult-size')!.inputsUsed.length).toBeGreaterThan(0);
     expect(assessment!.rulesVersion).toBeTruthy();
 
-    // Step 6 - Reveal. First jaguar cichlid in the collection.
-    const snapshot = await revealSpecimen(draft.specimen.id, db);
-    expect(snapshot!.components.firstConfirmedSpecies).toBe(35);
-    expect(snapshot!.components.dreamListHit).toBe(0);
-    // Cold start: no history yet, so personal scarcity honestly scores nothing.
-    expect(snapshot!.components.personalEncounterScarcity).toBe(0);
-    // Formula v0.2.0: market scarcity contributes when it is available.
+    // Step 6 - Reveal. Formula v0.3.0: the score is market scarcity alone.
+    const outcome = await revealSpecimen(draft.specimen.id, db);
+    expect(outcome.status).toBe('revealed');
+    const snapshot = (outcome as Extract<typeof outcome, { status: 'revealed' }>).snapshot;
+
+    // Only one component now. Asserted as an exact key set rather than a
+    // presence check, because the failure this guards against is a retired
+    // component quietly coming back and inflating the total.
+    expect(Object.keys(snapshot.components)).toEqual(['marketScarcity']);
+    expect(snapshot.totalScore).toBe(snapshot.components.marketScarcity);
+
     // Asserted against the live index rather than a hardcoded number, because
     // the score moves whenever a vendor is added - expected, not a regression.
-    //
-    const expectedMarket = snapshot!.components.marketScarcity;
-    expect(expectedMarket).toBeGreaterThan(0);
-    expect(expectedMarket).toBeLessThanOrEqual(15);
-    expect(snapshot!.totalScore).toBe(35 + expectedMarket);
-    // The acceptance criterion itself. Asserting only "total == 35 + whatever
-    // the snapshot says" is circular and would survive the market component
-    // silently going to zero, which is exactly what happened while the
-    // scarcity rewrite was mid-flight.
-    expect(snapshot!.tier).toBe('rare');
-    expect(snapshot!.formulaVersion).toBe('discovery-tier-v0.2.0');
+    expect(snapshot.totalScore).toBeGreaterThan(0);
+
+    // The acceptance criterion itself. Asserting only "total == whatever the
+    // snapshot says" is circular and would survive the market score silently
+    // going to zero, which is exactly what happened while the scarcity rewrite
+    // was mid-flight. Jaguar Cichlid is carried by 1 of 3 witness stores, so
+    // it scores 61 and lands in epic.
+    expect(snapshot.tier).toBe('epic');
+    expect(snapshot.formulaVersion).toBe('discovery-tier-v0.3.0');
+
+    // Revealing again returns the SAME snapshot, distinguishably.
+    const again = await revealSpecimen(draft.specimen.id, db);
+    expect(again.status).toBe('already-revealed');
 
     await awardGolden(draft.specimen.id, 'The way he tracked me across the glass.', db);
     const golden = await db.specimens.get(draft.specimen.id);
     expect(golden!.golden!.reason).toBeTruthy();
     // FR-R06: Golden changes nothing objective.
-    expect((await db.raritySnapshots.get(snapshot!.id))!.totalScore).toBe(snapshot!.totalScore);
+    expect((await db.raritySnapshots.get(snapshot.id))!.totalScore).toBe(snapshot.totalScore);
 
     // Step 7 - Leave responsibly. No holding, no ownership, no purchase.
     expect(await db.holdings.where('specimenId').equals(draft.specimen.id).count()).toBe(0);
@@ -629,6 +638,247 @@ describe('photos on a fish you keep but never caught', () => {
 
   it('refuses to attach a photo to a specimen that does not exist', async () => {
     await expect(addPhotos({ specimenId: 'spec_nope', files: [photo()] }, db)).rejects.toThrow();
+  });
+});
+
+describe('recording a store label for a fish the catalog lacks (spec 005)', () => {
+  async function anUnknownCatch() {
+    return createCatchDraft({ files: [], clientKey: newId('k') }, db);
+  }
+
+  it('records the wording verbatim and marks the identity provisional', async () => {
+    const { specimen } = await anUnknownCatch();
+    await recordStoreLabel(specimen.id, '  Emerald Puffer (LFS tag)  ', db);
+
+    const after = await db.specimens.get(specimen.id);
+    // Trimmed, but not otherwise touched - FR-O05 keeps the store's wording.
+    expect(after!.rawLabel).toBe('Emerald Puffer (LFS tag)');
+    expect(after!.identityStatus).toBe('provisional');
+  });
+
+  it('invents no speciesId, so nothing downstream reads it as a catalog match', async () => {
+    const { specimen } = await anUnknownCatch();
+    await recordStoreLabel(specimen.id, 'Mystery loach', db);
+    expect((await db.specimens.get(specimen.id))!.speciesId).toBeUndefined();
+  });
+
+  it('leaves an auditable assertion rather than stamping the record (FR-I06)', async () => {
+    const { specimen } = await anUnknownCatch();
+    await recordStoreLabel(specimen.id, 'Mystery loach', db);
+
+    const history = await identityHistory(specimen.id, db);
+    expect(history).toHaveLength(1);
+    expect(history[0]!.candidateRawText).toBe('Mystery loach');
+    expect(history[0]!.candidateSpeciesId).toBeUndefined();
+  });
+
+  it('refuses a blank label, because blank is the skip this replaces', async () => {
+    const { specimen } = await anUnknownCatch();
+    await expect(recordStoreLabel(specimen.id, '   ', db)).rejects.toThrow(/cannot be blank/i);
+    expect((await db.specimens.get(specimen.id))!.identityStatus).toBe('unknown');
+  });
+
+  it('does not rate it: Discovery needs a species to find market evidence for', async () => {
+    const { specimen } = await anUnknownCatch();
+    await recordStoreLabel(specimen.id, 'Mystery loach', db);
+
+    const outcome = await revealSpecimen(specimen.id, db);
+    expect(outcome.status).toBe('not-identified');
+    expect(await db.raritySnapshots.where('specimenId').equals(specimen.id).count()).toBe(0);
+  });
+
+  it('can be superseded later by a real catalog match', async () => {
+    const { specimen } = await anUnknownCatch();
+    await recordStoreLabel(specimen.id, 'Jag 6"', db);
+    await assertIdentity(
+      { specimenId: specimen.id, speciesId: 'sp_jaguar_cichlid', source: 'user', status: 'user-confirmed' },
+      db,
+    );
+
+    const after = await db.specimens.get(specimen.id);
+    expect(after!.identityStatus).toBe('user-confirmed');
+    expect(after!.speciesId).toBe('sp_jaguar_cichlid');
+    // FR-O05: the store's wording survives being corrected.
+    expect(after!.rawLabel).toBe('Jag 6"');
+    expect(await identityHistory(specimen.id, db)).toHaveLength(2);
+  });
+});
+
+describe('a reveal declines when there is no shelf evidence (spec 005)', () => {
+  it('returns the refusal and its reason, and writes no snapshot', async () => {
+    const draft = await createCatchDraft({ files: [], clientKey: newId('k') }, db);
+    // Listed only by Predatory Fins, which is not a qualifying witness store.
+    await assertIdentity(
+      { specimenId: draft.specimen.id, speciesId: 'sp_liosomadoras_oncinus', source: 'user', status: 'user-confirmed' },
+      db,
+    );
+
+    const outcome = await revealSpecimen(draft.specimen.id, db);
+    expect(outcome.status).toBe('no-market-evidence');
+    expect((outcome as Extract<typeof outcome, { status: 'no-market-evidence' }>).reason).toBeTruthy();
+    expect(await db.raritySnapshots.where('specimenId').equals(draft.specimen.id).count()).toBe(0);
+  });
+
+  it('still marks a Dream List wish fulfilled, even though nothing was rated', async () => {
+    const draft = await createCatchDraft({ files: [], clientKey: newId('k') }, db);
+    await db.dreamList.add({
+      id: newId('dream'),
+      speciesId: 'sp_liosomadoras_oncinus',
+      addedAt: '2026-01-01T00:00:00.000Z',
+      source: 'manual',
+    });
+    await assertIdentity(
+      { specimenId: draft.specimen.id, speciesId: 'sp_liosomadoras_oncinus', source: 'user', status: 'user-confirmed' },
+      db,
+    );
+
+    expect((await revealSpecimen(draft.specimen.id, db)).status).toBe('no-market-evidence');
+
+    // The regression this guards: fulfilment used to live inside the snapshot
+    // transaction, so a declined reveal would have silently stopped granting
+    // wishes for the 78% of the catalog that has no shelf evidence.
+    const wish = await db.dreamList.where('speciesId').equals('sp_liosomadoras_oncinus').first();
+    expect(wish!.fulfilledBySpecimenId).toBe(draft.specimen.id);
+  });
+});
+
+describe('stocking a tank directly (spec 005)', () => {
+  async function aTank(name = '75G') {
+    return createAquarium({ name, kind: 'display' }, db);
+  }
+
+  it('records a holding, a residency and a dated acquisition', async () => {
+    const tank = await aTank();
+    const { holding, residency, event } = await stockTank(
+      { aquariumId: tank.id, speciesId: 'sp_jaguar_cichlid', quantity: 3, on: '2026-08-01' }, db,
+    );
+
+    expect(holding.speciesId).toBe('sp_jaguar_cichlid');
+    expect(residency.aquariumId).toBe(tank.id);
+    expect(residency.endDate).toBeUndefined();
+    expect(event.type).toBe('acquired');
+    expect(event.quantityDelta).toBe(3);
+    expect(event.occurredOn).toBe('2026-08-01');
+  });
+
+  it('derives the quantity the caller asked for', async () => {
+    const tank = await aTank();
+    const { holding } = await stockTank({ aquariumId: tank.id, speciesId: 'sp_jaguar_cichlid', quantity: 6 }, db);
+    expect(deriveQuantity(holding, await db.lifeEvents.toArray())).toBe(6);
+  });
+
+  it('mints no specimen: a holding you keep has never been encountered (FR-T02)', async () => {
+    const tank = await aTank();
+    const { holding } = await stockTank({ aquariumId: tank.id, speciesId: 'sp_jaguar_cichlid' }, db);
+    expect(holding.specimenId).toBeUndefined();
+    expect(await db.specimens.count()).toBe(0);
+  });
+
+  it('is not an opening balance: this arrival has a known date', async () => {
+    const tank = await aTank();
+    const { holding } = await stockTank({ aquariumId: tank.id, speciesId: 'sp_jaguar_cichlid' }, db);
+    expect(holding.openingBalance).toBe(false);
+  });
+
+  it('calls a single fish individual and several a group', async () => {
+    const tank = await aTank();
+    const one = await stockTank({ aquariumId: tank.id, speciesId: 'sp_jaguar_cichlid', quantity: 1 }, db);
+    const many = await stockTank({ aquariumId: tank.id, speciesId: 'sp_jaguar_cichlid', quantity: 5 }, db);
+    expect(one.holding.kind).toBe('individual');
+    expect(many.holding.kind).toBe('group');
+  });
+
+  /** The reported bug: one fish in one tank, another in a different tank. */
+  it('puts the same species in two tanks, as two holdings', async () => {
+    const a = await aTank('75G');
+    const b = await aTank('Predator Tank');
+    await stockTank({ aquariumId: a.id, speciesId: 'sp_jaguar_cichlid', quantity: 1 }, db);
+    await stockTank({ aquariumId: b.id, speciesId: 'sp_jaguar_cichlid', quantity: 1 }, db);
+
+    const holdings = await db.holdings.where('speciesId').equals('sp_jaguar_cichlid').toArray();
+    expect(holdings).toHaveLength(2);
+
+    const residencies = await db.residencies.toArray();
+    const tanks = holdings.map((h) => residencies.find((r) => r.holdingId === h.id && !r.endDate)!.aquariumId);
+    // Two open residencies in two different tanks - neither closed the other.
+    expect(new Set(tanks)).toEqual(new Set([a.id, b.id]));
+  });
+
+  it('refuses a tank that does not exist rather than orphaning a holding', async () => {
+    await expect(stockTank({ aquariumId: 'tank_nope', speciesId: 'sp_jaguar_cichlid' }, db))
+      .rejects.toThrow(/unknown tank/i);
+    expect(await db.holdings.count()).toBe(0);
+  });
+
+  it.each([0, -2, 1.5])('refuses a quantity of %s', async (quantity) => {
+    const tank = await aTank();
+    await expect(stockTank({ aquariumId: tank.id, speciesId: 'sp_jaguar_cichlid', quantity }, db))
+      .rejects.toThrow(/cannot be stocked/i);
+  });
+});
+
+describe('raising and lowering a count (spec 005)', () => {
+  async function aHolding(quantity = 2) {
+    const tank = await createAquarium({ name: '75G', kind: 'display' }, db);
+    const { holding } = await stockTank({ aquariumId: tank.id, speciesId: 'sp_jaguar_cichlid', quantity }, db);
+    return holding;
+  }
+
+  async function quantityOf(holdingId: string) {
+    const holding = (await db.holdings.get(holdingId))!;
+    return deriveQuantity(holding, await db.lifeEvents.toArray());
+  }
+
+  it('adds fish you bought later', async () => {
+    const holding = await aHolding(2);
+    await adjustHoldingQuantity({ holdingId: holding.id, delta: 3 }, db);
+    expect(await quantityOf(holding.id)).toBe(5);
+  });
+
+  it('files an increase as an acquisition, not a correction', async () => {
+    const holding = await aHolding();
+    const event = await adjustHoldingQuantity({ holdingId: holding.id, delta: 1 }, db);
+    expect(event.type).toBe('acquired');
+  });
+
+  it('files a decrease as a correction, so the journal does not imply a death', async () => {
+    const holding = await aHolding(4);
+    const event = await adjustHoldingQuantity({ holdingId: holding.id, delta: -1 }, db);
+    expect(event.type).toBe('quantity-adjusted');
+    expect(await quantityOf(holding.id)).toBe(3);
+  });
+
+  it('refuses to go below zero rather than silently clamping', async () => {
+    const holding = await aHolding(2);
+    await expect(adjustHoldingQuantity({ holdingId: holding.id, delta: -5 }, db))
+      .rejects.toThrow(/below zero/i);
+    expect(await quantityOf(holding.id)).toBe(2);
+  });
+
+  it('refuses a change of zero, which says nothing', async () => {
+    const holding = await aHolding();
+    await expect(adjustHoldingQuantity({ holdingId: holding.id, delta: 0 }, db))
+      .rejects.toThrow(/says nothing/i);
+  });
+});
+
+describe('placing a holding that lives nowhere (spec 005)', () => {
+  it('opens a residency without closing one that was never there', async () => {
+    const tank = await createAquarium({ name: '75G', kind: 'display' }, db);
+    // An opening-balance holding with no residency: invisible on every screen
+    // and unplaceable from any of them before spec 005.
+    const holding = {
+      id: newId('hold'), speciesId: 'sp_jaguar_cichlid', kind: 'individual' as const,
+      openingQuantity: 1, openingBalance: true, createdAt: new Date().toISOString(),
+    };
+    await db.holdings.add(holding);
+
+    await moveHolding(holding.id, tank.id, '2026-08-01', db);
+
+    const residencies = await db.residencies.where('holdingId').equals(holding.id).toArray();
+    expect(residencies).toHaveLength(1);
+    expect(residencies[0]!.aquariumId).toBe(tank.id);
+    expect(residencies[0]!.endDate).toBeUndefined();
   });
 });
 

@@ -295,17 +295,29 @@ export interface PriceObservation {
 
 export type DiscoveryTier = 'familiar' | 'uncommon' | 'rare' | 'epic' | 'legendary';
 
+/**
+ * What a reveal awarded, by component.
+ *
+ * As of formula v0.3.0 a new snapshot carries `marketScarcity` and nothing
+ * else. The other four are OPTIONAL rather than deleted because snapshots are
+ * immutable by requirement (FR-R05: "tuning never rewrites a historical reveal
+ * snapshot"), so v0.2.0 records on the device still carry all five and still
+ * have to render. Read the keys a snapshot actually has; never assume the set.
+ */
 export interface RarityComponentBreakdown {
-  firstConfirmedSpecies: number;
-  dreamListHit: number;
-  personalEncounterScarcity: number;
-  exceptionalSpecimen: number;
   /**
    * Contribution from how hard the fish is to source from the tracked
-   * vendors. Added in formula v0.2.0 at the product owner's direction; see
-   * discovery-tier.ts for the PRD note.
+   * vendors. The entire score as of v0.2.0 -> v0.3.0; see discovery-tier.ts.
    */
   marketScarcity: number;
+  /** Retired in v0.3.0. Present on v0.1.0 and v0.2.0 snapshots. */
+  firstConfirmedSpecies?: number;
+  /** Retired in v0.3.0. Present on v0.1.0 and v0.2.0 snapshots. */
+  dreamListHit?: number;
+  /** Retired in v0.3.0. Present on v0.1.0 and v0.2.0 snapshots. */
+  personalEncounterScarcity?: number;
+  /** Retired in v0.3.0. Present on v0.1.0 and v0.2.0 snapshots. */
+  exceptionalSpecimen?: number;
 }
 
 /**

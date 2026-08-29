@@ -188,8 +188,92 @@ export class Fish2TankDB extends Dexie {
     this.version(3).stores({
       deletedRecords: 'id, deletedAt',
     });
+
+    /**
+     * v4 retires two species that were never species (spec 005).
+     *
+     * THE FIRST MIGRATION IN THIS APP THAT REWRITES USER DATA, so it is worth
+     * being explicit about what it may and may not touch. It rewrites
+     * `speciesId` references and nothing else. No record is deleted, no photo
+     * is dropped, no story is edited, and a specimen whose species is retired
+     * keeps its identity history - the assertion that named it is still there
+     * and still auditable (FR-I06).
+     *
+     * Without this the references dangle. `sp_roofvissen_fotografie` is gone
+     * from the catalog after the mart rebuild, so a specimen still pointing at
+     * it would render with no species and its species page would be a dead
+     * end. That fish is real; only the name was wrong.
+     */
+    this.version(4).stores({}).upgrade(async (tx) => {
+      const start = Date.now();
+      const counts: Record<string, number> = {};
+
+      for (const [table, key] of RETIRED_SPECIES_TABLES) {
+        for (const [from, to] of Object.entries(RETIRED_SPECIES)) {
+          const rows = await tx.table(table).where(key).equals(from).toArray();
+          if (rows.length === 0) continue;
+
+          for (const row of rows) {
+            // cardPrefs is keyed BY speciesId, so it is a delete-and-reinsert
+            // rather than an update - Dexie will not move a primary key.
+            if (key === 'speciesId' && table === 'cardPrefs') {
+              await tx.table(table).delete(from);
+              if (to) await tx.table(table).put({ ...row, speciesId: to });
+            } else {
+              await tx.table(table).update(row.id, { [key]: to });
+            }
+          }
+          counts[`${table}.${from}`] = rows.length;
+          console.info('[migrate v4] remapped species reference', {
+            table, from, to: to ?? '(cleared)', rows: rows.length,
+          });
+        }
+      }
+
+      // Verify, rather than reporting a migration nobody checked. A dangling
+      // reference left behind here is invisible until a screen renders blank.
+      const left: string[] = [];
+      for (const [table, key] of RETIRED_SPECIES_TABLES) {
+        for (const from of Object.keys(RETIRED_SPECIES)) {
+          if (await tx.table(table).where(key).equals(from).count() > 0) left.push(`${table}.${from}`);
+        }
+      }
+      if (left.length > 0) {
+        console.error('[migrate v4] references survived the remap', { left });
+        throw new Error(`Species remap incomplete: ${left.join(', ')}`);
+      }
+
+      console.info('[migrate v4] done', {
+        ms: Date.now() - start,
+        remapped: Object.keys(counts).length === 0 ? 'nothing to do' : counts,
+      });
+    });
   }
 }
+
+/**
+ * Retired species ids, and what a reference to one becomes.
+ *
+ * See NOT_A_SPECIES in seed/species-overrides.ts for why each was dropped.
+ *   - The Red Wolf Fish is a real animal that was minted under a photo
+ *     credit, so its references move to the catalog entry for the same fish.
+ *   - Fish food is not an animal, so a reference to it becomes no species at
+ *     all rather than being pointed at some arbitrary substitute.
+ */
+const RETIRED_SPECIES: Record<string, string | undefined> = {
+  sp_roofvissen_fotografie: 'sp_erythrinus_erythrinus',
+  sp_fish_food: undefined,
+};
+
+/** Every table that stores a species reference, and the field holding it. */
+const RETIRED_SPECIES_TABLES: ReadonlyArray<readonly [string, string]> = [
+  ['specimens', 'speciesId'],
+  ['holdings', 'speciesId'],
+  ['raritySnapshots', 'speciesId'],
+  ['priceObservations', 'speciesId'],
+  ['dreamList', 'speciesId'],
+  ['cardPrefs', 'speciesId'],
+];
 
 export const db = new Fish2TankDB();
 

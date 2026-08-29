@@ -1,7 +1,9 @@
 import { useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { blobFor, db } from '@/data/db';
-import { CATALOG_BY_SPECIES, cardPrice, portraitAsset } from '@/data/catalog';
+import {
+  buildCatalogCard, CATALOG_BY_SPECIES, cardPrice, portraitAsset, type CatalogCard,
+} from '@/data/catalog';
 import { marketFor } from '@/data/market';
 import { deriveBadge, deriveQuantity } from '@/domain/holdings';
 import { summariseTank, type TankResident } from '@/domain/tank-stats';
@@ -10,6 +12,68 @@ import { useBlobUrls } from './blob-url';
 
 export function useSpecies(id?: Id) {
   return useLiveQuery(async () => (id ? db.species.get(id) : undefined), [id]);
+}
+
+/**
+ * The catalog card for a species, assembled from the device.
+ *
+ * For callers that hold nothing else about the species - the reveal, chiefly.
+ * The species page keeps its own query because it needs the surrounding rows
+ * anyway, and calls buildCatalogCard directly with them; the assembly itself
+ * is shared so the two cannot disagree about what a card means.
+ *
+ * Distinguishes "still loading" (undefined) from "no such species" (null),
+ * because a speciesId can come from a stored record written before a catalog
+ * rebuild and the reveal must not spin forever on one.
+ */
+export function useCatalogCard(speciesId?: Id): CatalogCard | null | undefined {
+  return useLiveQuery(async () => {
+    if (!speciesId) return null;
+    const species = CATALOG_BY_SPECIES.get(speciesId);
+    if (!species) return null;
+
+    const [specimens, snapshots, holdings, lifeEvents, residencies, media, dream] = await Promise.all([
+      db.specimens.where('speciesId').equals(speciesId).toArray(),
+      db.raritySnapshots.where('speciesId').equals(speciesId).toArray(),
+      db.holdings.where('speciesId').equals(speciesId).toArray(),
+      db.lifeEvents.toArray(), db.residencies.toArray(), db.media.toArray(),
+      db.dreamList.where('speciesId').equals(speciesId).first(),
+    ]);
+
+    const keptHoldingIds = new Set(
+      holdings
+        .filter((h) => deriveQuantity(h, lifeEvents) > 0
+          && residencies.some((r) => r.holdingId === h.id && !r.endDate))
+        .map((h) => h.id),
+    );
+    const ownPhotoMediaIds = media
+      .filter((m) => m.kind === 'photo' && m.specimenIds.some((sid) => specimens.some((s) => s.id === sid)))
+      .sort((a, b) => b.capturedAt.localeCompare(a.capturedAt))
+      .map((m) => m.id);
+
+    return buildCatalogCard(species, {
+      specimens, holdings, keptHoldingIds, snapshots, ownPhotoMediaIds,
+      onDreamList: Boolean(dream),
+    });
+  }, [speciesId]);
+}
+
+/**
+ * Whether this is the first confirmed catch of its species.
+ *
+ * Used by the reveal for its "New species" line. It used to be read off the
+ * discovery score's `firstConfirmedSpecies` component, which was the right
+ * instinct - one source of truth - until v0.3.0 retired that component. It is
+ * a fact about the collection rather than about the score, so it is counted
+ * here directly instead of being inferred from a number that no longer carries
+ * it.
+ */
+export function useIsFirstOfSpecies(specimenId?: Id, speciesId?: Id) {
+  return useLiveQuery(async () => {
+    if (!specimenId || !speciesId) return false;
+    const confirmed = await db.specimens.where('speciesId').equals(speciesId).toArray();
+    return confirmed.filter((s) => s.identityStatus === 'user-confirmed' && s.id !== specimenId).length === 0;
+  }, [specimenId, speciesId]);
 }
 
 export function useSpecimen(id?: Id) {
