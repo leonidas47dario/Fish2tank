@@ -1,0 +1,639 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fish2Tank - "The Drawer" redesign, round 3</title>
+<!-- PROTOTYPE ONLY. In production both of these are self-hosted: the four
+     Geist woff2 weights actually used, and a Phosphor SVG sprite subset to
+     the eleven glyphs on these screens. An offline-first PWA cannot depend on
+     a CDN, and inline style attributes below would be stripped by a strict
+     style-src CSP, so the per-portrait plate colour ships as a class the ETL
+     emits, not as an attribute. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600;700&family=Geist:wght@400;500;600;700&family=Source+Sans+3:ital,wght@1,400;1,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="./proto.css">
+<link rel="stylesheet" href="./plates.css">
+</head>
+<body class="board">
+
+<!-- ==================================================================
+     1. HOME
+     ================================================================== -->
+<div class="frame">
+  <p class="frame__label">Home</p>
+  <div class="phone">
+    <div class="screen">
+
+      <header class="home-hero">
+        <h1 class="home-hero__line">7 species kept. 43 met.</h1>
+        <p class="home-hero__sub">Last catch was the Panther, two days ago.</p>
+      </header>
+
+      <div class="pad" style="margin-bottom:var(--space-5)">
+        <a class="cta" href="#"><i class="ph-fill ph-camera" aria-hidden="true"></i> Catch something</a>
+      </div>
+
+      <section style="margin-bottom:var(--space-5)">
+        <h2 class="sec-head pad">Recently caught</h2>
+        <div class="shelf">
+          <a class="shelf-item" href="#">
+            <span class="plate plate--sp-jaguar-cichlid"><img class="plate__img" src="../src/data/seed/assets/portraits/sp_jaguar_cichlid.jpg" alt="Jaguar Cichlid"></span>
+            <p class="shelf-item__name">the Panther</p>
+            <span class="shelf-item__when">27 Aug</span>
+          </a>
+          <a class="shelf-item" href="#">
+            <span class="plate plate--sp-electric-blue-acara"><img class="plate__img" src="../src/data/seed/assets/portraits/sp_electric_blue_acara.jpg" alt="Electric Blue Acara"></span>
+            <p class="shelf-item__name">Electric Blue Acara</p>
+            <span class="shelf-item__when">24 Aug</span>
+          </a>
+          <a class="shelf-item" href="#">
+            <span class="plate plate--sp-mikrogeophagus-ramirezi"><img class="plate__img" src="../src/data/seed/assets/portraits/sp_mikrogeophagus_ramirezi.jpg" alt="Ram Cichlid"></span>
+            <p class="shelf-item__name">Ram Cichlid</p>
+            <span class="shelf-item__when">21 Aug</span>
+          </a>
+          <a class="shelf-item" href="#">
+            <span class="plate"><span class="plate__img plate__img--none"><span class="plate__none-text">no photo</span></span></span>
+            <p class="shelf-item__name">Mystery Catch</p>
+            <span class="shelf-item__when">19 Aug</span>
+          </a>
+        </div>
+      </section>
+
+      <section>
+        <h2 class="sec-head pad">Your tanks</h2>
+        <button type="button" class="tankrow">
+          <span class="grow">
+            <span class="tankrow__name">Predator Tank</span><br>
+            <span class="tankrow__meta">15 holdings · 180 gal</span>
+          </span>
+          <span class="status status--suitable"><span class="status__glyph" aria-hidden="true">✓</span> Room</span>
+        </button>
+        <button type="button" class="tankrow">
+          <span class="grow">
+            <span class="tankrow__name">75G</span><br>
+            <span class="tankrow__meta">19 holdings · 75 gal</span>
+          </span>
+          <span class="status status--conditional"><span class="status__glyph" aria-hidden="true">!</span> Crowded</span>
+        </button>
+        <button type="button" class="tankrow">
+          <span class="grow">
+            <span class="tankrow__name">4 tanks unmeasured</span><br>
+            <span class="tankrow__meta">Bass Tote, Breeder Tote, Mini, Quarantine</span>
+          </span>
+          <span class="status status--unknown"><span class="status__glyph" aria-hidden="true">?</span> Measure</span>
+        </button>
+        <p class="panel__note panel__note--tight pad">
+          Nothing can be screened against a tank with no dimensions. One tape measure fixes all four.
+        </p>
+      </section>
+
+    </div>
+    <nav class="nav" aria-label="Main">
+      <a href="#" aria-current="page"><i class="ph-fill ph-house" aria-hidden="true"></i>Home</a>
+      <a href="#"><i class="ph ph-squares-four" aria-hidden="true"></i>Catalog</a>
+      <a href="#" class="nav__catch"><i class="ph-fill ph-camera" aria-hidden="true"></i>Catch</a>
+      <a href="#"><i class="ph ph-drop" aria-hidden="true"></i>Tanks</a>
+      <a href="#"><i class="ph ph-notebook" aria-hidden="true"></i>Journal</a>
+    </nav>
+  </div>
+</div>
+
+<!-- ==================================================================
+     2. CATALOG
+     ================================================================== -->
+<div class="frame">
+  <p class="frame__label">Catalog</p>
+  <div class="phone">
+    <div class="screen catalog-scroll">
+
+      <div class="sticky">
+        <div class="topbar">
+          <h1 class="topbar__title">Catalog</h1>
+          <span class="topbar__count">43 / 1076</span>
+        </div>
+        <div class="searchbar">
+          <div class="search">
+            <i class="ph ph-magnifying-glass faint" aria-hidden="true"></i>
+            <input type="text" placeholder="Name, species or trade name" aria-label="Search the catalog">
+          </div>
+        </div>
+        <div class="chips">
+          <button type="button" class="chip" aria-pressed="true">All<span class="chip__n">1076</span></button>
+          <button type="button" class="chip" aria-pressed="false">Fits<span class="chip__n">12</span></button>
+          <button type="button" class="chip" aria-pressed="false">Can't tell<span class="chip__n">1029</span></button>
+          <button type="button" class="chip" aria-pressed="false">Kept<span class="chip__n">7</span></button>
+          <button type="button" class="chip" aria-pressed="false">In stock<span class="chip__n">214</span></button>
+          <button type="button" class="chip"><i class="ph ph-sliders-horizontal" aria-hidden="true"></i> More</button>
+        </div>
+      </div>
+
+      <div class="sortline">
+        <span>In stock first</span>
+        <button type="button">Change sort</button>
+      </div>
+      <p class="asof">Only 47 of 1,076 species carry the size and tank data a verdict needs, so 1,029 cannot be checked at all. Stock last checked 12 Aug.</p>
+
+      <div class="catalog-grid">
+
+        <a class="tile" href="#">
+          <span class="plate plate--sp-neocaridina-davidi">
+            <img class="plate__img" src="../src/data/seed/assets/portraits/sp_neocaridina_davidi.jpg" alt="Cherry Shrimp">
+          </span>
+          <span class="tile__text">
+            <span class="tile__name">Cherry Shrimp</span>
+            <span class="tile__textrow"><span class="tile__sci">Neocaridina davidi</span></span>
+          </span>
+          <span class="tile__stats"><span class="faint">no price</span><span class="tile__col">btm</span></span>
+        </a>
+
+        <a class="tile" href="#">
+          <span class="plate plate--sp-pomacea-bridgesii">
+            <img class="plate__img" src="../src/data/seed/assets/portraits/sp_pomacea_bridgesii.jpg" alt="Mystery Snails">
+          </span>
+          <span class="tile__text">
+            <span class="tile__name">Mystery Snails</span>
+            <span class="tile__textrow"><span class="tile__sci">Pomacea bridgesii</span></span>
+          </span>
+          <span class="tile__stats"><b>$4</b><span class="tile__col">btm</span></span>
+        </a>
+
+        <a class="tile" href="#">
+          <span class="plate plate--sp-betta">
+            <img class="plate__img" src="../src/data/seed/assets/portraits/sp_betta.jpg" alt="Betta">
+          </span>
+          <span class="tile__text">
+            <span class="tile__name">Betta</span>
+            <span class="tile__textrow"><span class="tile__sci">Betta splendens</span></span>
+          </span>
+          <span class="tile__stats"><b>$15</b><span>3in</span><span>5gal</span><span class="tile__col">all</span></span>
+        </a>
+
+        <a class="tile" href="#">
+          <span class="plate plate--sp-guppy">
+            <img class="plate__img" src="../src/data/seed/assets/portraits/sp_guppy.jpg" alt="Fancy Guppy">
+          </span>
+          <span class="tile__text">
+            <span class="tile__name">Fancy Guppy</span>
+            <span class="tile__textrow"><span class="tile__sci">Poecilia reticulata</span></span>
+          </span>
+          <span class="tile__stats"><b>$27</b><span>2in</span><span>10gal</span><span class="tile__col">all</span></span>
+        </a>
+
+        <a class="tile" href="#">
+          <span class="plate plate--sp-caridina-multidentata">
+            <img class="plate__img" src="../src/data/seed/assets/portraits/sp_caridina_multidentata.jpg" alt="Shrimp">
+          </span>
+          <span class="tile__text">
+            <span class="tile__name">Shrimp</span>
+            <span class="tile__textrow"><span class="tile__sci">Caridina multidentata</span></span>
+          </span>
+          <span class="tile__stats"><span class="faint">no price</span><span class="tile__col">btm</span></span>
+        </a>
+
+        <a class="tile" href="#">
+          <span class="plate plate--sp-neon-tetra">
+            <img class="plate__img" src="../src/data/seed/assets/portraits/sp_neon_tetra.jpg" alt="Neon Tetra">
+          </span>
+          <span class="tile__text">
+            <span class="tile__name">Neon Tetra</span>
+            <span class="tile__textrow"><span class="tile__sci">Paracheirodon innesi</span></span>
+          </span>
+          <span class="tile__stats"><span class="faint">no price</span><span>1.5in</span><span>10gal</span><span class="tile__col">mid</span></span>
+        </a>
+
+        <a class="tile" href="#">
+          <span class="plate plate--sp-melanotaenia-boesemani">
+            <img class="plate__img" src="../src/data/seed/assets/portraits/sp_melanotaenia_boesemani.jpg" alt="Boesemani Rainbowfish">
+          </span>
+          <span class="tile__text">
+            <span class="tile__name">Boesemani Rainbowfish</span>
+            <span class="tile__textrow"><span class="tile__sci">Melanotaenia boesemani</span></span>
+          </span>
+          <span class="tile__stats"><b>$29</b><span class="tile__col">mid</span></span>
+        </a>
+
+        <a class="tile" href="#">
+          <span class="plate plate--sp-microsorum-pteropus">
+            <img class="plate__img" src="../src/data/seed/assets/portraits/sp_microsorum_pteropus.jpg" alt="Java Fern">
+          </span>
+          <span class="tile__text">
+            <span class="tile__name">Java Fern</span>
+            <span class="tile__textrow"><span class="tile__sci">Microsorum pteropus</span></span>
+          </span>
+          <span class="tile__stats"><span class="faint">no price</span></span>
+        </a>
+
+        <a class="tile" href="#">
+          <span class="plate plate--sp-bristlenose-pleco">
+            <img class="plate__img" src="../src/data/seed/assets/portraits/sp_bristlenose_pleco.jpg" alt="Bristlenose Pleco">
+          </span>
+          <span class="tile__text">
+            <span class="tile__name">Bristlenose Pleco</span>
+            <span class="tile__textrow"><span class="tile__sci">Ancistrus cirrhosus</span></span>
+          </span>
+          <span class="tile__stats"><b>$35</b><span>5in</span><span>30gal</span><span class="tile__col">btm</span></span>
+        </a>
+
+        <a class="tile" href="#">
+          <span class="plate plate--sp-potamotrygon-leopoldi">
+            <img class="plate__img" src="../src/data/seed/assets/portraits/sp_potamotrygon_leopoldi.jpg" alt="Black Diamond Stingray">
+          </span>
+          <span class="tile__text">
+            <span class="tile__name">Black Diamond Stingray</span>
+            <span class="tile__textrow"><span class="tile__sci">Potamotrygon leopoldi</span></span>
+          </span>
+          <span class="tile__stats"><b>$973</b><span class="tile__col">btm</span></span>
+        </a>
+
+      </div>
+    </div>
+    <nav class="nav" aria-label="Main">
+      <a href="#"><i class="ph ph-house" aria-hidden="true"></i>Home</a>
+      <a href="#" aria-current="page"><i class="ph-fill ph-squares-four" aria-hidden="true"></i>Catalog</a>
+      <a href="#" class="nav__catch"><i class="ph-fill ph-camera" aria-hidden="true"></i>Catch</a>
+      <a href="#"><i class="ph ph-drop" aria-hidden="true"></i>Tanks</a>
+      <a href="#"><i class="ph ph-notebook" aria-hidden="true"></i>Journal</a>
+    </nav>
+  </div>
+</div>
+
+<!-- ==================================================================
+     3. SPECIES - NEW. The screen the core job actually needs.
+     Every other screen assumes the fish is already yours. This one is the
+     aisle: a fish you do not own, a price tag, and four seconds to decide.
+     Verdict above the photograph, because the answer is why you opened it.
+     ================================================================== -->
+<div class="frame">
+  <p class="frame__label">Species - new</p>
+  <div class="phone">
+    <div class="screen">
+
+      <div class="topbar">
+        <button type="button" class="iconbtn" aria-label="Back to catalog"><i class="ph ph-arrow-left" aria-hidden="true"></i></button>
+        <h1 class="topbar__title">Black Diamond Stingray</h1>
+      </div>
+
+      <div class="pad" style="margin-bottom:var(--space-4)">
+        <p class="verdict-lede" style="padding:0">Fits neither of your 2 measured tanks.</p>
+        <p class="panel__note" style="margin-top:0">
+          Your largest measured tank is the Predator Tank, at 180 gal.
+        </p>
+        <button type="button" class="tankrow" style="padding-left:0;padding-right:0;margin-top:var(--space-3)">
+          <span class="grow">
+            <span class="tankrow__name">4 tanks cannot answer</span><br>
+            <span class="tankrow__meta">Bass Tote, Breeder Tote, Mini, Quarantine</span>
+          </span>
+          <span class="status status--unknown"><span class="status__glyph" aria-hidden="true">?</span> No data</span>
+        </button>
+      </div>
+
+      <!-- One clamp, everywhere. A hero is not exempt: its neighbour is its own
+           catalog tile, one tap earlier, and the same species must not carry two
+           mats two stops apart depending on which screen you are on. -->
+      <div class="hero-plate">
+        <span class="plate plate--sp-potamotrygon-leopoldi"><img class="plate__img" src="../src/data/seed/assets/portraits/sp_potamotrygon_leopoldi.jpg" alt="Black Diamond Stingray"></span>
+      </div>
+
+      <div class="pad">
+        <p class="specimen-sci">Potamotrygon leopoldi</p>
+        <div class="tagrow">
+          <span class="tier tier--legendary"><span class="tier__glyph" aria-hidden="true">★</span> Legendary</span>
+        </div>
+        <dl class="label-line"><div><dt>Adult</dt><dd>18in disc</dd></div>
+          <div><dt>Needs</dt><dd>300 gal</dd></div>
+          <div><dt>Column</dt><dd>Bottom</dd></div></dl>
+      </div>
+
+      <section class="panel">
+        <h2 class="sec-head">Why not</h2>
+        <div class="factor"><span class="factor__name">Minimum enclosure</span><span class="factor__val factor__val--bad factor__val--num">180 of 300 gal</span></div>
+        <div class="factor"><span class="factor__name">Adult size</span><span class="factor__val factor__val--bad factor__val--num">18in disc</span></div>
+        <div class="factor"><span class="factor__name">Water overlap</span><span class="factor__val factor__val--ok">pH and temp agree</span></div>
+        <div class="factor"><span class="factor__name">Aggression</span><span class="factor__val factor__val--unknown">not rated</span></div>
+        <p class="panel__note panel__note--tight">
+          Rules v0.2.0. Aggression has no profile for this species, so it is left unrated rather than assumed calm.
+        </p>
+      </section>
+
+      <section class="panel">
+        <h2 class="sec-head">What it goes for</h2>
+        <div class="figure" style="font-size:var(--size-xl);margin-bottom:var(--space-2)">$973<small>median of the 14 comparable</small></div>
+        <p class="panel__note" style="margin-top:0">
+          $595 to $2,800, listed 2021 to 2024. Only one tracked store carries it.
+        </p>
+        <div class="store" style="margin-top:var(--space-2)">
+          <a class="store__name" href="#">Predatory Fins</a>
+          <span class="store__flag store__flag--stale">11 in stock on 12 Aug</span>
+          <span class="store__price">$973</span>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2 class="sec-head">What the tag says</h2>
+        <div class="capture">
+          <div><label for="ask">Asking</label><input id="ask" inputmode="decimal" placeholder="$"></div>
+          <div><label for="mem">Member</label><input id="mem" inputmode="decimal" placeholder="$"></div>
+          <div class="capture--wide"><label for="obs">Size on the tag</label><input id="obs" inputmode="decimal" placeholder="inches"></div>
+        </div>
+        <p class="panel__note panel__note--tight">
+          Nothing is filled in for you, because what you type should be what the tag says.
+          No price tag? Leave both blank. Blank means unknown, not free.
+        </p>
+      </section>
+
+      <div class="pad" style="margin-top:var(--space-5)">
+        <button type="button" class="cta cta--quiet"><i class="ph ph-plus" aria-hidden="true"></i> Add to Dream List</button>
+      </div>
+
+    </div>
+    <nav class="nav" aria-label="Main">
+      <a href="#"><i class="ph ph-house" aria-hidden="true"></i>Home</a>
+      <a href="#" aria-current="page"><i class="ph-fill ph-squares-four" aria-hidden="true"></i>Catalog</a>
+      <a href="#" class="nav__catch"><i class="ph-fill ph-camera" aria-hidden="true"></i>Catch</a>
+      <a href="#"><i class="ph ph-drop" aria-hidden="true"></i>Tanks</a>
+      <a href="#"><i class="ph ph-notebook" aria-hidden="true"></i>Journal</a>
+    </nav>
+  </div>
+</div>
+
+<!-- ==================================================================
+     4. SPECIMEN - the screen that was 20,286px tall
+     ================================================================== -->
+<div class="frame">
+  <p class="frame__label">Specimen</p>
+  <div class="phone">
+    <div class="screen">
+
+      <div class="topbar">
+        <button type="button" class="iconbtn" aria-label="Back"><i class="ph ph-arrow-left" aria-hidden="true"></i></button>
+        <h1 class="topbar__title">the Panther</h1>
+        <button type="button" class="iconbtn" aria-label="More actions"><i class="ph ph-dots-three-vertical" aria-hidden="true"></i></button>
+      </div>
+
+      <div class="hero-plate">
+        <span class="plate plate--sp-jaguar-cichlid"><img class="plate__img" src="../src/data/seed/assets/portraits/sp_jaguar_cichlid.jpg" alt="Jaguar Cichlid, photographed on 27 August"></span>
+      </div>
+
+      <div class="pad">
+        <h2 class="specimen-name">the Panther</h2>
+        <p class="specimen-sci">Parachromis managuensis</p>
+        <p class="specimen-common">Jaguar Cichlid</p>
+        <div class="tagrow">
+          <span class="status status--suitable"><span class="status__glyph" aria-hidden="true">✓</span> You confirmed this</span>
+        </div>
+        <p class="panel__note panel__note--tight" style="margin-top:var(--space-2)">
+          No confidence percentage is recorded, because none was measured.
+        </p>
+        <dl class="label-line"><div><dt>Seen</dt><dd>27 Aug 2026</dd></div>
+          <div><dt>At</dt><dd>Aquarium Co-Op</dd></div>
+          <div><dt>Column</dt><dd>Mid-water</dd></div></dl>
+      </div>
+
+      <section class="panel panel--flush" style="margin-top:var(--space-5)">
+        <p class="verdict-lede">Fits 1 of your 2 measured tanks.</p>
+
+        <button type="button" class="tankrow">
+          <span class="grow">
+            <span class="tankrow__name">Predator Tank</span><br>
+            <span class="tankrow__meta">15 holdings · 180 gal</span>
+          </span>
+          <span class="status status--suitable"><span class="status__glyph" aria-hidden="true">✓</span> Suitable</span>
+        </button>
+
+        <!-- The pill is the WORST factor, and the worst factor is printed on
+             the collapsed row. Round 2 summarised this tank as Conditional
+             while "eats 4 residents" sat hidden underneath in red. -->
+        <button type="button" class="tankrow" aria-expanded="true" aria-controls="why-75g">
+          <span class="grow">
+            <span class="tankrow__name">75G</span><br>
+            <span class="tankrow__meta">19 holdings · 75 gal</span>
+            <span class="tankrow__why">Eats 4 of the fish already in it</span>
+          </span>
+          <span class="status status--extreme-risk"><span class="status__glyph" aria-hidden="true">■</span> Extreme risk</span>
+        </button>
+        <div class="factors factors--severe" id="why-75g">
+          <p class="factors__head">Why 75G is extreme risk</p>
+          <div class="factor"><span class="factor__name">Predation</span><span class="factor__val factor__val--bad">eats Ember Tetra, Ram, Otocinclus, Cardinal</span></div>
+          <div class="factor"><span class="factor__name">Aggression</span><span class="factor__val factor__val--bad">high vs peaceful</span></div>
+          <div class="factor"><span class="factor__name">Minimum enclosure</span><span class="factor__val factor__val--warn factor__val--num">75 of 100 gal</span></div>
+          <div class="factor"><span class="factor__name">Crowding</span><span class="factor__val factor__val--warn">already crowded</span></div>
+          <div class="factor"><span class="factor__name">Adult size</span><span class="factor__val factor__val--ok factor__val--num">16in fits</span></div>
+          <div class="factor"><span class="factor__name">Water overlap</span><span class="factor__val factor__val--ok">pH and temp agree</span></div>
+          <div class="factor"><span class="factor__name">Social needs</span><span class="factor__val factor__val--ok">solitary, met</span></div>
+          <p class="panel__note panel__note--tight">Rules v0.2.0, screened 27 Aug. Re-running adds a snapshot, it never edits this one.</p>
+        </div>
+
+        <button type="button" class="tankrow">
+          <span class="grow">
+            <span class="tankrow__name">4 tanks cannot answer</span><br>
+            <span class="tankrow__meta">Bass Tote, Breeder Tote, Mini, Quarantine</span>
+          </span>
+          <span class="status status--unknown"><span class="status__glyph" aria-hidden="true">?</span> No data</span>
+        </button>
+        <p class="panel__note pad">
+          These four have no recorded dimensions, so no verdict is possible and none is guessed.
+          <a class="prompt__act" href="#">Measure a tank</a>
+        </p>
+        <div class="pad" style="margin-top:var(--space-3)">
+          <button type="button" class="cta cta--quiet"><i class="ph ph-ruler" aria-hidden="true"></i> Check my tanks again</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2 class="sec-head">What it cost you</h2>
+        <dl class="prices" style="margin-bottom:var(--space-4)">
+          <div><dt>Asking</dt><dd>$100</dd></div>
+          <div><dt>Member</dt><dd>$75</dd></div>
+          <div><dt>You paid</dt><dd>$75</dd></div>
+        </dl>
+
+        <!-- n on every band. The bands below the comparability minimum are
+             drawn thin, because one listing is an observation, not a price. -->
+        <div class="pbs">
+          <span class="pbs__label">1in</span><span class="pbs__bar pbs__bar--thin" style="width:5%"></span><span class="pbs__val">$12</span><span class="pbs__n">n=1</span>
+          <span class="pbs__label">3in</span><span class="pbs__bar pbs__bar--thin" style="width:10%"></span><span class="pbs__val">$25</span><span class="pbs__n">n=1</span>
+          <span class="pbs__label">4in</span><span class="pbs__bar pbs__bar--thin" style="width:14%"></span><span class="pbs__val">$34</span><span class="pbs__n">n=2</span>
+          <span class="pbs__label">5in</span><span class="pbs__bar pbs__bar--thin" style="width:22%"></span><span class="pbs__val">$55</span><span class="pbs__n">n=1</span>
+          <span class="pbs__label">6in</span><span class="pbs__bar pbs__bar--you" style="width:34%"></span><span class="pbs__val pbs__val--you">$85</span><span class="pbs__n">n=1</span>
+          <span class="pbs__label">7in</span><span class="pbs__bar pbs__bar--thin" style="width:60%"></span><span class="pbs__val">$150</span><span class="pbs__n">n=1</span>
+          <span class="pbs__label">9in</span><span class="pbs__bar pbs__bar--thin" style="width:78%"></span><span class="pbs__val">$195</span><span class="pbs__n">n=1</span>
+          <span class="pbs__label">12in</span><span class="pbs__bar pbs__bar--thin" style="width:100%"></span><span class="pbs__val">$250</span><span class="pbs__n">n=1</span>
+        </div>
+
+        <p class="panel__note panel__note--tight">
+          Not enough to compare. The 6in band holds 1 listing and 3 are needed, so what you paid is recorded and not scored.
+          10 comparable of 13 listings, from 2 of the 8 tracked stores, listed 2016 to 2021.
+        </p>
+      </section>
+
+      <section class="panel">
+        <h2 class="sec-head">Where it shows up</h2>
+        <div class="store">
+          <a class="store__name" href="#">Imperial Tropicals</a>
+          <span class="store__flag store__flag--stale">in stock on 12 Aug</span>
+          <span class="store__price">$29.99</span>
+        </div>
+        <div class="store">
+          <a class="store__name" href="#">Predatory Fins</a>
+          <span class="store__flag store__flag--out">sold out</span>
+          <span class="store__price muted">$55.00</span>
+        </div>
+        <p class="panel__note panel__note--tight">
+          Scarce: 1 of those 13 is in stock, and nobody has listed one since 2021.
+        </p>
+      </section>
+
+    </div>
+    <nav class="nav" aria-label="Main">
+      <a href="#"><i class="ph ph-house" aria-hidden="true"></i>Home</a>
+      <a href="#"><i class="ph ph-squares-four" aria-hidden="true"></i>Catalog</a>
+      <a href="#" class="nav__catch"><i class="ph-fill ph-camera" aria-hidden="true"></i>Catch</a>
+      <a href="#"><i class="ph ph-drop" aria-hidden="true"></i>Tanks</a>
+      <a href="#"><i class="ph ph-notebook" aria-hidden="true"></i>Journal</a>
+    </nav>
+  </div>
+</div>
+
+
+<!-- ==================================================================
+     5. STATES. An offline-first app used on one bar in a shop basement
+     meets these constantly, and the prototype had drawn exactly one.
+     ================================================================== -->
+<div class="frame">
+  <p class="frame__label">States</p>
+  <div class="phone">
+    <div class="screen">
+
+      <div class="topbar"><h1 class="topbar__title">States</h1></div>
+
+      <h2 class="sec-head pad">Nothing matched</h2>
+      <div class="state">
+        <p class="state__head"><i class="ph ph-magnifying-glass" aria-hidden="true"></i> No species called "clown loch"</p>
+        <p class="state__body">Closest name in the catalog is Clown Loach. Trade names are searched too, so a shop label usually works.</p>
+        <button type="button" class="state__act">Search Clown Loach instead</button>
+      </div>
+
+      <h2 class="sec-head pad">Working offline</h2>
+      <div class="state state--stale">
+        <p class="state__head"><i class="ph ph-cloud-slash" aria-hidden="true"></i> Showing what was saved</p>
+        <p class="state__body">Every species, portrait and verdict works without a signal. Stock and prices are from 12 Aug and will not update until you are back on a connection.</p>
+      </div>
+
+      <h2 class="sec-head pad">Two different missing pictures</h2>
+      <div class="pairdemo">
+        <div>
+          <span class="plate"><span class="plate__img plate__img--none"><span class="plate__none-text">no portrait</span></span></span>
+          <p class="pairdemo__name">Coal Grunter</p>
+          <p class="pairdemo__note">Nobody has photographed it. Permanent, and true of 381 species.</p>
+        </div>
+        <div>
+          <span class="plate"><span class="plate__img plate__img--failed">
+            <i class="ph ph-arrow-clockwise" aria-hidden="true"></i>
+            <span>photo did not load</span>
+          </span></span>
+          <p class="pairdemo__name">Ram Cichlid</p>
+          <p class="pairdemo__note">Worth tapping again. <button type="button" class="prompt__act">Retry</button></p>
+        </div>
+      </div>
+
+      <h2 class="sec-head pad" style="margin-top:var(--space-5)">Screening in progress</h2>
+      <div class="state">
+        <p class="state__head"><i class="ph ph-ruler" aria-hidden="true"></i> Checking your tanks</p>
+        <div class="progress">
+          <span class="progress__track"><span class="progress__fill"></span></span>
+          <span class="progress__n">2 of 6</span>
+        </div>
+        <p class="state__body">Determinate, because the engine knows how many tanks it has to walk.</p>
+      </div>
+
+      <h2 class="sec-head pad">Something broke</h2>
+      <div class="state state--error">
+        <p class="state__head"><i class="ph ph-warning" aria-hidden="true"></i> The photo could not be saved</p>
+        <p class="state__body">The catch is kept as a draft, so nothing is lost. Storage said: quota exceeded.</p>
+        <button type="button" class="state__act">Try saving the photo again</button>
+      </div>
+
+    </div>
+    <nav class="nav" aria-label="Main">
+      <a href="#"><i class="ph ph-house" aria-hidden="true"></i>Home</a>
+      <a href="#" aria-current="page"><i class="ph-fill ph-squares-four" aria-hidden="true"></i>Catalog</a>
+      <a href="#" class="nav__catch"><i class="ph-fill ph-camera" aria-hidden="true"></i>Catch</a>
+      <a href="#"><i class="ph ph-drop" aria-hidden="true"></i>Tanks</a>
+      <a href="#"><i class="ph ph-notebook" aria-hidden="true"></i>Journal</a>
+    </nav>
+  </div>
+</div>
+
+<!-- ==================================================================
+     6. MORE FILTERS
+     ================================================================== -->
+<div class="frame">
+  <p class="frame__label">More filters</p>
+  <div class="phone">
+    <div class="screen">
+      <div class="topbar"><h1 class="topbar__title">More filters</h1>
+        <button type="button" class="iconbtn" aria-label="Close"><i class="ph ph-x" aria-hidden="true"></i></button>
+      </div>
+
+      <div class="sheet">
+        <span class="sheet__grip" aria-hidden="true"></span>
+
+        <fieldset class="sheet__group">
+          <legend class="sheet__legend">Where it lives</legend>
+          <p class="sheet__why">Three fish that never meet in the water column can share a tank that would be crowded otherwise.</p>
+          <div class="sheet__chips">
+            <button type="button" class="chip">Top<span class="chip__n">148</span></button>
+            <button type="button" class="chip" aria-pressed="true">Mid<span class="chip__n">602</span></button>
+            <button type="button" class="chip">Bottom<span class="chip__n">291</span></button>
+            <button type="button" class="chip">Not recorded<span class="chip__n">35</span></button>
+          </div>
+        </fieldset>
+
+        <fieldset class="sheet__group">
+          <legend class="sheet__legend">What kind of thing</legend>
+          <div class="sheet__chips">
+            <button type="button" class="chip">Fish<span class="chip__n">912</span></button>
+            <button type="button" class="chip">Shrimp<span class="chip__n">74</span></button>
+            <button type="button" class="chip">Snail<span class="chip__n">48</span></button>
+            <button type="button" class="chip">Plant<span class="chip__n">42</span></button>
+          </div>
+        </fieldset>
+
+        <fieldset class="sheet__group">
+          <legend class="sheet__legend">Temperament</legend>
+          <p class="sheet__why">Only where a profile records it. It is never guessed from the family, so 402 species are not listed here at all.</p>
+          <div class="sheet__chips">
+            <button type="button" class="chip">Peaceful<span class="chip__n">381</span></button>
+            <button type="button" class="chip">Semi-aggressive<span class="chip__n">193</span></button>
+            <button type="button" class="chip">Aggressive<span class="chip__n">100</span></button>
+            <button type="button" class="chip">Not rated<span class="chip__n">402</span></button>
+          </div>
+        </fieldset>
+
+        <div class="sheet__foot">
+          <button type="button" class="state__act">Clear all</button>
+          <span class="cta" style="margin-left:auto;width:auto;padding:0 var(--space-5)">Show 602</span>
+        </div>
+      </div>
+
+      <p class="panel__note panel__note--tight pad">
+        Every count is what you would actually get. A filter that hides its cost until you tap it is a filter you tap twice.
+      </p>
+
+    </div>
+    <nav class="nav" aria-label="Main">
+      <a href="#"><i class="ph ph-house" aria-hidden="true"></i>Home</a>
+      <a href="#" aria-current="page"><i class="ph-fill ph-squares-four" aria-hidden="true"></i>Catalog</a>
+      <a href="#" class="nav__catch"><i class="ph-fill ph-camera" aria-hidden="true"></i>Catch</a>
+      <a href="#"><i class="ph ph-drop" aria-hidden="true"></i>Tanks</a>
+      <a href="#"><i class="ph ph-notebook" aria-hidden="true"></i>Journal</a>
+    </nav>
+  </div>
+</div>
+
+</body>
+</html>

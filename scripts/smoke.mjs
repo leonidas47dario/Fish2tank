@@ -101,12 +101,36 @@ await page.screenshot({ path: `${SHOTS}/05-factors.png`, fullPage: true });
 // the stored snapshot rather than a Reveal button. PRD 7.5: "no full-screen
 // delay after the first viewing." revealSpecimen() is idempotent, so the tier
 // here must be the same one the ceremony stamped.
-await page.waitForSelector('.tier', { timeout: 10000 });
+// ":not(.scarcity)" matters: the market scarcity badge reuses the tier pill's
+// styling, so a bare ".tier" can match it instead of the Discovery tier.
+await page.waitForSelector('.tier:not(.scarcity)', { timeout: 10000 });
 await page.screenshot({ path: `${SHOTS}/06-reveal.png`, fullPage: true });
-const tierText = await page.locator('.tier').first().innerText();
+const tierText = await page.locator('.tier:not(.scarcity)').first().innerText();
 console.log('TIER (persisted, not replayed):', tierText);
 if (await page.getByRole('button', { name: /^Reveal$/ }).count()) {
   throw new Error('Specimen page still offers Reveal after the ceremony already ran');
+}
+
+/**
+ * Chromium cannot rasterise a surface taller than 16,384px, and `fullPage`
+ * asks it to. The catalog renders all 2,178 cards at once and stands about
+ * 115,000px tall, so the request fails with "Unable to capture screenshot"
+ * and takes the whole smoke run down with it.
+ *
+ * Falling back to a viewport shot keeps the run meaningful - the page still
+ * has to load, render and report no console errors, which is what this step
+ * is actually asserting. It is a workaround for the render-everything debt
+ * recorded in the README, not a fix for it, and it says so when it triggers
+ * rather than quietly capturing less than it claims.
+ */
+const MAX_SURFACE_PX = 16384;
+async function shoot(name) {
+  const height = await page.evaluate(() => document.documentElement.scrollHeight);
+  const fullPage = height <= MAX_SURFACE_PX;
+  if (!fullPage) {
+    console.log(`  ${name}: page is ${height}px, above Chromium's ${MAX_SURFACE_PX}px limit - viewport only`);
+  }
+  await page.screenshot({ path: `${SHOTS}/${name}.png`, fullPage });
 }
 
 // --- Theme comparison (PRD 7.6) -------------------------------------------
@@ -117,7 +141,7 @@ for (const theme of ['playful-collector', 'expedition-fieldbook']) {
   await page.waitForTimeout(300);
   await page.goBack();
   await page.waitForTimeout(600);
-  await page.screenshot({ path: `${SHOTS}/07-${theme}.png`, fullPage: true });
+  await shoot(`07-${theme}`);
 }
 
 // --- Other screens ---------------------------------------------------------
@@ -127,7 +151,7 @@ await page.waitForTimeout(300);
 for (const [route, name] of [['collection','08-collection'],['tanks','09-tanks'],['journal','10-journal'],['settings','11-settings']]) {
   await page.goto(`${BASE}/#/${route}`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(600);
-  await page.screenshot({ path: `${SHOTS}/${name}.png`, fullPage: true });
+  await shoot(name);
 }
 
 console.log('CONSOLE ERRORS:', errors.length ? JSON.stringify(errors, null, 2) : 'none');

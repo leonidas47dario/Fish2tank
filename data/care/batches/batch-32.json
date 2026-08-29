@@ -1,0 +1,103 @@
+{
+  "batch": "32",
+  "species": [
+    {
+      "speciesId": "sp_stenomelania_plicaria",
+      "commonName": "Yellow Chopstick Snail",
+      "scientificName": "Stenomelania plicaria",
+      "family": "Thiaridae",
+      "wikipediaFile": "data/care/text/sp_stenomelania_plicaria.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_labidochromis_caeruleus",
+      "commonName": "Electric Yellow Cichlid",
+      "scientificName": "Labidochromis caeruleus",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_labidochromis_caeruleus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_paracrossochilus_vittatus",
+      "commonName": "Yellow Flying Fox",
+      "scientificName": "Paracrossochilus vittatus",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_paracrossochilus_vittatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hypancistrus_furunculus",
+      "commonName": "Yellow Zebra Pleco",
+      "scientificName": "Hypancistrus furunculus",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_hypancistrus_furunculus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_elopichthys_bambusa",
+      "commonName": "Yellowcheek Bambusa",
+      "scientificName": "Elopichthys bambusa",
+      "family": "Xenocyprididae",
+      "wikipediaFile": "data/care/text/sp_elopichthys_bambusa.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_mugilogobius_chulae",
+      "commonName": "Yellowstripe Goby",
+      "scientificName": "Mugilogobius chulae",
+      "family": "Oxudercidae",
+      "wikipediaFile": "data/care/text/sp_mugilogobius_chulae.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_yasuhikotakia_modesta",
+      "commonName": "Yellowtail Blue Botia",
+      "scientificName": "Yasuhikotakia modesta",
+      "family": "Botiidae",
+      "wikipediaFile": "data/care/text/sp_yasuhikotakia_modesta.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_botia_almorhae",
+      "commonName": "Yo-Yo Loach",
+      "scientificName": "Botia almorhae",
+      "family": "Botiidae",
+      "wikipediaFile": "data/care/text/sp_botia_almorhae.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_cyphotilapia_gibberosa",
+      "commonName": "Zaire Moba Frontosa",
+      "scientificName": "Cyphotilapia gibberosa",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_cyphotilapia_gibberosa.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_botia_striata",
+      "commonName": "Zebra Loach",
+      "scientificName": "Botia striata",
+      "family": "Botiidae",
+      "wikipediaFile": "data/care/text/sp_botia_striata.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_neritina_natalensis",
+      "commonName": "Zebra Nerite Snail",
+      "scientificName": "Neritina natalensis",
+      "family": "Neritidae",
+      "wikipediaFile": "data/care/text/sp_neritina_natalensis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_otocinclus_cocama",
+      "commonName": "Zebra Otocinclus Catfish",
+      "scientificName": "Otocinclus cocama",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_otocinclus_cocama.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_stegostoma_fasciatum",
+      "commonName": "Zebra Shark",
+      "scientificName": "Stegostoma fasciatum",
+      "family": "Stegostomatidae",
+      "wikipediaFile": "data/care/text/sp_stegostoma_fasciatum.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_crenicichla_zebrina",
+      "commonName": "Zebrina Pike Cichlid",
+      "scientificName": "Crenicichla zebrina",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_crenicichla_zebrina.wikipedia.txt"
+    }
+  ]
+}

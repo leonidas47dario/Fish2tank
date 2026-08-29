@@ -25,7 +25,42 @@ CREATE TABLE dim_store (
   -- only valid because every tracked store declares one.
   currency       VARCHAR     NOT NULL,
   region         VARCHAR,
+  -- Which reader the vendor needs: 'shopify' | 'petsmart' | 'petco'.
+  platform       VARCHAR     NOT NULL,
+  -- 'listings' or 'store-locations'. Declares what the pipeline ATTEMPTS, so a
+  -- vendor contributing nothing reads as a scope rather than a failed run.
+  -- Whether an attempt succeeds is a per-run fact, not a column: Petco
+  -- declares 'listings' and its storefront is probed every run, with a refusal
+  -- recorded as market-index.json sources[].accessNote.
+  data_scope     VARCHAR     NOT NULL,
   PRIMARY KEY (store_key)
+);
+
+-- A physical branch of a vendor - the first rows here that are not mail order.
+--
+-- Every vendor before the big-box two answered "can this be shipped to me". A
+-- branch answers "is it in a tank I can drive to", which is the question the
+-- product was built around.
+CREATE TABLE dim_local_store (
+  local_store_key BIGINT  NOT NULL,     -- hash(vendor_id, store_number)
+  store_key       BIGINT  NOT NULL REFERENCES dim_store(store_key),
+  vendor_id       VARCHAR NOT NULL,     -- 'petsmart' | 'petco'
+  store_number    VARCHAR NOT NULL,     -- the vendor's own number, unpadded
+  name            VARCHAR NOT NULL,
+  street          VARCHAR,
+  city            VARCHAR,
+  state           VARCHAR,
+  postal_code     VARCHAR,
+  phone           VARCHAR,
+  latitude        DOUBLE,
+  longitude       DOUBLE,
+  url             VARCHAR NOT NULL,     -- the page the row was read from
+  departments     VARCHAR,              -- pipe-delimited, verbatim
+  -- NULLABLE ON PURPOSE. FALSE means the branch publishes a department list
+  -- and fish are not on it. NULL means it publishes no list, so we did not
+  -- check - which is not the same claim and must not be flattened into FALSE.
+  has_aquatics    BOOLEAN,
+  PRIMARY KEY (local_store_key)
 );
 
 -- Type 2 slowly-changing: re-identifying a fish opens a new row rather than
@@ -44,6 +79,12 @@ CREATE TABLE dim_species (
   temp_max_c        DOUBLE,
   predation_tags    VARCHAR,
   profile_version   INTEGER,
+  -- 'freshwater' | 'marine', tagged from the vendors that list the species and
+  -- NEVER inferred from the fish. NULL is most of the table and is not a claim
+  -- that a species is freshwater - it means no vendor listing it declared one.
+  -- It exists because the genus-to-zone map is a freshwater map: without the
+  -- tag, a marine catalogue arriving reads as the map having gone stale.
+  water_type        VARCHAR,
   source_label      VARCHAR,
   source_url        VARCHAR,
   valid_from        DATE     NOT NULL,
@@ -121,6 +162,36 @@ CREATE TABLE fact_listing (
   PRIMARY KEY (listing_key)
 );
 
+-- GRAIN: one row per (branch, sku, snapshot_date).
+--
+-- Separate from fact_listing because it is a different kind of fact. A listing
+-- is a price the vendor publishes nationally and then freezes; this is a count
+-- in one building that changes hourly. Pooling them would let a stale count
+-- read as a price and the grain of fact_listing would stop being true.
+--
+-- Only PetSmart populates this today: it is the one tracked vendor that
+-- publishes per-store on-hand counts, through the inventory search endpoint
+-- its robots.txt explicitly allows.
+CREATE TABLE fact_store_inventory (
+  inventory_key     BIGINT  NOT NULL,   -- hash(vendor, store_number, sku, snapshot_date)
+  snapshot_date_key INTEGER NOT NULL REFERENCES dim_date(date_key),
+  local_store_key   BIGINT  NOT NULL REFERENCES dim_local_store(local_store_key),
+  store_key         BIGINT  NOT NULL REFERENCES dim_store(store_key),
+  -- Inherited from the listing sharing this sku, so it is NULL whenever the
+  -- listing itself resolved to no species. That is the common case for a
+  -- big-box vendor, which titles by trade name rather than by binomial.
+  species_key       BIGINT           REFERENCES dim_species(species_key),
+  sku               VARCHAR NOT NULL,
+  -- NULL means the vendor reported nothing for this sku at this branch, which
+  -- is NOT zero - see carried.
+  on_hand           INTEGER,
+  -- FALSE = the branch does not stock the sku at all. TRUE with on_hand 0 =
+  -- it stocks it and has none today. Different answers to "is it worth
+  -- driving there".
+  carried           BOOLEAN NOT NULL,
+  PRIMARY KEY (inventory_key)
+);
+
 -- GRAIN: one row per price the USER personally recorded.
 --
 -- Deliberately separate from fact_listing. What Ryan saw on a tag in a Chicago
@@ -156,3 +227,15 @@ CREATE TABLE fact_price_observation (
 -- WHERE s.scientific_name = 'Parachromis managuensis'
 -- GROUP BY 1, 2, 3
 -- ORDER BY 1, 3;
+
+-- ─────────────────────────────────────────────────────────────────────────
+-- And the query the branch grain exists for: what is in a tank near you today.
+-- ─────────────────────────────────────────────────────────────────────────
+--
+-- SELECT ls.name, ls.street, l.title, i.on_hand
+-- FROM fact_store_inventory i
+-- JOIN dim_local_store ls ON ls.local_store_key = i.local_store_key
+-- JOIN fact_listing    l  ON CAST(l.variant_id AS VARCHAR) = i.sku
+--                        AND l.store_key = i.store_key
+-- WHERE ls.city = 'Chicago' AND i.on_hand > 0
+-- ORDER BY ls.name, i.on_hand DESC;

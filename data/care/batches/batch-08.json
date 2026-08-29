@@ -1,0 +1,180 @@
+{
+  "batch": "08",
+  "species": [
+    {
+      "speciesId": "sp_beaufortia_kweichowensis",
+      "commonName": "Butterfly Hillstream Loach",
+      "scientificName": "Beaufortia kweichowensis",
+      "family": "Gastromyzontidae",
+      "wikipediaFile": "data/care/text/sp_beaufortia_kweichowensis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_beaufortia_leveretti",
+      "commonName": "Butterfly Hillstream Loach",
+      "scientificName": "Beaufortia leveretti",
+      "family": "Gastromyzontidae",
+      "wikipediaFile": "data/care/text/sp_beaufortia_leveretti.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_cichla_ocellaris",
+      "commonName": "Butterfly Peacock Bass",
+      "scientificName": "Cichla ocellaris",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_cichla_ocellaris.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_tilapia_buttikoferi",
+      "commonName": "Buttikoferi Cichlid",
+      "scientificName": "Tilapia buttikoferi",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_tilapia_buttikoferi.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_girardinus_metallicus",
+      "commonName": "Black Chin Livebearer",
+      "scientificName": "Girardinus metallicus",
+      "family": "Poeciliidae",
+      "wikipediaFile": "data/care/text/sp_girardinus_metallicus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_ricciocarpos_natans",
+      "commonName": "Purple Fringed Riccia",
+      "scientificName": "Ricciocarpos natans",
+      "family": "Ricciaceae",
+      "wikipediaFile": "data/care/text/sp_ricciocarpos_natans.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_corydoras_pantanalensis",
+      "commonName": "C Pantanalensis Cory",
+      "scientificName": "Corydoras pantanalensis",
+      "family": "Callichthyidae",
+      "wikipediaFile": "data/care/text/sp_corydoras_pantanalensis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_cambarellus_patzcuarensis",
+      "commonName": "Mexican Dwarf Crayfish",
+      "scientificName": "Cambarellus patzcuarensis",
+      "family": "Cambaridae",
+      "wikipediaFile": "data/care/text/sp_cambarellus_patzcuarensis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_crenicichla_cametana",
+      "commonName": "Cameta Pike Cichlid",
+      "scientificName": "Crenicichla cametana",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_crenicichla_cametana.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_peckoltia_vittata",
+      "commonName": "Candy Stripe Pleco",
+      "scientificName": "Peckoltia vittata",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_peckoltia_vittata.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_brachyplatystoma_capapretum",
+      "commonName": "Capapretum Catfish",
+      "scientificName": "Brachyplatystoma capapretum",
+      "family": "Pimelodidae",
+      "wikipediaFile": "data/care/text/sp_brachyplatystoma_capapretum.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hypseleotris_cyprinoides",
+      "commonName": "Carp Sunburst Gudgeon",
+      "scientificName": "Hypseleotris cyprinoides",
+      "family": "Eleotridae",
+      "wikipediaFile": "data/care/text/sp_hypseleotris_cyprinoides.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_casuarina_equisetifolia",
+      "commonName": "Casuarina Pine Pods",
+      "scientificName": "Casuarina equisetifolia",
+      "family": "Casuarinaceae",
+      "wikipediaFile": "data/care/text/sp_casuarina_equisetifolia.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hoplosternum_littorale",
+      "commonName": "Brown Hoplo Catfish",
+      "scientificName": "Hoplosternum littorale",
+      "family": "Callichthyidae",
+      "wikipediaFile": "data/care/text/sp_hoplosternum_littorale.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pseudoplatystoma_corruscans",
+      "commonName": "Spotted Sorubim",
+      "scientificName": "Pseudoplatystoma corruscans",
+      "family": "Pimelodidae",
+      "wikipediaFile": "data/care/text/sp_pseudoplatystoma_corruscans.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_zungaro_zungaro",
+      "commonName": "Jau Catfish",
+      "scientificName": "Zungaro zungaro",
+      "family": "Pimelodidae",
+      "wikipediaFile": "data/care/text/sp_zungaro_zungaro.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_phractocephalus_hemioliopterus",
+      "commonName": "Redtail Catfish",
+      "scientificName": "Phractocephalus hemioliopterus",
+      "family": "Pimelodidae",
+      "wikipediaFile": "data/care/text/sp_phractocephalus_hemioliopterus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_synodontis_eupterus",
+      "commonName": "Featherfin Squeaker",
+      "scientificName": "Synodontis eupterus",
+      "family": "Mochokidae",
+      "wikipediaFile": "data/care/text/sp_synodontis_eupterus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_synodontis_decorus",
+      "commonName": "Clown Squeaker Catfish",
+      "scientificName": "Synodontis decorus",
+      "family": "Mochokidae",
+      "wikipediaFile": "data/care/text/sp_synodontis_decorus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_sturisoma_panamense",
+      "commonName": "Royal Farlowella",
+      "scientificName": "Sturisoma panamense",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_sturisoma_panamense.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_marosatherina_ladigesi",
+      "commonName": "Celebes Rainbowfish",
+      "scientificName": "Marosatherina ladigesi",
+      "family": "Telmatherinidae",
+      "wikipediaFile": "data/care/text/sp_marosatherina_ladigesi.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_ambastaia_sidthimunki",
+      "commonName": "Chain Loach Botia",
+      "scientificName": "Ambastaia sidthimunki",
+      "family": "Botiidae",
+      "wikipediaFile": "data/care/text/sp_ambastaia_sidthimunki.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_esox_niger",
+      "commonName": "Chain Pickerel",
+      "scientificName": "Esox niger",
+      "family": "Esocidae",
+      "wikipediaFile": "data/care/text/sp_esox_niger.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pseudohemiodon_apithanos",
+      "commonName": "Chameleon Loricaria",
+      "scientificName": "Pseudohemiodon apithanos",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_pseudohemiodon_apithanos.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_systomus_orphoides",
+      "commonName": "Cheek Javaen Barb",
+      "scientificName": "Systomus orphoides",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_systomus_orphoides.wikipedia.txt"
+    }
+  ]
+}

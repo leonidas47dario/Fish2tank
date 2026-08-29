@@ -1,0 +1,341 @@
+/*
+ * PROPOSED token set - round 3.
+ *
+ * Candidate replacement for src/theme/tokens.css. It keeps the whole shipped
+ * contract: same variable names, same three [data-theme] territories, so PRD
+ * 7.3 still holds and a theme change stays a token swap with no component
+ * rewrite. Round 2 shipped only a :root block, which as a literal drop-in
+ * would have deleted all three themes.
+ *
+ * Every ratio quoted below is computed with the WCAG relative-luminance
+ * formula, not estimated.
+ *
+ * New slots, all overridden in all three territories at the bottom of this
+ * file: --color-faint, --color-rare, --color-on-primary, --color-border-control,
+ * --color-accent-quiet, --plate, --duration-shimmer, --radius-hair, --tap-min.
+ */
+
+:root {
+  /* --- Color ------------------------------------------------------------ */
+  --color-canvas: #070f14;
+  --color-surface: #0e1a22;
+  --color-surface-raised: #16262f;
+
+  /* Three text tiers, all AA on canvas: 17.37 / 8.75 / 5.92.
+     Round 2 used #5d7480 for the small-print tier, which is 3.93:1 and was
+     the colour of fourteen selectors, i.e. the app's entire secondary layer
+     failed 1.4.3. Nothing in this set is set below 11px. */
+  --color-text: #eef4f5;
+  --color-muted: #9db2bb;
+  --color-faint: #7a929e;
+
+  /* --- primary and accent are TWO COLOURS, and must stay two --------------
+   * A previous pass aliased them ("nothing may diverge"). That was the bug,
+   * not the safeguard: src/app.css uses the pair to DISTINGUISH things in
+   * three places, and aliasing collapses each pair into one rendering.
+   *   .tier--uncommon / .tier--rare
+   *   .gem--cost      / .gem--size
+   *   .zone-pip--mid  / .zone-pip--top
+   * primary is the one interactive colour. accent is the pair partner and
+   * never colours a control.
+   */
+  --color-primary: #3fb6e8;          /* 8.34:1 - every interactive affordance */
+  --color-accent: #2ec9b4;           /* 9.32:1 - the pair partner, never a control */
+  --color-accent-quiet: #0d2b39;     /* primary at surface weight, for fills */
+  --color-on-primary: #04141c;       /* 8.08:1 on --color-primary. Themed below. */
+  --color-on-danger: #04141c;        /* foreground for a solid danger fill */
+
+  /* Status, and status only. These never colour a control.
+     They are ALSO never the only cue: positive and caution are 1.08:1 apart
+     in greyscale, so every one of them ships with a glyph. */
+  --color-positive: #5ac887;
+  --color-caution: #e3b34e;
+  --color-danger: #e8705f;
+  --color-danger-bright: #ff9d8f;
+  --color-legendary: #f2c75c;
+  /* Rare is the accent, which is what src/app.css already says
+     (.tier--rare { color: var(--color-accent) }). A previous pass used a tint
+     of --color-primary, which put a non-interactive tier inside the one colour
+     family reserved for things you can tap. */
+  --color-rare: #2ec9b4;
+
+  /* Two border tokens, because they do two jobs. A divider between list rows
+     may be quiet; the boundary of a control may not. 1.4.11 wants 3:1 for
+     anything needed to identify a component. */
+  --color-border: #1e323d;           /* dividers, decorative */
+  --color-border-control: #476f83;   /* 3.56:1 - inputs, chips, pressables */
+
+  /* --- The plate --------------------------------------------------------
+   * Not a fixed colour, and not the photograph's raw background either.
+   *
+   * Measured over 120 sampled portraits: 10% are cut-outs on white, 20% sit
+   * on near-black, 70% are full-bleed. One plate colour cannot hold that. A
+   * first attempt painted each plate with the median RGB of that image's
+   * border ring; on the flagship hero it resolved to a saturated chartreuse
+   * that appears nowhere in the photograph, and on the white cut-outs it
+   * faithfully reproduced the blown-out rectangle it existed to fix.
+   *
+   * So the plate is DERIVED, not copied. Per portrait, at build time:
+   *   1. sample the 1px border ring
+   *   2. take the MODE in a quantised cube, not the median, so a real
+   *      background wins rather than an average of plants and gravel
+   *   3. convert to OKLCH, clamp chroma to 0.04 - a plate can never become a
+   *      saturated field
+   *   4. clamp lightness to 0.16-0.34, between the canvas and a mid slate, so
+   *      every tile reads as a card and the grid keeps its field
+   *
+   * Always a near-neutral tint OF the photograph. On the 90% that are dark or
+   * full-bleed the letterbox disappears; on the white cut-outs it becomes a
+   * visible dark mat, which is the right trade for a grid that holds together.
+   *
+   * The value here is the fallback for a species with no portrait.
+   */
+  --plate-l: 0.25;        /* per image, from plates.css. Fallback here. */
+  --plate-h: 250;         /* fallback for a species with no portrait */
+  --plate-c: 0.012;
+  --plate-l-min: 0.22;    /* themed: the band the image's lightness is held to */
+  --plate-l-max: 0.42;
+  --plate: oklch(clamp(var(--plate-l-min), var(--plate-l), var(--plate-l-max)) var(--plate-c) var(--plate-h));
+
+  /* --- Typography -------------------------------------------------------
+   * Geist for everything spoken, Geist Mono for everything COUNTED. Mono is
+   * for numbers and units, never sentences: an earlier pass set "eats 4
+   * residents" and "pH and temp agree" in 11px mono, which has neither the
+   * scan value of a column nor the readability of prose.
+   *
+   * Self-hosted woff2, not a CDN link. This is an offline-first PWA and a
+   * font it cannot fetch is a font it does not have.
+   */
+  --font-display: 'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-body: 'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-data: 'Geist Mono', ui-monospace, 'SF Mono', 'Cascadia Mono', monospace;
+  /* The one second family in the system, for the one role where italic carries
+     meaning rather than emphasis. Geist ships no ital axis, so a binomial set
+     in it is a synthesised slant of a neutral grotesk - on an app whose subject
+     is 1,076 Latin names. Source Sans 3 has true italic letterforms. */
+  --font-scientific: 'Source Sans 3', var(--font-body);
+  --font-scientific-style: italic;
+  --font-scientific-weight: 400;
+
+  /* 11px is the floor. Nothing renders below it. */
+  --size-xs: 0.6875rem;   /* 11px */
+  --size-sm: 0.8125rem;   /* 13px */
+  --size-md: 0.9375rem;   /* 15px */
+  --size-lg: 1.125rem;    /* 18px */
+  --size-xl: 1.375rem;    /* 22px */
+  --size-2xl: 1.75rem;    /* 28px */
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  --tracking-tight: -0.02em;
+
+  /* --- Shape ------------------------------------------------------------
+   * One rule: PLATES and cards are --radius-card, INPUTS are --radius-control,
+   * anything pressable that is not a card is a PILL, and a drawn bar is
+   * --radius-hair. Four values, each with a job, and no fifth.
+   */
+  --radius-card: 14px;
+  --radius-control: 10px;
+  --radius-pill: 999px;
+  --radius-hair: 2px;
+  --rarity-frame-radius: 14px;
+  --border-width: 1px;
+  --image-mask: 10px;
+
+  /* --- Depth ------------------------------------------------------------
+   * Tinted to the canvas hue, never pure black, and no glows anywhere. The
+   * old --media-glow put a 40px cyan bloom under every photograph, which
+   * haloed the white cut-outs.
+   */
+  --elevation-surface: 0 1px 2px rgb(3 10 14 / 0.5);
+  --elevation-raised: 0 10px 30px -8px rgb(3 10 14 / 0.7);
+  --elevation-plate: 0 6px 18px -8px rgb(3 10 14 / 0.8);
+  --focus-ring: 0 0 0 2px var(--color-canvas), 0 0 0 4px var(--color-primary);
+  --media-glow: none;
+  --foil-strength: 0.5;
+
+  /* --- Motion ----------------------------------------------------------- */
+  --duration-fast: 110ms;
+  --duration-base: 200ms;
+  --duration-reveal: 1800ms;
+  --duration-shimmer: 1400ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0.1, 1);
+  --ease-rise: cubic-bezier(0.16, 1, 0.3, 1);
+  --reveal-intensity: 1;
+
+  /* --- Assets ----------------------------------------------------------- */
+  --texture-canvas:
+    linear-gradient(180deg,
+      #0d242c 0%,      /* surface */
+      #0b1c26 22%,
+      #070f14 55%,
+      #070f14 100%);   /* substrate, equal to --color-canvas: no step */
+  --surface-line: color-mix(in srgb, var(--color-accent) 22%, transparent);
+  --divider-style: solid;
+  --rarity-ornament-display: block;
+
+  /* --- Layout ----------------------------------------------------------- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --tap-min: 44px;
+  --nav-height: 56px;
+  --content-max: 640px;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Territory: Midnight Aquarium (PRD 7.2) - the :root defaults are this.   */
+/* ---------------------------------------------------------------------- */
+[data-theme='midnight-aquarium'] {
+  --color-canvas: #070f14;
+  --color-surface: #0e1a22;
+  --color-surface-raised: #16262f;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Territory: Playful Collector (PRD 7.2) - bright, rounded, buoyant.      */
+/* Every new slot is overridden. Round 2 left ten of them at their dark    */
+/* values under a white canvas, which put a near-black chip fill and 381   */
+/* black rectangles on a light page.                                       */
+/* ---------------------------------------------------------------------- */
+[data-theme='playful-collector'] {
+  --color-canvas: #f2fbff;
+  --color-surface: #ffffff;
+  --color-surface-raised: #e8f6fe;
+  --color-text: #102b3d;
+  --color-muted: #4d6c80;
+  --color-faint: #587381;          /* 4.55:1 min across canvas/surface/raised */
+
+  --color-primary: #0f6f9e;        /* darkened from #1a8fd1 to clear 4.5:1 */
+  --color-accent: #0d7e6a;         /* 4.52:1 min */
+  --color-accent-quiet: #d9eff9;
+  --color-on-primary: #ffffff;     /* dark-on-blue fails here; white passes */
+  --color-on-danger: #ffffff;
+
+  --color-positive: #167a4c;
+  --color-caution: #8a5c05;
+  --color-danger: #a8301f;
+  --color-danger-bright: #c04328;  /* louder than --color-danger, as the name says */
+  --color-legendary: #8a6100;
+  --color-rare: #0d7e6a;
+
+  --color-border: #cbe4f2;
+  --color-border-control: #6e92a4; /* 3.02:1 min, 1.4.11 */
+
+  --plate-l-min: 0.80;             /* the band moves, the image still sets its own place in it */
+  --plate-l-max: 0.95;
+
+  --font-display: 'Geist', 'Trebuchet MS', system-ui, sans-serif;
+  --radius-card: 22px;
+  --radius-control: 14px;
+  --image-mask: 18px;
+  --rarity-frame-radius: 22px;
+  --elevation-surface: 0 2px 6px rgb(16 43 61 / 0.08);
+  --elevation-raised: 0 12px 28px rgb(16 43 61 / 0.14);
+  --elevation-plate: 0 6px 18px -8px rgb(16 43 61 / 0.22);
+  --foil-strength: 0.75;
+  --reveal-intensity: 1.25;
+  --texture-canvas:
+    linear-gradient(180deg, #ffffff 0%, #eaf7ff 30%, #eaf6fd 100%);
+  --surface-line: color-mix(in srgb, var(--color-accent) 30%, transparent);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Territory: Expedition Fieldbook (PRD 7.2) - warm paper, dossiers.       */
+/* ---------------------------------------------------------------------- */
+[data-theme='expedition-fieldbook'] {
+  --color-canvas: #f4ece0;
+  --color-surface: #fbf6ee;
+  --color-surface-raised: #f0e5d4;
+  --color-text: #2b2216;
+  --color-muted: #6b5b47;
+  --color-faint: #746450;          /* 4.58:1 min */
+
+  --color-primary: #7a4d21;        /* 4.5:1 with white on top */
+  --color-accent: #2f5f6b;         /* de-aliased from positive: app.css uses the
+                                      pair to distinguish tier, gem and zone-pip */
+  --color-accent-quiet: #e7dbc6;
+  --color-on-primary: #ffffff;     /* 5.87:1. Dark ink on this brown is 3.19. */
+  --color-on-danger: #ffffff;
+
+  --color-positive: #3f5742;
+  --color-caution: #8a5f14;
+  --color-danger: #8c3524;
+  --color-danger-bright: #ad3a22;  /* louder than --color-danger #8c3524, as the name says */
+  --color-legendary: #7d5c17;
+  --color-rare: #2f5f6b;
+
+  --color-border: #d8c8b0;
+  --color-border-control: #95805e; /* 3.05:1 min */
+
+  --plate-l-min: 0.78;
+  --plate-l-max: 0.93;
+
+  --font-display: 'Geist', 'Iowan Old Style', Georgia, serif;
+  --font-body: 'Geist', 'Iowan Old Style', Georgia, serif;
+  --radius-card: 4px;
+  --radius-control: 3px;
+  --radius-pill: 3px;
+  --radius-hair: 0px;
+  --image-mask: 2px;
+  --rarity-frame-radius: 2px;
+  --border-width: 1.5px;
+  --elevation-surface: 0 1px 0 rgb(43 34 22 / 0.12);
+  --elevation-raised: 0 6px 18px rgb(43 34 22 / 0.16);
+  --elevation-plate: 0 2px 0 rgb(43 34 22 / 0.14);
+  --foil-strength: 0.35;
+  --divider-style: dashed;
+  --texture-canvas: none;
+  --surface-line: color-mix(in srgb, var(--color-text) 18%, transparent);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Accessibility (NFR-06, FR-R04)                                          */
+/* ---------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms;
+    --duration-base: 0ms;
+    --duration-reveal: 0ms;
+    --duration-shimmer: 0ms;
+    --reveal-intensity: 0;
+  }
+  /* The same blanket the in-app toggle gets. A literal duration anywhere in the
+     tree survives a custom-property change, so both paths need it or the OS
+     setting is the weaker of the two. */
+  *, *::before, *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+}
+
+/*
+ * The in-app toggle, which PRD FR-R04 requires to exist independently of the
+ * OS setting. The blanket rule below is load-bearing and must not be dropped
+ * for the custom properties alone: any animation declared with a literal
+ * duration survives a token change, and an infinite shimmer that keeps running
+ * after the user asks for stillness is the whole failure this guards against.
+ */
+[data-reduced-motion='true'] {
+  --duration-fast: 0ms;
+  --duration-base: 0ms;
+  --duration-reveal: 0ms;
+  --duration-shimmer: 0ms;
+  --reveal-intensity: 0;
+}
+
+[data-reduced-motion='true'] *,
+[data-reduced-motion='true'] *::before,
+[data-reduced-motion='true'] *::after {
+  animation-duration: 1ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 1ms !important;
+}

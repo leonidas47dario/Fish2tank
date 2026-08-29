@@ -1,0 +1,180 @@
+{
+  "batch": "27",
+  "species": [
+    {
+      "speciesId": "sp_catlocarpio_siamensis",
+      "commonName": "Siamese Giant Barb",
+      "scientificName": "Catlocarpio siamensis",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_catlocarpio_siamensis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_datnioides_pulcher",
+      "commonName": "Siamese Tiger Fish",
+      "scientificName": "Datnioides pulcher",
+      "family": "Datnioididae",
+      "wikipediaFile": "data/care/text/sp_datnioides_pulcher.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_acipenser_baerii",
+      "commonName": "Siberian Sturgeon",
+      "scientificName": "Acipenser baerii",
+      "family": "Acipenseridae",
+      "wikipediaFile": "data/care/text/sp_acipenser_baerii.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_puntioplites_falcifer",
+      "commonName": "Sicklefin Barb",
+      "scientificName": "Puntioplites falcifer",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_puntioplites_falcifer.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_osteoglossum_bicirrhosum",
+      "commonName": "Silver Arowana",
+      "scientificName": "Osteoglossum bicirrhosum",
+      "family": "Osteoglossidae",
+      "wikipediaFile": "data/care/text/sp_osteoglossum_bicirrhosum.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_centrodoras_brachiatus",
+      "commonName": "Silver Centrodoras Catfish",
+      "scientificName": "Centrodoras brachiatus",
+      "family": "Doradidae",
+      "wikipediaFile": "data/care/text/sp_centrodoras_brachiatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_myleus_schomburgkii",
+      "commonName": "Silver Dollar",
+      "scientificName": "Myleus schomburgkii",
+      "family": "Serrasalmidae",
+      "wikipediaFile": "data/care/text/sp_myleus_schomburgkii.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_crossocheilus_reticulatus",
+      "commonName": "Silver Flying Fox",
+      "scientificName": "Crossocheilus reticulatus",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_crossocheilus_reticulatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pangio_anguillaris",
+      "commonName": "Silver Kuhli Loach",
+      "scientificName": "Pangio anguillaris",
+      "family": "Cobitidae",
+      "wikipediaFile": "data/care/text/sp_pangio_anguillaris.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_desmopuntius_hexazona",
+      "commonName": "Six Banded Barb",
+      "scientificName": "Desmopuntius hexazona",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_desmopuntius_hexazona.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_caridina_gracilirostris",
+      "commonName": "Pinokio Shrimp",
+      "scientificName": "Caridina gracilirostris",
+      "family": "Atyidae",
+      "wikipediaFile": "data/care/text/sp_caridina_gracilirostris.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pseudancistrus_genisetiger",
+      "commonName": "Slate Pleco",
+      "scientificName": "Pseudancistrus genisetiger",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_pseudancistrus_genisetiger.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_giuris_margaritaceus",
+      "commonName": "Snakehead Gudgeon",
+      "scientificName": "Giuris margaritaceus",
+      "family": "Eleotridae",
+      "wikipediaFile": "data/care/text/sp_giuris_margaritaceus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_centropomus_undecimalis",
+      "commonName": "Snook",
+      "scientificName": "Centropomus undecimalis",
+      "family": "Centropomidae",
+      "wikipediaFile": "data/care/text/sp_centropomus_undecimalis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_lepidosiren_paradoxa",
+      "commonName": "South American Lungfish",
+      "scientificName": "Lepidosiren paradoxa",
+      "family": "Lepidosirenidae",
+      "wikipediaFile": "data/care/text/sp_lepidosiren_paradoxa.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_tradescantia_zebrina",
+      "commonName": "Spiderwort Tissue Culture",
+      "scientificName": "Tradescantia zebrina",
+      "family": "Commelinaceae",
+      "wikipediaFile": "data/care/text/sp_tradescantia_zebrina.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_faunus_ater",
+      "commonName": "Spike Snail",
+      "scientificName": "Faunus ater",
+      "family": "Pachychilidae",
+      "wikipediaFile": "data/care/text/sp_faunus_ater.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_eleocharis_acicularis",
+      "commonName": "Spikerush Tissue Culture",
+      "scientificName": "Eleocharis acicularis",
+      "family": "Cyperaceae",
+      "wikipediaFile": "data/care/text/sp_eleocharis_acicularis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pseudacanthicus_spinosus",
+      "commonName": "Spiny Monster Pleco",
+      "scientificName": "Pseudacanthicus spinosus",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_pseudacanthicus_spinosus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hypancistrus_contradens",
+      "commonName": "Spot Snowball Pleco",
+      "scientificName": "Hypancistrus contradens",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_hypancistrus_contradens.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_protopterus_dolloi",
+      "commonName": "Spotted African Lungfish",
+      "scientificName": "Protopterus dolloi",
+      "family": "Protopteridae",
+      "wikipediaFile": "data/care/text/sp_protopterus_dolloi.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_gastromyzon_punctulatus",
+      "commonName": "Spotted Borneo Sucker",
+      "scientificName": "Gastromyzon punctulatus",
+      "family": "Gastromyzontidae",
+      "wikipediaFile": "data/care/text/sp_gastromyzon_punctulatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_darienheros_calobrensis",
+      "commonName": "Spotted Calobrensis Cichlid",
+      "scientificName": "Darienheros calobrensis",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_darienheros_calobrensis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_paretroplus_maculatus",
+      "commonName": "Spotted Damba Cichlid",
+      "scientificName": "Paretroplus maculatus",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_paretroplus_maculatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_garra_spilota",
+      "commonName": "Spotted Garra",
+      "scientificName": "Garra spilota",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_garra_spilota.wikipedia.txt"
+    }
+  ]
+}

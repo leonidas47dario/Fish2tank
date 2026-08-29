@@ -1,0 +1,180 @@
+{
+  "batch": "24",
+  "species": [
+    {
+      "speciesId": "sp_vittina_waigiensis",
+      "commonName": "Racer Nerite Snail",
+      "scientificName": "Vittina waigiensis",
+      "family": "Neritidae",
+      "wikipediaFile": "data/care/text/sp_vittina_waigiensis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_herotilapia_multispinosa",
+      "commonName": "Rainbow Cichlid",
+      "scientificName": "Herotilapia multispinosa",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_herotilapia_multispinosa.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_cardisoma_armatum",
+      "commonName": "Rainbow Land Crab",
+      "scientificName": "Cardisoma armatum",
+      "family": "Gecarcinidae",
+      "wikipediaFile": "data/care/text/sp_cardisoma_armatum.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_epalzeorhynchos_frenatum",
+      "commonName": "Rainbow Shark",
+      "scientificName": "Epalzeorhynchos frenatum",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_epalzeorhynchos_frenatum.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_erythrinus_erythrinus",
+      "commonName": "Rainbow Wolf Fish",
+      "scientificName": "Erythrinus erythrinus",
+      "family": "Erythrinidae",
+      "wikipediaFile": "data/care/text/sp_erythrinus_erythrinus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pseudomugil_ivantsoffi",
+      "commonName": "Blue Eye Rainbowfish",
+      "scientificName": "Pseudomugil ivantsoffi",
+      "family": "Pseudomugilidae",
+      "wikipediaFile": "data/care/text/sp_pseudomugil_ivantsoffi.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_iriatherina_werneri",
+      "commonName": "Threadfin Rainbowfish",
+      "scientificName": "Iriatherina werneri",
+      "family": "Melanotaeniidae",
+      "wikipediaFile": "data/care/text/sp_iriatherina_werneri.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pseudomugil_furcatus",
+      "commonName": "Blue Eye Rainbowfish",
+      "scientificName": "Pseudomugil furcatus",
+      "family": "Pseudomugilidae",
+      "wikipediaFile": "data/care/text/sp_pseudomugil_furcatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_melanotaenia_maccullochi",
+      "commonName": "S Dwarf Rainbowfish",
+      "scientificName": "Melanotaenia maccullochi",
+      "family": "Melanotaeniidae",
+      "wikipediaFile": "data/care/text/sp_melanotaenia_maccullochi.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pseudomugil_signifer",
+      "commonName": "Blue Eye Rainbowfish",
+      "scientificName": "Pseudomugil signifer",
+      "family": "Pseudomugilidae",
+      "wikipediaFile": "data/care/text/sp_pseudomugil_signifer.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_melanotaenia_australis",
+      "commonName": "Western Rainbowfish",
+      "scientificName": "Melanotaenia australis",
+      "family": "Melanotaeniidae",
+      "wikipediaFile": "data/care/text/sp_melanotaenia_australis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_planorbarius_corneus",
+      "commonName": "Great Ramshorn Snail",
+      "scientificName": "Planorbarius corneus",
+      "family": "Planorbidae",
+      "wikipediaFile": "data/care/text/sp_planorbarius_corneus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_boraras_brigittae",
+      "commonName": "Chili Rasbora",
+      "scientificName": "Boraras brigittae",
+      "family": "Danionidae",
+      "wikipediaFile": "data/care/text/sp_boraras_brigittae.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_boraras_maculatus",
+      "commonName": "Dwarf Rasbora",
+      "scientificName": "Boraras maculatus",
+      "family": "Danionidae",
+      "wikipediaFile": "data/care/text/sp_boraras_maculatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_rasbora_trilineata",
+      "commonName": "Scissortail Rasbora",
+      "scientificName": "Rasbora trilineata",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_rasbora_trilineata.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_synaptolaemus_latofasciatus",
+      "commonName": "Red Banded Leporinus",
+      "scientificName": "Synaptolaemus latofasciatus",
+      "family": "Anostomidae",
+      "wikipediaFile": "data/care/text/sp_synaptolaemus_latofasciatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_petenia_splendida",
+      "commonName": "Red Bay Snook",
+      "scientificName": "Petenia splendida",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_petenia_splendida.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_sicyopus_zosterophorus",
+      "commonName": "Red Belted Goby",
+      "scientificName": "Sicyopus zosterophorus",
+      "family": "Oxudercidae",
+      "wikipediaFile": "data/care/text/sp_sicyopus_zosterophorus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_leptobarbus_melanopterus",
+      "commonName": "Red Cheeked Sultan",
+      "scientificName": "Leptobarbus melanopterus",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_leptobarbus_melanopterus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_rasbora_lacrimula",
+      "commonName": "Red Cherry Rasbora",
+      "scientificName": "Rasbora lacrimula",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_rasbora_lacrimula.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_symphysodon_tarzoo",
+      "commonName": "Red Eye Discus",
+      "scientificName": "Symphysodon tarzoo",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_symphysodon_tarzoo.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_homaloptera_orthogoniata",
+      "commonName": "Red Lizard Loach",
+      "scientificName": "Homaloptera orthogoniata",
+      "family": "Balitoridae",
+      "wikipediaFile": "data/care/text/sp_homaloptera_orthogoniata.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_tor_sinensis",
+      "commonName": "Red Mahseer",
+      "scientificName": "Tor sinensis",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_tor_sinensis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_lutjanus_argentimaculatus",
+      "commonName": "Red Mangrove Jack",
+      "scientificName": "Lutjanus argentimaculatus",
+      "family": "Lutjanidae",
+      "wikipediaFile": "data/care/text/sp_lutjanus_argentimaculatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_heros_liberifer",
+      "commonName": "Red Mouthbrooder Severum",
+      "scientificName": "Heros liberifer",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_heros_liberifer.wikipedia.txt"
+    }
+  ]
+}

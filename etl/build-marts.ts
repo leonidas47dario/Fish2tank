@@ -19,6 +19,8 @@ import { deriveCommonName } from './normalize/derive-species';
 import { findProblems, isUsableName, summarise } from '@/data/seed/catalog-quality';
 import { OVERRIDE_BY_ID, SPECIES_SYNONYMS, SYNONYM_IDS } from '@/data/seed/species-overrides';
 import { traitsFor, type OrganismKind, type WaterZone } from '@/data/seed/taxonomy';
+import type { WaterType } from '@/domain/types';
+import { loadCareBackfill, type CareRecord } from './care/backfill';
 
 const WAREHOUSE = 'warehouse';
 const OUT_DIR = 'src/data/seed/marts';
@@ -35,16 +37,41 @@ export interface CatalogEntry {
   tempMinC?: number;
   tempMaxC?: number;
   predationTags: string[];
+  /**
+   * Fresh, brackish or salt, from what the vendors selling it said - never
+   * inferred from the fish. Absent means no vendor made a claim, which is not
+   * a claim that it is freshwater; the catalog shows those as "not recorded"
+   * and excludes them from every specific filter. See normalize/water-type.ts.
+   */
+  waterType?: WaterType;
   sourceLabel?: string;
   sourceUrl?: string;
   /**
-   * Licensed portrait. Absent for the six species with no usable Commons
-   * image, and for hybrids that have no species article at all - the card
-   * renders a placeholder rather than pretending.
+   * Where each backfilled care value came from, keyed by the field it backs.
+   *
+   * One source per species stopped being true under spec 003: adult size
+   * commonly comes from a Wikipedia article while minimum tank volume comes
+   * from a store listing, and a card that credits only one of them is
+   * miscrediting the other. Absent for the curated profiles, which cite a
+   * single source for the whole profile.
+   *
+   * The sentence that proves each value is deliberately NOT here - it lives in
+   * src/data/seed/species-care.json. The mart is inlined into the JS bundle,
+   * and four quotes per species would add roughly 250KB to it.
+   */
+  careSources?: Record<string, { source: string; url?: string }>;
+  /**
+   * The card's portrait, and where it came from.
+   *
+   * Absent when no source could be found at all, and the card renders a
+   * placeholder rather than pretending. `license` is present for Wikimedia
+   * images and absent for vendor and web photos, which have none. See spec
+   * 002 for why those are shipped and how they are credited.
    */
   portrait?: {
     url: string;
-    license: string;
+    provenance: 'wikimedia' | 'vendor' | 'web';
+    license?: string;
     artist?: string;
     attributionUrl?: string;
     width?: number;
@@ -65,7 +92,7 @@ export interface CatalogEntry {
 }
 
 export interface CatalogMart {
-  schemaVersion: 1;
+  schemaVersion: 2;
   builtAt: string;
   species: CatalogEntry[];
 }
@@ -76,6 +103,57 @@ const num = (v: unknown): number | undefined =>
   v === null || v === undefined ? undefined : Number(v);
 const split = (v: unknown): string[] =>
   !v ? [] : String(v).split('|').filter(Boolean);
+
+/**
+ * Overlay the verified care backfill onto one warehouse row.
+ *
+ * FILLS GAPS ONLY. A field the warehouse already has - which means a curated
+ * profile wrote it - is never touched, so a scraped sentence can never
+ * overrule a person. That single rule is what keeps the hand-written 47
+ * authoritative without needing a list of which species they are.
+ *
+ * Returns the merged values plus the per-field credit for exactly the fields
+ * this layer supplied, so the UI credits the backfill for its own work and
+ * nothing else.
+ */
+function applyCareBackfill(
+  row: {
+    adultSizeIn?: number;
+    minVolumeGal?: number;
+    aggression?: string;
+    tempMinC?: number;
+    tempMaxC?: number;
+  },
+  care: CareRecord | undefined,
+) {
+  if (!care) return { ...row, careSources: undefined };
+
+  const sources: Record<string, { source: string; url?: string }> = {};
+  const credit = (field: string, v: { source: string; sourceUrl?: string }) => {
+    sources[field] = { source: v.source, ...(v.sourceUrl ? { url: v.sourceUrl } : {}) };
+  };
+
+  const out = { ...row };
+  if (out.adultSizeIn === undefined && care.adultSizeIn) {
+    out.adultSizeIn = care.adultSizeIn.value;
+    credit('adultSizeIn', care.adultSizeIn);
+  }
+  if (out.minVolumeGal === undefined && care.minVolumeGal) {
+    out.minVolumeGal = care.minVolumeGal.value;
+    credit('minVolumeGal', care.minVolumeGal);
+  }
+  if (out.aggression === undefined && care.aggression) {
+    out.aggression = care.aggression.value;
+    credit('aggression', care.aggression);
+  }
+  if (out.tempMinC === undefined && out.tempMaxC === undefined && care.tempC) {
+    out.tempMinC = care.tempC.value.min;
+    out.tempMaxC = care.tempC.value.max;
+    credit('tempC', care.tempC);
+  }
+
+  return { ...out, careSources: Object.keys(sources).length ? sources : undefined };
+}
 
 /**
  * The species display name, in three layers of decreasing machine confidence.
@@ -139,16 +217,18 @@ async function main() {
   // anything else on the screen.
   const rows = await c.runAndReadAll(`
     WITH best_image AS (
-      SELECT species_id, url, license, artist, attribution_url, width, height,
+      SELECT species_id, url, provenance, license, artist, attribution_url, width, height,
              row_number() OVER (PARTITION BY species_id ORDER BY width DESC NULLS LAST) AS rn
       FROM read_parquet('${WAREHOUSE}/dim/dim_image.parquet')
-      WHERE role = 'portrait' AND license IS NOT NULL
+      WHERE role = 'portrait' AND attribution_url IS NOT NULL
     )
     SELECT s.species_id, s.common_name, s.scientific_name, s.aliases,
            s.adult_size_in, s.min_volume_gal, s.aggression,
+           s.temp_min_c, s.temp_max_c, s.predation_tags, s.water_type,
            s.temp_min_c, s.temp_max_c, s.predation_tags,
            s.source_label, s.source_url,
-           i.url AS img_url, i.license AS img_license, i.artist AS img_artist,
+           i.url AS img_url, i.provenance AS img_provenance, i.license AS img_license,
+           i.artist AS img_artist,
            i.attribution_url AS img_attribution, i.width AS img_width, i.height AS img_height
     FROM read_parquet('${WAREHOUSE}/dim/dim_species.parquet') s
     LEFT JOIN best_image i ON i.species_id = s.species_id AND i.rn = 1
@@ -157,6 +237,8 @@ async function main() {
   `);
 
   const naming = { rederived: 0, overridden: 0, fellBack: 0 };
+  const careBackfill = loadCareBackfill();
+  const careStats = { species: 0, fields: {} as Record<string, number> };
 
   const species: CatalogEntry[] = rows.getRowObjects()
     // Vendor typos minted the same fish two or three times over. Dropping the
@@ -164,11 +246,25 @@ async function main() {
     .filter((r) => !SYNONYM_IDS.has(String(r.species_id)))
     .map((r) => {
     const url = nn(r.img_url);
-    const license = nn(r.img_license);
+    const attribution = nn(r.img_attribution);
     const speciesId = String(r.species_id);
     const scientificName = nn(r.scientific_name);
     const aliases = split(r.aliases);
     const traits = traitsFor(scientificName);
+    const cared = applyCareBackfill(
+      {
+        adultSizeIn: num(r.adult_size_in),
+        minVolumeGal: num(r.min_volume_gal),
+        aggression: nn(r.aggression),
+        tempMinC: num(r.temp_min_c),
+        tempMaxC: num(r.temp_max_c),
+      },
+      careBackfill.get(speciesId),
+    );
+    if (cared.careSources) {
+      careStats.species++;
+      for (const f of Object.keys(cared.careSources)) careStats.fields[f] = (careStats.fields[f] ?? 0) + 1;
+    }
 
     return {
       speciesId,
@@ -183,23 +279,31 @@ async function main() {
             ...(traits.zone ? { waterZone: traits.zone } : {}),
           }
         : {}),
-      adultSizeIn: num(r.adult_size_in),
-      minVolumeGal: num(r.min_volume_gal),
-      aggression: nn(r.aggression),
-      tempMinC: num(r.temp_min_c),
-      tempMaxC: num(r.temp_max_c),
+      adultSizeIn: cared.adultSizeIn,
+      minVolumeGal: cared.minVolumeGal,
+      aggression: cared.aggression,
+      tempMinC: cared.tempMinC,
+      tempMaxC: cared.tempMaxC,
       predationTags: split(r.predation_tags),
-      sourceLabel: nn(r.source_label),
-      sourceUrl: nn(r.source_url),
-      // Only ship an image we can attribute; the licence check is in the SQL
-      // above, and this is the belt to its braces.
-      ...(url && license
+      ...(nn(r.water_type) ? { waterType: nn(r.water_type) as WaterType } : {}),
+      // A backfilled species is no longer "no care profile yet", and saying so
+      // on a card that now shows an adult size would be visibly untrue.
+      sourceLabel: cared.careSources
+        ? 'Backfilled from cited sources - each value links to the sentence it came from'
+        : nn(r.source_label),
+      sourceUrl: cared.careSources ? undefined : nn(r.source_url),
+      ...(cared.careSources ? { careSources: cared.careSources } : {}),
+      // Only ship a picture we can account for. The test used to be a licence
+      // string; spec 002 changed it to traceability, because vendor photos
+      // have no licence and are shipped deliberately with visible credit.
+      ...(url && attribution
         ? {
             portrait: {
               url,
-              license,
+              provenance: (nn(r.img_provenance) ?? 'wikimedia') as 'wikimedia' | 'vendor' | 'web',
+              license: nn(r.img_license),
               artist: nn(r.img_artist),
-              attributionUrl: nn(r.img_attribution),
+              attributionUrl: attribution,
               width: num(r.img_width),
               height: num(r.img_height),
             },
@@ -209,7 +313,7 @@ async function main() {
   });
 
   const mart: CatalogMart = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     builtAt: new Date().toISOString(),
     species,
   };
@@ -221,14 +325,50 @@ async function main() {
   console.log(`  with a portrait  ${withArt}  (${Math.round((withArt / species.length) * 100)}%)`);
   console.log(`  without          ${species.length - withArt}`);
 
+  // Reported per field, never as one total. A single "care coverage" number
+  // would hide that adult size fills in for most of the catalog while minimum
+  // volume and temperament barely move, which is the whole shape of what this
+  // backfill can and cannot do.
+  const has = (p: (s: CatalogEntry) => boolean) => species.filter(p).length;
+  const pct = (n: number) => `${Math.round((n / species.length) * 100)}%`.padStart(4);
+  console.log('\n  care coverage             now   of which backfilled');
+  const coverage: Array<[string, (s: CatalogEntry) => boolean, string]> = [
+    ['adult size', (s) => s.adultSizeIn !== undefined, 'adultSizeIn'],
+    ['minimum volume', (s) => s.minVolumeGal !== undefined, 'minVolumeGal'],
+    ['temperament', (s) => s.aggression !== undefined, 'aggression'],
+    ['temperature', (s) => s.tempMinC !== undefined, 'tempC'],
+  ];
+  for (const [label, present, field] of coverage) {
+    const n = has(present);
+    console.log(`    ${label.padEnd(22)} ${String(n).padStart(5)} ${pct(n)}   ${careStats.fields[field] ?? 0}`);
+  }
+  console.log(`    ${'any care data'.padEnd(22)} ${String(has((s) => s.adultSizeIn !== undefined || s.minVolumeGal !== undefined || s.aggression !== undefined)).padStart(5)}`);
+  console.log(`    ${'species backfilled'.padEnd(22)} ${String(careStats.species).padStart(5)}`);
+
   const zoned = species.filter((s) => s.waterZone).length;
+  // Reported split, because the pooled number hides which half is missing.
+  // The taxonomy map is a freshwater map; the marine wing arrived with
+  // LiveAquaria's 3,256 products and has no family coverage yet.
+  const marine = species.filter((s) => s.waterType === 'marine');
+  const rest = species.filter((s) => s.waterType !== 'marine');
+  const zonedRest = rest.filter((s) => s.waterZone).length;
   console.log('\n  habitat (derived from family)');
   console.log(`    with a water zone         ${zoned}  (${Math.round((zoned / species.length) * 100)}%)`);
+  console.log(`      fresh / brackish / none ${zonedRest} of ${rest.length}  (${Math.round((zonedRest / rest.length) * 100)}%)`);
+  console.log(`      marine                  ${marine.filter((s) => s.waterZone).length} of ${marine.length}  <- the taxonomy map is freshwater`);
   console.log(`    family unmapped           ${species.filter((s) => !s.family).length}`);
   for (const k of ['fish', 'plant', 'invertebrate', 'amphibian', 'reptile'] as const) {
     const n = species.filter((s) => s.organismKind === k).length;
     if (n) console.log(`    ${k.padEnd(24)}  ${n}`);
   }
+
+  console.log('\n  salinity (vendor tags first, then a single-kind vendor\'s declaration)');
+  for (const t of ['freshwater', 'brackish', 'marine'] as const) {
+    const n = species.filter((s) => s.waterType === t).length;
+    console.log(`    ${t.padEnd(24)}  ${String(n).padStart(4)}  (${Math.round((n / species.length) * 100)}%)`);
+  }
+  const untyped = species.filter((s) => !s.waterType).length;
+  console.log(`    not recorded              ${String(untyped).padStart(4)}  (${Math.round((untyped / species.length) * 100)}%)`);
   console.log(`\n  dropped ${SPECIES_SYNONYMS.length} duplicate species minted by vendor typos`);
   for (const s of SPECIES_SYNONYMS) console.log(`      ${s.speciesId} -> ${s.canonicalId}`);
 

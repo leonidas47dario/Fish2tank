@@ -14,8 +14,9 @@
  *   npm run portraits
  */
 import { chromium } from 'playwright';
-import { existsSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
+import { readRows, isBundleable, type ImageRow } from './images-jsonl';
 
 const IMAGES = 'data/market/images.jsonl';
 const OUT_DIR = 'src/data/seed/assets/portraits';
@@ -74,17 +75,10 @@ async function fetchImage(url: string, attempt = 0): Promise<Response> {
   return fetchImage(url, attempt + 1);
 }
 
-interface ImageRow {
-  species_id: string;
-  url: string;
-  license: string | null;
-}
-
 async function main() {
   if (!existsSync(IMAGES)) throw new Error(`${IMAGES} not found - run "npm run images" first.`);
 
-  const rows: ImageRow[] = readFileSync(IMAGES, 'utf8')
-    .trim().split('\n').filter(Boolean).map((l) => JSON.parse(l));
+  const rows: ImageRow[] = readRows();
 
   // Rebuild from scratch so a species dropped from the catalog does not leave
   // an orphaned image behind in the bundle.
@@ -101,7 +95,14 @@ async function main() {
   let bytes = 0;
 
   for (const row of rows) {
-    if (!row.license) continue; // never bundle what we cannot attribute
+    // Never bundle a picture we cannot account for, and never one the
+    // downscaler cannot decode. The first test used to be a licence string;
+    // spec 002 changed it to traceability, because vendor and web photos have
+    // no licence and are shipped deliberately with visible credit. The second
+    // test is why 5 of the old 700 rows silently never produced a file: they
+    // were .tif, which Chromium cannot decode.
+    if (!row.attribution_url) continue;
+    if (!isBundleable(row)) continue;
     process.stdout.write(`  ${row.species_id.padEnd(28)}`);
     try {
       const res = await fetchImage(row.url);

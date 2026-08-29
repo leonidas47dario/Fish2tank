@@ -22,12 +22,56 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { db } from '@/data/db';
 import type { Id } from '@/domain/types';
 import { addPhotos, ensureSpecimenForHolding, type CaptureFile } from '@/data/repositories';
-import { CATALOG_BY_SPECIES, cardPrice, marketAndScarcity, ownership, type CatalogCard } from '@/data/catalog';
+import {
+  CATALOG_BY_SPECIES,
+  cardPrice,
+  marketAndScarcity,
+  ownership,
+  portraitCredit,
+  type CareField,
+  type CatalogCard,
+  type CatalogSpecies,
+} from '@/data/catalog';
 import { deriveQuantity } from '@/domain/holdings';
 import { formatVolume } from '@/domain/units';
 import { FishCard } from '../components/FishCard';
 import { MarketPanel } from '../components/MarketPanel';
 import { OwnPhotoStrip } from '../components/OwnPhotoStrip';
+
+const SOURCE_LABEL: Record<string, string> = {
+  wikipedia: 'Wikipedia',
+  vendor: 'store listing',
+};
+
+/**
+ * Credit for a single care value.
+ *
+ * Per-field rather than per-species because under the spec 003 backfill a
+ * fish's adult size can come from a Wikipedia article while its minimum tank
+ * volume comes from a shop that wants to sell it. Those are not equally strong
+ * claims and crediting them together would hide which is which.
+ *
+ * Renders nothing for the curated profiles, which carry no per-field
+ * provenance and are credited once beneath the list.
+ */
+function CareCredit({ species, field }: { species: CatalogSpecies; field: CareField }) {
+  const src = species.careSources?.[field];
+  if (!src) return null;
+  const label = SOURCE_LABEL[src.source] ?? src.source;
+  return (
+    <span className="xs muted">
+      (
+      {src.url ? (
+        <a href={src.url} target="_blank" rel="noreferrer">
+          {label}
+        </a>
+      ) : (
+        label
+      )}
+      )
+    </span>
+  );
+}
 
 export default function SpeciesDetail() {
   const { id } = useParams<{ id: string }>();
@@ -215,11 +259,11 @@ export default function SpeciesDetail() {
       <section className="card stack">
         <h2>Profile</h2>
         <dl className="kv">
-          {species.adultSizeIn !== undefined && (<><dt>Adult size</dt><dd>{Math.round(species.adultSizeIn * 10) / 10}&quot;</dd></>)}
-          {species.minVolumeGal !== undefined && (<><dt>Minimum tank</dt><dd>{formatVolume({ value: species.minVolumeGal, unit: 'gal' })}</dd></>)}
-          {species.aggression && (<><dt>Temperament</dt><dd>{species.aggression}</dd></>)}
+          {species.adultSizeIn !== undefined && (<><dt>Adult size</dt><dd>{Math.round(species.adultSizeIn * 10) / 10}&quot; <CareCredit species={species} field="adultSizeIn" /></dd></>)}
+          {species.minVolumeGal !== undefined && (<><dt>Minimum tank</dt><dd>{formatVolume({ value: species.minVolumeGal, unit: 'gal' })} <CareCredit species={species} field="minVolumeGal" /></dd></>)}
+          {species.aggression && (<><dt>Temperament</dt><dd>{species.aggression} <CareCredit species={species} field="aggression" /></dd></>)}
           {species.tempMinC !== undefined && species.tempMaxC !== undefined && (
-            <><dt>Temperature</dt><dd>{species.tempMinC}–{species.tempMaxC}°C</dd></>
+            <><dt>Temperature</dt><dd>{species.tempMinC}–{species.tempMaxC}°C <CareCredit species={species} field="tempC" /></dd></>
           )}
           {species.predationTags.length > 0 && (<><dt>Predation</dt><dd>{species.predationTags.join(', ')}</dd></>)}
         </dl>
@@ -263,8 +307,7 @@ export default function SpeciesDetail() {
         <section className="card">
           <h2>Picture credit</h2>
           <p className="small" style={{ marginBottom: 0 }}>
-            {species.portrait.artist ? `${species.portrait.artist}, ` : ''}
-            <strong>{species.portrait.license}</strong>
+            <strong>{portraitCredit(species.portrait)}</strong>
             {species.portrait.attributionUrl && (
               <> — <a href={species.portrait.attributionUrl} target="_blank" rel="noreferrer">source</a></>
             )}

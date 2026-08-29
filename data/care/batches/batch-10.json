@@ -1,0 +1,180 @@
+{
+  "batch": "10",
+  "species": [
+    {
+      "speciesId": "sp_polypterus_congicus",
+      "commonName": "Congicus Bichir",
+      "scientificName": "Polypterus congicus",
+      "family": "Polypteridae",
+      "wikipediaFile": "data/care/text/sp_polypterus_congicus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_tetraodon_schoutedeni",
+      "commonName": "Congo Puffer Fish",
+      "scientificName": "Tetraodon schoutedeni",
+      "family": "Tetraodontidae",
+      "wikipediaFile": "data/care/text/sp_tetraodon_schoutedeni.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_mormyrops_anguilloides",
+      "commonName": "Cornish Jack",
+      "scientificName": "Mormyrops anguilloides",
+      "family": "Mormyridae",
+      "wikipediaFile": "data/care/text/sp_mormyrops_anguilloides.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_corydoras_habrosus",
+      "commonName": "Cory Catfish",
+      "scientificName": "Corydoras habrosus",
+      "family": "Callichthyidae",
+      "wikipediaFile": "data/care/text/sp_corydoras_habrosus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_corydoras_julii",
+      "commonName": "S Cory Catfish",
+      "scientificName": "Corydoras julii",
+      "family": "Callichthyidae",
+      "wikipediaFile": "data/care/text/sp_corydoras_julii.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_corydoras_rabauti",
+      "commonName": "Rust Cory Catfish",
+      "scientificName": "Corydoras rabauti",
+      "family": "Callichthyidae",
+      "wikipediaFile": "data/care/text/sp_corydoras_rabauti.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_corydoras_schultzei",
+      "commonName": "Black Venezuela Corydoras",
+      "scientificName": "Corydoras schultzei",
+      "family": "Callichthyidae",
+      "wikipediaFile": "data/care/text/sp_corydoras_schultzei.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_corydoras_adolfoi",
+      "commonName": "Adolfo's Catfish",
+      "scientificName": "Corydoras adolfoi",
+      "family": "Callichthyidae",
+      "wikipediaFile": "data/care/text/sp_corydoras_adolfoi.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_corydoras_aeneus",
+      "commonName": "Aeneus Cory Catfish",
+      "scientificName": "Corydoras aeneus",
+      "family": "Callichthyidae",
+      "wikipediaFile": "data/care/text/sp_corydoras_aeneus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_corydoras_pygmaeus",
+      "commonName": "Pygmy Cory Catfish",
+      "scientificName": "Corydoras pygmaeus",
+      "family": "Callichthyidae",
+      "wikipediaFile": "data/care/text/sp_corydoras_pygmaeus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_corydoras_splendens",
+      "commonName": "Brochis Cory Catfish",
+      "scientificName": "Corydoras splendens",
+      "family": "Callichthyidae",
+      "wikipediaFile": "data/care/text/sp_corydoras_splendens.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_corydoras_eques",
+      "commonName": "S Cory Catfish",
+      "scientificName": "Corydoras eques",
+      "family": "Callichthyidae",
+      "wikipediaFile": "data/care/text/sp_corydoras_eques.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_corydoras_paleatus",
+      "commonName": "Peppered Catfish",
+      "scientificName": "Corydoras paleatus",
+      "family": "Callichthyidae",
+      "wikipediaFile": "data/care/text/sp_corydoras_paleatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_corydoras_trilineatus",
+      "commonName": "Threestripe Corydoras",
+      "scientificName": "Corydoras trilineatus",
+      "family": "Callichthyidae",
+      "wikipediaFile": "data/care/text/sp_corydoras_trilineatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_cherax_snowden",
+      "commonName": "Orange Tip Crayfish",
+      "scientificName": "Cherax snowden",
+      "family": "Parastacidae",
+      "wikipediaFile": "data/care/text/sp_cherax_snowden.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_cherax_boesemani",
+      "commonName": "Cherax boesemani",
+      "scientificName": "Cherax boesemani",
+      "family": "Parastacidae",
+      "wikipediaFile": "data/care/text/sp_cherax_boesemani.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_cherax_albidus",
+      "commonName": "Blue Pearl Crayfish",
+      "scientificName": "Cherax albidus",
+      "family": "Parastacidae",
+      "wikipediaFile": "data/care/text/sp_cherax_albidus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_lysimachia_nummularia",
+      "commonName": "Lloydiella",
+      "scientificName": "Lysimachia nummularia",
+      "family": "Primulaceae",
+      "wikipediaFile": "data/care/text/sp_lysimachia_nummularia.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_ludwigia_repens",
+      "commonName": "Creeping Primrose-Willow",
+      "scientificName": "Ludwigia repens",
+      "family": "Onagraceae",
+      "wikipediaFile": "data/care/text/sp_ludwigia_repens.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_juncus_repens",
+      "commonName": "Creeping Rush Clump",
+      "scientificName": "Juncus repens",
+      "family": "Juncaceae",
+      "wikipediaFile": "data/care/text/sp_juncus_repens.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_trichopsis_vittata",
+      "commonName": "Croaking Gourami",
+      "scientificName": "Trichopsis vittata",
+      "family": "Osphronemidae",
+      "wikipediaFile": "data/care/text/sp_trichopsis_vittata.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_cryptocoryne_undulata",
+      "commonName": "Undulated Crypt",
+      "scientificName": "Cryptocoryne undulata",
+      "family": "Araceae",
+      "wikipediaFile": "data/care/text/sp_cryptocoryne_undulata.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_atractosteus_tristoechus",
+      "commonName": "Cuban Gar",
+      "scientificName": "Atractosteus tristoechus",
+      "family": "Lepisosteidae",
+      "wikipediaFile": "data/care/text/sp_atractosteus_tristoechus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_synodontis_multipunctata",
+      "commonName": "Cuckoo Catfish",
+      "scientificName": "Synodontis multipunctata",
+      "family": "Mochokidae",
+      "wikipediaFile": "data/care/text/sp_synodontis_multipunctata.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_biotodoma_cupido",
+      "commonName": "Cupid Cichlid",
+      "scientificName": "Biotodoma cupido",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_biotodoma_cupido.wikipedia.txt"
+    }
+  ]
+}

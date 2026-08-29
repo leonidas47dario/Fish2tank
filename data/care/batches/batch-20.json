@@ -1,0 +1,182 @@
+{
+  "batch": "20",
+  "species": [
+    {
+      "speciesId": "sp_mastacembelus_armatus",
+      "commonName": "Tire Track Eel",
+      "scientificName": "Mastacembelus armatus",
+      "family": "Mastacembelidae",
+      "wikipediaFile": "data/care/text/sp_mastacembelus_armatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_placidochromis_phenochilus",
+      "commonName": "Mdoka White Lips",
+      "scientificName": "Placidochromis phenochilus",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_placidochromis_phenochilus.wikipedia.txt",
+      "vendorFile": "data/care/text/sp_placidochromis_phenochilus.vendor.txt"
+    },
+    {
+      "speciesId": "sp_hemiancistrus_medians",
+      "commonName": "Medians Pleco",
+      "scientificName": "Hemiancistrus medians",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_hemiancistrus_medians.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_megalechis_thoracata",
+      "commonName": "Spotted Hoplo Catfish",
+      "scientificName": "Megalechis thoracata",
+      "family": "Callichthyidae",
+      "wikipediaFile": "data/care/text/sp_megalechis_thoracata.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pao_suvattii",
+      "commonName": "Mekong Arrowhead Puffer",
+      "scientificName": "Pao suvattii",
+      "family": "Tetraodontidae",
+      "wikipediaFile": "data/care/text/sp_pao_suvattii.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_melanotaenia_trifasciata",
+      "commonName": "Banded Rainbowfish",
+      "scientificName": "Melanotaenia trifasciata",
+      "family": "Melanotaeniidae",
+      "wikipediaFile": "data/care/text/sp_melanotaenia_trifasciata.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_lilaeopsis_brasiliensis",
+      "commonName": "Micro Sword",
+      "scientificName": "Lilaeopsis brasiliensis",
+      "family": "Apiaceae",
+      "wikipediaFile": "data/care/text/sp_lilaeopsis_brasiliensis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_microsorum_pteropus",
+      "commonName": "Java Fern",
+      "scientificName": "Microsorum pteropus",
+      "family": "Polypodiaceae",
+      "wikipediaFile": "data/care/text/sp_microsorum_pteropus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_mikrogeophagus_ramirezi",
+      "commonName": "Ram Cichlid",
+      "scientificName": "Mikrogeophagus ramirezi",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_mikrogeophagus_ramirezi.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_neritina_pulligera",
+      "commonName": "Military Nerite Snails",
+      "scientificName": "Neritina pulligera",
+      "family": "Neritidae",
+      "wikipediaFile": "data/care/text/sp_neritina_pulligera.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_cambarellus_diminutus",
+      "commonName": "Crayfish Mini Lobster",
+      "scientificName": "Cambarellus diminutus",
+      "family": "Cambaridae",
+      "wikipediaFile": "data/care/text/sp_cambarellus_diminutus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_cambarellus_shufeldtii",
+      "commonName": "Crayfish Mini Lobster",
+      "scientificName": "Cambarellus shufeldtii",
+      "family": "Cambaridae",
+      "wikipediaFile": "data/care/text/sp_cambarellus_shufeldtii.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_polypterus_mokelembembe",
+      "commonName": "Mokelembembe Bichir",
+      "scientificName": "Polypterus mokelembembe",
+      "family": "Polypteridae",
+      "wikipediaFile": "data/care/text/sp_polypterus_mokelembembe.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_poecilia_sphenops",
+      "commonName": "Molly",
+      "scientificName": "Poecilia sphenops",
+      "family": "Poeciliidae",
+      "wikipediaFile": "data/care/text/sp_poecilia_sphenops.wikipedia.txt",
+      "vendorFile": "data/care/text/sp_poecilia_sphenops.vendor.txt"
+    },
+    {
+      "speciesId": "sp_poecilia_salvatoris",
+      "commonName": "Liberty Molly",
+      "scientificName": "Poecilia salvatoris",
+      "family": "Poeciliidae",
+      "wikipediaFile": "data/care/text/sp_poecilia_salvatoris.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_bacopa_monnieri",
+      "commonName": "Moneywort",
+      "scientificName": "Bacopa monnieri",
+      "family": "Plantaginaceae",
+      "wikipediaFile": "data/care/text/sp_bacopa_monnieri.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_monodactylus_argenteus",
+      "commonName": "Mono Argentus",
+      "scientificName": "Monodactylus argenteus",
+      "family": "Monodactylidae",
+      "wikipediaFile": "data/care/text/sp_monodactylus_argenteus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_cichla_monoculus",
+      "commonName": "Mono Peacock Bass",
+      "scientificName": "Cichla monoculus",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_cichla_monoculus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_vesicularia_montagnei",
+      "commonName": "Christmas Moss",
+      "scientificName": "Vesicularia montagnei",
+      "family": "Hypnaceae",
+      "wikipediaFile": "data/care/text/sp_vesicularia_montagnei.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_danio_dangila",
+      "commonName": "Moustached Danio",
+      "scientificName": "Danio dangila",
+      "family": "Danionidae",
+      "wikipediaFile": "data/care/text/sp_danio_dangila.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_tyrannochromis_macrostoma",
+      "commonName": "Mouth Hap Cichlid",
+      "scientificName": "Tyrannochromis macrostoma",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_tyrannochromis_macrostoma.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_maccullochella_peelii",
+      "commonName": "Murray Cod",
+      "scientificName": "Maccullochella peelii",
+      "family": "Percichthyidae",
+      "wikipediaFile": "data/care/text/sp_maccullochella_peelii.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_esox_masquinongy",
+      "commonName": "Muskie",
+      "scientificName": "Esox masquinongy",
+      "family": "Esocidae",
+      "wikipediaFile": "data/care/text/sp_esox_masquinongy.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_panaqolus_albomaculatus",
+      "commonName": "Mustard Spot Pleco",
+      "scientificName": "Panaqolus albomaculatus",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_panaqolus_albomaculatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_heros_notatus",
+      "commonName": "Negro Spotted Severum",
+      "scientificName": "Heros notatus",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_heros_notatus.wikipedia.txt"
+    }
+  ]
+}

@@ -1,121 +1,216 @@
 import { describe, expect, it } from 'vitest';
 import {
-  bandForScore, computeMarketScarcity, DEFAULT_SCARCITY_CONFIG, type MarketScarcityResult,
+  bandForScore, computeMarketScarcity, DEFAULT_SCARCITY_CONFIG,
+  type MarketScarcityResult, type ScarcityWitness,
 } from './market-scarcity';
 import type { MarketSpeciesStats } from '@/data/market';
 
-function stats(over: Partial<MarketSpeciesStats> = {}): MarketSpeciesStats {
+/** Witnesses well clear of the gate, so a test opts into the gate deliberately. */
+const witnesses = (n: number): ScarcityWitness[] =>
+  Array.from({ length: n }, (_, i) => ({ storeId: `w${i}`, resolveRate: 0.5, coverage: 0.5 }));
+
+function stats(storeIds: string[], listingsEach = 2): MarketSpeciesStats {
   return {
-    speciesId: 'sp_x', comparableCount: 10, totalListings: 10, inStock: 5, soldOut: 5,
+    speciesId: 'sp_x',
+    comparableCount: storeIds.length * listingsEach,
+    totalListings: storeIds.length * listingsEach,
+    inStock: 1,
+    soldOut: 1,
     price: { median: 50, min: 10, max: 100, currency: 'USD' },
     priceBySize: [],
-    // Built from the configured store count, so adding a vendor does not
-    // silently invalidate every expectation in this file.
-    stores: allStores(),
-    ...over,
+    stores: storeIds.map((storeId) => ({
+      storeId, listings: listingsEach, inStock: 1, medianPrice: 50,
+    })),
   };
 }
-const rate = (o: Partial<MarketSpeciesStats> = {}) => computeMarketScarcity(stats(o)) as MarketScarcityResult;
 
-/** One entry per tracked store: the "carried everywhere" case. */
-function allStores(n = DEFAULT_SCARCITY_CONFIG.trackedStores) {
-  return Array.from({ length: n }, (_, i) => ({
-    storeId: `s${i}`, listings: 2, inStock: 1, medianPrice: 50,
-  }));
-}
+const rate = (ids: string[], n = 4, each = 2) =>
+  computeMarketScarcity(stats(ids, each), witnesses(n)) as MarketScarcityResult;
 
-describe('absence is never evidence of scarcity', () => {
-  it('returns not-enough-data for a species with no index entry', () => {
-    const r = computeMarketScarcity(undefined);
-    expect(r.available).toBe(false);
-    if (!r.available) {
-      expect(r.reason).toBe('Not enough data');
-      // The critical wording: a missing species is an unmatched title, not a rare fish.
-      expect(r.explanation).toMatch(/not that it is rare/i);
-    }
+describe('breadth is the rating', () => {
+  it('scores zero when every witness carries it', () => {
+    expect(rate(['w0', 'w1', 'w2', 'w3']).components.storeBreadth).toBe(0);
   });
 
-  it('refuses to rate below the minimum listing count', () => {
-    const r = computeMarketScarcity(stats({ totalListings: 2 }));
-    expect(r.available).toBe(false);
+  it('scores highest when exactly one witness carries it', () => {
+    expect(rate(['w0']).components.storeBreadth).toBe(75); // 100 * (1 - 1/4)
   });
 
-  it('never reports a scarce band from missing data', () => {
-    const r = computeMarketScarcity(undefined);
-    expect(r).not.toHaveProperty('band');
-    expect(r).not.toHaveProperty('score');
-  });
-});
-
-describe('store breadth', () => {
-  it('scores zero when every tracked store carries it', () => {
-    expect(rate().components.storeBreadth).toBe(0);
-  });
-
-  it('scores maximum when only one store carries it', () => {
-    const r = rate({ stores: [{ storeId: 'a', listings: 10, inStock: 5, medianPrice: 50 }] });
-    expect(r.components.storeBreadth).toBe(DEFAULT_SCARCITY_CONFIG.points.storeBreadthMax);
-  });
-
-  it('falls between the extremes for a partially-carried species', () => {
-    const max = DEFAULT_SCARCITY_CONFIG.points.storeBreadthMax;
-    const half = Math.ceil(DEFAULT_SCARCITY_CONFIG.trackedStores / 2);
-    const r = rate({ stores: allStores(half) });
-    expect(r.components.storeBreadth).toBeGreaterThan(0);
-    expect(r.components.storeBreadth).toBeLessThan(max);
-  });
-
-  it('scores monotonically: more stores carrying it is never scarcer', () => {
+  it('falls monotonically as more witnesses carry it', () => {
     let previous = Infinity;
-    for (let n = 1; n <= DEFAULT_SCARCITY_CONFIG.trackedStores; n += 1) {
-      const points = rate({ stores: allStores(n) }).components.storeBreadth;
+    for (let n = 1; n <= 4; n += 1) {
+      const points = rate(['w0', 'w1', 'w2', 'w3'].slice(0, n)).components.storeBreadth;
       expect(points).toBeLessThanOrEqual(previous);
       previous = points;
     }
   });
-});
 
-describe('listing depth', () => {
-  it('scores zero for a deep catalogue', () => {
-    expect(rate({ totalListings: 40 }).components.listingDepth).toBe(0);
-  });
-
-  it('scores high for a thin one', () => {
-    // 3 of 20 saturation -> 85% of the maximum.
-    expect(rate({ totalListings: 3 }).components.listingDepth).toBe(26);
+  it('ignores specialist stores entirely: they are not witnesses', () => {
+    const withPf = rate(['w0', 'predatory-fins']);
+    expect(withPf.score).toBe(rate(['w0']).score);
+    expect(withPf.basis.carriedBy).toEqual(['w0']);
   });
 });
 
-describe('stock pressure', () => {
-  it('scores maximum when everything is sold out', () => {
-    const r = rate({ totalListings: 10, inStock: 0, soldOut: 10 });
-    expect(r.components.stockPressure).toBe(DEFAULT_SCARCITY_CONFIG.points.stockPressureMax);
+describe('depth is a nudge, not a signal', () => {
+  it('is negative: a deep catalogue makes a fish more findable, never less', () => {
+    expect(rate(['w0'], 4, 40).components.listingDepth).toBeLessThan(0);
   });
 
-  it('scores zero when everything is in stock', () => {
-    expect(rate({ totalListings: 10, inStock: 10, soldOut: 0 }).components.stockPressure).toBe(0);
+  it('caps at the configured maximum', () => {
+    expect(rate(['w0'], 4, 10_000).components.listingDepth)
+      .toBe(-DEFAULT_SCARCITY_CONFIG.depthNudgeMax);
   });
 
-  it('scales with the in-stock ratio', () => {
-    expect(rate({ totalListings: 10, inStock: 5 }).components.stockPressure).toBe(13);
+  it('never outweighs breadth', () => {
+    // One witness with a huge catalogue still outranks two witnesses.
+    expect(rate(['w0'], 4, 10_000).score).toBeGreaterThan(rate(['w0', 'w1'], 4, 2).score);
   });
 });
 
-describe('price level', () => {
-  it('scores zero for a cheap fish', () => {
-    expect(rate({ price: { median: 0, min: 0, max: 0, currency: 'USD' } }).components.priceLevel).toBe(0);
+describe('the witness gate', () => {
+  it('refuses when the community stores cannot resolve their own catalogues', () => {
+    const weak: ScarcityWitness[] = [
+      { storeId: 'w0', resolveRate: 0.02, coverage: 0.5 },
+      { storeId: 'w1', resolveRate: 0.03, coverage: 0.5 },
+    ];
+    const r = computeMarketScarcity(stats(['w0']), weak);
+    expect(r.available).toBe(false);
+    if (!r.available) expect(r.reason).toBe('No local-shelf sample');
   });
 
-  it('caps at the ceiling rather than running away', () => {
-    const r = rate({ price: { median: 5000, min: 100, max: 9000, currency: 'USD' } });
-    expect(r.components.priceLevel).toBe(DEFAULT_SCARCITY_CONFIG.points.priceLevelMax);
+  it('rates the same species once those stores clear the threshold', () => {
+    const strong: ScarcityWitness[] = [
+      { storeId: 'w0', resolveRate: 0.5, coverage: 0.5 },
+      { storeId: 'w1', resolveRate: 0.5, coverage: 0.5 },
+    ];
+    expect(computeMarketScarcity(stats(['w0']), strong).available).toBe(true);
   });
 
-  it('is the lowest-weighted signal, since price is weak evidence of scarcity', () => {
-    const p = DEFAULT_SCARCITY_CONFIG.points;
-    expect(p.priceLevelMax).toBeLessThan(p.storeBreadthMax);
-    expect(p.priceLevelMax).toBeLessThan(p.listingDepthMax);
-    expect(p.priceLevelMax).toBeLessThan(p.stockPressureMax);
+  it('uses the configured threshold, not a hardcoded one', () => {
+    const stores: ScarcityWitness[] = [
+      { storeId: 'w0', resolveRate: 0.05, coverage: 0.5 },
+      { storeId: 'w1', resolveRate: 0.05, coverage: 0.5 },
+    ];
+    const lenient = { ...DEFAULT_SCARCITY_CONFIG, witnessMinResolveRate: 0.01 };
+    expect(computeMarketScarcity(stats(['w0']), stores, lenient).available).toBe(true);
+  });
+
+  it('refuses a store that is legible but carries almost nothing', () => {
+    // Aquarium Co-Op's shape: clean listings, 1.6% of the catalog. Its
+    // silence is coverage, not scarcity.
+    const thin: ScarcityWitness[] = [
+      { storeId: 'w0', resolveRate: 0.5, coverage: 0.5 },
+      { storeId: 'w1', resolveRate: 0.5, coverage: 0.01 },
+    ];
+    const r = computeMarketScarcity(stats(['w0']), thin);
+    expect(r.available).toBe(false);
+    if (!r.available) expect(r.reason).toBe('No local-shelf sample');
+  });
+
+  it('refuses on a single witness, because one store cannot make a comparison', () => {
+    const r = computeMarketScarcity(stats(['w0']), witnesses(1));
+    expect(r.available).toBe(false);
+    if (!r.available) expect(r.explanation).toMatch(/at least 2 general stores/i);
+  });
+});
+
+describe('refusing to rate is one rule: no witness carries it', () => {
+  it('refuses for a species with no index entry', () => {
+    const r = computeMarketScarcity(undefined, witnesses(4));
+    expect(r.available).toBe(false);
+    if (!r.available) {
+      expect(r.reason).toBe('Not enough data');
+      // A missing species is an unmatched title, not a rare fish.
+      expect(r.explanation).toMatch(/not that it is rare/i);
+    }
+  });
+
+  it('refuses for a species only specialists carry, rather than calling it rare', () => {
+    const r = computeMarketScarcity(stats(['predatory-fins']), witnesses(4));
+    expect(r.available).toBe(false);
+    expect(r).not.toHaveProperty('band');
+    expect(r).not.toHaveProperty('score');
+  });
+
+  it('names the stores that do carry it, so the refusal is diagnosable', () => {
+    const r = computeMarketScarcity(stats(['predatory-fins']), witnesses(4));
+    if (!r.available) expect(r.explanation).toMatch(/predatory-fins/);
+  });
+
+  it('rates a species the vendors never sized, now that price is gone', () => {
+    // v0.1.0 refused these outright, because the price component had no median
+    // to read. Breadth does not need one.
+    const unpriced = { ...stats(['w0', 'w1']), price: undefined };
+    expect(computeMarketScarcity(unpriced, witnesses(4)).available).toBe(true);
+  });
+});
+
+describe('the ceiling rises with the witness count', () => {
+  // The band comes from breadth = 100 * (1 - 1/N), so a sole-witness fish
+  // climbs as the sample grows. The guard against "fixing" thin coverage by
+  // loosening the gate: doing that has to move visible bands.
+  const sole = (n: number) => rate(['w0'], n);
+
+  it('cannot call anything rarely listed on two witnesses', () => {
+    expect(sole(2).components.storeBreadth).toBe(50);
+    expect(sole(2).band).toBe('uncommon');
+  });
+
+  it('reaches scarce at three', () => {
+    expect(sole(3).band).toBe('scarce');
+  });
+
+  it('reaches rarely listed at four, which the real store list can produce', () => {
+    // The point of taking depth out of the band decision. While the nudge
+    // could move a band, breadth 75 scored 72 and the top band was
+    // unreachable at every witness count STORE_CHANNELS can actually yield.
+    expect(sole(4).components.storeBreadth).toBe(75);
+    expect(sole(4).band).toBe('rarely-listed');
+  });
+
+  it('stays there as more witnesses join', () => {
+    expect(sole(6).band).toBe('rarely-listed');
+  });
+});
+
+describe('depth orders within a band but never moves one', () => {
+  it('gives the same band to a thin and a deep sole-witness listing', () => {
+    const thin = rate(['w0'], 4, 1);
+    const deep = rate(['w0'], 4, 500);
+    expect(thin.band).toBe(deep.band);
+    // ...while still ranking the deep one as easier to find.
+    expect(deep.score).toBeLessThan(thin.score);
+  });
+
+  it('is not swayed across a boundary by variant granularity', () => {
+    // `listings` counts Shopify variant rows, so one product split into 20
+    // sizes must not promote a fish a whole band. This is the assertion that
+    // keeps that catalogue artifact out of the rating.
+    const bands = new Set([1, 5, 20, 100, 1000].map((n) => rate(['w0'], 3, n).band));
+    expect(bands.size).toBe(1);
+  });
+});
+
+describe('the deleted signals stay deleted', () => {
+  it('exposes only breadth and depth', () => {
+    expect(Object.keys(rate(['w0']).components).sort()).toEqual(['listingDepth', 'storeBreadth']);
+  });
+
+  it('ignores stock: most of the dataset is sold-out back catalogue', () => {
+    const base = stats(['w0', 'w1']);
+    const soldOut = computeMarketScarcity({ ...base, inStock: 0, soldOut: 4 }, witnesses(4));
+    const stocked = computeMarketScarcity({ ...base, inStock: 4, soldOut: 0 }, witnesses(4));
+    expect(soldOut).toEqual(stocked);
+  });
+
+  it('ignores price: it is a consequence of rarity, not evidence of it', () => {
+    const base = stats(['w0', 'w1']);
+    const dear = computeMarketScarcity(
+      { ...base, price: { median: 5000, min: 1000, max: 9000, currency: 'USD' } },
+      witnesses(4),
+    ) as MarketScarcityResult;
+    expect(dear.score).toBe(rate(['w0', 'w1']).score);
   });
 });
 
@@ -124,100 +219,37 @@ describe('bands', () => {
     [0, 'widely-available'], [19, 'widely-available'],
     [20, 'available'], [39, 'available'],
     [40, 'uncommon'], [59, 'uncommon'],
-    [60, 'scarce'], [79, 'scarce'],
-    [80, 'rarely-listed'], [100, 'rarely-listed'],
+    [60, 'scarce'], [74, 'scarce'],
+    [75, 'rarely-listed'], [100, 'rarely-listed'],
   ];
   it.each(cases)('maps %i to %s', (score, band) => {
     expect(bandForScore(score, DEFAULT_SCARCITY_CONFIG)).toBe(band);
   });
-
-  it('rates a common, always-stocked, cheap fish carried everywhere as widely available', () => {
-    const r = rate({
-      totalListings: 40, inStock: 38, stores: allStores(),
-      price: { median: 15, min: 5, max: 30, currency: 'USD' },
-    });
-    expect(r.band).toBe('widely-available');
-  });
-
-  it('rates a one-store, thin, always-sold-out, expensive fish at the top', () => {
-    const r = rate({
-      totalListings: 3, inStock: 0, soldOut: 3,
-      price: { median: 400, min: 300, max: 500, currency: 'USD' },
-      stores: [{ storeId: 'a', listings: 3, inStock: 0, medianPrice: 400 }],
-    });
-    expect(r.band).toBe('rarely-listed');
-    expect(r.score).toBeGreaterThanOrEqual(80);
-  });
 });
 
 describe('transparency and determinism', () => {
-  it('shows every component, not just a total', () => {
-    expect(Object.keys(rate().components).sort())
-      .toEqual(['listingDepth', 'priceLevel', 'stockPressure', 'storeBreadth']);
-  });
-
   it('reports the basis the rating rests on', () => {
-    const r = rate({ totalListings: 9, inStock: 0, stores: allStores(3) });
-    expect(r.basis).toMatchObject({ storesCarrying: 3, totalListings: 9, inStock: 0 });
+    expect(rate(['w0', 'w1'], 4).basis).toMatchObject({
+      witnessesCarrying: 2, witnessesTracked: 4, witnessListings: 4,
+    });
   });
 
   it('stamps the formula version', () => {
-    expect(rate().formulaVersion).toBe(DEFAULT_SCARCITY_CONFIG.formulaVersion);
+    expect(rate(['w0']).formulaVersion).toBe('market-scarcity-v1.0.0');
   });
 
   it('is deterministic', () => {
-    expect(rate({ totalListings: 7 })).toEqual(rate({ totalListings: 7 }));
+    expect(rate(['w0', 'w1'])).toEqual(rate(['w0', 'w1']));
   });
 
-  it('clamps to 0-100 even with retuned weights', () => {
-    const generous = {
-      ...DEFAULT_SCARCITY_CONFIG,
-      points: { storeBreadthMax: 90, listingDepthMax: 90, stockPressureMax: 90, priceLevelMax: 90 },
-    };
-    const r = computeMarketScarcity(
-      stats({ totalListings: 3, inStock: 0, stores: [{ storeId: 'a', listings: 3, inStock: 0, medianPrice: 400 }],
-              price: { median: 400, min: 1, max: 500, currency: 'USD' } }),
-      generous,
-    ) as MarketScarcityResult;
-    expect(r.score).toBe(100);
+  it('clamps to 0-100', () => {
+    expect(rate(['w0', 'w1', 'w2', 'w3'], 4, 10_000).score).toBe(0);
   });
 });
 
 describe('separation from the Discovery Tier (FR-P05)', () => {
   it('produces no field that the personal tier consumes', () => {
-    const json = JSON.stringify(rate());
+    const json = JSON.stringify(rate(['w0']));
     expect(json).not.toMatch(/discoveryTier|personalEncounterScarcity|dreamList|firstConfirmed/i);
-  });
-});
-
-describe('the store count cannot drift from the vendor list', () => {
-  it('scarcityFor() uses the count the index was actually built from', async () => {
-    const { MARKET_INDEX, TRACKED_STORES, scarcityFor } = await import('@/data/market');
-    // Read from the data, never hardcoded: adding a vendor updates both at once.
-    expect(TRACKED_STORES).toBe(MARKET_INDEX.sources.length);
-
-    // The index now also publishes species it cannot price, so that their
-    // vendors and links are visible; those deliberately do not rate. Pick one
-    // that does, because the drift being guarded against is in the score.
-    const speciesId = Object.keys(MARKET_INDEX.species)
-      .find((id) => MARKET_INDEX.species[id]!.price)!;
-    expect(speciesId).toBeDefined();
-    const viaEntryPoint = scarcityFor(speciesId);
-    const viaStaleDefault = computeMarketScarcity(MARKET_INDEX.species[speciesId], {
-      ...DEFAULT_SCARCITY_CONFIG,
-      trackedStores: 3, // what the config said before vendors were added
-    });
-    expect(viaEntryPoint.available).toBe(true);
-    if (viaEntryPoint.available && viaStaleDefault.available) {
-      // Demonstrates the bug this guards against: a stale count changes the score.
-      expect(viaEntryPoint.components.storeBreadth)
-        .not.toBe(viaStaleDefault.components.storeBreadth);
-    }
-  });
-
-  it('returns not-enough-data for an unknown species through the entry point too', async () => {
-    const { scarcityFor } = await import('@/data/market');
-    expect(scarcityFor('sp_does_not_exist').available).toBe(false);
-    expect(scarcityFor(undefined).available).toBe(false);
   });
 });

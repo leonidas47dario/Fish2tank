@@ -1,0 +1,699 @@
+@import './tokens.css';
+@import './plates.css';
+
+/* ======================================================================
+   Prototype chrome. Not part of the proposal - it is the board the phone
+   frames sit on. Values here are deliberately literal.
+   ====================================================================== */
+.board {
+  margin: 0; padding: 40px 32px 64px; background: #05090c;
+  color: var(--color-text); font-family: var(--font-body);
+  display: flex; gap: 56px; align-items: flex-start; overflow-x: auto;
+}
+.frame { flex: 0 0 auto; }
+.frame__label {
+  font-family: var(--font-data); font-size: 11px; letter-spacing: 0.08em;
+  text-transform: uppercase; color: #5d7480; margin: 0 0 10px 2px;
+}
+.phone {
+  width: 390px; border-radius: 30px; border: 1px solid #1a2a33;
+  overflow: hidden; position: relative;
+  background: var(--color-canvas);
+  box-shadow: 0 30px 80px -20px #000;
+}
+
+/* ======================================================================
+   App shell
+   ====================================================================== */
+*, *::before, *::after { box-sizing: border-box; }
+
+/*
+ * One focus rule, applied to everything focusable, first. The shipped
+ * src/app.css already does this; an earlier pass of this prototype dropped it
+ * and set outline:none on the search field with nothing replacing it, which
+ * is 2.4.7 failed by regression rather than by inheritance.
+ */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+@media (forced-colors: active) {
+  :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid CanvasText;
+    outline-offset: 2px;
+  }
+}
+
+/* Viewport-anchored, not scroll-anchored. In the app this is
+   position: fixed; inset: 0 on a layer behind content. The 1px "waterline"
+   hairline that used to sit here is deleted: at 22% teal against the device
+   bezel it was indistinguishable from chrome, which is decoration answering a
+   distinctiveness note rather than solving one. */
+.screen::before {
+  /* In the app this is position: fixed; inset: 0 on a layer behind content.
+     Here it is absolute at viewport height so the board can show it. */
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 780px;
+  background: var(--texture-canvas);
+  z-index: 0; pointer-events: none;
+}
+.screen > * { position: relative; z-index: 1; }
+.screen {
+  min-height: 780px;
+  padding: 0 0 calc(var(--nav-height) + var(--space-5));
+  font-size: var(--size-md); line-height: 1.5; color: var(--color-text);
+  position: relative;
+}
+
+/* Sticky region. It holds the CONTROLS, not the title: an earlier pass pinned
+   a bar containing only "Catalog 43 / 1076" while search, filters and sort
+   scrolled away within one flick of 538 rows. */
+.topbar {
+  display: flex; align-items: center; gap: var(--space-3);
+  min-height: var(--tap-min);
+  padding: var(--space-2) var(--space-4);
+}
+.topbar__title {
+  font-family: var(--font-display); font-size: var(--size-xl);
+  font-weight: var(--weight-semibold); letter-spacing: var(--tracking-tight);
+  margin: 0; flex: 1; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.topbar__count { font-family: var(--font-data); font-size: var(--size-xs); color: var(--color-faint); flex: 0 0 auto; }
+
+.sticky {
+  position: sticky; top: 0; z-index: 5;
+  /* The topbar lives INSIDE this block. Splitting them left the scrim
+     starting mid-gradient and reading as a mispainted header. */
+  background: color-mix(in srgb, var(--color-canvas) 88%, transparent);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  border-bottom: var(--border-width) solid var(--color-border);
+  padding-top: var(--space-2);
+}
+/* The sort line is not a control anyone taps twice a session, so it scrolls
+   with the grid rather than paying rent in the pinned block. */
+.sortline { min-height: 0; }
+/* .sortline and .asof live OUTSIDE .sticky: pinning them cost ~180px of a
+   780px viewport for two lines nobody taps twice a session. */
+
+/* Stock is the most perishable field in the app and it now orders all 1,076
+   rows, so it states its own age. A present-tense green pill sourced from an
+   unscheduled scrape is an invented number in a nicer hat. */
+.asof {
+  margin: 0; padding: 0 var(--space-4) var(--space-3);
+  font-size: var(--size-xs); color: var(--color-faint);
+}
+.store__flag--stale { color: var(--color-muted); }
+
+/* Three prices, kept apart. Ask, member and paid are three different facts and
+   the data model keeps them separate on purpose; collapsing them to "you paid"
+   throws away the distinction PRD 5.4 exists to preserve. */
+.prices { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); }
+.prices dt { font-size: var(--size-xs); color: var(--color-faint); margin-bottom: 2px; }
+.prices dd {
+  margin: 0; font-family: var(--font-data); font-variant-numeric: tabular-nums;
+  font-size: var(--size-lg); color: var(--color-text);
+}
+.prices dd.is-blank { color: var(--color-faint); font-size: var(--size-sm); }
+
+/* Capture, on the screen where you are holding the tag. */
+.capture { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-top: var(--space-3); }
+.capture label { font-size: var(--size-xs); color: var(--color-faint); display: block; margin-bottom: var(--space-1); }
+.capture input {
+  width: 100%; font: inherit; font-family: var(--font-data); font-size: var(--size-sm);
+  min-height: var(--tap-min); padding: 0 var(--space-3);
+  color: var(--color-text); background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border-control);
+  border-radius: var(--radius-control);
+}
+.capture--wide { grid-column: 1 / -1; }
+
+/* The rail clipped its third card with nothing to say it kept going. */
+.shelf { -webkit-mask-image: linear-gradient(90deg, #000 0, #000 88%, transparent 100%);
+         mask-image: linear-gradient(90deg, #000 0, #000 88%, transparent 100%); }
+/* Safari 17+ only, so the solid fill is also the default under any engine
+   that does not support backdrop-filter at all. */
+@supports not (backdrop-filter: blur(1px)) { .sticky, .nav { background: var(--color-canvas); } }
+@media (prefers-reduced-transparency: reduce) {
+  .sticky, .nav { background: var(--color-canvas); backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+
+/* An icon-only control still needs to be a control. */
+.iconbtn {
+  flex: 0 0 auto;
+  display: grid; place-items: center;
+  width: var(--tap-min); height: var(--tap-min);
+  margin: 0 calc(var(--space-3) * -1);
+  padding: 0; font-size: var(--size-lg);
+  background: none; border: 0; color: var(--color-text); cursor: pointer;
+}
+
+.pad { padding: 0 var(--space-4); }
+.spread { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.grow { flex: 1; min-width: 0; }
+.mono { font-family: var(--font-data); font-variant-numeric: tabular-nums; }
+.muted { color: var(--color-muted); }
+.faint { color: var(--color-faint); }
+.sci { font-family: var(--font-scientific); font-style: var(--font-scientific-style); font-weight: var(--font-scientific-weight); }
+
+/*
+ * Section heads. Quieter and smaller than the content they label.
+ *
+ * An earlier pass set these uppercase at 0.08em tracking and 13px, above fish
+ * names at 11px, so "STORIES YOU HAVE NOT WRITTEN" was the second loudest
+ * thing on Home. Tracked-out small caps above every section is also exactly
+ * the eyebrow pattern this redesign claims not to use. Sentence case, muted,
+ * no tracking: it labels, it does not announce.
+ */
+.sec-head {
+  font-family: var(--font-display); font-size: var(--size-sm);
+  font-weight: var(--weight-semibold); color: var(--color-faint);
+  margin: 0 0 var(--space-3);
+}
+
+/* ======================================================================
+   The plate
+   ====================================================================== */
+.plate {
+  position: relative; display: block; min-width: 0;
+  background: var(--plate);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  box-shadow: var(--elevation-plate);
+}
+/* A hairline in the text colour at low alpha, so it flips with the theme
+   instead of being a white line that vanishes on a light canvas. */
+.plate::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit;
+  box-shadow: inset 0 0 0 var(--border-width) color-mix(in srgb, var(--color-text) 10%, transparent);
+  pointer-events: none;
+}
+.plate__img {
+  display: block; width: 100%; aspect-ratio: 3 / 2;
+  /* contain, never cover: 1,076 photographs at every aspect ratio, and a fish
+     is a long horizontal animal that a crop beheads. The letterbox is a
+     derived neutral tint of the photo, so on 90% of the library it is
+     invisible. */
+  object-fit: contain;
+  background: var(--plate);
+}
+/* 381 of 1,076 species have no portrait, so this is a surface the user meets
+   constantly. It is designed, not an emoji. */
+.plate__img--none {
+  display: grid; place-items: center; aspect-ratio: 3 / 2;
+  background: repeating-linear-gradient(135deg,
+    var(--plate) 0 7px,
+    color-mix(in srgb, var(--color-text) 5%, var(--plate)) 7px 14px);
+  color: var(--color-muted);
+}
+.plate__none-text { font-size: var(--size-xs); }
+
+/* Not caught yet. Mild: the fish stays identifiable, because the catalog is
+   also how you shop. But caught fish keep their colour, so 43 of 1,076 reads
+   at a glance, which is the whole collection conceit. */
+.plate--locked img.plate__img { filter: grayscale(1) contrast(0.92); opacity: 0.62; }
+
+
+/* Rarity tier, as a pill. Its own treatment, not the dotted "unknown" status:
+   Legendary is a fact about the fish, not a missing answer. */
+.tier {
+  display: inline-flex; align-items: center; gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-pill);
+  border: var(--border-width) solid currentColor;
+  font-size: var(--size-xs); font-weight: var(--weight-bold);
+  white-space: nowrap;
+}
+.tier__glyph { font-family: var(--font-data); }
+.tier--rare      { color: var(--color-rare); }
+.tier--epic      { color: var(--color-caution); }
+.tier--legendary { color: var(--color-legendary); }
+
+/* ======================================================================
+   Catalog
+   ====================================================================== */
+/* Two up. One up made the library 583,302px tall, about 700 phone screens.
+   Container query, not a viewport media query, so the grid answers to the
+   column it is in. */
+.catalog-scroll { container-type: inline-size; }
+.catalog-grid {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-5) var(--space-3); padding: var(--space-4);
+}
+@container (min-width: 620px) { .catalog-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+/* Uniform tile height whatever the name length, so plates line up across the
+   row. Ragged rows are what made the first pass read as a dump. */
+.tile {
+  display: grid; grid-template-rows: auto 1fr auto; gap: var(--space-2);
+  min-width: 0;
+  text-decoration: none; color: inherit; align-content: start;
+}
+.tile__text { min-height: 40px; }
+.tile__name { display: block;
+  font-family: var(--font-display); font-size: var(--size-sm);
+  font-weight: var(--weight-semibold); letter-spacing: var(--tracking-tight);
+  line-height: 1.25; margin: 0;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.tile__sci { display: block;
+  font-family: var(--font-scientific); font-size: var(--size-sm);
+  font-style: italic; color: var(--color-muted); margin: 1px 0 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* The numbers a keeper decides on, in one line under the name rather than
+   three coloured discs over the photograph. Never wraps. Units are spelled,
+   because an earlier pass rendered `3" 5g 32 in` on a fish app, where `in`
+   meant "in stock" two glyphs from `"` meaning inches. The stock count is
+   gone from the tile entirely: the default sort is in-stock-first, so
+   position already carries it. */
+/* Three non-droppable cells: price, adult size, minimum tank. A rarity badge
+   used to take the third slot, so the Stingray, the Jack Dempsey and the High
+   Fin Loach - the three fish whose tank requirement is most alarming - were
+   the three that showed no gallon figure, on a screen whose whole job is
+   "will it fit". overflow:hidden then hid the failure. Rarity moved to the
+   plate; these three cannot be pushed out. */
+.tile__stats {
+  display: grid;
+  grid-template-columns: auto auto auto 1fr;
+  align-items: center; gap: var(--space-2);
+  font-family: var(--font-data); font-variant-numeric: tabular-nums;
+  font-size: var(--size-xs); color: var(--color-muted);
+  white-space: nowrap;
+}
+.tile__stats b { color: var(--color-text); font-weight: var(--weight-medium); }
+/* The water column, as three legible letters. A 7px three-segment pip said
+   the same thing and could not be read at tile scale. */
+.tile__col { margin-left: auto; color: var(--color-muted); }
+
+/* Rarity is a word, and only above Uncommon. Most of the library is common;
+   a badge on all 1,076 says nothing. It rides the sci-name line, not the
+   photograph and not the stat line: on the plate it landed on the fish, and in
+   the stat line it displaced the tank figure. */
+.tile__rarity {
+  flex: 0 0 auto; margin-left: auto;
+  font-family: var(--font-data); font-size: var(--size-xs);
+  font-weight: var(--weight-bold); line-height: 1;
+}
+.tile__textrow { display: flex; align-items: baseline; gap: var(--space-2); }
+.tile__textrow .tile__sci { display: block; flex: 1 1 auto; min-width: 0; }
+.tile__rarity--rare      { color: var(--color-rare); }
+.tile__rarity--epic      { color: var(--color-caution); }
+.tile__rarity--legendary { color: var(--color-legendary); }
+
+/* The only mark ever painted on a photograph, and only when the answer is
+   yes. A solid fill reads on every plate lightness in the clamped band. */
+.tile__owned {
+  position: absolute; z-index: 1; top: var(--space-2); left: var(--space-2);
+  display: inline-flex; align-items: center; gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--color-primary); color: var(--color-on-primary);
+  font-family: var(--font-data); font-size: var(--size-xs);
+  font-weight: var(--weight-bold); line-height: 1;
+}
+
+/* --- Search and filters ------------------------------------------------ */
+.searchbar { padding: 0 var(--space-4) var(--space-2); }
+.search {
+  display: flex; align-items: center; gap: var(--space-2);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border-control);
+  border-radius: var(--radius-control);
+  padding: 0 var(--space-3); height: var(--tap-min);
+}
+.search input {
+  flex: 1; min-width: 0; font: inherit; font-size: var(--size-sm);
+  background: none; border: 0; color: var(--color-text);
+  text-overflow: ellipsis;   /* the shipped field clipped to "...trade nam" */
+}
+.search input::placeholder { color: var(--color-faint); }
+
+.chips { display: flex; gap: var(--space-2); padding: var(--space-1) var(--space-4) var(--space-2); overflow-x: auto; }
+.chip {
+  flex: 0 0 auto; font: inherit; font-size: var(--size-sm);
+  min-height: var(--tap-min); padding: 0 var(--space-3);
+  display: inline-flex; align-items: center; gap: var(--space-1);
+  border-radius: var(--radius-pill);
+  border: var(--border-width) solid var(--color-border-control);
+  background: transparent; color: var(--color-muted);
+  cursor: pointer; white-space: nowrap;
+}
+.chip[aria-pressed='true'] {
+  background: var(--color-accent-quiet);
+  border-color: var(--color-primary);
+  color: var(--color-primary); font-weight: var(--weight-medium);
+}
+.chip__n { font-family: var(--font-data); }
+
+.sortline {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 var(--space-4) var(--space-3);
+  font-size: var(--size-xs); color: var(--color-faint); font-family: var(--font-data);
+}
+.sortline button {
+  font: inherit; background: none; border: 0; color: var(--color-primary);
+  cursor: pointer; min-height: var(--tap-min); padding: 0 var(--space-1);
+}
+
+/* ======================================================================
+   Home
+   ====================================================================== */
+/* No wordmark. The app's own name is the one fact the person holding the
+   phone already has. */
+.home-hero { padding: var(--space-5) var(--space-4) var(--space-5); }
+.home-hero__line {
+  font-family: var(--font-display); font-size: var(--size-xl);
+  font-weight: var(--weight-semibold); letter-spacing: var(--tracking-tight);
+  line-height: 1.2; margin: 0 0 var(--space-1);
+}
+.home-hero__sub { color: var(--color-muted); font-size: var(--size-sm); margin: 0; }
+
+.cta {
+  display: flex; align-items: center; justify-content: center; gap: var(--space-2);
+  width: 100%; font: inherit; font-family: var(--font-display);
+  font-size: var(--size-md); font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-tight);
+  min-height: var(--tap-min); padding: var(--space-3);
+  border: 0; border-radius: var(--radius-pill);
+  background: var(--color-primary); color: var(--color-on-primary);
+  cursor: pointer; text-decoration: none;
+  transition: transform var(--duration-fast) var(--ease-standard);
+}
+.cta:active { transform: scale(0.985); }
+.cta--quiet {
+  background: transparent;
+  border: var(--border-width) solid var(--color-border-control);
+  color: var(--color-text);
+}
+
+/* A shelf, not a list. This is a collecting app whose home screen showed no
+   fish at all. */
+.shelf { display: flex; gap: var(--space-3); overflow-x: auto; padding: 0 var(--space-4) var(--space-2); }
+.shelf-item { flex: 0 0 132px; text-decoration: none; color: inherit; }
+.shelf-item .plate { margin-bottom: var(--space-2); }
+.shelf-item__name {
+  font-size: var(--size-sm); font-weight: var(--weight-medium); line-height: 1.3; margin: 0;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.shelf-item__when { font-family: var(--font-data); font-size: var(--size-xs); color: var(--color-faint); }
+
+/* One row per tank. The tanks that give the SAME non-answer are one row. */
+.tankrow {
+  display: flex; align-items: center; gap: var(--space-3);
+  width: 100%; text-align: left; font: inherit;
+  min-height: var(--tap-min); padding: var(--space-3) var(--space-4);
+  background: none; border: 0;
+  border-top: var(--border-width) var(--divider-style) var(--color-border);
+  color: inherit; cursor: pointer;
+}
+.tankrow:last-of-type { border-bottom: var(--border-width) var(--divider-style) var(--color-border); }
+.tankrow__name { font-weight: var(--weight-medium); font-size: var(--size-sm); }
+.tankrow__meta { font-size: var(--size-xs); color: var(--color-faint); }
+.tankrow__meta .num { font-family: var(--font-data); font-variant-numeric: tabular-nums; }
+/* The reason the pill says what it says, on the COLLAPSED row. Nobody expands
+   a row to be talked out of amber. */
+.tankrow__why { display: block; font-size: var(--size-xs); margin-top: 2px; color: var(--color-danger-bright); }
+.tankrow__why--warn { color: var(--color-caution); }
+
+/* --- Status ------------------------------------------------------------
+ * All five levels the engine returns, with the glyphs the shipped build uses.
+ * An earlier pass compressed them to three, which let one row summarise "eats
+ * 4 residents" as Conditional. A summary is never allowed to be calmer than
+ * its own contents, so the collapsed pill is the WORST factor, not an average.
+ * Glyph + word + border style, because positive and caution are 1.08:1 apart
+ * in greyscale and hue alone would say nothing.
+ */
+.status {
+  display: inline-flex; align-items: center; gap: var(--space-1); flex: 0 0 auto;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-pill);
+  border: var(--border-width) solid currentColor;
+  font-size: var(--size-xs); font-weight: var(--weight-semibold); white-space: nowrap;
+}
+.status__glyph { font-family: var(--font-data); font-weight: var(--weight-bold); }
+.status--suitable     { color: var(--color-positive); }
+.status--conditional  { color: var(--color-caution); border-style: dashed; }
+.status--high-risk    { color: var(--color-danger-bright); border-style: double; border-width: 2px; }
+.status--extreme-risk { color: var(--color-on-danger); background: var(--color-danger); border-color: var(--color-danger); border-width: 3px; }
+.status--unknown      { color: var(--color-faint); border-style: dotted; }
+
+/* ======================================================================
+   Species and specimen
+   ====================================================================== */
+.hero-plate { margin: 0 var(--space-4) var(--space-4); }
+.hero-plate .plate__img { aspect-ratio: 4 / 3; }
+
+.specimen-name {
+  font-family: var(--font-display); font-size: var(--size-2xl);
+  font-weight: var(--weight-bold); letter-spacing: var(--tracking-tight);
+  line-height: 1.1; margin: 0 0 var(--space-1);
+}
+/* Set like a specimen label, because that is what it is. */
+.specimen-sci {
+  font-family: var(--font-scientific);
+  font-size: var(--size-xl); font-style: italic; font-weight: var(--weight-regular);
+  color: var(--color-text); letter-spacing: var(--tracking-tight);
+  margin: 0 0 var(--space-2);
+}
+.specimen-common { color: var(--color-muted); font-size: var(--size-sm); margin: 0 0 var(--space-3); }
+/* The rest of the label: when, and from where. */
+.label-line {
+  display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
+  gap: var(--space-3);
+  font-size: var(--size-xs); color: var(--color-faint);
+  padding-top: var(--space-3); margin-top: var(--space-3);
+  border-top: var(--border-width) var(--divider-style) var(--color-border);
+}
+.label-line dt { color: var(--color-faint); margin-bottom: 2px; }
+.label-line dd { margin: 0; color: var(--color-muted); font-family: var(--font-data); }
+.tagrow { display: flex; gap: var(--space-2); flex-wrap: wrap; align-items: center; }
+
+.panel { border-top: var(--border-width) var(--divider-style) var(--color-border); padding: var(--space-5) var(--space-4) var(--space-4); }
+.panel--flush { padding-left: 0; padding-right: 0; }
+.panel--flush > .sec-head, .panel--flush > .panel__note { padding: 0 var(--space-4); }
+.panel__note { color: var(--color-muted); font-size: var(--size-sm); margin: var(--space-3) 0 0; }
+.panel__note--tight { font-size: var(--size-xs); }
+
+/* The answer first, then the tanks. */
+.verdict-lede {
+  font-family: var(--font-display); font-size: var(--size-lg);
+  font-weight: var(--weight-semibold); letter-spacing: var(--tracking-tight);
+  margin: 0 0 var(--space-3); padding: 0 var(--space-4);
+}
+
+/* Factors live behind the row that owns them, indented under it and headed
+   with the row's name, so it is never ambiguous which tank they describe. */
+.factors {
+  background: var(--color-surface);
+  border-left: 3px solid var(--color-caution);
+  margin-left: var(--space-4);
+  padding: var(--space-3) var(--space-4) var(--space-4);
+}
+.factors--severe { border-left-color: var(--color-danger); }
+.factors__head { font-size: var(--size-sm); font-weight: var(--weight-semibold); margin: 0 0 var(--space-2); }
+.factor {
+  display: grid; grid-template-columns: 1fr auto; align-items: baseline;
+  gap: var(--space-3); padding: var(--space-2) 0; font-size: var(--size-sm);
+}
+.factor + .factor { border-top: var(--border-width) solid color-mix(in srgb, var(--color-border) 60%, transparent); }
+.factor__name { color: var(--color-muted); }
+/* Set in Geist, not mono: these are phrases. Each carries a glyph, because
+   the hues are indistinguishable in greyscale. */
+.factor__val { font-size: var(--size-sm); text-align: right; }
+.factor__val::before {
+  font-family: var(--font-data); font-weight: var(--weight-bold);
+  margin-right: var(--space-1);
+}
+/* Alt text on generated content. An earlier pass used `speak: never`, which is
+   a no-op: CSS Speech was never implemented in any shipping engine, so every
+   factor value was still being read as "black square, eats four residents". */
+.factor__val--ok::before      { content: '\2713' / ''; }
+.factor__val--warn::before    { content: '!' / ''; }
+.factor__val--bad::before     { content: '\25A0' / ''; }
+.factor__val--unknown::before { content: '?' / ''; }
+.factor__val--ok      { color: var(--color-positive); }
+.factor__val--warn    { color: var(--color-caution); }
+.factor__val--bad     { color: var(--color-danger-bright); }
+.factor__val--unknown { color: var(--color-faint); }
+/* The exact numbers a factor used stay monospaced, because they are counted. */
+.factor__val--num { font-family: var(--font-data); font-variant-numeric: tabular-nums; }
+
+/* --- Price by size -----------------------------------------------------
+ * No filled background tracks, and n on every band. An earlier pass drew
+ * eight smooth bars from ten listings and asserted a comparison the shipped
+ * engine declines to make below its minimum sample count.
+ */
+.pbs { display: grid; grid-template-columns: 40px 1fr 46px 30px; gap: var(--space-2) var(--space-3); align-items: center; }
+.pbs__label { font-family: var(--font-data); font-size: var(--size-xs); color: var(--color-faint); text-align: right; }
+.pbs__bar { height: 3px; border-radius: var(--radius-hair); background: var(--color-border-control); }
+.pbs__bar--you { background: var(--color-primary); height: 5px; }
+.pbs__bar--thin { background: color-mix(in srgb, var(--color-border-control) 55%, transparent); }
+.pbs__val { font-family: var(--font-data); font-size: var(--size-xs); color: var(--color-muted); }
+.pbs__val--you { color: var(--color-primary); font-weight: var(--weight-semibold); }
+.pbs__n { font-family: var(--font-data); font-size: var(--size-xs); color: var(--color-faint); }
+
+.figure { display: flex; align-items: baseline; gap: var(--space-2); font-family: var(--font-data); font-size: var(--size-2xl); letter-spacing: var(--tracking-tight); }
+.figure small { font-size: var(--size-xs); color: var(--color-muted); font-family: var(--font-body); }
+
+/* --- Stores ------------------------------------------------------------ */
+.store { display: flex; align-items: center; gap: var(--space-3); min-height: var(--tap-min); font-size: var(--size-sm); }
+.store + .store { border-top: var(--border-width) solid color-mix(in srgb, var(--color-border) 60%, transparent); }
+.store__name { color: var(--color-text); text-decoration: none; border-bottom: var(--border-width) solid var(--color-primary); }
+.store__price { font-family: var(--font-data); margin-left: auto; }
+.store__flag { font-size: var(--size-xs); color: var(--color-positive); }
+.store__flag--out { color: var(--color-faint); }
+.store .store__flag--stale { color: var(--color-muted); }
+
+/* ======================================================================
+   Prompts, empty and loading states
+   ====================================================================== */
+/* A solid surface, not a dashed box: dashed already means "conditional" in
+   the status system, and a third dash pattern within 400px is noise. */
+.prompt {
+  display: grid; gap: var(--space-2); justify-items: start;
+  padding: var(--space-4); margin: 0 var(--space-4);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-card);
+}
+.prompt__title { font-weight: var(--weight-semibold); font-size: var(--size-sm); margin: 0; }
+.prompt__body { color: var(--color-muted); font-size: var(--size-sm); margin: 0; }
+.prompt__act {
+  font: inherit; font-size: var(--size-sm); font-weight: var(--weight-medium);
+  color: var(--color-primary); background: none; border: 0;
+  padding: 0; cursor: pointer; text-decoration: none;
+}
+/* A 44px inline-flex inside a paragraph inflates that paragraph's line box.
+   The target is met with padding on the tap area, not by growing the line. */
+.prompt__act::after {
+  content: ''; position: absolute; inset: -12px -8px;
+}
+.prompt__act { position: relative; display: inline; }
+
+/* Shaped like the content, and it stops when the user asks for stillness.
+   The duration is a token: a literal here survived the in-app toggle and left
+   an infinite shimmer running on every tile in the catalog. */
+.skel { border-radius: var(--radius-card); background: var(--color-surface); position: relative; overflow: hidden; }
+.skel--plate { aspect-ratio: 3 / 2; }
+.skel--line { height: 11px; border-radius: var(--radius-hair); }
+.skel::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--color-surface-raised) 90%, transparent), transparent);
+  animation: shimmer var(--duration-shimmer) var(--ease-standard) infinite;
+}
+@keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+
+/* ======================================================================
+   Bottom navigation
+   ====================================================================== */
+.nav {
+  position: absolute; inset: auto 0 0 0; height: var(--nav-height);
+  display: grid; grid-template-columns: repeat(5, 1fr);
+  background: color-mix(in srgb, var(--color-canvas) 88%, transparent);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border-top: var(--border-width) solid var(--color-border);
+  z-index: 6;
+}
+.nav a {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: var(--space-1); text-decoration: none; color: var(--color-faint);
+  font-size: var(--size-xs); font-weight: var(--weight-medium);
+}
+.nav a[aria-current='page'] { color: var(--color-primary); }
+.nav i { font-size: var(--size-xl); line-height: 1; }
+
+/* Catch is the product's one verb, so it is a control, not a fifth label.
+   No glow: --media-glow is off and nothing may reintroduce one. */
+.nav__catch { color: var(--color-text); }
+.nav__catch i {
+  display: grid; place-items: center;
+  width: var(--tap-min); height: var(--tap-min); margin-top: calc(var(--space-4) * -1);
+  border-radius: var(--radius-pill);
+  background: var(--color-primary); color: var(--color-on-primary);
+  border: 3px solid var(--color-canvas);
+}
+
+
+/* ======================================================================
+   States. An offline-first app used on one bar in a shop basement meets
+   these constantly, and round 5 had drawn exactly one of them.
+   ====================================================================== */
+.state {
+  display: grid; gap: var(--space-2); justify-items: start;
+  padding: var(--space-4); margin: 0 var(--space-4) var(--space-4);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-card);
+}
+.state__head { display: flex; align-items: center; gap: var(--space-2); font-size: var(--size-sm); font-weight: var(--weight-semibold); margin: 0; }
+.state__head i { font-size: var(--size-lg); color: var(--color-muted); }
+.state__body { color: var(--color-muted); font-size: var(--size-sm); margin: 0; }
+.state__act {
+  font: inherit; font-size: var(--size-sm); font-weight: var(--weight-medium);
+  color: var(--color-primary); background: none; border: 0; padding: 0;
+  min-height: var(--tap-min); display: inline-flex; align-items: center; cursor: pointer;
+}
+/* Stale is not broken. It is a real answer with a date on it, so it reads
+   calm rather than red. */
+.state--stale { border-color: var(--color-border-control); }
+.state--error { border-color: color-mix(in srgb, var(--color-danger) 45%, transparent); }
+.state--error .state__head i { color: var(--color-danger-bright); }
+
+/* A screening in flight. Determinate, because the engine knows how many tanks
+   it has to walk. */
+.progress { display: flex; align-items: center; gap: var(--space-3); width: 100%; }
+.progress__track { flex: 1; height: 3px; border-radius: var(--radius-hair); background: var(--color-border-control); overflow: hidden; }
+.progress__fill { display: block; height: 100%; width: 33%; background: var(--color-primary); border-radius: var(--radius-hair); }
+.progress__n { font-family: var(--font-data); font-size: var(--size-xs); color: var(--color-muted); }
+
+/* Image absent and image failed are different facts and must not share a
+   surface: 381 species have no portrait at all, and that is permanent. */
+.plate__img--failed {
+  display: grid; place-items: center; aspect-ratio: 3 / 2; gap: var(--space-1);
+  background: var(--plate); color: var(--color-muted);
+  font-size: var(--size-xs); text-align: center; padding: var(--space-2);
+}
+.plate__img--failed i { font-size: var(--size-xl); }
+
+/* ======================================================================
+   More filters. The 7px water-column pip deserved to die; the FILTER did
+   not. Zone, kind and temperament were the shipped catalog's way of making
+   item 215 of 1,076 reachable, and losing them made the grid browsable but
+   not searchable.
+   ====================================================================== */
+.sheet {
+  margin: var(--space-4);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+.sheet__grip {
+  display: block; width: 36px; height: 4px; margin: var(--space-3) auto;
+  border-radius: var(--radius-hair); background: var(--color-border-control);
+}
+.sheet__group { padding: 0 var(--space-4) var(--space-4); }
+.sheet__legend {
+  font-size: var(--size-sm); font-weight: var(--weight-semibold);
+  color: var(--color-text); margin: 0 0 var(--space-1); padding: 0;
+}
+/* Why a filter exists, in one line, where the shipped build explained it. */
+.sheet__why { font-size: var(--size-xs); color: var(--color-faint); margin: 0 0 var(--space-3); }
+.sheet__chips { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.sheet__foot {
+  display: flex; gap: var(--space-3); align-items: center;
+  padding: var(--space-3) var(--space-4);
+  border-top: var(--border-width) solid var(--color-border);
+}
+
+/* Two states side by side, on the states board only. A portrait that does not
+   exist and a portrait that failed to arrive are different facts, and an
+   offline-first app has to say which one it is holding. */
+.pairdemo {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3); padding: 0 var(--space-4) var(--space-4);
+}
+.pairdemo__name { font-size: var(--size-sm); font-weight: var(--weight-semibold); margin: var(--space-2) 0 2px; }
+.pairdemo__note { font-size: var(--size-xs); color: var(--color-muted); margin: 0; line-height: 1.4; }

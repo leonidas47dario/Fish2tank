@@ -1,0 +1,180 @@
+{
+  "batch": "19",
+  "species": [
+    {
+      "speciesId": "sp_platynematichthys_notatus",
+      "commonName": "Lince Catfish",
+      "scientificName": "Platynematichthys notatus",
+      "family": "Pimelodidae",
+      "wikipediaFile": "data/care/text/sp_platynematichthys_notatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_neritina_violacea",
+      "commonName": "Lip Nerite Snail",
+      "scientificName": "Neritina violacea",
+      "family": "Neritidae",
+      "wikipediaFile": "data/care/text/sp_neritina_violacea.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_corydoras_nanus",
+      "commonName": "Little Cory Catfish",
+      "scientificName": "Corydoras nanus",
+      "family": "Callichthyidae",
+      "wikipediaFile": "data/care/text/sp_corydoras_nanus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_lumbriculus_variegatus",
+      "commonName": "Live Blackworms",
+      "scientificName": "Lumbriculus variegatus",
+      "family": "Lumbriculidae",
+      "wikipediaFile": "data/care/text/sp_lumbriculus_variegatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_homalopteroides_tweediei",
+      "commonName": "Lizard Hillstream Loach",
+      "scientificName": "Homalopteroides tweediei",
+      "family": "Balitoridae",
+      "wikipediaFile": "data/care/text/sp_homalopteroides_tweediei.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_homaloptera_ogilviei",
+      "commonName": "Lizard Hillstream Loach",
+      "scientificName": "Homaloptera ogilviei",
+      "family": "Balitoridae",
+      "wikipediaFile": "data/care/text/sp_homaloptera_ogilviei.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pangio_oblonga",
+      "commonName": "Black Kuhli Loach",
+      "scientificName": "Pangio oblonga",
+      "family": "Cobitidae",
+      "wikipediaFile": "data/care/text/sp_pangio_oblonga.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hoplisoma_panda",
+      "commonName": "Longfin Panda Corydoras",
+      "scientificName": "Hoplisoma panda",
+      "family": "Callichthyidae",
+      "wikipediaFile": "data/care/text/sp_hoplisoma_panda.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_lepisosteus_osseus",
+      "commonName": "Longnose Gar",
+      "scientificName": "Lepisosteus osseus",
+      "family": "Lepisosteidae",
+      "wikipediaFile": "data/care/text/sp_lepisosteus_osseus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_sturisoma_barbatum",
+      "commonName": "Longnose Whiptail Catfish",
+      "scientificName": "Sturisoma barbatum",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_sturisoma_barbatum.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_anguilla_japonica",
+      "commonName": "Luecistic Japanese Eel",
+      "scientificName": "Anguilla japonica",
+      "family": "Anguillidae",
+      "wikipediaFile": "data/care/text/sp_anguilla_japonica.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_aponogeton_madagascariensis",
+      "commonName": "Madagascar Lace Bulb",
+      "scientificName": "Aponogeton madagascariensis",
+      "family": "Aponogetonaceae",
+      "wikipediaFile": "data/care/text/sp_aponogeton_madagascariensis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_siniperca_scherzeri",
+      "commonName": "Mandarin Perch",
+      "scientificName": "Siniperca scherzeri",
+      "family": "Sinipercidae",
+      "wikipediaFile": "data/care/text/sp_siniperca_scherzeri.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_baryancistrus_chrysolomus",
+      "commonName": "Mango Magnum Pleco",
+      "scientificName": "Baryancistrus chrysolomus",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_baryancistrus_chrysolomus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_lutjanus_griseus",
+      "commonName": "Mangrove Snapper",
+      "scientificName": "Lutjanus griseus",
+      "family": "Lutjanidae",
+      "wikipediaFile": "data/care/text/sp_lutjanus_griseus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_leiarius_marmoratus",
+      "commonName": "Marble Achara Catfish",
+      "scientificName": "Leiarius marmoratus",
+      "family": "Pimelodidae",
+      "wikipediaFile": "data/care/text/sp_leiarius_marmoratus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_leiarius_pictus",
+      "commonName": "Marble Achara Catfish",
+      "scientificName": "Leiarius pictus",
+      "family": "Pimelodidae",
+      "wikipediaFile": "data/care/text/sp_leiarius_pictus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_boulengerella_maculata",
+      "commonName": "Marble Amazon Gar",
+      "scientificName": "Boulengerella maculata",
+      "family": "Ctenoluciidae",
+      "wikipediaFile": "data/care/text/sp_boulengerella_maculata.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_oxyeleotris_marmorata",
+      "commonName": "Marble Goby",
+      "scientificName": "Oxyeleotris marmorata",
+      "family": "Eleotridae",
+      "wikipediaFile": "data/care/text/sp_oxyeleotris_marmorata.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_fluvitrygon_oxyrhynchus",
+      "commonName": "Marble Whiptail Stingray",
+      "scientificName": "Fluvitrygon oxyrhynchus",
+      "family": "Dasyatidae",
+      "wikipediaFile": "data/care/text/sp_fluvitrygon_oxyrhynchus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_ageneiosus_marmoratus",
+      "commonName": "Marbled Hammerhead Catfish",
+      "scientificName": "Ageneiosus marmoratus",
+      "family": "Auchenipteridae",
+      "wikipediaFile": "data/care/text/sp_ageneiosus_marmoratus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_franciscodoras_marmoratus",
+      "commonName": "Marbled Spiny Catfish",
+      "scientificName": "Franciscodoras marmoratus",
+      "family": "Doradidae",
+      "wikipediaFile": "data/care/text/sp_franciscodoras_marmoratus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_synbranchus_marmoratus",
+      "commonName": "Marbled Swamp Eel",
+      "scientificName": "Synbranchus marmoratus",
+      "family": "Synbranchidae",
+      "wikipediaFile": "data/care/text/sp_synbranchus_marmoratus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_synodontis_schoutedeni",
+      "commonName": "Marbled Synodontis Catfish",
+      "scientificName": "Synodontis schoutedeni",
+      "family": "Mochokidae",
+      "wikipediaFile": "data/care/text/sp_synodontis_schoutedeni.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_dawkinsia_assimilis",
+      "commonName": "Mascara Barb",
+      "scientificName": "Dawkinsia assimilis",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_dawkinsia_assimilis.wikipedia.txt"
+    }
+  ]
+}
