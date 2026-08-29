@@ -56,16 +56,24 @@ export type SyncState = 'local-draft' | 'uploading' | 'synced' | 'retry-required
 // User and place
 // ---------------------------------------------------------------------------
 
+/**
+ * Account-level settings (spec 005 FR-A04).
+ *
+ * `muted` is deliberately absent: it is about the room a device is in, so it
+ * stays device-local in localStorage. Everything here follows the keeper.
+ */
 export interface UserSettings {
-  homeRegion?: string;
-  lengthUnit: LengthUnit;
-  volumeUnit: VolumeUnit;
-  currency: CurrencyCode;
-  /** NFR-06 / FR-R04: reveal ceremony must respect both of these. */
-  reducedMotion: boolean;
-  muted: boolean;
-  /** Active app theme token set (PRD 7.2/7.3). */
+  /** Active app theme token set (PRD 7.2/7.3). Narrowed by src/theme/resolve.ts. */
   themeId: string;
+  /** Living Portrait surround (PRD 7.4). Independent of the app theme. */
+  sceneId: string;
+  /**
+   * NFR-06 / FR-R04: the reveal ceremony must respect this. Account-level
+   * because an accessibility need belongs to the person, not the device.
+   */
+  reducedMotion: boolean;
+  /** FR-P01: the currency new price observations are recorded in. */
+  currency: CurrencyCode;
 }
 
 export interface User {

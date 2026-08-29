@@ -10,6 +10,10 @@
  * release, so they live here rather than behind a later settings milestone.
  */
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { db } from '@/data/db';
+import { loadProfile, updateSettings } from '@/data/profile';
+import type { UserSettings } from '@/domain/types';
+import { resolveSceneId, resolveThemeId } from './resolve';
 
 export const THEMES = [
   { id: 'midnight-aquarium', name: 'Midnight Aquarium', blurb: 'Dark gallery, luminous media, restrained foil.' },
@@ -32,6 +36,7 @@ interface Settings {
   theme: ThemeId;
   scene: SceneId;
   reducedMotion: boolean;
+  /** Device-level (spec 005 FR-A04): never in the profile, never synced. */
   muted: boolean;
 }
 
@@ -53,7 +58,15 @@ interface ThemeContextValue extends Settings {
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
-function load(): Settings {
+/**
+ * First-paint cache only.
+ *
+ * Spec 005 FR-A04 makes the profile in IndexedDB authoritative, but IndexedDB
+ * cannot be read synchronously, and rendering defaults for one frame would
+ * flash the wrong theme on every load. So localStorage is read first for the
+ * first paint and then corrected by the profile.
+ */
+function loadCache(): Settings {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     return raw ? { ...DEFAULTS, ...JSON.parse(raw) } : DEFAULTS;
@@ -63,8 +76,40 @@ function load(): Settings {
   }
 }
 
+/** Reading the cache must never take the app down; the profile is the record. */
+function cachedRaw(): string | null {
+  try {
+    return localStorage.getItem(STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [settings, setSettings] = useState<Settings>(load);
+  const [settings, setSettings] = useState<Settings>(loadCache);
+
+  // The profile wins over the cache. On a first run it is also seeded from it.
+  useEffect(() => {
+    let cancelled = false;
+    loadProfile(db, cachedRaw())
+      .then((profile) => {
+        if (cancelled) return;
+        setSettings((s) => ({
+          ...s,
+          theme: resolveThemeId(profile.settings.themeId),
+          scene: resolveSceneId(profile.settings.sceneId),
+          reducedMotion: profile.settings.reducedMotion,
+        }));
+      })
+      .catch((err) => {
+        // Keep the cached values rather than snapping to defaults, but say so:
+        // silence here means settings appear to work and never persist.
+        console.error('[theme] could not load profile, staying on cached settings', err);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -75,21 +120,33 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
     } catch {
-      /* persistence is a convenience, never a requirement */
+      /* the cache is a convenience; the profile is the record */
     }
   }, [settings]);
 
   const patch = useCallback((p: Partial<Settings>) => setSettings((s) => ({ ...s, ...p })), []);
 
+  /** Applies locally for instant feedback, then persists the account-level part. */
+  const patchProfile = useCallback(
+    (p: Partial<Settings>, stored: Partial<UserSettings>) => {
+      patch(p);
+      updateSettings(stored).catch((err) =>
+        console.error(`[theme] failed to persist ${JSON.stringify(stored)}`, err),
+      );
+    },
+    [patch],
+  );
+
   const value = useMemo<ThemeContextValue>(
     () => ({
       ...settings,
-      setTheme: (theme) => patch({ theme }),
-      setScene: (scene) => patch({ scene }),
-      setReducedMotion: (reducedMotion) => patch({ reducedMotion }),
+      setTheme: (theme) => patchProfile({ theme }, { themeId: theme }),
+      setScene: (scene) => patchProfile({ scene }, { sceneId: scene }),
+      setReducedMotion: (reducedMotion) => patchProfile({ reducedMotion }, { reducedMotion }),
+      // Device-level: cache only, never the profile.
       setMuted: (muted) => patch({ muted }),
     }),
-    [settings, patch],
+    [settings, patch, patchProfile],
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
