@@ -8,6 +8,8 @@
  */
 import type {
   Aquarium,
+  AquariumKind,
+  AquariumStatus,
   CalendarDate,
   CauseConfidence,
   CompatibilityAssessment,
@@ -23,11 +25,13 @@ import type {
   Memorial,
   PriceBasis,
   PriceObservation,
+  Dimensions,
   RaritySnapshot,
   Residency,
   Species,
   SpeciesProfile,
   Specimen,
+  VolumeMeasurement,
 } from '@/domain/types';
 import { deriveQuantity, planMove } from '@/domain/holdings';
 import { evaluateAllTanks, type CandidateInput, type ResidentInput, type TankInput } from '@/engine/compatibility/engine';
@@ -837,4 +841,505 @@ export async function searchSpecies(query: string, database: DB = db): Promise<S
       s.scientificName?.toLowerCase().includes(q) ||
       s.aliases.some((a) => a.toLowerCase().includes(q)),
   );
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Editing and deleting a catch
+// ─────────────────────────────────────────────────────────────────────────
+
+export interface UpdateCatchInput {
+  specimenId: Id;
+  /** Which encounter to amend. Defaults to the most recent one. */
+  encounterId?: Id;
+  /** Narrative name. Pass null to clear it. */
+  nickname?: string | null;
+  /** The store's own label, verbatim. Pass null to clear it. */
+  rawLabel?: string | null;
+  exceptional?: boolean;
+  observedAt?: Instant;
+  placeId?: Id | null;
+  quantitySeen?: number | null;
+  observedSize?: LengthMeasurement | null;
+  rawTankLabel?: string | null;
+  observedTankmates?: string | null;
+  originLocality?: string | null;
+  notes?: string | null;
+}
+
+/**
+ * Correct what you recorded about a catch.
+ *
+ * WHAT THIS IS FOR, AND WHAT IT REFUSES TO TOUCH.
+ *
+ * These are observations the user made, and an observation can simply be wrong:
+ * the date defaults to "now" and the visit was yesterday, the nickname was a
+ * typo, the store label was misread. Fixing those is not rewriting history, it
+ * is making the record true - and FR-C03 has always specified the encounter
+ * time as "automatic but editable".
+ *
+ * IDENTITY IS NOT IN THIS LIST, deliberately. Changing which species a catch is
+ * goes through assertIdentity, which supersedes the earlier assertion instead
+ * of overwriting it and keeps source, date and status (FR-I06, NFR-09). If
+ * this function could set speciesId, the audit trail would have a hole in it
+ * exactly where the interesting decisions are made. Same for rarity tiers and
+ * compatibility verdicts: those are recomputed into new snapshots, never
+ * edited.
+ *
+ * `undefined` means "leave alone"; `null` means "clear this field". Without
+ * that distinction there is no way to remove a nickname you no longer want.
+ */
+export async function updateCatch(input: UpdateCatchInput, database: DB = db): Promise<void> {
+  const specimen = await database.specimens.get(input.specimenId);
+  if (!specimen) throw new Error(`No such catch: ${input.specimenId}`);
+
+  const encounters = await database.encounters.where('specimenId').equals(input.specimenId).toArray();
+  encounters.sort((a, b) => a.observedAt.localeCompare(b.observedAt));
+  const target = input.encounterId
+    ? encounters.find((e) => e.id === input.encounterId)
+    : encounters[encounters.length - 1];
+
+  // A field is only written when the caller mentioned it, so a form that
+  // submits three fields cannot blank the other seven.
+  const set = <T>(value: T | null | undefined, current: T | undefined): T | undefined =>
+    value === undefined ? current : (value === null ? undefined : value);
+
+  await database.transaction('rw', [database.specimens, database.encounters], async () => {
+    await database.specimens.update(input.specimenId, {
+      nickname: set(input.nickname, specimen.nickname),
+      rawLabel: set(input.rawLabel, specimen.rawLabel),
+      exceptional: input.exceptional === undefined ? specimen.exceptional : input.exceptional,
+      updatedAt: nowIso(),
+    });
+
+    if (target) {
+      await database.encounters.update(target.id, {
+        observedAt: input.observedAt ?? target.observedAt,
+        placeId: set(input.placeId, target.placeId),
+        quantitySeen: set(input.quantitySeen, target.quantitySeen),
+        observedSize: set(input.observedSize, target.observedSize),
+        rawTankLabel: set(input.rawTankLabel, target.rawTankLabel),
+        observedTankmates: set(input.observedTankmates, target.observedTankmates),
+        originLocality: set(input.originLocality, target.originLocality),
+        notes: set(input.notes, target.notes),
+      });
+    }
+  });
+}
+
+/** What a delete would remove, or why it will not happen. */
+export interface DeleteCatchPlan {
+  allowed: boolean;
+  /** Why not, in words a person can act on. Present only when refused. */
+  reason?: string;
+  encounters: number;
+  /** Media removed outright, because nothing else refers to them. */
+  media: number;
+  /** Media kept because another catch also uses them. */
+  mediaSharedElsewhere: number;
+  prices: number;
+  assessments: number;
+  reveals: number;
+  identifications: number;
+}
+
+/**
+ * What deleting this catch would take with it.
+ *
+ * Separated from the delete itself so the confirmation can state the real
+ * consequences - "3 photos and the reveal" - rather than asking the user to
+ * accept an unspecified cascade.
+ */
+export async function planDeleteCatch(specimenId: Id, database: DB = db): Promise<DeleteCatchPlan> {
+  const [encounters, allMedia, prices, assessments, reveals, ids, holdings, memorials] =
+    await Promise.all([
+      database.encounters.where('specimenId').equals(specimenId).toArray(),
+      database.media.where('specimenIds').equals(specimenId).toArray(),
+      database.priceObservations.where('specimenId').equals(specimenId).toArray(),
+      database.assessments.where('specimenId').equals(specimenId).toArray(),
+      database.raritySnapshots.where('specimenId').equals(specimenId).toArray(),
+      database.identifications.where('specimenId').equals(specimenId).toArray(),
+      database.holdings.where('specimenId').equals(specimenId).toArray(),
+      database.memorials.where('specimenId').equals(specimenId).toArray(),
+    ]);
+
+  const shared = allMedia.filter((m) => m.specimenIds.filter((s) => s !== specimenId).length > 0);
+
+  const plan: DeleteCatchPlan = {
+    allowed: true,
+    encounters: encounters.length,
+    media: allMedia.length - shared.length,
+    mediaSharedElsewhere: shared.length,
+    prices: prices.length,
+    assessments: assessments.length,
+    reveals: reveals.length,
+    identifications: ids.length,
+  };
+
+  /**
+   * A fish you actually keep is not a catch you can delete.
+   *
+   * The holding, its dated residencies and its lifecycle events are tank
+   * history, and principle 3 is that the app never rewrites that - "a fish that
+   * dies stays in the tank history it lived through". Deleting the specimen
+   * underneath a holding would either orphan those rows or quietly destroy
+   * them, and neither is something a delete button should do silently. So it
+   * refuses and says where to go instead.
+   */
+  if (holdings.length > 0) {
+    return {
+      ...plan,
+      allowed: false,
+      reason: 'This fish is in one of your tanks, so its catch record is part of that tank\'s history. '
+        + 'Remove it from the tank first if it is no longer there.',
+    };
+  }
+  if (memorials.length > 0) {
+    return {
+      ...plan,
+      allowed: false,
+      reason: 'This fish has a memorial in Fish Heaven. That record is deliberately permanent.',
+    };
+  }
+
+  return plan;
+}
+
+/**
+ * Delete a catch and everything that only existed because of it.
+ *
+ * WHY THIS EXISTS IN AN APP THAT NEVER REWRITES HISTORY. Deleting says "this
+ * encounter never happened" - a mis-tap, a duplicate, test data - which is a
+ * different claim from "I was wrong about the species" or "the fish died".
+ * Those two already have honest paths that preserve the past (assertIdentity
+ * supersedes, recordDeath memorialises), and this does not compete with them:
+ * planDeleteCatch refuses outright for anything held in a tank or memorialised.
+ *
+ * Everything removed here is downstream of the catch and meaningless without
+ * it: a price you noted on this fish, a screening of this fish against your
+ * tanks, its reveal, its identification trail. Species-level price notes are
+ * NOT removed, because those are market observations that outlive the catch.
+ *
+ * Photos are detached rather than destroyed when another catch also uses them.
+ * The media IS the record (principle P3), so deleting one catch must never
+ * take another catch's only photo with it.
+ */
+export async function deleteCatch(specimenId: Id, database: DB = db): Promise<DeleteCatchPlan> {
+  const plan = await planDeleteCatch(specimenId, database);
+  if (!plan.allowed) return plan;
+
+  const encounters = await database.encounters.where('specimenId').equals(specimenId).toArray();
+  const encounterIds = new Set(encounters.map((e) => e.id));
+  const media = await database.media.where('specimenIds').equals(specimenId).toArray();
+  const drafts = (await database.draftKeys.toArray()).filter((d) => d.specimenId === specimenId);
+
+  // Price rows tied to this catch, plus any that point at an encounter about to
+  // disappear - a dangling encounterId would outlive the thing it names.
+  const prices = await database.priceObservations.toArray();
+  const priceIds = prices
+    .filter((p) => p.specimenId === specimenId || (p.encounterId && encounterIds.has(p.encounterId)))
+    .map((p) => p.id);
+
+  await database.transaction(
+    'rw',
+    [
+      database.specimens, database.encounters, database.media, database.blobs,
+      database.identifications, database.priceObservations, database.raritySnapshots,
+      database.assessments, database.draftKeys, database.deletedRecords,
+    ],
+    async () => {
+      for (const m of media) {
+        const others = m.specimenIds.filter((s) => s !== specimenId);
+        if (others.length > 0) {
+          // Another catch still needs this photo. Detach, never destroy.
+          await database.media.update(m.id, { specimenIds: others });
+        } else {
+          await database.media.delete(m.id);
+          if (m.originalBlobKey) await database.blobs.delete(m.originalBlobKey);
+        }
+      }
+
+      await database.encounters.bulkDelete([...encounterIds]);
+      await database.identifications.bulkDelete(
+        (await database.identifications.where('specimenId').equals(specimenId).toArray()).map((r) => r.id),
+      );
+      await database.priceObservations.bulkDelete(priceIds);
+      await database.raritySnapshots.bulkDelete(
+        (await database.raritySnapshots.where('specimenId').equals(specimenId).toArray()).map((r) => r.id),
+      );
+      await database.assessments.bulkDelete(
+        (await database.assessments.where('specimenId').equals(specimenId).toArray()).map((r) => r.id),
+      );
+      await database.draftKeys.bulkDelete(drafts.map((d) => d.clientKey));
+      await database.specimens.delete(specimenId);
+
+      // Remembered so a seeded record cannot come back on the next boot.
+      await database.deletedRecords.put({ id: specimenId, kind: 'specimen', deletedAt: nowIso() });
+    },
+  );
+
+  return plan;
+}
+
+/**
+ * Set (or replace) the photo that represents a tank.
+ *
+ * The Aquarium type has carried `photoMediaId` since the schema was written and
+ * nothing ever filled it. It stores a real Media row rather than a loose blob,
+ * so a tank photo obeys the same rules as every other picture in the app -
+ * bytes inline (see StoredBlob), original never downsampled (NFR-03).
+ *
+ * It has no encounter and no specimen: `encounterId` is optional and
+ * `specimenIds` is empty, because a photo of the glass is not a sighting of a
+ * fish and must never be counted as one.
+ *
+ * REPLACING DELETES THE OLD ONE. A tank has exactly one photo, so keeping the
+ * previous blob would silently grow the device's storage every time somebody
+ * retook it - and on a phone that budget is the app's to respect.
+ */
+export async function setTankPhoto(
+  aquariumId: Id,
+  file: CaptureFile,
+  database: DB = db,
+): Promise<Media> {
+  const aquarium = await database.aquariums.get(aquariumId);
+  if (!aquarium) throw new Error(`Unknown tank ${aquariumId}`);
+
+  const [detached] = await detachFiles([file]);
+  if (!detached) throw new Error('Could not read that photo.');
+
+  const at = nowIso();
+  const blobKey = newId('blob');
+  const media: Media = {
+    id: newId('media'),
+    kind: 'photo',
+    specimenIds: [],
+    originalBlobKey: blobKey,
+    originalBytes: detached.data.byteLength,
+    mimeType: detached.mimeType,
+    capturedAt: at,
+    syncState: 'local-draft',
+  };
+
+  const previous = aquarium.photoMediaId
+    ? await database.media.get(aquarium.photoMediaId)
+    : undefined;
+
+  try {
+    await database.transaction(
+      'rw',
+      [database.media, database.blobs, database.aquariums],
+      async () => {
+        await database.blobs.add({
+          key: blobKey, data: detached.data, bytes: detached.data.byteLength,
+          mimeType: detached.mimeType, storedAt: at,
+        });
+        await database.media.add(media);
+        await database.aquariums.update(aquariumId, { photoMediaId: media.id });
+        if (previous) {
+          await database.media.delete(previous.id);
+          await database.blobs.delete(previous.originalBlobKey);
+        }
+      },
+    );
+  } catch (cause) {
+    throw storageError(cause, detached.data.byteLength, 1);
+  }
+
+  return media;
+}
+
+/** Remove a tank's photo, leaving the tank itself alone. */
+export async function clearTankPhoto(aquariumId: Id, database: DB = db): Promise<void> {
+  const aquarium = await database.aquariums.get(aquariumId);
+  if (!aquarium?.photoMediaId) return;
+  const media = await database.media.get(aquarium.photoMediaId);
+
+  await database.transaction(
+    'rw',
+    [database.media, database.blobs, database.aquariums, database.deletedRecords],
+    async () => {
+      if (media) {
+        await database.media.delete(media.id);
+        await database.blobs.delete(media.originalBlobKey);
+      }
+      await database.aquariums.update(aquariumId, { photoMediaId: undefined });
+      // Tombstoned, or bootstrap's seedTankPhoto puts a bundled photo straight
+      // back on the next load - the same way the Panther used to return.
+      if (media) {
+        await database.deletedRecords.put({ id: media.id, kind: 'media', deletedAt: nowIso() });
+      }
+    },
+  );
+}
+
+/**
+ * Create a tank.
+ *
+ * Volume and dimensions are optional on purpose. A tank you have not measured
+ * yet is a real tank, and FR-E05 wants "Not enough data" rather than a guess -
+ * so this refuses to invent a footprint from a gallon figure, and the screening
+ * rules simply report what they are missing until someone measures it.
+ */
+export async function createAquarium(
+  input: {
+    name: string;
+    kind: AquariumKind;
+    volume?: VolumeMeasurement;
+    dimensions?: Dimensions;
+    notes?: string;
+  },
+  database: DB = db,
+): Promise<Aquarium> {
+  const name = input.name.trim();
+  if (!name) throw new Error('A tank needs a name.');
+
+  const aquarium: Aquarium = {
+    id: newId('tank'),
+    name,
+    kind: input.kind,
+    volume: input.volume,
+    dimensions: input.dimensions,
+    status: 'active',
+    notes: input.notes?.trim() || undefined,
+    createdAt: nowIso(),
+  };
+  await database.aquariums.add(aquarium);
+  return aquarium;
+}
+
+/**
+ * Retire a tank, or bring it back.
+ *
+ * Retiring is the non-destructive way to get a broken-down tank out of the way:
+ * the record and every residency that names it stay exactly as they were, so a
+ * fish that lived there still says so. AquariumStatus has carried 'retired'
+ * since the schema was written and nothing could ever set it.
+ */
+export async function setAquariumStatus(
+  aquariumId: Id,
+  status: AquariumStatus,
+  database: DB = db,
+): Promise<void> {
+  await database.aquariums.update(aquariumId, { status });
+}
+
+export interface DeleteTankPlan {
+  allowed: boolean;
+  /** Why not, in words a person can act on. Present only when refused. */
+  reason?: string;
+  /** Fish living in it right now. */
+  residents: number;
+  /** Ended residencies - fish that lived here and have since moved on. */
+  pastResidencies: number;
+  /** Move events naming this tank as an origin or destination. */
+  moveEvents: number;
+  /** Cached screenings against this tank, discarded with it. */
+  assessments: number;
+  /** Whether a tank photo goes with it. */
+  photo: boolean;
+}
+
+/**
+ * What deleting this tank would take with it, and whether it may go at all.
+ *
+ * Two refusals, for two different reasons:
+ *
+ * OCCUPIED. Fish live there. Deleting the tank under them would strand the
+ * holdings - rows describing a fish in a place that no longer exists. Move them
+ * or record the loss first; both are one tap away on the same screen.
+ *
+ * HISTORICAL. A residency or a move event names this tank in the past. Those
+ * rows are history, and principle 3 is that the app never rewrites it. Deleting
+ * the tank does not delete them; it leaves them pointing at nothing, and a
+ * fish's timeline that said "moved to Predator Tank" starts saying "moved to
+ * tank_a3f9c2". Retiring is the honest way to put such a tank away - it stops
+ * appearing among your active tanks and every record that names it still reads
+ * correctly.
+ *
+ * A tank that never held anything has no history to protect, so it just goes.
+ */
+export async function planDeleteTank(aquariumId: Id, database: DB = db): Promise<DeleteTankPlan> {
+  const [aquarium, residencies, events, assessments] = await Promise.all([
+    database.aquariums.get(aquariumId),
+    database.residencies.where('aquariumId').equals(aquariumId).toArray(),
+    database.lifeEvents.toArray(),
+    database.assessments.where('aquariumId').equals(aquariumId).toArray(),
+  ]);
+
+  const current = residencies.filter((r) => !r.endDate);
+  const past = residencies.filter((r) => r.endDate);
+  const moves = events.filter(
+    (e) => e.fromAquariumId === aquariumId || e.toAquariumId === aquariumId,
+  );
+
+  const plan: DeleteTankPlan = {
+    allowed: true,
+    residents: current.length,
+    pastResidencies: past.length,
+    moveEvents: moves.length,
+    assessments: assessments.length,
+    photo: Boolean(aquarium?.photoMediaId),
+  };
+
+  if (!aquarium) return { ...plan, allowed: false, reason: 'That tank no longer exists.' };
+
+  if (current.length > 0) {
+    const fish = current.length === 1 ? 'one group of fish' : `${current.length} groups of fish`;
+    return {
+      ...plan,
+      allowed: false,
+      reason: `${aquarium.name} still holds ${fish}. Move them to another tank, or record the loss, `
+        + 'and then it can go.',
+    };
+  }
+
+  if (past.length > 0 || moves.length > 0) {
+    return {
+      ...plan,
+      allowed: false,
+      reason: `Fish have lived in ${aquarium.name} before, and their history still names it. `
+        + 'Deleting the tank would leave those records pointing at nothing. Retire it instead - '
+        + 'it leaves your active tanks and every past record still reads correctly.',
+    };
+  }
+
+  return plan;
+}
+
+/**
+ * Delete a tank that never held a fish.
+ *
+ * planDeleteTank refuses anything with residents or history, so by the time we
+ * get here the only things to clean up are the tank, its photo, and any cached
+ * screening against it. Assessments are derived - re-running the check
+ * regenerates them - so they go without ceremony.
+ */
+export async function deleteTank(aquariumId: Id, database: DB = db): Promise<DeleteTankPlan> {
+  const plan = await planDeleteTank(aquariumId, database);
+  if (!plan.allowed) return plan;
+
+  const aquarium = await database.aquariums.get(aquariumId);
+  const media = aquarium?.photoMediaId ? await database.media.get(aquarium.photoMediaId) : undefined;
+  const assessments = await database.assessments.where('aquariumId').equals(aquariumId).toArray();
+
+  await database.transaction(
+    'rw',
+    [
+      database.aquariums, database.media, database.blobs,
+      database.assessments, database.deletedRecords,
+    ],
+    async () => {
+      if (media) {
+        await database.media.delete(media.id);
+        await database.blobs.delete(media.originalBlobKey);
+        await database.deletedRecords.put({ id: media.id, kind: 'media', deletedAt: nowIso() });
+      }
+      await database.assessments.bulkDelete(assessments.map((a) => a.id));
+      await database.aquariums.delete(aquariumId);
+      // Remembered so a seeded tank cannot come back on the next boot.
+      await database.deletedRecords.put({ id: aquariumId, kind: 'aquarium', deletedAt: nowIso() });
+    },
+  );
+
+  return plan;
 }

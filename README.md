@@ -19,7 +19,7 @@ npm run dev          # http://localhost:5173
 ```
 
 ```bash
-npm test             # 478 unit + integration tests across 25 files
+npm test             # 701 unit + integration tests across 38 files
 npm run build        # type-check, bundle, generate the service worker
 npm run preview      # serve the production build on :4173
 
@@ -45,9 +45,9 @@ real UI.
 
 | PRD slice (11.1) | State |
 |---|---|
-| **1 — Private shell** | PWA installs and runs offline; drafts are created before media finishes writing; retries never duplicate a catch. No auth — see *No backend* below. |
+| **1 — Private shell** | PWA installs and runs offline; drafts are created before media finishes writing; retries never duplicate a catch. Catches can be corrected or deleted, with the cascade named before it happens. No auth — see *No backend* below. |
 | **2 — Catalog** | Species / specimen / encounter modelled separately; Unknown / Provisional / Confirmed identity; reveal ceremony; Dream List. The library is a **card grid of 2,178 species**, filterable by where a fish lives in the tank, what kind of thing it is, and temperament. |
-| **3 — Real tanks** | Aquariums, holdings, dated residencies, full lifecycle events, inventory importer. |
+| **3 — Real tanks** | Aquariums, holdings, dated residencies, full lifecycle events, inventory importer. Each tank opens in two modes: a **Viewer** dashboard built to hand to a guest, and **Manage** for everything that writes. |
 | **4 — Evaluation** | Seven-factor deterministic screening over a versioned rule set, with immutable snapshots. |
 | **5 — Price + journal** | Ask / member / paid kept separate, comparability filtering, story chapters. Prices come from **12 tracked vendors**, each store row linking straight to its product page, and **8 Chicago PetSmart branches report what is in the tank today**. |
 | **6 — Legacy + hardening** | Fish Heaven, Keeper's Code, JSON export, reduced-motion and mute, non-colour status cues. |
@@ -97,6 +97,16 @@ refusing to fill it.
 assertion rather than replacing it. Re-running a screening adds a snapshot
 rather than mutating one. Moving a fish closes one dated residency and opens
 another. A fish that dies stays in the tank history it lived through.
+
+*You can still edit and delete your own catches, and that is not a contradiction.*
+Correcting a mistyped date or a nickname makes the record **true**; it is the
+species, the verdicts and the tiers — the things the app concluded — that are
+superseded rather than overwritten, so the edit form deliberately has no species
+field. And deleting says *this encounter never happened* — a mis-tap, a
+duplicate, test data — which is a different claim from *I was wrong* or *it
+died*, both of which have their own paths that keep the past. A catch held in a
+tank or carrying a memorial cannot be deleted at all; the app says so and points
+you at the tank instead.
 
 ---
 
@@ -347,6 +357,57 @@ you could actually run. A species nobody tagged is *not recorded* and is
 excluded from every specific choice rather than defaulted into one, the same
 rule the water-column zone follows.
 
+## Showing someone your tank
+
+A tank page used to be an inventory list, which is the right tool for the
+keeper and the wrong one for the person standing next to the glass. Each tank
+now opens in two modes, and they are separate because they serve different
+people at different moments — a guest tapping around your tank should not be
+able to retire a fish by accident.
+
+**Viewer** answers what a visitor actually asks. How many fish, how many
+species, what it is worth, what the biggest one grows to. Where everyone swims,
+drawn as bands in the order the fish occupy them — the geometry carries the
+depth, so no colour ramp is needed and no legend has to be read. The
+temperament mix, in the same severity vocabulary the verdict badges already
+use, because a second visual language for one idea is how a design system rots.
+What the tank *becomes*, since the two-inch fish in front of them is a
+fourteen-inch fish later. Then the fish themselves as portraits you can tap
+through to the species page.
+
+**Manage** is everything that writes: move a fish, record a loss, set the
+measurements.
+
+**The index is a way in, not a second workspace.** It used to render every
+tank's full resident list along with move and record-a-loss controls — the same
+job the Manage tab does, in the wrong place, since a list answers *which tank?*
+rather than *what do I do with this fish?*. It is now a card per tank: a photo
+you can upload, the numbers worth a glance, and a tap to open. The tank rows on
+Home open the same screen, which they previously did not — inert text put the
+one screen a visitor is shown two taps behind a nav item.
+
+`Aquarium.photoMediaId` had been in the schema since it was written and nothing
+ever filled it. A tank photo is now a real Media row, so it obeys the same rules
+as every other picture here — bytes stored inline, original never downsampled.
+It carries no encounter and no specimen, because a photo of the glass is not a
+sighting of a fish and must never be counted as one, and replacing it deletes
+the old bytes rather than quietly growing the device's storage on every retake.
+
+**Every total reports its own denominator.** Twelve of the sixty-one seeded
+holdings are labels nobody could resolve to a species, and the 75-gallon's
+estimate covers 10 of its 22 fish. The dashboard says so, in the panel named
+*What this leaves out*, rather than averaging over 80% of a tank and presenting
+it as the tank. That is the same rule the rest of the app follows, applied
+where it is most tempting to break.
+
+**On chart colour.** The fills are `color-mix` against the theme tokens, so the
+whole dashboard re-themes with everything else and `src/ui` still names no
+colour. The direction of that mix was measured, not eyeballed: mixing toward
+the *surface* is the intuitive move and it put the light theme's bars at
+**1.75:1**, well under the 3:1 floor for a mark. Mixing toward the *ink*
+instead raises contrast in every territory at once, because the token flips
+with the theme. Measured live in all three: 3.56:1 at worst.
+
 ## Where a fish lives
 
 Every card carries a glyph for its water column zone — top, mid, bottom or all
@@ -398,7 +459,22 @@ this exactly — *"the product does not claim embedded Google Lens capability; t
 user returns and confirms the result manually"* — so the photo goes to Lens only
 through a share sheet you tap, and the app does the half that actually saves
 taps: turning whatever text comes back into a ranked shortlist of real catalog
-species. Paste `Parachromis managuensis` and Jaguar Cichlid is first; paste a
+species.
+
+**The share carries the image and nothing else, and that is load-bearing.** It
+used to send a title and a caption alongside the photo. A share carrying text is
+a different kind of share: the receiving app gets a text payload too, and Chrome
+on iOS acts on the words — opening a tab, or searching for them — instead of
+routing the image into Lens. Picture-plus-caption also reads to iOS as a
+message, which is why its sheet led with contacts. Neither string was read by
+anything; Lens wants a picture. `identify.test.ts` asserts the payload has
+exactly one key.
+
+**No web page can choose which app receives a share.** `navigator.share()` has
+no target parameter on any platform, by design — the OS owns that choice, and on
+iOS the order of the sheet is Apple's, learned from what you actually pick.
+Sending a clean image share is the whole of what a web app is allowed to
+influence, so that is what this does. Paste `Parachromis managuensis` and Jaguar Cichlid is first; paste a
 whole messy Lens caption and it still resolves; type `freshwater aquarium fish`
 and it matches **nothing**, rather than ranking the catalog by how often the word
 "fish" appears.

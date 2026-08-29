@@ -86,6 +86,18 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 }
 .btn--big { width: 100%; padding: var(--space-4); font-size: var(--size-lg); }
 .btn--ghost { background: transparent; }
+/*
+ * Irreversible actions. The token is defined by all three territories, so this
+ * reads correctly in every theme without src/ui naming a colour.
+ *
+ * Colour is reinforcement here, never the only cue (NFR-06): the button says
+ * "Yes, delete it" and sits behind a confirmation that names what goes with it.
+ */
+.btn--danger {
+  background: var(--color-danger);
+  border-color: var(--color-danger);
+  color: var(--color-canvas);
+}
 
 input, select, textarea {
   font: inherit;
@@ -652,4 +664,166 @@ fieldset { border: 0; padding: 0; margin: 0 0 var(--space-3); }
   font-size: 11px;
   display: grid;
   place-items: center;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * Tank viewer
+ *
+ * Every colour below is a token, so the whole dashboard re-themes with the
+ * rest of the app (PRD 7.3). The one derived ramp - the temperament segments -
+ * reuses the badge tones the app already assigns to severity, rather than
+ * inventing a second visual language for the same idea.
+ * ───────────────────────────────────────────────────────────────────────── */
+
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+  gap: var(--space-2);
+}
+.stat {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: var(--space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+}
+.stat__value { font-size: var(--size-xl); line-height: 1.1; color: var(--color-text); }
+.stat__label { font-size: var(--size-xs); color: var(--color-muted); }
+
+/* Water column. Bands stack in the order the fish occupy them, so position
+   carries the meaning and no colour ramp is needed. */
+.watercolumn { display: flex; flex-direction: column; gap: 2px; }
+.watercolumn__band {
+  display: grid; grid-template-columns: 5.5rem 1fr 2rem;
+  align-items: center; gap: var(--space-2);
+}
+.watercolumn__label { font-size: var(--size-xs); color: var(--color-muted); }
+.watercolumn__track {
+  height: 22px; border-radius: 4px;
+  background: color-mix(in oklab, var(--color-border) 45%, transparent);
+  overflow: hidden;
+}
+/*
+ * Mixed toward TEXT, not toward the surface.
+ *
+ * Mixing toward the surface is the intuitive move and it fails: on the light
+ * theme it took these fills to 1.75:1 against white, well under the 3:1 floor
+ * for a mark. Mixing toward the ink instead raises contrast in every theme at
+ * once - darker on a light ground, lighter on a dark one - because the token
+ * flips with the territory. Measured: 6.27 / 4.51 / 6.56:1.
+ */
+.watercolumn__fill {
+  display: block; height: 100%; border-radius: 4px;
+  background: color-mix(in oklab, var(--color-primary) 82%, var(--color-text));
+}
+.watercolumn__value { font-size: var(--size-xs); text-align: right; color: var(--color-muted); }
+
+/* Part-to-whole. A 2px surface gap between segments, per the mark spec. */
+.segbar { display: flex; gap: 2px; height: 22px; }
+.segbar__seg { border-radius: 3px; min-width: 3px; }
+.segbar__seg--suitable { background: var(--color-positive); }
+.segbar__seg--conditional { background: var(--color-caution); }
+.segbar__seg--high-risk { background: var(--color-danger); }
+.segbar__seg--extreme-risk { background: color-mix(in oklab, var(--color-danger) 65%, var(--color-text)); }
+.segbar__seg--insufficient-data { background: var(--color-muted); }
+
+.legend {
+  list-style: none; padding: 0; margin: 0;
+  display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3);
+  font-size: var(--size-xs); color: var(--color-text);
+}
+.legend li { display: flex; align-items: center; gap: 6px; }
+.legend__swatch { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.legend__swatch--suitable { background: var(--color-positive); }
+.legend__swatch--conditional { background: var(--color-caution); }
+.legend__swatch--high-risk { background: var(--color-danger); }
+.legend__swatch--extreme-risk { background: color-mix(in oklab, var(--color-danger) 65%, var(--color-text)); }
+.legend__swatch--insufficient-data { background: var(--color-muted); }
+
+/* Magnitude bars. One hue; length is the encoding. */
+.bars { display: flex; flex-direction: column; gap: var(--space-1); }
+.bars__row {
+  display: grid; grid-template-columns: minmax(5rem, 8rem) 1fr 2.5rem;
+  align-items: center; gap: var(--space-2);
+}
+.bars__label {
+  font-size: var(--size-xs); color: var(--color-text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.bars__track {
+  height: 14px; border-radius: 4px;
+  background: color-mix(in oklab, var(--color-border) 45%, transparent);
+  overflow: hidden;
+}
+/* Same correction as the water column. Measured: 10.24 / 3.56 / 7.32:1. */
+.bars__fill {
+  display: block; height: 100%; border-radius: 4px;
+  background: color-mix(in oklab, var(--color-accent) 72%, var(--color-text));
+}
+.bars__value { font-size: var(--size-xs); text-align: right; color: var(--color-muted); }
+
+/* The fish themselves. */
+.tank-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--space-2);
+}
+.tank-tile {
+  display: flex; flex-direction: column;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  text-decoration: none; color: inherit;
+}
+.tank-tile--plain { opacity: 0.7; }
+.tank-tile__art {
+  width: 100%; aspect-ratio: 3 / 2; object-fit: cover;
+  background: var(--color-surface-raised);
+}
+.tank-tile__art--empty {
+  display: grid; place-items: center;
+  font-size: var(--size-xl); color: var(--color-muted);
+}
+.tank-tile__body { padding: var(--space-2); font-size: var(--size-sm); }
+.h3 { font-size: var(--size-md); }
+
+/* Tank index cards. Tokens only, like everything else in src/ui. */
+.tanklist { display: flex; flex-direction: column; gap: var(--space-2); }
+.tankcard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+.tankcard__link {
+  display: grid; grid-template-columns: 96px 1fr;
+  gap: var(--space-3); align-items: center;
+  text-decoration: none; color: inherit;
+}
+.tankcard__art {
+  display: block; width: 96px; height: 96px;
+  background: var(--color-surface-raised);
+}
+.tankcard__art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.tankcard__art--empty {
+  display: grid; place-items: center; width: 100%; height: 100%;
+  font-size: var(--size-xl); opacity: 0.5;
+}
+.tankcard__body {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: var(--space-2) var(--space-2) var(--space-2) 0;
+  min-width: 0;
+}
+.tankcard__name { font-size: var(--size-md); }
+.tankcard__stats {
+  display: flex; flex-wrap: wrap; gap: var(--space-2);
+  font-size: var(--size-sm); color: var(--color-text);
+}
+/* A badge is a label, not a bar: it should be as wide as its words. */
+.tankcard__body .badge { align-self: flex-start; margin-top: 2px; }
+.tankcard__photo-btn {
+  width: 100%;
+  border-top: 1px solid var(--color-border);
+  border-radius: 0;
+  font-size: var(--size-xs);
 }

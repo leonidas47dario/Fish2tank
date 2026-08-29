@@ -8,7 +8,16 @@ import {
   assertIdentity,
   assessmentHistory,
   awardGolden,
+  clearTankPhoto,
+  createAquarium,
   createCatchDraft,
+  deleteCatch,
+  deleteTank,
+  planDeleteTank,
+  setAquariumStatus,
+  setTankPhoto,
+  planDeleteCatch,
+  updateCatch,
   storageError,
   createKeeperPrinciple,
   createOpeningBalanceHolding,
@@ -620,5 +629,325 @@ describe('photos on a fish you keep but never caught', () => {
 
   it('refuses to attach a photo to a specimen that does not exist', async () => {
     await expect(addPhotos({ specimenId: 'spec_nope', files: [photo()] }, db)).rejects.toThrow();
+  });
+});
+
+describe('editing a catch', () => {
+  async function aCatch() {
+    const draft = await createCatchDraft({
+      files: [], clientKey: newId('k'), rawLabel: 'Jag 6"', observedAt: '2026-08-01T10:00:00.000Z',
+    }, db);
+    return draft;
+  }
+
+  it('corrects the fields the user actually observed', async () => {
+    const { specimen } = await aCatch();
+    await updateCatch({
+      specimenId: specimen.id,
+      nickname: 'the Panther',
+      observedAt: '2026-07-30T09:00:00.000Z',
+      notes: 'Went in for plants.',
+      quantitySeen: 2,
+    }, db);
+
+    const after = await db.specimens.get(specimen.id);
+    const enc = (await db.encounters.where('specimenId').equals(specimen.id).toArray())[0];
+    expect(after!.nickname).toBe('the Panther');
+    expect(enc!.observedAt).toBe('2026-07-30T09:00:00.000Z');
+    expect(enc!.notes).toBe('Went in for plants.');
+    expect(enc!.quantitySeen).toBe(2);
+  });
+
+  it('leaves untouched fields alone, so a partial form cannot blank the rest', async () => {
+    const { specimen } = await aCatch();
+    await updateCatch({ specimenId: specimen.id, notes: 'first' }, db);
+    await updateCatch({ specimenId: specimen.id, nickname: 'Spot' }, db);
+
+    const enc = (await db.encounters.where('specimenId').equals(specimen.id).toArray())[0];
+    expect(enc!.notes).toBe('first');
+    expect((await db.specimens.get(specimen.id))!.rawLabel).toBe('Jag 6"');
+  });
+
+  it('clears a field on null, which undefined cannot express', async () => {
+    const { specimen } = await aCatch();
+    await updateCatch({ specimenId: specimen.id, nickname: 'Spot' }, db);
+    await updateCatch({ specimenId: specimen.id, nickname: null }, db);
+    expect((await db.specimens.get(specimen.id))!.nickname).toBeUndefined();
+  });
+
+  it('never changes identity — that path supersedes rather than overwrites', async () => {
+    // The audit trail would have a hole in it exactly where the interesting
+    // decisions happen if an edit could quietly set speciesId.
+    const { specimen } = await aCatch();
+    await assertIdentity(
+      { specimenId: specimen.id, speciesId: 'sp_jaguar_cichlid', source: 'user', status: 'user-confirmed' },
+      db,
+    );
+    await updateCatch({ specimenId: specimen.id, nickname: 'Spot' }, db);
+
+    const after = await db.specimens.get(specimen.id);
+    expect(after!.speciesId).toBe('sp_jaguar_cichlid');
+    expect(after!.identityStatus).toBe('user-confirmed');
+    expect(await identityHistory(specimen.id, db)).toHaveLength(1);
+  });
+
+  it('bumps updatedAt so the record shows it was touched', async () => {
+    const { specimen } = await aCatch();
+    await updateCatch({ specimenId: specimen.id, nickname: 'Spot' }, db);
+    expect((await db.specimens.get(specimen.id))!.updatedAt >= specimen.updatedAt).toBe(true);
+  });
+});
+
+describe('deleting a catch', () => {
+  async function aFullCatch() {
+    const { specimen, encounter } = await createCatchDraft({
+      files: [photo()],
+      clientKey: newId('k'),
+    }, db);
+    await assertIdentity(
+      { specimenId: specimen.id, speciesId: 'sp_jaguar_cichlid', source: 'user', status: 'user-confirmed' },
+      db,
+    );
+    await recordPrice({
+      specimenId: specimen.id, speciesId: 'sp_jaguar_cichlid', encounterId: encounter.id, askingPrice: 100,
+    }, db);
+    await revealSpecimen(specimen.id, db);
+    return { specimen, encounter };
+  }
+
+  it('states what it will remove before removing it', async () => {
+    const { specimen } = await aFullCatch();
+    const plan = await planDeleteCatch(specimen.id, db);
+    expect(plan.allowed).toBe(true);
+    expect(plan).toMatchObject({ encounters: 1, media: 1, prices: 1, identifications: 1 });
+  });
+
+  it('removes the catch and everything downstream of it', async () => {
+    const { specimen } = await aFullCatch();
+    await deleteCatch(specimen.id, db);
+
+    expect(await db.specimens.get(specimen.id)).toBeUndefined();
+    expect(await db.encounters.where('specimenId').equals(specimen.id).count()).toBe(0);
+    expect(await db.media.where('specimenIds').equals(specimen.id).count()).toBe(0);
+    expect(await db.identifications.where('specimenId').equals(specimen.id).count()).toBe(0);
+    expect(await db.priceObservations.where('specimenId').equals(specimen.id).count()).toBe(0);
+    expect(await db.raritySnapshots.where('specimenId').equals(specimen.id).count()).toBe(0);
+    expect(await db.blobs.count()).toBe(0);
+  });
+
+  it('leaves species-level price notes alone', async () => {
+    // A price seen elsewhere is a market observation; it outlives the catch.
+    const { specimen } = await aFullCatch();
+    await recordPrice(
+      { speciesId: 'sp_jaguar_cichlid', askingPrice: 50, source: 'online-manual' },
+      db,
+    );
+    await deleteCatch(specimen.id, db);
+    expect(await db.priceObservations.where('speciesId').equals('sp_jaguar_cichlid').count()).toBe(1);
+  });
+
+  it('detaches a shared photo rather than destroying it', async () => {
+    // The media IS the record. Deleting one catch must never take another
+    // catch's only photo with it.
+    const a = await aFullCatch();
+    const b = await createCatchDraft({ files: [], clientKey: newId('k') }, db);
+    const shot = (await db.media.where('specimenIds').equals(a.specimen.id).toArray())[0]!;
+    await db.media.update(shot.id, { specimenIds: [a.specimen.id, b.specimen.id] });
+
+    await deleteCatch(a.specimen.id, db);
+
+    const kept = await db.media.get(shot.id);
+    expect(kept).toBeDefined();
+    expect(kept!.specimenIds).toEqual([b.specimen.id]);
+    expect(await db.blobs.get(shot.originalBlobKey!)).toBeDefined();
+  });
+
+  it('refuses when the fish is in one of your tanks', async () => {
+    // Tank history is not the catch's to delete - principle 3.
+    const { specimen } = await aFullCatch();
+    await db.holdings.add({
+      id: newId('hold'), specimenId: specimen.id, speciesId: 'sp_jaguar_cichlid',
+      quantity: 1, openingBalance: false, acquiredOn: '2026-08-01', createdAt: '2026-08-01T00:00:00.000Z',
+    } as never);
+
+    const result = await deleteCatch(specimen.id, db);
+    expect(result.allowed).toBe(false);
+    expect(result.reason).toMatch(/tank/i);
+    expect(await db.specimens.get(specimen.id)).toBeDefined();
+  });
+
+  it('remembers the deletion, so a seeded catch cannot come back', async () => {
+    // Every seeder is guarded by "does this id exist?", so without the
+    // tombstone a delete is only a hide until the next boot.
+    const { specimen } = await aFullCatch();
+    await deleteCatch(specimen.id, db);
+    expect(await db.deletedRecords.get(specimen.id)).toMatchObject({ kind: 'specimen' });
+  });
+});
+
+describe('tank photos', () => {
+  const shot = (byte: number) => ({
+    kind: 'photo' as const,
+    blob: new Blob([new Uint8Array([byte])], { type: 'image/jpeg' }),
+    mimeType: 'image/jpeg',
+  });
+
+  async function aTank() {
+    const id = newId('aq');
+    await upsertAquarium({ id, name: 'Reef', kind: 'freshwater', status: 'active', createdAt: '' } as never, db);
+    return id;
+  }
+
+  it('stores the photo as a real media row, not a loose blob', async () => {
+    const id = await aTank();
+    const media = await setTankPhoto(id, shot(1), db);
+
+    expect((await db.aquariums.get(id))!.photoMediaId).toBe(media.id);
+    expect(await db.blobs.get(media.originalBlobKey)).toBeDefined();
+  });
+
+  it('is not a sighting of a fish, and is never counted as one', async () => {
+    // A photo of the glass has no encounter and no specimen. If it had either,
+    // it would turn up in a catch's media and in the catalog's ownership maths.
+    const id = await aTank();
+    const media = await setTankPhoto(id, shot(1), db);
+    expect(media.specimenIds).toEqual([]);
+    expect(media.encounterId).toBeUndefined();
+  });
+
+  it('replacing deletes the old bytes rather than accumulating them', async () => {
+    // A tank has one photo. Keeping every retake would quietly grow the
+    // device's storage, and that budget is the app's to respect.
+    const id = await aTank();
+    const first = await setTankPhoto(id, shot(1), db);
+    await setTankPhoto(id, shot(2), db);
+
+    expect(await db.media.get(first.id)).toBeUndefined();
+    expect(await db.blobs.get(first.originalBlobKey)).toBeUndefined();
+    expect(await db.media.count()).toBe(1);
+    expect(await db.blobs.count()).toBe(1);
+  });
+
+  it('clearing removes the photo and leaves the tank', async () => {
+    const id = await aTank();
+    const media = await setTankPhoto(id, shot(1), db);
+    await clearTankPhoto(id, db);
+
+    expect((await db.aquariums.get(id))!.photoMediaId).toBeUndefined();
+    expect(await db.media.get(media.id)).toBeUndefined();
+    expect(await db.blobs.count()).toBe(0);
+    expect(await db.aquariums.get(id)).toBeDefined();
+  });
+
+  it('clearing a tank that has no photo is a no-op, not an error', async () => {
+    const id = await aTank();
+    await expect(clearTankPhoto(id, db)).resolves.toBeUndefined();
+  });
+});
+
+describe('adding, retiring and deleting tanks', () => {
+  it('creates a tank with just a name and a kind', async () => {
+    const tank = await createAquarium({ name: '  Dune  ', kind: 'display' }, db);
+    // Trimmed, and active from the start.
+    expect(tank.name).toBe('Dune');
+    expect(tank.status).toBe('active');
+    // Unmeasured on purpose - screening reports what it is missing rather than
+    // working from a guessed footprint.
+    expect(tank.volume).toBeUndefined();
+    expect(tank.dimensions).toBeUndefined();
+    expect(await db.aquariums.get(tank.id)).toMatchObject({ name: 'Dune' });
+  });
+
+  it('refuses a tank with no name', async () => {
+    await expect(createAquarium({ name: '   ', kind: 'display' }, db)).rejects.toThrow(/needs a name/i);
+  });
+
+  it('deletes a tank that never held a fish, and remembers it is gone', async () => {
+    const tank = await createAquarium({ name: 'Spare', kind: 'tote' }, db);
+    const plan = await deleteTank(tank.id, db);
+
+    expect(plan.allowed).toBe(true);
+    expect(await db.aquariums.get(tank.id)).toBeUndefined();
+    // Tombstoned, so first-run seeding cannot bring a deleted tank back.
+    expect(await db.deletedRecords.get(tank.id)).toMatchObject({ kind: 'aquarium' });
+  });
+
+  it('takes the tank photo with it, and tombstones that too', async () => {
+    const tank = await createAquarium({ name: 'Spare', kind: 'tote' }, db);
+    await setTankPhoto(tank.id, photo(), db);
+    const withPhoto = await db.aquariums.get(tank.id);
+    const mediaId = withPhoto!.photoMediaId!;
+    expect(mediaId).toBeTruthy();
+
+    const plan = await deleteTank(tank.id, db);
+    expect(plan.photo).toBe(true);
+    expect(await db.media.get(mediaId)).toBeUndefined();
+    expect(await db.deletedRecords.get(mediaId)).toMatchObject({ kind: 'media' });
+  });
+
+  it('refuses to delete a tank that still holds fish, and says what to do', async () => {
+    await db.aquariums.add(seventyFive());
+    await createOpeningBalanceHolding(
+      { aquariumId: 'tank_75g', speciesId: 'sp_neon_tetra', rawLabel: 'Neon Tetra', kind: 'group', openingQuantity: 6 },
+      db,
+    );
+
+    const plan = await planDeleteTank('tank_75g', db);
+    expect(plan.allowed).toBe(false);
+    expect(plan.residents).toBe(1);
+    expect(plan.reason).toMatch(/move them/i);
+
+    // And the refusal is enforced, not merely advertised.
+    await deleteTank('tank_75g', db);
+    expect(await db.aquariums.get('tank_75g')).toBeDefined();
+  });
+
+  /**
+   * The case that makes retire exist. Once a fish has lived somewhere, its
+   * residency names that tank forever; deleting the tank would leave the
+   * timeline reading "moved to tank_a3f9c2".
+   */
+  it('refuses to delete a tank whose history is still referenced, and points at retiring', async () => {
+    await db.aquariums.add(seventyFive());
+    const spare = await createAquarium({ name: 'Spare', kind: 'tote' }, db);
+    const { holding } = await createOpeningBalanceHolding(
+      { aquariumId: spare.id, speciesId: 'sp_neon_tetra', rawLabel: 'Neon Tetra', kind: 'group', openingQuantity: 6 },
+      db,
+    );
+    await moveHolding(holding.id, 'tank_75g', undefined, db);
+
+    const plan = await planDeleteTank(spare.id, db);
+    expect(plan.allowed).toBe(false);
+    expect(plan.residents).toBe(0);          // nothing lives there now
+    expect(plan.pastResidencies).toBe(1);    // but something did
+    expect(plan.reason).toMatch(/retire it instead/i);
+    await deleteTank(spare.id, db);
+    expect(await db.aquariums.get(spare.id)).toBeDefined();
+  });
+
+  it('retires and reinstates without touching the history that names the tank', async () => {
+    await db.aquariums.add(seventyFive());
+    await createOpeningBalanceHolding(
+      { aquariumId: 'tank_75g', speciesId: 'sp_neon_tetra', rawLabel: 'Neon Tetra', kind: 'group', openingQuantity: 6 },
+      db,
+    );
+    const before = await db.residencies.where('aquariumId').equals('tank_75g').toArray();
+
+    await setAquariumStatus('tank_75g', 'retired', db);
+    expect((await db.aquariums.get('tank_75g'))!.status).toBe('retired');
+    expect(await db.residencies.where('aquariumId').equals('tank_75g').toArray()).toEqual(before);
+
+    await setAquariumStatus('tank_75g', 'active', db);
+    expect((await db.aquariums.get('tank_75g'))!.status).toBe('active');
+  });
+
+  it('tombstones a tank photo the owner removes, so bootstrap cannot re-seed it', async () => {
+    const tank = await createAquarium({ name: 'Spare', kind: 'tote' }, db);
+    await setTankPhoto(tank.id, photo(), db);
+    const mediaId = (await db.aquariums.get(tank.id))!.photoMediaId!;
+
+    await clearTankPhoto(tank.id, db);
+    expect((await db.aquariums.get(tank.id))!.photoMediaId).toBeUndefined();
+    expect(await db.deletedRecords.get(mediaId)).toMatchObject({ kind: 'media' });
   });
 });

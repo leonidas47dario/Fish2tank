@@ -161,6 +161,43 @@ export function canShareFiles(files: File[]): boolean {
 }
 
 /**
+ * Hand a photo to a visual search app, as an IMAGE AND NOTHING ELSE.
+ *
+ * THE TITLE AND TEXT ARE DELIBERATELY ABSENT, and removing them is the whole
+ * point of this function existing.
+ *
+ * It used to share `{ files, title: 'What fish is this?', text: 'Identify this
+ * fish' }`. A share carrying text is a different kind of share: the receiving
+ * app gets a text payload as well as an image, and Chrome on iOS acts on the
+ * text - opening a tab or a web search for the words - rather than routing the
+ * image into Lens. The extra text also pushes iOS's own sheet toward the
+ * people-and-messaging suggestions at the top, because a caption plus a
+ * picture looks like a message.
+ *
+ * Neither string was ever read by anything. Lens wants a picture.
+ *
+ * WHAT THIS STILL CANNOT DO, because no web page can: choose which app
+ * receives the share. `navigator.share()` has no target parameter on any
+ * platform, by design - the OS owns that choice, and on iOS the order of the
+ * sheet is Apple's, learned from what you actually pick. Sending a clean image
+ * share is the whole of what a web app is allowed to influence here.
+ */
+export async function shareForLens(
+  file: File,
+  share: (data: ShareData) => Promise<void> = (d) => navigator.share(d),
+): Promise<'shared' | 'cancelled' | 'unavailable'> {
+  try {
+    await share({ files: [file] });
+    return 'shared';
+  } catch (e) {
+    // Dismissing the sheet rejects with AbortError. That is the user changing
+    // their mind, not a failure worth shouting about.
+    if (e instanceof Error && e.name === 'AbortError') return 'cancelled';
+    return 'unavailable';
+  }
+}
+
+/**
  * Google Lens by URL, for when the share sheet is not available.
  *
  * Only usable with a publicly reachable image URL, which a blob in IndexedDB

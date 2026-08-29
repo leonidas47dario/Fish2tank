@@ -87,16 +87,26 @@ export default function Home() {
       <section>
         <h2>Your tanks</h2>
         <ul className="list">
-          {tanks?.map(({ aquarium, residents }) => (
-            <li key={aquarium.id} className="card spread">
-              <span>
-                <strong>{aquarium.name}</strong><br />
-                <span className="xs muted">
-                  {residents.length} holding{residents.length === 1 ? '' : 's'}
-                  {aquarium.stockingState && ` · ${aquarium.stockingState}`}
+          {/* Retired tanks keep their records but are not part of "your tanks"
+              any more, so the home summary stops at the active ones. */}
+          {tanks?.filter(({ aquarium }) => aquarium.status !== 'retired').map(({ aquarium, residents }) => (
+            <li key={aquarium.id}>
+              {/* Opens the tank itself. This used to be inert text, which put
+                  the one screen a visitor is shown two taps behind a nav item. */}
+              <Link
+                to={`/tanks/${aquarium.id}`}
+                className="card spread"
+                style={{ textDecoration: 'none', color: 'inherit' }}
+              >
+                <span>
+                  <strong>{aquarium.name}</strong><br />
+                  <span className="xs muted">
+                    {residents.length} holding{residents.length === 1 ? '' : 's'}
+                    {aquarium.stockingState && ` · ${aquarium.stockingState}`}
+                  </span>
                 </span>
-              </span>
-              {!aquarium.volume && <span className="badge badge--insufficient-data"><span aria-hidden="true">?</span> Unmeasured</span>}
+                {!aquarium.volume && <span className="badge badge--insufficient-data"><span aria-hidden="true">?</span> Unmeasured</span>}
+              </Link>
             </li>
           ))}
         </ul>
