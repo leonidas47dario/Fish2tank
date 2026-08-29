@@ -1370,6 +1370,22 @@ summary.factor::-webkit-details-marker { display: none; }
 }
 .tank-tile--add:hover { border-color: var(--color-primary); color: var(--color-text); }
 .tankedit__bar { align-items: center; }
+
+/*
+ * The species brief inside a catch record: a portrait beside the numbers.
+ *
+ * Wraps rather than shrinking - below about 380px the image and a two-column
+ * definition list cannot both be readable, and a squeezed portrait next to
+ * squeezed values is worse than a portrait above them.
+ */
+.brief { display: flex; gap: var(--space-3); align-items: flex-start; flex-wrap: wrap; }
+.brief__art {
+  width: 96px; aspect-ratio: 3 / 2; object-fit: cover;
+  border-radius: var(--radius-card);
+  background: var(--color-surface-raised);
+  flex: none;
+}
+.brief .grow { min-width: 12rem; }
 .h3 { font-size: var(--size-md); }
 
 /* Tank index cards. Tokens only, like everything else in src/ui. */
