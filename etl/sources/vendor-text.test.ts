@@ -84,15 +84,46 @@ describe('fetchProductBody', () => {
   });
 
   it('retries a 503 and succeeds on the second attempt', async () => {
+    // A realistic failure response: the shared client reads Retry-After and
+    // clones the body looking for a network-filter interstitial, so a bare
+    // `{ ok, status }` stub is not enough to exercise the retry path.
+    const failure = {
+      ok: false,
+      status: 503,
+      headers: new Headers(),
+      clone: () => ({ text: async () => 'upstream unavailable' }),
+    } as unknown as Response;
     const fetchImpl = vi
       .fn()
-      .mockResolvedValueOnce({ ok: false, status: 503 } as Response)
+      .mockResolvedValueOnce(failure)
       .mockResolvedValueOnce(json({ product: { body_html: '<p>Peaceful.</p>' } }));
     const out = await fetchProductBody('https://imperialtropicals.com/products/x', 'imperial-tropicals', {
       fetchImpl: fetchImpl as unknown as typeof fetch,
       backoffMs: 1,
     });
     expect(out.text).toBe('Peaceful.');
+  });
+
+  it('carries the shared client\'s network-filter hint into the skip reason', async () => {
+    // The distinction this whole refactor exists for: a store that is down
+    // and a store our own proxy is blocking look identical without it, and
+    // 243 of the 272 listings in this campaign are the second case.
+    const blocked = {
+      ok: false,
+      status: 503,
+      headers: new Headers(),
+      clone: () => ({
+        text: async () => '<!DOCTYPE html><html><script>var paloCategory = "society"</script></html>',
+      }),
+    } as unknown as Response;
+    const fetchImpl = vi.fn(async () => blocked);
+    const out = await fetchProductBody('https://globalexoticquatics.com/products/x', 'global-exoticquatics', {
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+      backoffMs: 1,
+      maxAttempts: 1,
+    });
+    expect(out.text).toBeUndefined();
+    expect(out.skipReason).toMatch(/network filter/);
   });
 
   it('reports a thrown network error instead of swallowing it', async () => {

@@ -20,8 +20,7 @@
  * same limit spec 002 hit and it is a property of this network, not the store.
  */
 
-const USER_AGENT =
-  'Fish2TankResearch/0.1 (personal aquarium field guide; +https://github.com/leonidas47dario/Fish2tank)';
+import { getWithRetry } from './http';
 
 /**
  * Hosts that the corporate proxy blocks. Verified 2026-08-29: both return a
@@ -45,8 +44,6 @@ export interface VendorFetchOptions {
   userAgent?: string;
   fetchImpl?: typeof fetch;
 }
-
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /** The public product record behind a Shopify product page. */
 export function productJsonUrl(productUrl: string): string {
@@ -104,46 +101,41 @@ export async function fetchProductBody(
     return { productUrl, storeId, skipReason: `host ${host} is blocked by the corporate proxy` };
   }
 
-  const { backoffMs = 1500, maxAttempts = 3, userAgent = USER_AGENT, fetchImpl = fetch } = opts;
+  const { backoffMs = 1500, maxAttempts = 3, userAgent, fetchImpl } = opts;
   const url = productJsonUrl(productUrl);
 
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    let res: Response;
-    try {
-      res = await fetchImpl(url, { headers: { 'User-Agent': userAgent } });
-    } catch (err) {
-      // A network error is a fact about this run, not something to swallow.
-      if (attempt === maxAttempts) {
-        return { productUrl, storeId, skipReason: `fetch failed: ${(err as Error).message}` };
-      }
-      await sleep(backoffMs * attempt);
-      continue;
-    }
-
-    if (res.status === 404) return { productUrl, storeId, skipReason: 'product 404 (delisted)' };
-    if (res.status === 429 || res.status >= 500) {
-      if (attempt === maxAttempts) {
-        return { productUrl, storeId, skipReason: `HTTP ${res.status} after ${maxAttempts} attempts` };
-      }
-      await sleep(backoffMs * attempt);
-      continue;
-    }
-    if (!res.ok) return { productUrl, storeId, skipReason: `HTTP ${res.status}` };
-
-    const raw = await res.text();
-    let product: { title?: string; body_html?: string } | undefined;
-    try {
-      product = (JSON.parse(raw) as { product?: { title?: string; body_html?: string } }).product;
-    } catch {
-      // The proxy answers HTML where JSON was asked for. Say that plainly
-      // rather than reporting an empty description.
-      return { productUrl, storeId, skipReason: 'response was not JSON (proxy interstitial?)' };
-    }
-
-    const text = bodyText(product?.body_html);
-    if (!text) return { productUrl, storeId, skipReason: 'product has an empty description' };
-    return { productUrl, storeId, text, ...(product?.title ? { title: product.title } : {}) };
+  // The shared polite client, so this source cannot ship without the manners
+  // the others have - Retry-After, bounded backoff, and the network-filter
+  // hint that tells a genuinely down store apart from one our own proxy is
+  // blocking. That distinction is not academic here: 243 of the 272 listings
+  // in this campaign are unreachable for the second reason.
+  let res: Response;
+  try {
+    res = await getWithRetry(url, {
+      backoffMs,
+      maxRetries: maxAttempts - 1,
+      ...(userAgent ? { userAgent } : {}),
+      ...(fetchImpl ? { fetchImpl } : {}),
+    });
+  } catch (err) {
+    // Never throws to the caller: an unreachable store is an outcome to
+    // record, not a reason to abandon the other 271 species.
+    const message = (err as Error).message;
+    if (message.includes('HTTP 404')) return { productUrl, storeId, skipReason: 'product 404 (delisted)' };
+    return { productUrl, storeId, skipReason: message };
   }
 
-  return { productUrl, storeId, skipReason: 'exhausted retries' };
+  const raw = await res.text();
+  let product: { title?: string; body_html?: string } | undefined;
+  try {
+    product = (JSON.parse(raw) as { product?: { title?: string; body_html?: string } }).product;
+  } catch {
+    // A 200 carrying HTML is the other shape a filter takes: it answers for
+    // the origin rather than failing, so getWithRetry never sees an error.
+    return { productUrl, storeId, skipReason: 'response was not JSON (proxy interstitial?)' };
+  }
+
+  const text = bodyText(product?.body_html);
+  if (!text) return { productUrl, storeId, skipReason: 'product has an empty description' };
+  return { productUrl, storeId, text, ...(product?.title ? { title: product.title } : {}) };
 }
