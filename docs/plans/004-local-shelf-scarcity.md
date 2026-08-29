@@ -1,6 +1,6 @@
 # Local-shelf scarcity (spec 004) - implementation record
 
-**Status:** code complete, dormant on the shipped index. One blocker, external.
+**Status:** complete and live. Index rebuilt with all 10 vendors.
 **Date:** 2026-08-29
 
 This replaces the original TDD plan. That plan was written against an index of
@@ -69,50 +69,66 @@ livestock category at all. It cannot be a witness. `isLivestock` is separately
 too permissive - it admits lanyards and keychains - but tightening it takes
 Co-Op toward zero, not toward useful.
 
-## Verified end state
+## Live result
 
-Built in memory from the seven snapshots that answered, using the shipped
-engine:
+`npm run reindex` now publishes an index covering **10 of 10 vendors**, 19,450
+listings, 1,074 species. Nu Aqua is in it for the first time.
 
 ```
-witnesses: imperial-tropicals (38.7%), aquahuna (28.8%), nu-aqua (23.1%)   N=3
+witnesses: imperial-tropicals 31.0%, aquahuna 28.6%, nu-aqua 24.1%   N=3
 
-species 1464
-   widely-available      55   3.8%
-   available             78   5.3%
-   uncommon              37   2.5%
-   scarce               157  10.7%
+species 1074, rated 372
+   widely-available      44   4.1%
+   available             90   8.4%
+   uncommon              37   3.4%
+   scarce               201  18.7%
    rarely-listed          0   0.0%
-   not-rated           1137  77.7%
+   not-rated            702  65.4%
 ```
 
-Four bands populated, largest 48% of the rated set - the scale discriminates.
-Oscar reads "available", carried by Imperial Tropicals and Nu Aqua. At N=3 a
-sole-witness fish scores 63 and reads "scarce", which is the metric Ryan
-asked for, one rung short of its ceiling until a fourth witness exists.
+Spot-checked against fish anyone in the hobby can place:
 
-## The blocker
+| Fish | Band | Witnesses carrying |
+|---|---|---|
+| Neon Tetra | Widely available | all three |
+| Cardinal Tetra | Widely available | all three |
+| Bristlenose Pleco | Widely available | all three |
+| Harlequin Rasbora | Widely available | all three |
+| Electric Blue Acara | Widely available | all three |
+| Oscar | Available | Imperial Tropicals, Nu Aqua |
+| Jack Dempsey | Available | Imperial Tropicals, AquaHuna |
+| Fancy Guppy | Available | Imperial Tropicals, Nu Aqua |
+| Betta | Uncommon | Imperial Tropicals only |
 
-`npm run etl` cannot republish the index from this machine. **Predatory Fins,
-Aquatic Arts and Flip Aquatics all return HTTP 503**, and the body is a Palo
-Alto / Menlo Security interstitial (`paloCategory = "society"`, redirecting to
-`safe.menlosecurity.com`) - this is DRW's corporate egress filter, not the
-vendors' servers. It is not transient, retrying does not help, and it must not
-be routed around: it is an employer network control.
+Four of five bands populated, largest holds 54% of the rated set. Nothing
+reads "rarely listed" - that needs five witnesses and there are three, which
+is the ceiling rule doing its job rather than a gap.
 
-All three are specialists, so they do not affect the witness set - but they
-hold roughly a thousand species and most of the price data, and
-`--allow-partial` correctly refuses to reprice the catalog against seven
-stores. Not overridden.
+**Betta at "uncommon" is the one visibly soft call**, and it is a matching
+gap, not a rating bug: Nu Aqua stocks bettas but lists them as "Halfmoon Betta
+- Male" and "Betta Crowntail Male", which the conservative single-word rule in
+`etl/normalize/species.ts` will not match to the catalog name "Betta". That
+rule exists to stop "Bass" swallowing "Peacock Bass" and should not be
+loosened casually.
 
-The other seven vendors fetch normally from here, including Nu Aqua and
-LiveAquaria, which had never been scraped before this session.
+## How the blocker was cleared
 
-**To finish:** re-run `npm run etl` from a network outside the DRW filter,
-confirm the
-witness count reaches 3, then update the calibration expectations in
-`src/data/market.test.ts` - the test that currently asserts "rates nothing"
-flips to asserting the real distribution, deliberately and visibly.
+Three vendors - Predatory Fins, Aquatic Arts, Flip Aquatics - return HTTP 503
+from this machine. The body is a Palo Alto / Menlo Security interstitial
+(`paloCategory = "society"`), so it is DRW's corporate egress filter, not the
+vendors. It is not transient and was not routed around.
+
+`npm run etl` therefore cannot complete, and `--allow-partial` correctly
+refuses to reprice the catalog against seven stores. But the *warehouse*
+already holds all three vendors' listings, and the two stores the warehouse
+never saw (Nu Aqua, LiveAquaria) fetch fine. So `etl/rebuild-index.ts` gained
+the ability to fold a raw snapshot in for any declared vendor absent from the
+warehouse. Warehouse supplies the blocked three; snapshots supply the other
+two; no network needed for the blocked hosts.
+
+A full `npm run refresh` from an unfiltered network still reproduces this and
+would additionally discover the 4,920 listings whose binomials are not yet in
+`dim_species`.
 
 ## Still open
 

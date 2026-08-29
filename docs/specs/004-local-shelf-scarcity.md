@@ -1,6 +1,6 @@
 # 004 - Local-shelf scarcity
 
-**Status:** implemented, dormant on the shipped index (see docs/plans/004-local-shelf-scarcity.md)
+**Status:** implemented and live (see docs/plans/004-local-shelf-scarcity.md)
 **Date:** 2026-08-29
 **Touches:** FR-P05 (online availability never increases collecting rarity), FR-R07 (no objective rarity claim below a sample threshold), FR-P06 (automated pricing retains source and confidence).
 **Introduces:** store `channel` tiering, and the *witness gate* - a store's silence only counts as evidence when that store demonstrably resolves its own catalog.
@@ -244,33 +244,30 @@ support. At five or six witnesses, sole-source lands in the top band exactly
 as asked. The formula earns the right to its strongest word rather than
 assuming it.
 
-### What this achieves, verified
+### What this achieves
 
-Built in memory from the seven store snapshots that answered, using the
-shipped engine:
+Live, on an index rebuilt across all 10 vendors:
 
 ```
-witnesses: imperial-tropicals (38.7%), aquahuna (28.8%), nu-aqua (23.1%)   N=3
+witnesses: imperial-tropicals 31.0%, aquahuna 28.6%, nu-aqua 24.1%   N=3
 
-species 1464
-   widely-available      55   3.8%
-   available             78   5.3%
-   uncommon              37   2.5%
-   scarce               157  10.7%
+species 1074, rated 372
+   widely-available      44   4.1%
+   available             90   8.4%
+   uncommon              37   3.4%
+   scarce               201  18.7%
    rarely-listed          0   0.0%
-   not-rated           1137  77.7%
+   not-rated            702  65.4%
 ```
 
-Four bands populated and the largest holds 48% of the rated set, so the scale
-discriminates. Oscar reads "available", carried by Imperial Tropicals and Nu
-Aqua. A sole-witness fish scores 63 and reads "scarce" - Ryan's metric, one
-rung short of its ceiling until a fourth witness exists.
+Neon Tetra, Cardinal Tetra, Bristlenose Pleco, Harlequin Rasbora and Electric
+Blue Acara all read **widely available** - every one of them was "scarce" or
+"uncommon" under v0.1.0. Oscar, Jack Dempsey and Fancy Guppy read available.
+The 201 sole-witness species read scarce.
 
-**On the currently shipped index it rates nothing.** With Aquatic Arts
-reclassified there is one qualifying witness, and `minimumWitnesses: 2` refuses
-rather than emitting a badge with a single possible value. The feature is
-dormant until the ETL republishes, which is blocked only by three stores
-returning 503. See docs/plans/004-local-shelf-scarcity.md.
+Nothing reads "rarely listed", and that is the ceiling rule working: it takes
+five witnesses and there are three. The rating declines its strongest word
+until the sample earns it.
 
 ---
 
