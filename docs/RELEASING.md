@@ -75,7 +75,7 @@ Run them in that order: the warehouse reads what the first two write.
 
 | Stage | Network | Runtime | Writes |
 |---|---|---|---|
-| `etl` | 8 vendors, ~25 paginated requests | ~1 min | `data/market/`, `src/data/seed/market/market-index.json` |
+| `etl` | 12 vendors: ~50 paginated Shopify requests, plus ~280 PetSmart page reads and 8 Petco branch reads at 1/sec | ~10 min | `data/market/`, `src/data/seed/marts/market-index.json` |
 | `images` | ~90 Wikimedia calls | ~1 min | `data/market/images.jsonl` |
 | `warehouse` | none | seconds | `warehouse/dim/*.parquet`, `warehouse/fact/*.parquet` |
 
@@ -87,22 +87,43 @@ npm run etl -- --offline
 
 Rebuilds from the raw snapshots cached in `etl/raw/`. Use this whenever you
 change normalization, matching or aggregation logic — there is no reason to
-re-hit eight small businesses to test a parser change.
+re-hit twelve vendors to test a parser change.
+
+This matters more since the big-box vendors landed: PetSmart has no bulk feed,
+so an online run reads 256 product pages and 8 store pages one at a time. That
+is the permitted route (see [`MARKET_ETL.md`](MARKET_ETL.md)), and it is why
+`--offline` is the default posture for anything that is not an intentional data
+refresh.
 
 `etl/raw/` is gitignored, so `--offline` needs one online run first on a fresh
 clone.
 
 ### Politeness
 
-These are small businesses' servers. The client identifies itself with a
-contactable User-Agent, waits between page requests, honours `Retry-After`,
-backs off on 429/5xx, and caps pagination so a bug cannot become a hammering
-loop. Do not raise the concurrency.
+These are small businesses' servers, and the two big-box ones will throttle
+anything that behaves like a crawler. One shared client in
+`etl/sources/http.ts` carries the manners for every source — a contactable
+User-Agent, a wait between requests, `Retry-After` honoured, exponential
+backoff on 429/5xx, capped pagination — so a new vendor reader cannot ship
+without them. Do not raise the concurrency.
+
+Permission is checked **per host, not per brand**. `www.petco.com` refuses
+every automated request including its own `robots.txt`, so nothing is read from
+it and no substitute for its prices is invented; `stores.petco.com` publishes a
+`robots.txt` with no restrictions and is read. Same company, two answers.
 
 ### What a refresh should produce
 
-A refresh is expected to change `market-index.json` and the Parquet facts. It
-should **not** change any engine behaviour. If a refresh turns tests red, the
+A refresh is expected to change `market-index.json`, `catalog.json` and the
+Parquet facts. It should **not** change any engine behaviour.
+
+It **can** legitimately change the catalog's shape, and the 2026-08-29 refresh
+did: vendors had grown their own catalogues, the species dimension went from
+1,076 to 2,149, and the two build gates caught the consequences — 29 new naming
+problems (`npm run marts` exits non-zero) and a water-zone coverage assertion
+that had quietly become a marine-coverage assertion. Both were fixed at the
+cause. That is the gates working, not the refresh failing; read a red build
+after a refresh as a finding, not as noise to be silenced. If a refresh turns tests red, the
 tests were asserting on live data rather than on logic — fix the test to derive
 its expectation, as `market-scarcity.test.ts` does with the vendor count.
 

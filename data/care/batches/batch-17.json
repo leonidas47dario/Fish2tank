@@ -1,0 +1,180 @@
+{
+  "batch": "17",
+  "species": [
+    {
+      "speciesId": "sp_parambassis_ranga",
+      "commonName": "Indian Glass Fish",
+      "scientificName": "Parambassis ranga",
+      "family": "Ambassidae",
+      "wikipediaFile": "data/care/text/sp_parambassis_ranga.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_oryzias_dancena",
+      "commonName": "Indian Ricefish",
+      "scientificName": "Oryzias dancena",
+      "family": "Adrianichthyidae",
+      "wikipediaFile": "data/care/text/sp_oryzias_dancena.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_ceratopteris_thalictroides",
+      "commonName": "Indian Water Fern",
+      "scientificName": "Ceratopteris thalictroides",
+      "family": "Pteridaceae",
+      "wikipediaFile": "data/care/text/sp_ceratopteris_thalictroides.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_megalops_cyprinoides",
+      "commonName": "Indo Pacific Tarpon",
+      "scientificName": "Megalops cyprinoides",
+      "family": "Megalopidae",
+      "wikipediaFile": "data/care/text/sp_megalops_cyprinoides.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_cichla_intermedia",
+      "commonName": "Intermedia Peacock Bass",
+      "scientificName": "Cichla intermedia",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_cichla_intermedia.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pangasianodon_hypophthalmus",
+      "commonName": "Iridescent Shark",
+      "scientificName": "Pangasianodon hypophthalmus",
+      "family": "Pangasiidae",
+      "wikipediaFile": "data/care/text/sp_pangasianodon_hypophthalmus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_megalodoras_uranoscopus",
+      "commonName": "Irwini Catfish",
+      "scientificName": "Megalodoras uranoscopus",
+      "family": "Doradidae",
+      "wikipediaFile": "data/care/text/sp_megalodoras_uranoscopus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_dormitator_maculatus",
+      "commonName": "Fat Sleeper",
+      "scientificName": "Dormitator maculatus",
+      "family": "Eleotridae",
+      "wikipediaFile": "data/care/text/sp_dormitator_maculatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_liosomadoras_oncinus",
+      "commonName": "Jaguar Catfish",
+      "scientificName": "Liosomadoras oncinus",
+      "family": "Auchenipteridae",
+      "wikipediaFile": "data/care/text/sp_liosomadoras_oncinus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_scleropages_jardinii",
+      "commonName": "Jardini Arowana",
+      "scientificName": "Scleropages jardinii",
+      "family": "Osteoglossidae",
+      "wikipediaFile": "data/care/text/sp_scleropages_jardinii.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_cephalosilurus_apurensis",
+      "commonName": "Jelly Catfish",
+      "scientificName": "Cephalosilurus apurensis",
+      "family": "Pseudopimelodidae",
+      "vendorFile": "data/care/text/sp_cephalosilurus_apurensis.vendor.txt"
+    },
+    {
+      "speciesId": "sp_wertheimeria_maculata",
+      "commonName": "Jewel Spotted Catfish",
+      "scientificName": "Wertheimeria maculata",
+      "family": "Doradidae",
+      "wikipediaFile": "data/care/text/sp_wertheimeria_maculata.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_aplocheilus_panchax",
+      "commonName": "Blue Panchax Killifish",
+      "scientificName": "Aplocheilus panchax",
+      "family": "Aplocheilidae",
+      "wikipediaFile": "data/care/text/sp_aplocheilus_panchax.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_nothobranchius_korthausae",
+      "commonName": "Yellow Korthaus Killifish",
+      "scientificName": "Nothobranchius korthausae",
+      "family": "Nothobranchiidae",
+      "wikipediaFile": "data/care/text/sp_nothobranchius_korthausae.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_boehlkea_fredcochui",
+      "commonName": "S Blue Tetra",
+      "scientificName": "Boehlkea fredcochui",
+      "family": "Stevardiidae",
+      "wikipediaFile": "data/care/text/sp_boehlkea_fredcochui.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hypancistrus_seideli",
+      "commonName": "King Tiger Pleco",
+      "scientificName": "Hypancistrus seideli",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_hypancistrus_seideli.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_cyprinus_carpio",
+      "commonName": "Koi Fish",
+      "scientificName": "Cyprinus carpio",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_cyprinus_carpio.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_neritina_juttingae",
+      "commonName": "Koopa Nerite Snail",
+      "scientificName": "Neritina juttingae",
+      "family": "Neritidae",
+      "wikipediaFile": "data/care/text/sp_neritina_juttingae.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pelvicachromis_taeniatus",
+      "commonName": "Kribensis Cichlid",
+      "scientificName": "Pelvicachromis taeniatus",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_pelvicachromis_taeniatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_microdevario_kubotai",
+      "commonName": "Kubotai Rasbora",
+      "scientificName": "Microdevario kubotai",
+      "family": "Danionidae",
+      "wikipediaFile": "data/care/text/sp_microdevario_kubotai.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_dekeyseria_brachyura",
+      "commonName": "L Butterfly Pleco",
+      "scientificName": "Dekeyseria brachyura",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_dekeyseria_brachyura.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_ancistomus_snethlageae",
+      "commonName": "L Ghost Pleco",
+      "scientificName": "Ancistomus snethlageae",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_ancistomus_snethlageae.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_ancistrus_ranunculus",
+      "commonName": "L Medusa Pleco",
+      "scientificName": "Ancistrus ranunculus",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_ancistrus_ranunculus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_peckoltia_sabaji",
+      "commonName": "L Para Pleco",
+      "scientificName": "Peckoltia sabaji",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_peckoltia_sabaji.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hypancistrus_inspector",
+      "commonName": "L Snowball Pleco",
+      "scientificName": "Hypancistrus inspector",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_hypancistrus_inspector.wikipedia.txt"
+    }
+  ]
+}

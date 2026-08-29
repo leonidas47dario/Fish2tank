@@ -14,12 +14,18 @@ import type { MarketSpeciesStats } from './market';
 
 export interface CatalogPortrait {
   url: string;
-  license: string;
+  /** Which credit line to render. See spec 002. */
+  provenance: 'wikimedia' | 'vendor' | 'web';
+  /** Present for Wikimedia images only; vendor and web photos have none. */
+  license?: string;
   artist?: string;
   attributionUrl?: string;
   width?: number;
   height?: number;
 }
+
+/** The care fields the backfill can source, and therefore can credit. */
+export type CareField = 'adultSizeIn' | 'minVolumeGal' | 'aggression' | 'tempC';
 
 export interface CatalogSpecies {
   speciesId: string;
@@ -34,6 +40,13 @@ export interface CatalogSpecies {
   predationTags: string[];
   sourceLabel?: string;
   sourceUrl?: string;
+  /**
+   * Where each backfilled care value came from, keyed by field. Present only
+   * for species filled in by the spec 003 backfill, where size may come from
+   * Wikipedia and tank volume from a store, so a single species-level credit
+   * would be wrong about one of them.
+   */
+  careSources?: Partial<Record<CareField, { source: string; url?: string }>>;
   portrait?: CatalogPortrait;
   /** Taxonomic family, and what it implies. Derived — see seed/taxonomy.ts. */
   family?: string;
@@ -176,4 +189,23 @@ export function marketAndScarcity(speciesId: string) {
   const market = marketFor(speciesId);
   const scarcity = scarcityFor(speciesId);
   return { market, scarcityBand: scarcity.available ? scarcity.band : undefined };
+}
+
+/**
+ * The sentence under a portrait, which differs by where the picture came from.
+ *
+ * A Wikimedia file is used under a stated licence and credits its
+ * photographer. A vendor listing photo has no licence at all and is used by
+ * the owner's decision (spec 002), so it names the shop plainly instead of
+ * borrowing the shape of a licence line. Dressing the second up as the first
+ * would be the actual dishonesty here, so provenance decides the sentence and
+ * the presence of a `license` field never overrides it.
+ */
+export function portraitCredit(p: CatalogPortrait): string {
+  if (p.provenance === 'wikimedia' && p.license) {
+    return p.artist ? `${p.artist}, ${p.license}` : p.license;
+  }
+  if (p.provenance === 'vendor' && p.artist) return `Photo: ${p.artist} (product listing)`;
+  if (p.artist) return `Photo: ${p.artist}`;
+  return 'Source not recorded';
 }

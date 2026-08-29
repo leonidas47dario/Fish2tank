@@ -99,6 +99,46 @@ describe('politeness', () => {
   });
 });
 
+describe('telling a vendor outage apart from our own network', () => {
+  /**
+   * A corporate filter answers for the origin, so a blocked host is
+   * indistinguishable from a down one: a plain 5xx, retried to exhaustion,
+   * that never recovers. On 2026-08-29 predatoryfins.com was retried for an
+   * hour on the assumption it was down. It was up; the network was blocking
+   * it, and the proof was sitting in the response body the whole time.
+   */
+  const interstitial = `<!DOCTYPE html>
+<html lang="en"><head><script>
+  var paloCategory = "society"
+  var url = "www.predatoryfins.com/"
+  window.location = "https://safe.menlosecurity.com/" + url;
+</script></head><body>Blocked</body></html>`;
+
+  it('says so when the 5xx body is a network filter, not the store', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(
+      new Response(interstitial, { status: 503, headers: { 'content-type': 'text/html' } }),
+    );
+    await expect(fetchAllProducts('example.com', { ...opts, fetchImpl: fetchImpl as never }))
+      .rejects.toThrow(/network filter.*retrying will not help/s);
+  });
+
+  it('leaves a genuine store error alone', async () => {
+    // A real 503 from the origin carries no interstitial, and the message must
+    // stay exactly as terse as it was.
+    const fetchImpl = vi.fn().mockResolvedValue(new Response('service unavailable', { status: 503 }));
+    await expect(fetchAllProducts('example.com', { ...opts, fetchImpl: fetchImpl as never }))
+      .rejects.toThrow(/^GET .* failed: HTTP 503$/);
+  });
+
+  it('does not mistake an HTML error page for a filter', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(
+      new Response('<!DOCTYPE html><html><body>500 Internal Server Error</body></html>', { status: 500 }),
+    );
+    await expect(fetchAllProducts('example.com', { ...opts, fetchImpl: fetchImpl as never }))
+      .rejects.toThrow(/^GET .* failed: HTTP 500$/);
+  });
+});
+
 describe('productUrl', () => {
   it('builds the canonical listing URL', () => {
     expect(productUrl('www.predatoryfins.com', 'black-kumpay-goby'))

@@ -1,0 +1,181 @@
+{
+  "batch": "07",
+  "species": [
+    {
+      "speciesId": "sp_celetaia_persculpta",
+      "commonName": "Blue Turbo Snail",
+      "scientificName": "Celetaia persculpta",
+      "family": "Viviparidae",
+      "wikipediaFile": "data/care/text/sp_celetaia_persculpta.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_haplochromis_nubilus",
+      "commonName": "Blue Victoria Mouthbrooder",
+      "scientificName": "Haplochromis nubilus",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_haplochromis_nubilus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_cetopsis_coecutiens",
+      "commonName": "Blue Whale Catfish",
+      "scientificName": "Cetopsis coecutiens",
+      "family": "Cetopsidae",
+      "wikipediaFile": "data/care/text/sp_cetopsis_coecutiens.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_boesemania_microlepis",
+      "commonName": "Boeseman Croaker",
+      "scientificName": "Boesemania microlepis",
+      "family": "Sciaenidae",
+      "wikipediaFile": "data/care/text/sp_boesemania_microlepis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_melanotaenia_boesemani",
+      "commonName": "Boesemani Rainbowfish",
+      "scientificName": "Melanotaenia boesemani",
+      "family": "Melanotaeniidae",
+      "wikipediaFile": "data/care/text/sp_melanotaenia_boesemani.wikipedia.txt",
+      "vendorFile": "data/care/text/sp_melanotaenia_boesemani.vendor.txt"
+    },
+    {
+      "speciesId": "sp_potamotrygon_boesemani",
+      "commonName": "Boesemani Stingray",
+      "scientificName": "Potamotrygon boesemani",
+      "family": "Potamotrygonidae",
+      "wikipediaFile": "data/care/text/sp_potamotrygon_boesemani.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_bolbitis_heteroclita",
+      "commonName": "Ni O Fern",
+      "scientificName": "Bolbitis heteroclita",
+      "family": "Dryopteridaceae",
+      "wikipediaFile": "data/care/text/sp_bolbitis_heteroclita.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_aguarunichthys_torosus",
+      "commonName": "Bolt Catfish",
+      "scientificName": "Aguarunichthys torosus",
+      "family": "Pimelodidae",
+      "wikipediaFile": "data/care/text/sp_aguarunichthys_torosus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_neoarius_leptaspis",
+      "commonName": "Boofhead Catfish",
+      "scientificName": "Neoarius leptaspis",
+      "family": "Ariidae",
+      "wikipediaFile": "data/care/text/sp_neoarius_leptaspis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_copadichromis_borleyi",
+      "commonName": "Borleyi Kadango Cichlid",
+      "scientificName": "Copadichromis borleyi",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_copadichromis_borleyi.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_amia_calva",
+      "commonName": "Bowfin",
+      "scientificName": "Amia calva",
+      "family": "Amiidae",
+      "wikipediaFile": "data/care/text/sp_amia_calva.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_sinotaia_quadrata",
+      "commonName": "Japanese Trapdoor Snail",
+      "scientificName": "Sinotaia quadrata",
+      "family": "Viviparidae",
+      "wikipediaFile": "data/care/text/sp_sinotaia_quadrata.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_zoogoneticus_tequila",
+      "commonName": "Tequila Goodeid",
+      "scientificName": "Zoogoneticus tequila",
+      "family": "Goodeidae",
+      "wikipediaFile": "data/care/text/sp_zoogoneticus_tequila.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_nothobranchius_guentheri",
+      "commonName": "Killifish",
+      "scientificName": "Nothobranchius guentheri",
+      "family": "Nothobranchiidae",
+      "wikipediaFile": "data/care/text/sp_nothobranchius_guentheri.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_neocaridina_zhangjiajiensis",
+      "commonName": "Snowball Shrimp",
+      "scientificName": "Neocaridina zhangjiajiensis",
+      "family": "Atyidae",
+      "wikipediaFile": "data/care/text/sp_neocaridina_zhangjiajiensis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_tylomelania_sarasinorum",
+      "commonName": "Sulawesi Rabbit Snail",
+      "scientificName": "Tylomelania sarasinorum",
+      "family": "Pachychilidae",
+      "wikipediaFile": "data/care/text/sp_tylomelania_sarasinorum.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_physella_acuta",
+      "commonName": "Bladder Snail",
+      "scientificName": "Physella acuta",
+      "family": "Physidae",
+      "wikipediaFile": "data/care/text/sp_physella_acuta.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_tylomelania_patriarchalis",
+      "commonName": "Sulawesi Rabbit Snail",
+      "scientificName": "Tylomelania patriarchalis",
+      "family": "Pachychilidae",
+      "wikipediaFile": "data/care/text/sp_tylomelania_patriarchalis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_caridina_dennerli",
+      "commonName": "Cardinal Sulawesi Shrimp",
+      "scientificName": "Caridina dennerli",
+      "family": "Atyidae",
+      "wikipediaFile": "data/care/text/sp_caridina_dennerli.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_synodontis_brichardi",
+      "commonName": "Brichardi Squeaker Catfish",
+      "scientificName": "Synodontis brichardi",
+      "family": "Mochokidae",
+      "wikipediaFile": "data/care/text/sp_synodontis_brichardi.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_epinephelus_lanceolatus",
+      "commonName": "Bumblebee Grouper",
+      "scientificName": "Epinephelus lanceolatus",
+      "family": "Serranidae",
+      "wikipediaFile": "data/care/text/sp_epinephelus_lanceolatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_vallisneria_americana",
+      "commonName": "Jungle Vallisneria",
+      "scientificName": "Vallisneria americana",
+      "family": "Hydrocharitaceae",
+      "wikipediaFile": "data/care/text/sp_vallisneria_americana.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_sagittaria_subulata",
+      "commonName": "Narrowleaf Sagittaria",
+      "scientificName": "Sagittaria subulata",
+      "family": "Alismataceae",
+      "wikipediaFile": "data/care/text/sp_sagittaria_subulata.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_lota_lota",
+      "commonName": "Burbot",
+      "scientificName": "Lota lota",
+      "family": "Lotidae",
+      "wikipediaFile": "data/care/text/sp_lota_lota.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_macrognathus_zebrinus",
+      "commonName": "Burmese Zebra Eel",
+      "scientificName": "Macrognathus zebrinus",
+      "family": "Mastacembelidae",
+      "wikipediaFile": "data/care/text/sp_macrognathus_zebrinus.wikipedia.txt"
+    }
+  ]
+}

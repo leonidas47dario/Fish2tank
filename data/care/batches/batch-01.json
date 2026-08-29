@@ -1,0 +1,180 @@
+{
+  "batch": "01",
+  "species": [
+    {
+      "speciesId": "sp_carassius_auratus_auratus",
+      "commonName": "Blue Oranda Goldfish",
+      "scientificName": "Carassius auratus auratus",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_carassius_auratus_auratus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_daphnia_magna",
+      "commonName": "Live Daphnia",
+      "scientificName": "Daphnia magna",
+      "family": "Daphniidae",
+      "wikipediaFile": "data/care/text/sp_daphnia_magna.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_echinodorus_osiris",
+      "commonName": "Melon Sword",
+      "scientificName": "Echinodorus osiris",
+      "family": "Alismataceae",
+      "wikipediaFile": "data/care/text/sp_echinodorus_osiris.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_nannacara_anomala",
+      "commonName": "Golden Dwarf Cichlid",
+      "scientificName": "Nannacara anomala",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_nannacara_anomala.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_trichogaster_labiosa",
+      "commonName": "Thick-Lipped Gourami",
+      "scientificName": "Trichogaster labiosa",
+      "family": "Osphronemidae",
+      "wikipediaFile": "data/care/text/sp_trichogaster_labiosa.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_sphaerichthys_vaillanti",
+      "commonName": "Samurai Gourami",
+      "scientificName": "Sphaerichthys vaillanti",
+      "family": "Osphronemidae",
+      "wikipediaFile": "data/care/text/sp_sphaerichthys_vaillanti.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_brachydanio_rerio",
+      "commonName": "Golden Zebra Danio",
+      "scientificName": "Brachydanio rerio",
+      "family": "Danionidae",
+      "wikipediaFile": "data/care/text/sp_brachydanio_rerio.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_melanotaenia_fluviatilis",
+      "commonName": "Australian Rainbowfish",
+      "scientificName": "Melanotaenia fluviatilis",
+      "family": "Melanotaeniidae",
+      "wikipediaFile": "data/care/text/sp_melanotaenia_fluviatilis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_corydoras_hastatus",
+      "commonName": "Spot Pygmy Cory",
+      "scientificName": "Corydoras hastatus",
+      "family": "Callichthyidae",
+      "wikipediaFile": "data/care/text/sp_corydoras_hastatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_apistogramma_viejita",
+      "commonName": "Viejita Dwarf Cichlid",
+      "scientificName": "Apistogramma viejita",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_apistogramma_viejita.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_corydoras_metae",
+      "commonName": "Bandit Cory Catfish",
+      "scientificName": "Corydoras metae",
+      "family": "Callichthyidae",
+      "wikipediaFile": "data/care/text/sp_corydoras_metae.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_farlowella_amazonum",
+      "commonName": "Amazon Whiptail Catfish",
+      "scientificName": "Farlowella amazonum",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_farlowella_amazonum.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hyphessobrycon_columbianus",
+      "commonName": "Blue Colombian Tetra",
+      "scientificName": "Hyphessobrycon columbianus",
+      "family": "Characidae",
+      "wikipediaFile": "data/care/text/sp_hyphessobrycon_columbianus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pomacea_bridgesii",
+      "commonName": "Mystery Snails",
+      "scientificName": "Pomacea bridgesii",
+      "family": "Ampullariidae",
+      "wikipediaFile": "data/care/text/sp_pomacea_bridgesii.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_aborichthys_elongatus",
+      "commonName": "Red-Tailed Squirrel Loach",
+      "scientificName": "Aborichthys elongatus",
+      "family": "Nemacheilidae",
+      "wikipediaFile": "data/care/text/sp_aborichthys_elongatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_caridina_cantonensis",
+      "commonName": "Black King Kong",
+      "scientificName": "Caridina cantonensis",
+      "family": "Atyidae",
+      "wikipediaFile": "data/care/text/sp_caridina_cantonensis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_gymnarchus_niloticus",
+      "commonName": "Aba Aba Knifefish",
+      "scientificName": "Gymnarchus niloticus",
+      "family": "Gymnarchidae",
+      "wikipediaFile": "data/care/text/sp_gymnarchus_niloticus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pao_abei",
+      "commonName": "Abei Puffer",
+      "scientificName": "Pao abei",
+      "family": "Tetraodontidae",
+      "wikipediaFile": "data/care/text/sp_pao_abei.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_acarichthys_heckelii",
+      "commonName": "Threadfin Acara",
+      "scientificName": "Acarichthys heckelii",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_acarichthys_heckelii.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hoplisoma_adolfoi",
+      "commonName": "Adolfo S Hoplisoma",
+      "scientificName": "Hoplisoma adolfoi",
+      "family": "Callichthyidae",
+      "wikipediaFile": "data/care/text/sp_hoplisoma_adolfoi.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_acanthicus_adonis",
+      "commonName": "Adonis Pleco",
+      "scientificName": "Acanthicus adonis",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_acanthicus_adonis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_heterotis_niloticus",
+      "commonName": "African Arowana",
+      "scientificName": "Heterotis niloticus",
+      "family": "Osteoglossidae",
+      "wikipediaFile": "data/care/text/sp_heterotis_niloticus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hymenochirus_boettgeri",
+      "commonName": "African Dwarf Frog",
+      "scientificName": "Hymenochirus boettgeri",
+      "family": "Pipidae",
+      "wikipediaFile": "data/care/text/sp_hymenochirus_boettgeri.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hymenochirus_curtipes",
+      "commonName": "Dwarf African Frog",
+      "scientificName": "Hymenochirus curtipes",
+      "family": "Pipidae",
+      "wikipediaFile": "data/care/text/sp_hymenochirus_curtipes.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pareutropius_debauwi",
+      "commonName": "African Glass Catfish",
+      "scientificName": "Pareutropius debauwi",
+      "family": "Schilbeidae",
+      "wikipediaFile": "data/care/text/sp_pareutropius_debauwi.wikipedia.txt"
+    }
+  ]
+}

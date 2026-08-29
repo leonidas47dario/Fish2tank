@@ -1,0 +1,105 @@
+{"speciesId":"sp_carassius_auratus_auratus","kind":"rejected-field","field":"aggression","reason":"the quote uses no word supporting this temperament","claimed":"peaceful from \"Very rarely does a goldfish harm another goldfish, nor do the males harm the females during breeding\""}
+{"speciesId":"sp_echinodorus_osiris","kind":"low-confidence","reason":"agent flagged low confidence: Cached file is the Wikipedia article for Aquarius uruguayensis, not Echinodorus osiris; it never mentions our binomial, so no correction is asserted. It gives leaf and stem dimensions only, no whole-plant size, no tank volume and no temperature figures."}
+{"speciesId":"sp_brachydanio_rerio","kind":"taxonomy-correction","reason":"proposed rename to \"Danio rerio\""}
+{"speciesId":"sp_brachydanio_rerio","kind":"rejected-field","field":"aggression","reason":"the quote uses no word supporting this temperament","claimed":"peaceful from \"interact well with other fish species in the aquarium\""}
+{"speciesId":"sp_corydoras_agassizii","kind":"taxonomy-correction","reason":"proposed rename to \"Brochis agassizii\""}
+{"speciesId":"sp_tetraodon_palembangensis","kind":"taxonomy-correction","reason":"proposed rename to \"Pao palembangensis\""}
+{"speciesId":"sp_azolla_caroliniana","kind":"taxonomy-correction","reason":"proposed rename to \"Azolla cristata\""}
+{"speciesId":"sp_celestichthys_margaritatus","kind":"taxonomy-correction","reason":"proposed rename to \"Danio margaritatus\""}
+{"speciesId":"sp_pangasius_hypophthalmus","kind":"taxonomy-correction","reason":"proposed rename to \"Pangasianodon hypophthalmus\""}
+{"speciesId":"sp_glossolepis_pseudoincisus","kind":"taxonomy-correction","reason":"proposed rename to \"Glossolepis pseudoincisa\""}
+{"speciesId":"sp_brycinus_longipinnis","kind":"taxonomy-correction","reason":"proposed rename to \"Bryconalestes longipinnis\""}
+{"speciesId":"sp_echinodorus_bleheri","kind":"taxonomy-correction","reason":"proposed rename to \"Echinodorus grisebachii\""}
+{"speciesId":"sp_nymphaea_stellata","kind":"taxonomy-correction","reason":"proposed rename to \"Nymphaea nouchali\""}
+{"speciesId":"sp_nymphaea_zenkeri","kind":"low-confidence","reason":"agent flagged low confidence: Cached file is the Wikipedia article for Nymphaea lotus, not Nymphaea zenkeri. The article never mentions zenkeri, so no corrected name is asserted. Only an aquarium cultivation temperature is stated; no size, volume or temperament."}
+{"speciesId":"sp_clea_helena","kind":"taxonomy-correction","reason":"proposed rename to \"Anentome helena\""}
+{"speciesId":"sp_dasyatis_sabina","kind":"taxonomy-correction","reason":"proposed rename to \"Hypanus sabinus\""}
+{"speciesId":"sp_balantiocheilus_melanopterus","kind":"taxonomy-correction","reason":"proposed rename to \"Balantiocheilos melanopterus\""}
+{"speciesId":"sp_aegagropila_linnaei","kind":"low-confidence","reason":"agent flagged low confidence: Figure is the diameter of wild marimo balls in Lake Akan, not an aquarium size. The article's lead calls the species Aegagropila brownii while its taxonomy section says DNA work returned the name to Aegagropila linnaei, so no correction is asserted."}
+{"speciesId":"sp_barbus_fasciolatus","kind":"taxonomy-correction","reason":"proposed rename to \"Enteromius fasciolatus\""}
+{"speciesId":"sp_puntius_conchonius","kind":"taxonomy-correction","reason":"proposed rename to \"Pethia conchonius\""}
+{"speciesId":"sp_puntius_semifasciolatus","kind":"taxonomy-correction","reason":"proposed rename to \"Barbodes semifasciolatus\""}
+{"speciesId":"sp_neritina_auriculata","kind":"taxonomy-correction","reason":"proposed rename to \"Neripteron auriculatum\""}
+{"speciesId":"sp_neritina_auriculata","kind":"low-confidence","reason":"agent flagged low confidence: Identity check: the cached text never mentions our binomial 'Neritina auriculata' nor the common name 'Batman Nerite Snail' - it is titled Neripteron auriculatum, the type species of Neripteron, which is the same snail under its current genus. All-null regardless: the Description section is empty and the only care-adjacent statement is that it is part of the ornamental freshwater aquarium trade. No figures of any kind."}
+{"speciesId":"sp_botia_modesta","kind":"taxonomy-correction","reason":"proposed rename to \"Yasuhikotakia modesta\""}
+{"speciesId":"sp_neoarius_leptaspis","kind":"taxonomy-correction","reason":"proposed rename to \"Bleekeriella leptaspis\""}
+{"speciesId":"sp_tilapia_buttikoferi","kind":"taxonomy-correction","reason":"proposed rename to \"Heterotilapia buttikoferi\""}
+{"speciesId":"sp_corydoras_pantanalensis","kind":"taxonomy-correction","reason":"proposed rename to \"Brochis pantanalensis\""}
+{"speciesId":"sp_sturisoma_panamense","kind":"taxonomy-correction","reason":"proposed rename to \"Sturisomatichthys panamensis\""}
+{"speciesId":"sp_puntius_titteya","kind":"taxonomy-correction","reason":"proposed rename to \"Rohanella titteya\""}
+{"speciesId":"sp_andinoacara_stalsbergi","kind":"rejected-field","field":"aggression","reason":"the quote uses no word supporting this temperament","claimed":"aggressive from \"A. stalsbergi live up to the name aquarium trade name green terror\""}
+{"speciesId":"sp_arius_jordani","kind":"taxonomy-correction","reason":"proposed rename to \"Ariopsis seemanni\""}
+{"speciesId":"sp_corydoras_habrosus","kind":"taxonomy-correction","reason":"proposed rename to \"Hoplisoma habrosum\""}
+{"speciesId":"sp_corydoras_rabauti","kind":"taxonomy-correction","reason":"proposed rename to \"Osteogaster rabauti\""}
+{"speciesId":"sp_corydoras_schultzei","kind":"low-confidence","reason":"agent flagged low confidence: Wrong article. The cached file is the Wikipedia page for the bronze corydoras (Osteogaster aenea / Corydoras aeneus) and is byte-identical to sp_corydoras_aeneus.wikipedia.txt. It never mentions Corydoras schultzei or the 'Black Venezuela' common name, so nothing was extracted and no name correction is asserted."}
+{"speciesId":"sp_corydoras_aeneus","kind":"taxonomy-correction","reason":"proposed rename to \"Osteogaster aenea\""}
+{"speciesId":"sp_corydoras_pygmaeus","kind":"taxonomy-correction","reason":"proposed rename to \"Gastrodermus pygmaeus\""}
+{"speciesId":"sp_corydoras_splendens","kind":"taxonomy-correction","reason":"proposed rename to \"Brochis splendens\""}
+{"speciesId":"sp_synodontis_multipunctata","kind":"taxonomy-correction","reason":"proposed rename to \"Synodontis multipunctatus\""}
+{"speciesId":"sp_danio_rerio","kind":"rejected-field","field":"aggression","reason":"the quote uses no word supporting this temperament","claimed":"peaceful from \"They also do well in schools or shoals of six or more, and interact well with other fish species in the aquarium\""}
+{"speciesId":"sp_acipenser_gueldenstaedtii","kind":"taxonomy-correction","reason":"proposed rename to \"Huso gueldenstaedtii\""}
+{"speciesId":"sp_melanotaenia_parva","kind":"low-confidence","reason":"agent flagged low confidence: Article is about the correct species but is a stub covering distribution and conservation only. No size, volume, temperature or temperament stated."}
+{"speciesId":"sp_nannostomus_limatus","kind":"low-confidence","reason":"agent flagged low confidence: Correct species, but the article covers only etymology, description history and range. No care figures stated."}
+{"speciesId":"sp_eleocharis_vivipara","kind":"low-confidence","reason":"agent flagged low confidence: Correct species. Article confirms aquarium use but states no dimensions, volume or temperature."}
+{"speciesId":"sp_coenobita_brevimanus","kind":"low-confidence","reason":"agent flagged low confidence: Terrestrial hermit crab. Article gives adult weight (230 g) and 'the size of a coconut' but no body length, and its only temperature statement is an ambient preference written out in words (eighty to eighty-five degrees), not an aquarium water range. No temperament or volume stated."}
+{"speciesId":"sp_pseudomugil_luminatus","kind":"low-confidence","reason":"agent flagged low confidence: Correct species, but the article is two sentences on range only. No care figures stated."}
+{"speciesId":"sp_moenkhausia_sanctaefilomenae","kind":"taxonomy-correction","reason":"proposed rename to \"Bario sanctaefilomenae\""}
+{"speciesId":"sp_neolamprologus_brichardi","kind":"low-confidence","reason":"agent flagged low confidence: Correct species. No size, volume or temperature stated. Temperament left null: the only relevant wording describes wild nest defence and schooling, which the wild-behaviour rule excludes."}
+{"speciesId":"sp_dichotomyctere_ocellatus","kind":"rejected-field","field":"aggression","reason":"the quote uses no word supporting this temperament","claimed":"semi-aggressive from \"Figure 8 puffers are relatively peaceful among Tetraodontidae, and have been kept successfully with other fish such as bumblebee gobies and mollies, but as with all pufferfish there is a risk that tankmates will not be tolerated\""}
+{"speciesId":"sp_crenicichla_multispinosa","kind":"taxonomy-correction","reason":"proposed rename to \"Lugubria multispinosa\""}
+{"speciesId":"sp_crenicichla_acutirostris","kind":"taxonomy-correction","reason":"proposed rename to \"Lugubria acutirostris\""}
+{"speciesId":"sp_limnobium_spongia","kind":"taxonomy-correction","reason":"proposed rename to \"Hydrocharis spongia\""}
+{"speciesId":"sp_palaemonetes_paludosus","kind":"taxonomy-correction","reason":"proposed rename to \"Palaemon paludosus\""}
+{"speciesId":"sp_chitala_lopis","kind":"low-confidence","reason":"agent flagged low confidence: Cached article is a short stub on Chitala lopis containing no size, volume, temperature or temperament figures."}
+{"speciesId":"sp_osphronemus_goramy","kind":"rejected-field","field":"aggression","reason":"the quote uses no word supporting this temperament","claimed":"aggressive from \"A gourami in a community tank will snap and charge any other fish which are small enough for it to bully\""}
+{"speciesId":"sp_kryptopterus_bicirrhis","kind":"rejected-field","field":"aggression","reason":"the quote uses no word supporting this temperament","claimed":"semi-aggressive from \"the larger and more aggressive true K. bicirrhis was only ever exported in insignificant numbers\""}
+{"speciesId":"sp_glossostigma_elatinoides","kind":"low-confidence","reason":"agent flagged low confidence: Botanical article on the plant Glossostigma elatinoides. It gives leaf, petiole and corolla dimensions only, with no whole-plant size, aquarium volume, temperature or temperament data."}
+{"speciesId":"sp_trigonostigma_hengeli","kind":"low-confidence","reason":"agent flagged low confidence: Cached article is a one-sentence stub with no size, volume, temperature or temperament figures."}
+{"speciesId":"sp_puntius_sachsii","kind":"taxonomy-correction","reason":"proposed rename to \"Barbodes semifasciolatus\""}
+{"speciesId":"sp_trichogaster_trichopterus","kind":"taxonomy-correction","reason":"proposed rename to \"Trichopodus trichopterus\""}
+{"speciesId":"sp_trichogaster_trichopterus","kind":"rejected-field","field":"aggression","reason":"the quote uses no word supporting this temperament","claimed":"semi-aggressive from \"Male gouramis are known to be very aggressive; they may also be fin nippers and generally may bother other fish in the tank\""}
+{"speciesId":"sp_carassius_auratus","kind":"rejected-field","field":"aggression","reason":"the quote uses no word supporting this temperament","claimed":"peaceful from \"Very rarely does a goldfish harm another goldfish, nor do the males harm the females during breeding\""}
+{"speciesId":"sp_crenicichla_cincta","kind":"taxonomy-correction","reason":"proposed rename to \"Lugubria cincta\""}
+{"speciesId":"sp_herichthys_carpintis","kind":"rejected-field","field":"aggression","reason":"the quote uses no word supporting this temperament","claimed":"aggressive from \"Due to their large size and territorial nature, this species is best kept alone, in pairs, or with other large, territorial species in a large aquarium\""}
+{"speciesId":"sp_ceratopteris_thalictroides","kind":"low-confidence","reason":"agent flagged low confidence: Aquarium plant, not an animal. Size statements in the source are mutually inconsistent and garbled ('4-60 cm long including its stipe'; 'fertile fronds are 15-100 cm or more, including the stipe, to 40 cm long'), so no defensible single maximum. No temperature, volume or temperament data."}
+{"speciesId":"sp_neritina_juttingae","kind":"taxonomy-correction","reason":"proposed rename to \"Neritona juttingae\""}
+{"speciesId":"sp_dekeyseria_brachyura","kind":"low-confidence","reason":"agent flagged low confidence: Wrong species: the cached page is Dekeyseria picta (L168/L052, Urubaxi butterfly pleco). The name Dekeyseria brachyura never appears in the text. Returning all-null rather than borrowing another species' 13 cm figure."}
+{"speciesId":"sp_crenicichla_lenticulata","kind":"taxonomy-correction","reason":"proposed rename to \"Lugubria lenticulata\""}
+{"speciesId":"sp_neritina_violacea","kind":"taxonomy-correction","reason":"proposed rename to \"Neripteron violaceum\""}
+{"speciesId":"sp_neritina_violacea","kind":"low-confidence","reason":"agent flagged low confidence: Cached page is the accepted-name article Neripteron violaceum; the binomial Neritina violacea never appears in the body. Article carries no size, volume, temperature or temperament figures at all (Description section is empty)."}
+{"speciesId":"sp_corydoras_nanus","kind":"taxonomy-correction","reason":"proposed rename to \"Gastrodermus nanus\""}
+{"speciesId":"sp_ageneiosus_marmoratus","kind":"taxonomy-correction","reason":"proposed rename to \"Ageneiosus inermis\""}
+{"speciesId":"sp_mastacembelus_armatus","kind":"rejected-field","field":"aggression","reason":"the quote uses no word supporting this temperament","claimed":"semi-aggressive from \"they are aggressive to members of the same fish family but peaceful to other fish species with similar care level requirements, size, and temperament\""}
+{"speciesId":"sp_microsorum_pteropus","kind":"taxonomy-correction","reason":"proposed rename to \"Leptochilus pteropus\""}
+{"speciesId":"sp_hypsophrys_nicaraguensis","kind":"taxonomy-correction","reason":"proposed rename to \"Hypsophrys unimaculatus\""}
+{"speciesId":"sp_hemigrammus_bleheri","kind":"taxonomy-correction","reason":"proposed rename to \"Petitella bleheri\""}
+{"speciesId":"sp_notropis_chrosomus","kind":"taxonomy-correction","reason":"proposed rename to \"Hydrophlox chrosomus\""}
+{"speciesId":"sp_neritina_reclivata","kind":"taxonomy-correction","reason":"proposed rename to \"Vitta usnea\""}
+{"speciesId":"sp_protomelas_ornatus","kind":"rejected-field","field":"aggression","reason":"the quote uses no word supporting this temperament","claimed":"semi-aggressive from \"the ornate hap will hunt and eat anything small enough to fit in its mouth. However, most note them to be rather mellow so long as their tankmates are the same size as them\""}
+{"speciesId":"sp_barbodes_lateristriga","kind":"taxonomy-correction","reason":"proposed rename to \"Striuntius lateristriga\""}
+{"speciesId":"sp_hyphessobrycon_sweglesi","kind":"taxonomy-correction","reason":"proposed rename to \"Megalamphodus sweglesi\""}
+{"speciesId":"sp_vietorintalia_rubrum","kind":"taxonomy-correction","reason":"proposed rename to \"Vietorientalia rubra\""}
+{"speciesId":"sp_aegle_marmelos","kind":"rejected-field","field":"adult_size_in","reason":"value outside the plausible range (likely a unit error)","claimed":511.81}
+{"speciesId":"sp_aegle_marmelos","kind":"low-confidence","reason":"agent flagged low confidence: Terrestrial bael tree, sold in the catalog as dried botanical pods. The 13 m figure is tree height, not an aquarium-relevant size, and should probably be discarded. The article's only temperature range (-7–48 °C) is ambient air tolerance for the tree, not aquarium water, so temp_c is null."}
+{"speciesId":"sp_epipremnum_aureum","kind":"rejected-field","field":"adult_size_in","reason":"value outside the plausible range (likely a unit error)","claimed":787.4}
+{"speciesId":"sp_epipremnum_aureum","kind":"low-confidence","reason":"agent flagged low confidence: Terrestrial climbing vine used in aquariums only with its roots in the water. The 20 m figure is wild vine length and is not aquarium-relevant; as an indoor plant the article says it reaches 'more than 2 m in height'. The stated range of 17–30 °C is ambient air temperature for indoor cultivation, not aquarium water, so temp_c is null."}
+{"speciesId":"sp_dionaea_muscipula","kind":"low-confidence","reason":"agent flagged low confidence: Terrestrial bog plant, not an aquarium organism. The 6 in figure is the flower stem; the rosette leaves are given only in words ('about three to ten centimeters'). No temperature, volume or temperament figures."}
+{"speciesId":"sp_hemigraphis_alternata","kind":"taxonomy-correction","reason":"proposed rename to \"Strobilanthes alternata\""}
+{"speciesId":"sp_spinibarbus_denticulatus","kind":"taxonomy-correction","reason":"proposed rename to \"Spinibarbichthys denticulatus\""}
+{"speciesId":"sp_eichornia_crassipes","kind":"taxonomy-correction","reason":"proposed rename to \"Pontederia crassipes\""}
+{"speciesId":"sp_crenicichla_rosemariae","kind":"taxonomy-correction","reason":"proposed rename to \"Lugubria rosemariae\""}
+{"speciesId":"sp_glyptoperichthys_gibbiceps","kind":"taxonomy-correction","reason":"proposed rename to \"Pterygoplichthys gibbiceps\""}
+{"speciesId":"sp_acipenser_baerii","kind":"taxonomy-correction","reason":"proposed rename to \"Huso baerii\""}
+{"speciesId":"sp_myleus_schomburgkii","kind":"taxonomy-correction","reason":"proposed rename to \"Myloplus schomburgkii\""}
+{"speciesId":"sp_acipenser_stellatus","kind":"taxonomy-correction","reason":"proposed rename to \"Huso stellatus\""}
+{"speciesId":"sp_acipenser_ruthenus","kind":"taxonomy-correction","reason":"proposed rename to \"Huso ruthenus\""}
+{"speciesId":"sp_puntius_tambraparniei","kind":"taxonomy-correction","reason":"proposed rename to \"Dawkinsia tambraparniei\""}
+{"speciesId":"sp_corydoras_sterbai","kind":"taxonomy-correction","reason":"proposed rename to \"Hoplisoma sterbai\""}
+{"speciesId":"sp_hemianthus_micranthemoides","kind":"taxonomy-correction","reason":"proposed rename to \"Micranthemum micranthemoides\""}
+{"speciesId":"sp_moenkhausia_pittieri","kind":"taxonomy-correction","reason":"proposed rename to \"Makunaima pittieri\""}
+{"speciesId":"sp_puntius_tetrazona","kind":"taxonomy-correction","reason":"proposed rename to \"Puntigrus tetrazona\""}
+{"speciesId":"sp_anubias_nana","kind":"taxonomy-correction","reason":"proposed rename to \"Anubias barteri var. nana\""}
+{"speciesId":"sp_hypancistrus_furunculus","kind":"low-confidence","reason":"agent flagged low confidence: The only length in the article is the holotype standard length, 65.3 mm = 2.6 in, which is a single type specimen rather than a stated adult maximum. Nothing else in the stub."}
+{"speciesId":"sp_mugilogobius_chulae","kind":"low-confidence","reason":"agent flagged low confidence: The only length given is the 3.5-4 cm size at which sexual dimorphism shows, not a stated maximum; took the top of that range, 4 cm = 1.6 in. No volume, temperature or temperament stated."}
+{"speciesId":"sp_neritina_natalensis","kind":"taxonomy-correction","reason":"proposed rename to \"Vittina natalensis\""}
+{"speciesId":"sp_stegostoma_fasciatum","kind":"taxonomy-correction","reason":"proposed rename to \"Stegostoma tigrinum\""}

@@ -1,0 +1,181 @@
+{
+  "batch": "09",
+  "species": [
+    {
+      "speciesId": "sp_rohanella_titteya",
+      "commonName": "Cherry Barb",
+      "scientificName": "Rohanella titteya",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_rohanella_titteya.wikipedia.txt",
+      "vendorFile": "data/care/text/sp_rohanella_titteya.vendor.txt"
+    },
+    {
+      "speciesId": "sp_puntius_titteya",
+      "commonName": "Cherry Barb",
+      "scientificName": "Puntius titteya",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_puntius_titteya.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_gyrinocheilus_aymonieri",
+      "commonName": "Chinese Algae Eater",
+      "scientificName": "Gyrinocheilus aymonieri",
+      "family": "Gyrinocheilidae",
+      "wikipediaFile": "data/care/text/sp_gyrinocheilus_aymonieri.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_siniperca_chuatsi",
+      "commonName": "Chinese Perch",
+      "scientificName": "Siniperca chuatsi",
+      "family": "Sinipercidae",
+      "wikipediaFile": "data/care/text/sp_siniperca_chuatsi.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pelodiscus_sinensis",
+      "commonName": "Chinese Softshell Turtle",
+      "scientificName": "Pelodiscus sinensis",
+      "family": "Trionychidae",
+      "wikipediaFile": "data/care/text/sp_pelodiscus_sinensis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_stenomelania_torulosa",
+      "commonName": "Chopstick Snail",
+      "scientificName": "Stenomelania torulosa",
+      "family": "Thiaridae",
+      "wikipediaFile": "data/care/text/sp_stenomelania_torulosa.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pseudorinelepis_genibarbis",
+      "commonName": "Chubby Pleco L",
+      "scientificName": "Pseudorinelepis genibarbis",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_pseudorinelepis_genibarbis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_gymnogeophagus_lipokarenos",
+      "commonName": "Rainbow Humphead Cichlid",
+      "scientificName": "Gymnogeophagus lipokarenos",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_gymnogeophagus_lipokarenos.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_amatitlania_nigrofasciata",
+      "commonName": "Convict Cichlid",
+      "scientificName": "Amatitlania nigrofasciata",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_amatitlania_nigrofasciata.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hypselecara_temporalis",
+      "commonName": "Emerald Cichlid",
+      "scientificName": "Hypselecara temporalis",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_hypselecara_temporalis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_apistogramma_trifasciata",
+      "commonName": "Three-Striped Dwarf Cichlid",
+      "scientificName": "Apistogramma trifasciata",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_apistogramma_trifasciata.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_neolamprologus_multifasciatus",
+      "commonName": "Multi Cichlid",
+      "scientificName": "Neolamprologus multifasciatus",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_neolamprologus_multifasciatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_andinoacara_stalsbergi",
+      "commonName": "Green Terror Cichlid",
+      "scientificName": "Andinoacara stalsbergi",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_andinoacara_stalsbergi.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_geophagus_brasiliensis",
+      "commonName": "Pearl Cichlid",
+      "scientificName": "Geophagus brasiliensis",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_geophagus_brasiliensis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_anomalochromis_thomasi",
+      "commonName": "African Butterfly Cichlid",
+      "scientificName": "Anomalochromis thomasi",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_anomalochromis_thomasi.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_syntripsa_flavichela",
+      "commonName": "Claw Towuti Crab",
+      "scientificName": "Syntripsa flavichela",
+      "family": "Gecarcinucidae",
+      "wikipediaFile": "data/care/text/sp_syntripsa_flavichela.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_marsilea_hirsuta",
+      "commonName": "Clover Tissue Culture",
+      "scientificName": "Marsilea hirsuta",
+      "family": "Marsileaceae",
+      "wikipediaFile": "data/care/text/sp_marsilea_hirsuta.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_chitala_ornata",
+      "commonName": "Clown Knifefish",
+      "scientificName": "Chitala ornata",
+      "family": "Notopteridae",
+      "wikipediaFile": "data/care/text/sp_chitala_ornata.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_labidochromis_chisumulae",
+      "commonName": "Clown Lab",
+      "scientificName": "Labidochromis chisumulae",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_labidochromis_chisumulae.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_chromobotia_macracanthus",
+      "commonName": "Clown Loach",
+      "scientificName": "Chromobotia macracanthus",
+      "family": "Botiidae",
+      "wikipediaFile": "data/care/text/sp_chromobotia_macracanthus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hephaestus_carbo",
+      "commonName": "Coal Grunter",
+      "scientificName": "Hephaestus carbo",
+      "family": "Terapontidae",
+      "wikipediaFile": "data/care/text/sp_hephaestus_carbo.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_arius_jordani",
+      "commonName": "Colombian Shark Catfish",
+      "scientificName": "Arius jordani",
+      "family": "Ariidae",
+      "wikipediaFile": "data/care/text/sp_arius_jordani.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hypancistrus_debilittera",
+      "commonName": "Colombian Zebra Pleco",
+      "scientificName": "Hypancistrus debilittera",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_hypancistrus_debilittera.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_rineloricaria_parva",
+      "commonName": "Common Whiptail",
+      "scientificName": "Rineloricaria parva",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_rineloricaria_parva.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_anubias_heterophylla",
+      "commonName": "Anubias Congensis",
+      "scientificName": "Anubias heterophylla",
+      "family": "Araceae",
+      "wikipediaFile": "data/care/text/sp_anubias_heterophylla.wikipedia.txt"
+    }
+  ]
+}

@@ -192,3 +192,44 @@ describe('discoverSpecies', () => {
     expect(discoverSpecies(odd, new Set())[0]!.commonName).toBe('Genus species');
   });
 });
+
+describe('water type, taken from the vendors rather than the fish', () => {
+  const water = new Map<string, 'freshwater' | 'marine' | 'mixed'>([
+    ['liveaquaria', 'marine'],
+    ['petsmart', 'freshwater'],
+  ]);
+  const listing = (storeId: string, sci: string, title = sci) =>
+    ({ storeId, scientificNameInTitle: sci, title });
+
+  it('tags a species only a marine vendor carries', () => {
+    const [d] = discoverSpecies([listing('liveaquaria', 'Chaetodon auriga')], new Set(), water);
+    expect(d!.waterType).toBe('marine');
+  });
+
+  it('lets one freshwater vendor outrank a marine one', () => {
+    // A freshwater shop stocking it means a freshwater keeper can buy it,
+    // whatever else also lists it.
+    const [d] = discoverSpecies(
+      [listing('liveaquaria', 'Betta splendens'), listing('petsmart', 'Betta splendens')],
+      new Set(),
+      water,
+    );
+    expect(d!.waterType).toBe('freshwater');
+  });
+
+  it('declares nothing when no vendor declared anything', () => {
+    // Undefined is not a claim that the fish is freshwater. Most of the
+    // catalog is here, and defaulting it would be inventing the fact.
+    const [d] = discoverSpecies([listing('predatory-fins', 'Parachromis managuensis')], new Set(), water);
+    expect(d!.waterType).toBeUndefined();
+  });
+
+  it('declares nothing when a vendor without a declaration also carries it', () => {
+    const [d] = discoverSpecies(
+      [listing('liveaquaria', 'Amphiprion ocellaris'), listing('predatory-fins', 'Amphiprion ocellaris')],
+      new Set(),
+      water,
+    );
+    expect(d!.waterType).toBeUndefined();
+  });
+});
