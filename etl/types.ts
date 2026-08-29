@@ -99,7 +99,12 @@ export interface MarketSpeciesStats {
   totalListings: number;
   inStock: number;
   soldOut: number;
-  price: {
+  /**
+   * What the fish is worth, or absent when too few listings carry a size to
+   * say. Absent does NOT mean unsold: the stores below are still real, and
+   * still linked. See the threshold note in index-builder.ts.
+   */
+  price?: {
     median: number;
     min: number;
     max: number;
@@ -133,6 +138,10 @@ export interface MarketSpeciesStats {
     productUrl?: string;
     /** Whether productUrl points at something in stock. Never implied. */
     productInStock?: boolean;
+    /** That listing's own asking price. One observation, not an aggregate. */
+    productPrice?: number;
+    /** And the option text it is priced for - "3 Fish", "4 - 4.5 inches". */
+    productSizeLabel?: string;
   }>;
   /** Earliest and latest publish date seen, as a rough catalogue span. */
   listedBetween?: { earliest: string; latest: string };
