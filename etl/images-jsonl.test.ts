@@ -2,7 +2,7 @@ import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it, afterEach } from 'vitest';
-import { mergeRows, readRows, toRow, writeRows, type ImageRow } from './images-jsonl';
+import { isBundleable, mergeRows, readRows, toRow, writeRows, type ImageRow } from './images-jsonl';
 
 const row = (species_id: string, url: string): ImageRow => ({
   image_key: '1', species_id, role: 'portrait', source: 'wikimedia',
@@ -70,5 +70,33 @@ describe('readRows / writeRows round trip', () => {
     const rewritten = readFileSync(path, 'utf8');
 
     expect(rewritten).toBe(original);
+  });
+});
+
+describe('isBundleable', () => {
+  it('accepts the formats Chromium can decode', () => {
+    for (const url of [
+      'https://x/a.jpg', 'https://x/a.JPEG', 'https://x/a.png',
+      'https://x/a.gif', 'https://x/a.webp',
+      'https://cdn.shopify.com/s/files/1/x/fish.jpg?v=1690466794',
+    ]) {
+      expect(isBundleable(row('sp_a', url))).toBe(true);
+    }
+  });
+
+  it('rejects TIFF, which is why 5 of the 700 committed rows never bundled', () => {
+    // Not hypothetical. Four Iconographia Zoologica lithographs and one other
+    // .tif sat in images.jsonl looking healthy, failed silently at downscale
+    // time, and blocked their species from being retried by any other route.
+    // That is exactly the 700 rows versus 695 bundled files discrepancy.
+    expect(isBundleable(row('sp_a', 'https://upload.wikimedia.org/x/Gymnothorax.tif'))).toBe(false);
+  });
+
+  it('rejects an unknown format rather than assuming it will decode', () => {
+    // Allowlist, not denylist: a format nobody thought about should fail
+    // closed and get retried, not fail at bundle time.
+    expect(isBundleable(row('sp_a', 'https://x/a.svg'))).toBe(false);
+    expect(isBundleable(row('sp_a', 'https://x/a.pdf'))).toBe(false);
+    expect(isBundleable(row('sp_a', 'https://x/no-extension'))).toBe(false);
   });
 });

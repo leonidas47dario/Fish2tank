@@ -4,14 +4,19 @@
  *   npm run images
  *
  * Writes data/market/images.jsonl, which build-warehouse.ts loads into
- * dim_image. Images without a stateable licence are dropped, not shipped.
+ * dim_image.
+ *
+ * Images we cannot ACCOUNT FOR are dropped, not shipped. That used to mean
+ * "no stateable licence"; spec 002 changed it to "no URL a human can open to
+ * see where this came from", because vendor listing photos have no licence and
+ * are shipped deliberately with visible credit. See `isPublishable`.
  */
 import { readFileSync, existsSync } from 'node:fs';
 import {
   fetchSpeciesPortrait, searchCommonsPortrait, isPublishable, type SpeciesImage,
 } from './sources/wikimedia';
 import { fetchVendorPortrait } from './sources/vendor';
-import { IMAGES_PATH, mergeRows, readRows, toRow, writeRows } from './images-jsonl';
+import { IMAGES_PATH, isBundleable, isBundleableUrl, mergeRows, readRows, toRow, writeRows } from './images-jsonl';
 
 const CATALOG = 'src/data/seed/marts/catalog.json';
 const MARKET = 'src/data/seed/marts/market-index.json';
@@ -30,8 +35,9 @@ interface CatalogRow { speciesId: string; commonName: string; scientificName?: s
  * Gap-fill, not rebuild. This used to re-fetch all 700 rows it already had on
  * every run, which made a re-run cost ten minutes of Wikimedia calls to change
  * nothing, and destroyed the committed file if it was interrupted. Now it
- * attempts only species with no row, so the step is idempotent and safe to run
- * after every catalog change.
+ * attempts only species with no BUNDLEABLE row, so the step is idempotent and
+ * safe to run after every catalog change. "Bundleable" rather than "any"
+ * because a row the downscaler cannot decode is a gap wearing a hat.
  */
 function targets(have: Set<string>): CatalogRow[] {
   if (!existsSync(CATALOG)) {
@@ -72,27 +78,45 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
  * beats borrowed art whenever both exist, so the order is the policy.
  */
 async function resolve(species: CatalogRow): Promise<{ image: SpeciesImage; via: string } | undefined> {
+  // Two conditions, and they are different questions. isPublishable asks
+  // whether we can say where the picture came from; isBundleableUrl asks
+  // whether the downscaler can actually decode it. A Commons .tif passes the
+  // first and fails the second, and accepting it there is what turned the
+  // retry of the five .tif species into a no-op loop.
+  const usable = (i: SpeciesImage | undefined): i is SpeciesImage =>
+    isPublishable(i) && isBundleableUrl(i.url);
+
   const article = await fetchSpeciesPortrait(species.speciesId, species.scientificName!);
-  if (isPublishable(article)) return { image: article, via: 'article' };
+  if (usable(article)) return { image: article, via: 'article' };
 
   await sleep(200);
   const commons = await searchCommonsPortrait(species.speciesId, species.scientificName!);
-  if (isPublishable(commons)) return { image: commons, via: 'commons' };
+  if (usable(commons)) return { image: commons, via: 'commons' };
 
   for (const url of productUrls(species.speciesId)) {
     await sleep(200);
     const vendor = await fetchVendorPortrait(species.speciesId, url);
-    if (isPublishable(vendor)) return { image: vendor, via: 'vendor' };
+    if (usable(vendor)) return { image: vendor, via: 'vendor' };
   }
   return undefined;
 }
 
 async function main() {
   const existing = readRows();
-  const have = new Set(existing.map((r) => r.species_id));
+  // A row whose image the bundler cannot decode does NOT count as covered.
+  // Otherwise the five .tif rows in the committed data hold their species
+  // hostage forever: counted as done here, dropped at bundle time, never
+  // retried by any other route. Treating them as gaps lets Commons search,
+  // the vendor route, or the subagent stage replace them.
+  const unbundleable = existing.filter((r) => !isBundleable(r));
+  const have = new Set(existing.filter(isBundleable).map((r) => r.species_id));
   const wanted = targets(have);
 
-  console.log(`  ${have.size} species already have an image row`);
+  console.log(`  ${have.size} species already have a bundleable image row`);
+  if (unbundleable.length > 0) {
+    console.log(`  ${unbundleable.length} rows the bundler cannot decode, retrying those species:`);
+    for (const r of unbundleable) console.log(`    ${r.species_id}  ${r.url.split('/').pop()}`);
+  }
   console.log(`  attempting ${wanted.length} without one\n`);
 
   const found: SpeciesImage[] = [];

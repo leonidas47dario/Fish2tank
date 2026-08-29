@@ -61,6 +61,45 @@ export function writeRows(rows: ImageRow[], path = IMAGES_PATH): void {
 }
 
 /**
+ * Formats `build-portraits.ts` can actually turn into a bundled JPEG.
+ *
+ * It downscales through Chromium's `Image.decode()`, which handles what a
+ * browser handles and nothing else. TIFF is the one that bites: Commons serves
+ * plenty of it, the row looks perfectly healthy, and the failure only surfaces
+ * at bundle time as a generic decode error.
+ *
+ * This is not hypothetical. It is the exact reason the committed data had 700
+ * image rows but only 695 bundled portraits: five rows are `.tif`, four of
+ * them 19th-century Iconographia Zoologica lithographs. Worse than the missing
+ * picture is that those five species each HELD a row, so the gap-fill counted
+ * them as covered and never retried them by any other route. A dead-end that
+ * reports itself as done is the failure mode this pipeline is meant to avoid.
+ *
+ * An allowlist rather than a denylist of known-bad, so a new exotic format
+ * fails closed and gets retried, instead of silently failing at bundle time.
+ */
+const BUNDLEABLE = /\.(jpe?g|png|gif|webp)$/i;
+
+/**
+ * Whether an image URL can survive the downscale into the bundle.
+ *
+ * Checked at the point a resolver's candidate is ACCEPTED, not only when
+ * deciding which species to attempt. Skipping the acceptance check makes the
+ * retry a loop: the five .tif species were re-attempted, the article route
+ * handed back the identical .tif lead image, and the run reported five
+ * resolutions that changed nothing. Rejecting the format at acceptance lets
+ * the next route down have a go instead.
+ */
+export function isBundleableUrl(url: string): boolean {
+  return BUNDLEABLE.test(url.split('?')[0]!);
+}
+
+/** Whether this row's image can survive the downscale into the bundle. */
+export function isBundleable(row: ImageRow): boolean {
+  return isBundleableUrl(row.url);
+}
+
+/**
  * Existing rows plus new ones, newest winning per species.
  *
  * `keep` drops rows whose species has left the catalog. Passing it is optional
