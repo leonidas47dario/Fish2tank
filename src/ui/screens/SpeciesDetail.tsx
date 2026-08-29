@@ -22,7 +22,9 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { db } from '@/data/db';
 import type { Id } from '@/domain/types';
 import { addPhotos, ensureSpecimenForHolding, type CaptureFile } from '@/data/repositories';
-import { CATALOG_BY_SPECIES, cardPrice, marketAndScarcity, ownership, type CatalogCard } from '@/data/catalog';
+import {
+  CATALOG_BY_SPECIES, cardPrice, marketAndScarcity, ownership, portraitCredit, type CatalogCard,
+} from '@/data/catalog';
 import { deriveQuantity } from '@/domain/holdings';
 import { formatVolume } from '@/domain/units';
 import { FishCard } from '../components/FishCard';
@@ -263,8 +265,7 @@ export default function SpeciesDetail() {
         <section className="card">
           <h2>Picture credit</h2>
           <p className="small" style={{ marginBottom: 0 }}>
-            {species.portrait.artist ? `${species.portrait.artist}, ` : ''}
-            <strong>{species.portrait.license}</strong>
+            <strong>{portraitCredit(species.portrait)}</strong>
             {species.portrait.attributionUrl && (
               <> — <a href={species.portrait.attributionUrl} target="_blank" rel="noreferrer">source</a></>
             )}

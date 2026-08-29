@@ -289,8 +289,9 @@ export default function Catalog() {
       </div>
 
       <p className="xs muted">
-        Portraits from Wikimedia Commons under their stated licences; each card&apos;s detail page
-        credits the photographer. Where you have your own photo of a fish, it is used instead.
+        Portraits come from Wikimedia Commons under their stated licences, from vendor product
+        listings, or from the open web; each card&apos;s detail page names its source. Where you
+        have your own photo of a fish, it is used instead.
       </p>
     </div>
   );

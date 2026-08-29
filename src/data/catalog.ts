@@ -174,3 +174,22 @@ export function marketAndScarcity(speciesId: string) {
   const scarcity = scarcityFor(speciesId);
   return { market, scarcityBand: scarcity.available ? scarcity.band : undefined };
 }
+
+/**
+ * The sentence under a portrait, which differs by where the picture came from.
+ *
+ * A Wikimedia file is used under a stated licence and credits its
+ * photographer. A vendor listing photo has no licence at all and is used by
+ * the owner's decision (spec 002), so it names the shop plainly instead of
+ * borrowing the shape of a licence line. Dressing the second up as the first
+ * would be the actual dishonesty here, so provenance decides the sentence and
+ * the presence of a `license` field never overrides it.
+ */
+export function portraitCredit(p: CatalogPortrait): string {
+  if (p.provenance === 'wikimedia' && p.license) {
+    return p.artist ? `${p.artist}, ${p.license}` : p.license;
+  }
+  if (p.provenance === 'vendor' && p.artist) return `Photo: ${p.artist} (product listing)`;
+  if (p.artist) return `Photo: ${p.artist}`;
+  return 'Source not recorded';
+}
