@@ -12,7 +12,9 @@
     "test:watch": "vitest",
     "smoke": "node scripts/smoke.mjs",
     "typecheck": "tsc -b --noEmit false --emitDeclarationOnly false --pretty",
-    "etl": "tsx etl/run.ts"
+    "etl": "tsx etl/run.ts",
+    "warehouse": "tsx etl/build-warehouse.ts",
+    "images": "tsx etl/build-images.ts"
   },
   "dependencies": {
     "dexie": "^4.0.10",
@@ -22,6 +24,7 @@
     "react-router-dom": "^6.28.0"
   },
   "devDependencies": {
+    "@duckdb/node-api": "^1.5.5-r.4",
     "@types/node": "^26.4.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",

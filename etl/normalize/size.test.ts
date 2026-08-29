@@ -93,3 +93,16 @@ describe('every size is flagged an estimate', () => {
     expect(size('3 inches')?.estimate).toBe(true);
   });
 });
+
+describe('formats the newer vendors use', () => {
+  it('parses Imperial Tropicals size-and-sex options', () => {
+    expect(size('1-2" Unsexed')).toEqual({ value: 1.5, unit: 'in', estimate: true });
+    expect(size('3-4" Unsexed')).toEqual({ value: 3.5, unit: 'in', estimate: true });
+  });
+
+  it('refuses Aquatic Arts quantity and sex options, which carry no size', () => {
+    for (const v of ['1 Male', '1 Female', 'School of 3', '1 Fish', 'Pack of 6']) {
+      expect(size(v)).toBeUndefined();
+    }
+  });
+});

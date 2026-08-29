@@ -23,8 +23,7 @@ import { IdentityBadge, TierBadge, VerdictBadge } from '../components/Badges';
 import { FactorList, MissingInputsNotice } from '../components/FactorList';
 import { MarketPanel } from '../components/MarketPanel';
 import { ScarcityBadge } from '../components/Badges';
-import { bandForSize, marketFor } from '@/data/market';
-import { computeMarketScarcity } from '@/engine/rarity/market-scarcity';
+import { bandForSize, marketFor, scarcityFor } from '@/data/market';
 import { usePrefersReducedMotion } from '@/theme/ThemeProvider';
 
 export default function SpecimenDetail() {
@@ -102,7 +101,7 @@ export default function SpecimenDetail() {
 
   // Market context, auto-populated from the shipped index. No network call.
   const marketStats = marketFor(specimen.speciesId);
-  const marketScarcity = computeMarketScarcity(marketStats);
+  const marketScarcity = scarcityFor(specimen.speciesId);
   const marketBand = marketStats ? bandForSize(marketStats, latest?.observedSize) : undefined;
 
   const priceFit = prices?.[0] && allPricesForSpecies

@@ -290,6 +290,12 @@ export interface RarityComponentBreakdown {
   dreamListHit: number;
   personalEncounterScarcity: number;
   exceptionalSpecimen: number;
+  /**
+   * Contribution from how hard the fish is to source from the tracked
+   * vendors. Added in formula v0.2.0 at the product owner's direction; see
+   * discovery-tier.ts for the PRD note.
+   */
+  marketScarcity: number;
 }
 
 /**

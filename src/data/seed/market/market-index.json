@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "builtAt": "2026-08-28T05:03:39.503Z",
+  "builtAt": "2026-08-29T01:48:29.492Z",
   "minimumSampleCount": 3,
   "sources": [
     {
@@ -9,15 +9,15 @@
       "host": "globalexoticquatics.com",
       "currency": "USD",
       "listingsFetched": 331,
-      "retrievedAt": "2026-08-28T05:03:39.365Z"
+      "retrievedAt": "2026-08-29T01:47:45.431Z"
     },
     {
       "id": "j4-flowerhorns",
       "name": "J4 Flowerhorns",
       "host": "www.j4flowerhorns.com",
       "currency": "USD",
-      "listingsFetched": 635,
-      "retrievedAt": "2026-08-28T05:03:39.386Z"
+      "listingsFetched": 634,
+      "retrievedAt": "2026-08-29T01:47:47.599Z"
     },
     {
       "id": "predatory-fins",
@@ -25,16 +25,56 @@
       "host": "www.predatoryfins.com",
       "currency": "USD",
       "listingsFetched": 2429,
-      "retrievedAt": "2026-08-28T05:03:39.423Z"
+      "retrievedAt": "2026-08-29T01:47:52.768Z"
+    },
+    {
+      "id": "imperial-tropicals",
+      "name": "Imperial Tropicals",
+      "host": "imperialtropicals.com",
+      "currency": "USD",
+      "listingsFetched": 4133,
+      "retrievedAt": "2026-08-29T01:47:58.250Z"
+    },
+    {
+      "id": "aquatic-arts",
+      "name": "Aquatic Arts",
+      "host": "aquaticarts.com",
+      "currency": "USD",
+      "listingsFetched": 5127,
+      "retrievedAt": "2026-08-29T01:48:08.096Z"
+    },
+    {
+      "id": "aquarium-coop",
+      "name": "Aquarium Co-Op",
+      "host": "www.aquariumcoop.com",
+      "currency": "USD",
+      "listingsFetched": 375,
+      "retrievedAt": "2026-08-29T01:48:18.318Z"
+    },
+    {
+      "id": "flip-aquatics",
+      "name": "Flip Aquatics",
+      "host": "flipaquatics.com",
+      "currency": "USD",
+      "listingsFetched": 1701,
+      "retrievedAt": "2026-08-29T01:48:20.574Z"
+    },
+    {
+      "id": "aquahuna",
+      "name": "AquaHuna",
+      "host": "www.aquahuna.com",
+      "currency": "USD",
+      "listingsFetched": 704,
+      "retrievedAt": "2026-08-29T01:48:25.990Z"
     }
   ],
   "species": {
     "sp_raphael_catfish": {
       "speciesId": "sp_raphael_catfish",
       "comparableCount": 4,
-      "totalListings": 4,
+      "totalListings": 7,
       "inStock": 1,
-      "soldOut": 3,
+      "soldOut": 6,
       "price": {
         "median": 48,
         "min": 10,
@@ -70,6 +110,12 @@
           "medianPrice": 68
         },
         {
+          "storeId": "aquatic-arts",
+          "listings": 3,
+          "inStock": 0,
+          "medianPrice": 0
+        },
+        {
           "storeId": "global-exoticquatics",
           "listings": 1,
           "inStock": 1,
@@ -77,7 +123,7 @@
         }
       ],
       "listedBetween": {
-        "earliest": "2021-09-03",
+        "earliest": "2021-07-14",
         "latest": "2026-08-10"
       }
     },
@@ -136,9 +182,9 @@
     "sp_delhezi_bichir": {
       "speciesId": "sp_delhezi_bichir",
       "comparableCount": 7,
-      "totalListings": 7,
+      "totalListings": 9,
       "inStock": 1,
-      "soldOut": 6,
+      "soldOut": 8,
       "price": {
         "median": 48,
         "min": 20,
@@ -189,21 +235,33 @@
           "listings": 1,
           "inStock": 1,
           "medianPrice": 20
+        },
+        {
+          "storeId": "imperial-tropicals",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 0
+        },
+        {
+          "storeId": "aquatic-arts",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 0
         }
       ],
       "listedBetween": {
-        "earliest": "2021-09-04",
+        "earliest": "2021-04-27",
         "latest": "2026-06-05"
       }
     },
     "sp_geophagus_sveni": {
       "speciesId": "sp_geophagus_sveni",
-      "comparableCount": 12,
-      "totalListings": 16,
-      "inStock": 4,
-      "soldOut": 12,
+      "comparableCount": 15,
+      "totalListings": 31,
+      "inStock": 7,
+      "soldOut": 24,
       "price": {
-        "median": 97.5,
+        "median": 59.99,
         "min": 18,
         "max": 250,
         "currency": "USD"
@@ -215,8 +273,8 @@
       "priceBySize": [
         {
           "sizeIn": 1,
-          "medianPrice": 18,
-          "listings": 1
+          "medianPrice": 18.99,
+          "listings": 2
         },
         {
           "sizeIn": 2,
@@ -230,13 +288,13 @@
         },
         {
           "sizeIn": 4,
-          "medianPrice": 110,
-          "listings": 3
+          "medianPrice": 82.5,
+          "listings": 4
         },
         {
           "sizeIn": 5,
-          "medianPrice": 140,
-          "listings": 2
+          "medianPrice": 85,
+          "listings": 3
         },
         {
           "sizeIn": 6,
@@ -257,6 +315,18 @@
           "medianPrice": 110
         },
         {
+          "storeId": "aquatic-arts",
+          "listings": 8,
+          "inStock": 0,
+          "medianPrice": 0
+        },
+        {
+          "storeId": "imperial-tropicals",
+          "listings": 6,
+          "inStock": 3,
+          "medianPrice": 49.99
+        },
+        {
           "storeId": "j4-flowerhorns",
           "listings": 3,
           "inStock": 2,
@@ -267,11 +337,17 @@
           "listings": 2,
           "inStock": 1,
           "medianPrice": 25
+        },
+        {
+          "storeId": "aquahuna",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 0
         }
       ],
       "listedBetween": {
-        "earliest": "2021-09-04",
-        "latest": "2026-08-05"
+        "earliest": "2020-02-19",
+        "latest": "2026-08-28"
       }
     },
     "sp_geophagus_tapajos": {
@@ -344,10 +420,10 @@
     },
     "sp_jack_dempsey": {
       "speciesId": "sp_jack_dempsey",
-      "comparableCount": 10,
-      "totalListings": 11,
-      "inStock": 2,
-      "soldOut": 9,
+      "comparableCount": 12,
+      "totalListings": 19,
+      "inStock": 8,
+      "soldOut": 11,
       "price": {
         "median": 26.5,
         "min": 10,
@@ -361,8 +437,8 @@
       "priceBySize": [
         {
           "sizeIn": 1,
-          "medianPrice": 14,
-          "listings": 2
+          "medianPrice": 15.5,
+          "listings": 4
         },
         {
           "sizeIn": 2,
@@ -393,6 +469,18 @@
           "medianPrice": 31.5
         },
         {
+          "storeId": "imperial-tropicals",
+          "listings": 4,
+          "inStock": 3,
+          "medianPrice": 26.49
+        },
+        {
+          "storeId": "aquatic-arts",
+          "listings": 3,
+          "inStock": 2,
+          "medianPrice": 0
+        },
+        {
           "storeId": "global-exoticquatics",
           "listings": 2,
           "inStock": 1,
@@ -403,21 +491,27 @@
           "listings": 1,
           "inStock": 1,
           "medianPrice": 0
+        },
+        {
+          "storeId": "aquahuna",
+          "listings": 1,
+          "inStock": 1,
+          "medianPrice": 0
         }
       ],
       "listedBetween": {
-        "earliest": "2021-09-06",
+        "earliest": "2015-12-08",
         "latest": "2025-11-12"
       }
     },
     "sp_electric_blue_acara": {
       "speciesId": "sp_electric_blue_acara",
-      "comparableCount": 7,
-      "totalListings": 10,
-      "inStock": 5,
-      "soldOut": 5,
+      "comparableCount": 10,
+      "totalListings": 19,
+      "inStock": 7,
+      "soldOut": 12,
       "price": {
-        "median": 25,
+        "median": 22.49,
         "min": 10,
         "max": 45,
         "currency": "USD"
@@ -434,13 +528,13 @@
         },
         {
           "sizeIn": 2,
-          "medianPrice": 28,
-          "listings": 1
+          "medianPrice": 19.99,
+          "listings": 3
         },
         {
           "sizeIn": 3,
-          "medianPrice": 30,
-          "listings": 2
+          "medianPrice": 29.99,
+          "listings": 3
         },
         {
           "sizeIn": 4,
@@ -449,6 +543,12 @@
         }
       ],
       "stores": [
+        {
+          "storeId": "imperial-tropicals",
+          "listings": 7,
+          "inStock": 1,
+          "medianPrice": 19.99
+        },
         {
           "storeId": "predatory-fins",
           "listings": 4,
@@ -466,19 +566,25 @@
           "listings": 3,
           "inStock": 2,
           "medianPrice": 0
+        },
+        {
+          "storeId": "aquahuna",
+          "listings": 2,
+          "inStock": 1,
+          "medianPrice": 0
         }
       ],
       "listedBetween": {
-        "earliest": "2022-04-27",
+        "earliest": "2019-05-04",
         "latest": "2026-08-06"
       }
     },
     "sp_vampire_shrimp": {
       "speciesId": "sp_vampire_shrimp",
       "comparableCount": 3,
-      "totalListings": 4,
-      "inStock": 0,
-      "soldOut": 4,
+      "totalListings": 13,
+      "inStock": 3,
+      "soldOut": 10,
       "price": {
         "median": 35,
         "min": 28,
@@ -508,6 +614,12 @@
       ],
       "stores": [
         {
+          "storeId": "aquatic-arts",
+          "listings": 9,
+          "inStock": 3,
+          "medianPrice": 0
+        },
+        {
           "storeId": "predatory-fins",
           "listings": 3,
           "inStock": 0,
@@ -521,7 +633,7 @@
         }
       ],
       "listedBetween": {
-        "earliest": "2023-12-14",
+        "earliest": "2021-07-14",
         "latest": "2026-06-19"
       }
     },
@@ -589,35 +701,35 @@
     },
     "sp_true_parrot_cichlid": {
       "speciesId": "sp_true_parrot_cichlid",
-      "comparableCount": 6,
-      "totalListings": 7,
+      "comparableCount": 10,
+      "totalListings": 12,
       "inStock": 0,
-      "soldOut": 7,
+      "soldOut": 12,
       "price": {
-        "median": 80,
+        "median": 67.5,
         "min": 35,
         "max": 145,
         "currency": "USD"
       },
       "sizeRangeIn": {
         "min": 2.25,
-        "max": 7
+        "max": 7.5
       },
       "priceBySize": [
         {
           "sizeIn": 2,
-          "medianPrice": 35,
-          "listings": 1
+          "medianPrice": 42.5,
+          "listings": 2
         },
         {
           "sizeIn": 3,
-          "medianPrice": 45,
-          "listings": 1
+          "medianPrice": 52.5,
+          "listings": 2
         },
         {
           "sizeIn": 4,
-          "medianPrice": 65,
-          "listings": 1
+          "medianPrice": 67.5,
+          "listings": 2
         },
         {
           "sizeIn": 5,
@@ -631,8 +743,8 @@
         },
         {
           "sizeIn": 7,
-          "medianPrice": 145,
-          "listings": 1
+          "medianPrice": 117.5,
+          "listings": 2
         }
       ],
       "stores": [
@@ -641,6 +753,12 @@
           "listings": 6,
           "inStock": 0,
           "medianPrice": 80
+        },
+        {
+          "storeId": "imperial-tropicals",
+          "listings": 5,
+          "inStock": 0,
+          "medianPrice": 64.99
         },
         {
           "storeId": "j4-flowerhorns",
@@ -654,12 +772,77 @@
         "latest": "2026-04-10"
       }
     },
+    "sp_empire_gudgeon": {
+      "speciesId": "sp_empire_gudgeon",
+      "comparableCount": 5,
+      "totalListings": 15,
+      "inStock": 3,
+      "soldOut": 12,
+      "price": {
+        "median": 29.99,
+        "min": 19.99,
+        "max": 49.99,
+        "currency": "USD"
+      },
+      "sizeRangeIn": {
+        "min": 1.5,
+        "max": 2.5
+      },
+      "priceBySize": [
+        {
+          "sizeIn": 1,
+          "medianPrice": 27.49,
+          "listings": 4
+        },
+        {
+          "sizeIn": 2,
+          "medianPrice": 34.99,
+          "listings": 1
+        }
+      ],
+      "stores": [
+        {
+          "storeId": "aquatic-arts",
+          "listings": 7,
+          "inStock": 0,
+          "medianPrice": 0
+        },
+        {
+          "storeId": "imperial-tropicals",
+          "listings": 5,
+          "inStock": 2,
+          "medianPrice": 29.99
+        },
+        {
+          "storeId": "j4-flowerhorns",
+          "listings": 1,
+          "inStock": 1,
+          "medianPrice": 0
+        },
+        {
+          "storeId": "flip-aquatics",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 0
+        },
+        {
+          "storeId": "aquahuna",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 0
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2021-07-23",
+        "latest": "2026-03-13"
+      }
+    },
     "sp_teugelsi_bichir": {
       "speciesId": "sp_teugelsi_bichir",
       "comparableCount": 7,
-      "totalListings": 8,
+      "totalListings": 9,
       "inStock": 1,
-      "soldOut": 7,
+      "soldOut": 8,
       "price": {
         "median": 110,
         "min": 50,
@@ -719,6 +902,12 @@
           "listings": 1,
           "inStock": 0,
           "medianPrice": 0
+        },
+        {
+          "storeId": "imperial-tropicals",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 0
         }
       ],
       "listedBetween": {
@@ -728,33 +917,67 @@
     },
     "sp_bristlenose_pleco": {
       "speciesId": "sp_bristlenose_pleco",
-      "comparableCount": 4,
-      "totalListings": 6,
-      "inStock": 1,
-      "soldOut": 5,
+      "comparableCount": 9,
+      "totalListings": 144,
+      "inStock": 11,
+      "soldOut": 133,
       "price": {
-        "median": 40,
+        "median": 44.99,
         "min": 25,
-        "max": 58,
+        "max": 64.99,
         "currency": "USD"
       },
       "sizeRangeIn": {
-        "min": 1.75,
-        "max": 2.88
+        "min": 1.5,
+        "max": 4.5
       },
       "priceBySize": [
         {
           "sizeIn": 1,
-          "medianPrice": 25,
-          "listings": 1
+          "medianPrice": 34.99,
+          "listings": 3
         },
         {
           "sizeIn": 2,
           "medianPrice": 45,
-          "listings": 3
+          "listings": 4
+        },
+        {
+          "sizeIn": 3,
+          "medianPrice": 54.99,
+          "listings": 1
+        },
+        {
+          "sizeIn": 4,
+          "medianPrice": 64.99,
+          "listings": 1
         }
       ],
       "stores": [
+        {
+          "storeId": "aquatic-arts",
+          "listings": 122,
+          "inStock": 7,
+          "medianPrice": 0
+        },
+        {
+          "storeId": "flip-aquatics",
+          "listings": 6,
+          "inStock": 0,
+          "medianPrice": 0
+        },
+        {
+          "storeId": "imperial-tropicals",
+          "listings": 5,
+          "inStock": 0,
+          "medianPrice": 44.99
+        },
+        {
+          "storeId": "aquahuna",
+          "listings": 5,
+          "inStock": 3,
+          "medianPrice": 0
+        },
         {
           "storeId": "predatory-fins",
           "listings": 4,
@@ -769,16 +992,16 @@
         }
       ],
       "listedBetween": {
-        "earliest": "2023-11-24",
+        "earliest": "2020-06-19",
         "latest": "2026-07-24"
       }
     },
     "sp_ornate_bichir": {
       "speciesId": "sp_ornate_bichir",
       "comparableCount": 8,
-      "totalListings": 11,
+      "totalListings": 13,
       "inStock": 2,
-      "soldOut": 9,
+      "soldOut": 11,
       "price": {
         "median": 105,
         "min": 38,
@@ -843,21 +1066,92 @@
           "listings": 3,
           "inStock": 2,
           "medianPrice": 0
+        },
+        {
+          "storeId": "imperial-tropicals",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 0
+        },
+        {
+          "storeId": "aquatic-arts",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 0
         }
       ],
       "listedBetween": {
-        "earliest": "2021-09-04",
+        "earliest": "2019-07-26",
         "latest": "2025-04-01"
+      }
+    },
+    "sp_betta": {
+      "speciesId": "sp_betta",
+      "comparableCount": 4,
+      "totalListings": 128,
+      "inStock": 32,
+      "soldOut": 96,
+      "price": {
+        "median": 14.99,
+        "min": 6,
+        "max": 14.99,
+        "currency": "USD"
+      },
+      "sizeRangeIn": {
+        "min": 1.5,
+        "max": 2.25
+      },
+      "priceBySize": [
+        {
+          "sizeIn": 1,
+          "medianPrice": 14.99,
+          "listings": 3
+        },
+        {
+          "sizeIn": 2,
+          "medianPrice": 6,
+          "listings": 1
+        }
+      ],
+      "stores": [
+        {
+          "storeId": "aquatic-arts",
+          "listings": 72,
+          "inStock": 9,
+          "medianPrice": 0
+        },
+        {
+          "storeId": "imperial-tropicals",
+          "listings": 38,
+          "inStock": 23,
+          "medianPrice": 14.99
+        },
+        {
+          "storeId": "predatory-fins",
+          "listings": 17,
+          "inStock": 0,
+          "medianPrice": 6
+        },
+        {
+          "storeId": "j4-flowerhorns",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 0
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2022-09-09",
+        "latest": "2026-07-23"
       }
     },
     "sp_senegal_bichir": {
       "speciesId": "sp_senegal_bichir",
-      "comparableCount": 10,
-      "totalListings": 11,
-      "inStock": 0,
-      "soldOut": 11,
+      "comparableCount": 11,
+      "totalListings": 17,
+      "inStock": 2,
+      "soldOut": 15,
       "price": {
-        "median": 60,
+        "median": 55,
         "min": 12,
         "max": 165,
         "currency": "USD"
@@ -869,8 +1163,8 @@
       "priceBySize": [
         {
           "sizeIn": 3,
-          "medianPrice": 28,
-          "listings": 3
+          "medianPrice": 20.5,
+          "listings": 4
         },
         {
           "sizeIn": 4,
@@ -896,27 +1190,45 @@
           "medianPrice": 60
         },
         {
+          "storeId": "aquatic-arts",
+          "listings": 3,
+          "inStock": 0,
+          "medianPrice": 0
+        },
+        {
+          "storeId": "imperial-tropicals",
+          "listings": 2,
+          "inStock": 1,
+          "medianPrice": 12.99
+        },
+        {
           "storeId": "j4-flowerhorns",
           "listings": 1,
           "inStock": 0,
           "medianPrice": 0
+        },
+        {
+          "storeId": "aquahuna",
+          "listings": 1,
+          "inStock": 1,
+          "medianPrice": 0
         }
       ],
       "listedBetween": {
-        "earliest": "2021-09-03",
-        "latest": "2025-07-09"
+        "earliest": "2021-03-09",
+        "latest": "2026-07-03"
       }
     },
     "sp_congo_puffer": {
       "speciesId": "sp_congo_puffer",
-      "comparableCount": 8,
-      "totalListings": 9,
+      "comparableCount": 11,
+      "totalListings": 13,
       "inStock": 0,
-      "soldOut": 9,
+      "soldOut": 13,
       "price": {
-        "median": 102.5,
+        "median": 95,
         "min": 45,
-        "max": 195,
+        "max": 199.99,
         "currency": "USD"
       },
       "sizeRangeIn": {
@@ -926,13 +1238,13 @@
       "priceBySize": [
         {
           "sizeIn": 1,
-          "medianPrice": 135,
-          "listings": 4
+          "medianPrice": 95,
+          "listings": 6
         },
         {
           "sizeIn": 2,
-          "medianPrice": 87.5,
-          "listings": 2
+          "medianPrice": 110,
+          "listings": 3
         },
         {
           "sizeIn": 3,
@@ -948,6 +1260,12 @@
           "medianPrice": 102.5
         },
         {
+          "storeId": "imperial-tropicals",
+          "listings": 4,
+          "inStock": 0,
+          "medianPrice": 94.99
+        },
+        {
           "storeId": "j4-flowerhorns",
           "listings": 1,
           "inStock": 0,
@@ -955,19 +1273,19 @@
         }
       ],
       "listedBetween": {
-        "earliest": "2021-09-04",
-        "latest": "2023-04-02"
+        "earliest": "2021-08-02",
+        "latest": "2025-08-07"
       }
     },
     "sp_flowerhorn": {
       "speciesId": "sp_flowerhorn",
-      "comparableCount": 8,
-      "totalListings": 19,
+      "comparableCount": 9,
+      "totalListings": 20,
       "inStock": 1,
-      "soldOut": 18,
+      "soldOut": 19,
       "price": {
-        "median": 115,
-        "min": 95,
+        "median": 110,
+        "min": 21.99,
         "max": 250,
         "currency": "USD"
       },
@@ -983,8 +1301,8 @@
         },
         {
           "sizeIn": 3,
-          "medianPrice": 107.5,
-          "listings": 2
+          "medianPrice": 95,
+          "listings": 3
         },
         {
           "sizeIn": 4,
@@ -1008,19 +1326,25 @@
           "listings": 19,
           "inStock": 1,
           "medianPrice": 115
+        },
+        {
+          "storeId": "imperial-tropicals",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 21.99
         }
       ],
       "listedBetween": {
-        "earliest": "2021-09-04",
+        "earliest": "2017-07-05",
         "latest": "2025-05-28"
       }
     },
     "sp_green_severum": {
       "speciesId": "sp_green_severum",
       "comparableCount": 20,
-      "totalListings": 20,
+      "totalListings": 23,
       "inStock": 1,
-      "soldOut": 19,
+      "soldOut": 22,
       "price": {
         "median": 66.5,
         "min": 12,
@@ -1074,47 +1398,76 @@
           "listings": 20,
           "inStock": 1,
           "medianPrice": 66.5
+        },
+        {
+          "storeId": "aquatic-arts",
+          "listings": 3,
+          "inStock": 0,
+          "medianPrice": 0
         }
       ],
       "listedBetween": {
-        "earliest": "2021-09-06",
+        "earliest": "2021-07-14",
         "latest": "2024-12-09"
       }
     },
     "sp_guppy": {
       "speciesId": "sp_guppy",
-      "comparableCount": 12,
-      "totalListings": 12,
-      "inStock": 0,
-      "soldOut": 12,
+      "comparableCount": 57,
+      "totalListings": 410,
+      "inStock": 31,
+      "soldOut": 379,
       "price": {
-        "median": 35,
-        "min": 25,
+        "median": 29.99,
+        "min": 3.99,
         "max": 45,
         "currency": "USD"
       },
       "sizeRangeIn": {
-        "min": 1.75,
+        "min": 0.75,
         "max": 1.75
       },
       "priceBySize": [
         {
+          "sizeIn": 0,
+          "medianPrice": 18.99,
+          "listings": 4
+        },
+        {
           "sizeIn": 1,
-          "medianPrice": 35,
-          "listings": 12
+          "medianPrice": 29.99,
+          "listings": 53
         }
       ],
       "stores": [
+        {
+          "storeId": "aquatic-arts",
+          "listings": 349,
+          "inStock": 19,
+          "medianPrice": 0
+        },
+        {
+          "storeId": "imperial-tropicals",
+          "listings": 48,
+          "inStock": 11,
+          "medianPrice": 14.99
+        },
         {
           "storeId": "predatory-fins",
           "listings": 12,
           "inStock": 0,
           "medianPrice": 35
+        },
+        {
+          "storeId": "aquarium-coop",
+          "listings": 1,
+          "inStock": 1,
+          "medianPrice": 0
         }
       ],
       "listedBetween": {
-        "earliest": "2021-09-06",
-        "latest": "2023-11-30"
+        "earliest": "2015-12-14",
+        "latest": "2026-07-22"
       }
     },
     "sp_largemouth_bass": {
@@ -1168,14 +1521,92 @@
         "latest": "2023-09-02"
       }
     },
+    "sp_common_pleco": {
+      "speciesId": "sp_common_pleco",
+      "comparableCount": 9,
+      "totalListings": 13,
+      "inStock": 1,
+      "soldOut": 12,
+      "price": {
+        "median": 24.99,
+        "min": 8.99,
+        "max": 59.99,
+        "currency": "USD"
+      },
+      "sizeRangeIn": {
+        "min": 1.5,
+        "max": 8
+      },
+      "priceBySize": [
+        {
+          "sizeIn": 1,
+          "medianPrice": 39.99,
+          "listings": 1
+        },
+        {
+          "sizeIn": 2,
+          "medianPrice": 18,
+          "listings": 3
+        },
+        {
+          "sizeIn": 3,
+          "medianPrice": 19.99,
+          "listings": 1
+        },
+        {
+          "sizeIn": 4,
+          "medianPrice": 24.99,
+          "listings": 1
+        },
+        {
+          "sizeIn": 5,
+          "medianPrice": 34.99,
+          "listings": 1
+        },
+        {
+          "sizeIn": 6,
+          "medianPrice": 24.99,
+          "listings": 1
+        },
+        {
+          "sizeIn": 8,
+          "medianPrice": 59.99,
+          "listings": 1
+        }
+      ],
+      "stores": [
+        {
+          "storeId": "imperial-tropicals",
+          "listings": 11,
+          "inStock": 0,
+          "medianPrice": 29.99
+        },
+        {
+          "storeId": "predatory-fins",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 18
+        },
+        {
+          "storeId": "aquahuna",
+          "listings": 1,
+          "inStock": 1,
+          "medianPrice": 0
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2015-12-15",
+        "latest": "2024-08-16"
+      }
+    },
     "sp_wolf_cichlid": {
       "speciesId": "sp_wolf_cichlid",
-      "comparableCount": 10,
-      "totalListings": 10,
-      "inStock": 0,
-      "soldOut": 10,
+      "comparableCount": 21,
+      "totalListings": 27,
+      "inStock": 2,
+      "soldOut": 25,
       "price": {
-        "median": 36.5,
+        "median": 69.99,
         "min": 15,
         "max": 295,
         "currency": "USD"
@@ -1197,17 +1628,37 @@
         },
         {
           "sizeIn": 3,
-          "medianPrice": 30,
-          "listings": 1
-        },
-        {
-          "sizeIn": 4,
           "medianPrice": 37.5,
           "listings": 2
         },
         {
+          "sizeIn": 4,
+          "medianPrice": 39.99,
+          "listings": 3
+        },
+        {
+          "sizeIn": 5,
+          "medianPrice": 49.99,
+          "listings": 1
+        },
+        {
           "sizeIn": 6,
-          "medianPrice": 95,
+          "medianPrice": 87.5,
+          "listings": 4
+        },
+        {
+          "sizeIn": 9,
+          "medianPrice": 174.99,
+          "listings": 2
+        },
+        {
+          "sizeIn": 10,
+          "medianPrice": 164.99,
+          "listings": 2
+        },
+        {
+          "sizeIn": 11,
+          "medianPrice": 189.99,
           "listings": 2
         },
         {
@@ -1218,6 +1669,12 @@
       ],
       "stores": [
         {
+          "storeId": "imperial-tropicals",
+          "listings": 17,
+          "inStock": 2,
+          "medianPrice": 139.99
+        },
+        {
           "storeId": "predatory-fins",
           "listings": 10,
           "inStock": 0,
@@ -1225,25 +1682,25 @@
         }
       ],
       "listedBetween": {
-        "earliest": "2021-12-16",
+        "earliest": "2015-12-08",
         "latest": "2022-05-23"
       }
     },
     "sp_pinktail_chalceus": {
       "speciesId": "sp_pinktail_chalceus",
-      "comparableCount": 3,
-      "totalListings": 3,
+      "comparableCount": 4,
+      "totalListings": 4,
       "inStock": 0,
-      "soldOut": 3,
+      "soldOut": 4,
       "price": {
-        "median": 16,
+        "median": 17.99,
         "min": 10,
         "max": 20,
         "currency": "USD"
       },
       "sizeRangeIn": {
         "min": 2.5,
-        "max": 4.25
+        "max": 4.5
       },
       "priceBySize": [
         {
@@ -1258,8 +1715,8 @@
         },
         {
           "sizeIn": 4,
-          "medianPrice": 10,
-          "listings": 1
+          "medianPrice": 15,
+          "listings": 2
         }
       ],
       "stores": [
@@ -1268,21 +1725,27 @@
           "listings": 3,
           "inStock": 0,
           "medianPrice": 16
+        },
+        {
+          "storeId": "imperial-tropicals",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 19.99
         }
       ],
       "listedBetween": {
         "earliest": "2021-09-06",
-        "latest": "2021-09-06"
+        "latest": "2023-05-18"
       }
     },
     "sp_jaguar_cichlid": {
       "speciesId": "sp_jaguar_cichlid",
-      "comparableCount": 9,
-      "totalListings": 9,
-      "inStock": 0,
-      "soldOut": 9,
+      "comparableCount": 10,
+      "totalListings": 13,
+      "inStock": 1,
+      "soldOut": 12,
       "price": {
-        "median": 55,
+        "median": 46.5,
         "min": 12,
         "max": 250,
         "currency": "USD"
@@ -1309,8 +1772,8 @@
         },
         {
           "sizeIn": 4,
-          "medianPrice": 38,
-          "listings": 1
+          "medianPrice": 33.99,
+          "listings": 2
         },
         {
           "sizeIn": 5,
@@ -1344,10 +1807,16 @@
           "listings": 9,
           "inStock": 0,
           "medianPrice": 55
+        },
+        {
+          "storeId": "imperial-tropicals",
+          "listings": 4,
+          "inStock": 1,
+          "medianPrice": 29.99
         }
       ],
       "listedBetween": {
-        "earliest": "2021-09-04",
+        "earliest": "2016-01-28",
         "latest": "2021-09-04"
       }
     }
@@ -1355,31 +1824,83 @@
   "unmatchedScientificNames": [
     {
       "scientificName": "Pterophyllum scalare",
-      "listings": 60
+      "listings": 197
+    },
+    {
+      "scientificName": "Neocaridina davidi",
+      "listings": 174
+    },
+    {
+      "scientificName": "Poecilia wingei",
+      "listings": 138
+    },
+    {
+      "scientificName": "Xiphophorus maculatus",
+      "listings": 120
+    },
+    {
+      "scientificName": "Pomacea bridgesii",
+      "listings": 81
+    },
+    {
+      "scientificName": "Astronotus ocellatus",
+      "listings": 72
     },
     {
       "scientificName": "Potamotrygon leopoldi",
       "listings": 48
     },
     {
-      "scientificName": "Astronotus ocellatus",
-      "listings": 44
+      "scientificName": "Apistogramma cacatuoides",
+      "listings": 40
     },
     {
       "scientificName": "Phractocephalus hemioliopterus",
       "listings": 37
     },
     {
+      "scientificName": "Xiphophorus helleri",
+      "listings": 35
+    },
+    {
+      "scientificName": "Ambystoma mexicanum",
+      "listings": 35
+    },
+    {
       "scientificName": "Potamotrygon jabuti",
       "listings": 34
     },
     {
+      "scientificName": "Melanotaenia boesemani",
+      "listings": 30
+    },
+    {
+      "scientificName": "Mikrogeophagus ramirezi",
+      "listings": 27
+    },
+    {
       "scientificName": "Carassius auratus",
-      "listings": 24
+      "listings": 27
+    },
+    {
+      "scientificName": "Cyphotilapia frontosa",
+      "listings": 26
     },
     {
       "scientificName": "Lepisosteus platyrhincus",
       "listings": 23
+    },
+    {
+      "scientificName": "Cichla kelberi",
+      "listings": 23
+    },
+    {
+      "scientificName": "Poecilia sphenops",
+      "listings": 22
+    },
+    {
+      "scientificName": "Xiphophorus hellerii",
+      "listings": 22
     },
     {
       "scientificName": "Datnioides microlepis",
@@ -1390,12 +1911,20 @@
       "listings": 20
     },
     {
-      "scientificName": "Ambystoma mexicanum",
+      "scientificName": "Acarichthys heckelii",
       "listings": 20
     },
     {
-      "scientificName": "Cichla kelberi",
+      "scientificName": "Puntigrus tetrazona",
       "listings": 20
+    },
+    {
+      "scientificName": "Heros efasciatus",
+      "listings": 19
+    },
+    {
+      "scientificName": "Panaque nigrolineatus laurafabianae",
+      "listings": 19
     },
     {
       "scientificName": "Lithobates catesbeiana",
@@ -1406,11 +1935,43 @@
       "listings": 18
     },
     {
-      "scientificName": "Panaque nigrolineatus laurafabianae",
+      "scientificName": "Symphysodon aequifasciata",
+      "listings": 18
+    },
+    {
+      "scientificName": "Procambarus clarkii",
+      "listings": 18
+    },
+    {
+      "scientificName": "Aulonocara koningsi",
+      "listings": 18
+    },
+    {
+      "scientificName": "Corydoras aeneus",
+      "listings": 18
+    },
+    {
+      "scientificName": "Paracheirodon axelrodi",
+      "listings": 17
+    },
+    {
+      "scientificName": "Poecilia latipinna",
       "listings": 16
     },
     {
-      "scientificName": "Cyphotilapia frontosa",
+      "scientificName": "Cherax boesemani",
+      "listings": 16
+    },
+    {
+      "scientificName": "Cambarellus patzcuarensis",
+      "listings": 16
+    },
+    {
+      "scientificName": "Faunus ater",
+      "listings": 16
+    },
+    {
+      "scientificName": "Myxocyprinus asiaticus",
       "listings": 15
     },
     {
@@ -1418,27 +1979,83 @@
       "listings": 15
     },
     {
+      "scientificName": "Procambarus alleni",
+      "listings": 15
+    },
+    {
+      "scientificName": "Caridina multidentata",
+      "listings": 15
+    },
+    {
+      "scientificName": "Cherax alyciae",
+      "listings": 15
+    },
+    {
+      "scientificName": "Cyprinus carpio",
+      "listings": 14
+    },
+    {
       "scientificName": "Pseudoplatystoma fasciatum",
       "listings": 14
     },
     {
-      "scientificName": "Myxocyprinus asiaticus",
+      "scientificName": "Baryancistrus xanthellus",
+      "listings": 14
+    },
+    {
+      "scientificName": "Panaque armbrusteri",
+      "listings": 14
+    },
+    {
+      "scientificName": "Cyrtocara moorii",
+      "listings": 14
+    },
+    {
+      "scientificName": "Oryzias latipes",
+      "listings": 14
+    },
+    {
+      "scientificName": "Trichogaster lalius",
+      "listings": 14
+    },
+    {
+      "scientificName": "Andinoacara pulcher hybrid",
+      "listings": 14
+    },
+    {
+      "scientificName": "Chromobotia macracanthus",
       "listings": 13
     },
     {
-      "scientificName": "Baryancistrus xanthellus",
+      "scientificName": "Macropodus opercularis",
       "listings": 13
+    },
+    {
+      "scientificName": "Nimbochromis venustus",
+      "listings": 13
+    },
+    {
+      "scientificName": "Microsorum pteropus",
+      "listings": 13
+    },
+    {
+      "scientificName": "Pristella maxillaris",
+      "listings": 13
+    },
+    {
+      "scientificName": "Symphysodon aequifasciatus",
+      "listings": 12
     },
     {
       "scientificName": "Polypterus endlicheri",
       "listings": 12
     },
     {
-      "scientificName": "Cyprinus carpio",
+      "scientificName": "Sahyadria denisonii",
       "listings": 12
     },
     {
-      "scientificName": "Panaque armbrusteri",
+      "scientificName": "Tetraodon mbu",
       "listings": 12
     },
     {
@@ -1450,11 +2067,19 @@
       "listings": 12
     },
     {
-      "scientificName": "Osphronemus septemfasciatus",
+      "scientificName": "Cherax snowden",
+      "listings": 12
+    },
+    {
+      "scientificName": "Sinotaia quadrata",
+      "listings": 12
+    },
+    {
+      "scientificName": "Haludaria fasciata",
       "listings": 11
     },
     {
-      "scientificName": "Symphysodon aequifasciatus",
+      "scientificName": "Osphronemus septemfasciatus",
       "listings": 11
     },
     {
@@ -1466,6 +2091,10 @@
       "listings": 11
     },
     {
+      "scientificName": "Panaque nigrolineatus",
+      "listings": 11
+    },
+    {
       "scientificName": "Siniperca scherzeri",
       "listings": 11
     },
@@ -1474,7 +2103,31 @@
       "listings": 11
     },
     {
-      "scientificName": "Tetraodon mbu",
+      "scientificName": "Epalzeorhynchos frenatum",
+      "listings": 11
+    },
+    {
+      "scientificName": "Herichthys carpintis",
+      "listings": 11
+    },
+    {
+      "scientificName": "Tatia galaxias",
+      "listings": 11
+    },
+    {
+      "scientificName": "Inpaichthys kerri",
+      "listings": 11
+    },
+    {
+      "scientificName": "Septaria porcellana",
+      "listings": 11
+    },
+    {
+      "scientificName": "Trigonostigma heteromorpha",
+      "listings": 10
+    },
+    {
+      "scientificName": "Nothobranchius guentheri",
       "listings": 10
     },
     {
@@ -1486,7 +2139,55 @@
       "listings": 10
     },
     {
-      "scientificName": "Poecilia sphenops",
+      "scientificName": "Cichla piquiti",
+      "listings": 10
+    },
+    {
+      "scientificName": "Cephalosilurus apurensis",
+      "listings": 10
+    },
+    {
+      "scientificName": "Hasemania nana",
+      "listings": 10
+    },
+    {
+      "scientificName": "Glossolepis pseudoincisus",
+      "listings": 10
+    },
+    {
+      "scientificName": "Hyphessobrycon herbertaxelrodi",
+      "listings": 10
+    },
+    {
+      "scientificName": "Gymnocorymbus ternetzi",
+      "listings": 10
+    },
+    {
+      "scientificName": "Stenomelania acutospira",
+      "listings": 10
+    },
+    {
+      "scientificName": "Cherax peknyi",
+      "listings": 10
+    },
+    {
+      "scientificName": "Vittina waigiensis",
+      "listings": 10
+    },
+    {
+      "scientificName": "Corydoras trilineatus",
+      "listings": 10
+    },
+    {
+      "scientificName": "Corydoras sterbai",
+      "listings": 9
+    },
+    {
+      "scientificName": "Puntius titteya",
+      "listings": 9
+    },
+    {
+      "scientificName": "Amatitlania nigrofasciata",
       "listings": 9
     },
     {
@@ -1514,244 +2215,12 @@
       "listings": 9
     },
     {
-      "scientificName": "Cichla piquiti",
-      "listings": 9
-    },
-    {
       "scientificName": "Leporacanthicus galaxias",
       "listings": 9
     },
     {
-      "scientificName": "Toxotes jaculatrix",
-      "listings": 8
-    },
-    {
-      "scientificName": "Auchenoglanis occidentalis",
-      "listings": 8
-    },
-    {
-      "scientificName": "Symphysodon aequifaciatus",
-      "listings": 8
-    },
-    {
-      "scientificName": "Sahyadria denisonii",
-      "listings": 8
-    },
-    {
-      "scientificName": "Bagarius yarrelli",
-      "listings": 8
-    },
-    {
-      "scientificName": "Osphronemus goramy",
-      "listings": 8
-    },
-    {
-      "scientificName": "Cichla orinocensis",
-      "listings": 8
-    },
-    {
-      "scientificName": "Panaque nigrolineatus",
-      "listings": 8
-    },
-    {
-      "scientificName": "Semaprochilodus taeniurus",
-      "listings": 8
-    },
-    {
-      "scientificName": "Neolissochilus stracheyi",
-      "listings": 8
-    },
-    {
-      "scientificName": "Scobiancistrus aureautus",
-      "listings": 8
-    },
-    {
-      "scientificName": "Glyptoperichthys gibbiceps",
-      "listings": 8
-    },
-    {
-      "scientificName": "Tetraodon lineatus",
-      "listings": 8
-    },
-    {
-      "scientificName": "Brachyplatystoma tigrinum",
-      "listings": 8
-    },
-    {
-      "scientificName": "Polypterus lapradei",
-      "listings": 7
-    },
-    {
-      "scientificName": "Amatitlania nigrofasciata",
-      "listings": 7
-    },
-    {
-      "scientificName": "Synodontis decorus",
-      "listings": 7
-    },
-    {
-      "scientificName": "Cichla melaniae",
-      "listings": 7
-    },
-    {
-      "scientificName": "Lates calcarifer",
-      "listings": 7
-    },
-    {
-      "scientificName": "Tetraodon pustulatus",
-      "listings": 7
-    },
-    {
-      "scientificName": "Dorado brasiliense",
-      "listings": 7
-    },
-    {
-      "scientificName": "Mormyrus longirostris",
-      "listings": 7
-    },
-    {
-      "scientificName": "Hydrocynus goliath",
-      "listings": 7
-    },
-    {
-      "scientificName": "Acarichthys heckelii",
-      "listings": 7
-    },
-    {
-      "scientificName": "Scleropages jardinii",
-      "listings": 7
-    },
-    {
-      "scientificName": "Electrophorus electricus",
-      "listings": 7
-    },
-    {
-      "scientificName": "Heterotis niloticus",
-      "listings": 7
-    },
-    {
-      "scientificName": "Gymnarchus niloticus",
-      "listings": 7
-    },
-    {
-      "scientificName": "Asterophysus batrachus",
-      "listings": 7
-    },
-    {
-      "scientificName": "Peckoltia sabaji",
-      "listings": 6
-    },
-    {
-      "scientificName": "Barbonymus schwanenfeldii",
-      "listings": 6
-    },
-    {
-      "scientificName": "Sorubimichthys planiceps",
-      "listings": 6
-    },
-    {
-      "scientificName": "Pao suvattii",
-      "listings": 6
-    },
-    {
-      "scientificName": "Herichthys cyanoguttatus",
-      "listings": 6
-    },
-    {
-      "scientificName": "Pseudoplatystoma corruscans",
-      "listings": 6
-    },
-    {
-      "scientificName": "Panaque titan",
-      "listings": 6
-    },
-    {
-      "scientificName": "Polypterus weeksii",
-      "listings": 6
-    },
-    {
-      "scientificName": "Hoplias aimara",
-      "listings": 6
-    },
-    {
-      "scientificName": "Pangasius hypophthalmus",
-      "listings": 6
-    },
-    {
-      "scientificName": "Pseudopimelodus bufonius",
-      "listings": 6
-    },
-    {
-      "scientificName": "Elopichthys bambusa",
-      "listings": 6
-    },
-    {
-      "scientificName": "Osphronemus laticlavius",
-      "listings": 6
-    },
-    {
-      "scientificName": "Chromobotia macracanthus",
-      "listings": 6
-    },
-    {
-      "scientificName": "Leptobotia elongata",
-      "listings": 6
-    },
-    {
-      "scientificName": "Megalops cyprinoides",
-      "listings": 6
-    },
-    {
-      "scientificName": "Uaru fernandezyepezi",
-      "listings": 6
-    },
-    {
-      "scientificName": "Cichla intermedia",
-      "listings": 6
-    },
-    {
-      "scientificName": "Cichla temensis",
-      "listings": 6
-    },
-    {
-      "scientificName": "Protopterus aethiopicus",
-      "listings": 6
-    },
-    {
-      "scientificName": "Acanthicus adonis",
-      "listings": 6
-    },
-    {
-      "scientificName": "Vieja melanura",
-      "listings": 6
-    },
-    {
-      "scientificName": "Crenicichla zebrina",
-      "listings": 6
-    },
-    {
-      "scientificName": "Hemiancistrus subviridis",
-      "listings": 6
-    },
-    {
-      "scientificName": "Leporacanthicus triactis",
-      "listings": 6
-    },
-    {
-      "scientificName": "Guianacara dacrya",
-      "listings": 5
-    },
-    {
-      "scientificName": "Arapaima gigas",
-      "listings": 5
-    },
-    {
-      "scientificName": "Labeobarbus malagarisi",
-      "listings": 5
-    },
-    {
-      "scientificName": "Pseudoplatystoma tigrinum",
-      "listings": 5
+      "scientificName": "Labeotropheus fuelleborni",
+      "listings": 9
     }
   ]
 }
