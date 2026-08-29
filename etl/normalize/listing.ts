@@ -9,7 +9,7 @@ import type { MarketListing, StoreConfig } from '../types';
 import type { ShopifyProduct, ShopifyVariant } from '../sources/shopify';
 import { productUrl } from '../sources/shopify';
 import { parseSize } from './size';
-import { buildMatcher } from './species';
+import { buildMatcher, type SpeciesMatch } from './species';
 import { canonicalSpeciesId, derivedSpeciesId } from './derive-species';
 
 /**
@@ -27,6 +27,33 @@ function sizeFromVariant(variant: ShopifyVariant) {
   return parseSize(variant.option1 ?? variant.title);
 }
 
+/**
+ * Turn a title match into the species id and provenance a listing carries.
+ *
+ * A binomial the curated catalog does not cover still names a real species, so
+ * it gets a derived id rather than being dropped. Without this the library
+ * showed 47 of the 1,068 species these vendors actually sell. Note what this
+ * is NOT: it never guesses that one fish is another. It only mints a species
+ * from a name the vendor stated explicitly.
+ *
+ * The id is then folded onto the canonical record before anything downstream
+ * sees it, so a fish the vendors spelled three ways is priced once.
+ *
+ * Shared with the warehouse rebuild in etl/rebuild-index.ts, so the two paths
+ * cannot drift into resolving the same title differently.
+ */
+export function resolveSpecies(m: SpeciesMatch): {
+  speciesId?: string;
+  matchMethod?: MarketListing['matchMethod'];
+} {
+  const minted = m.speciesId
+    ?? (m.scientificNameInTitle ? derivedSpeciesId(m.scientificNameInTitle) : undefined);
+  return {
+    speciesId: minted ? canonicalSpeciesId(minted) : undefined,
+    matchMethod: m.speciesId ? m.method : (m.scientificNameInTitle ? 'derived-binomial' : undefined),
+  };
+}
+
 export function normalizeProduct(
   store: StoreConfig,
   product: ShopifyProduct,
@@ -34,25 +61,7 @@ export function normalizeProduct(
   retrievedAt: string,
 ): MarketListing[] {
   const m = match(product.title, product.product_type);
-
-  /**
-   * A binomial the curated catalog does not cover still names a real species,
-   * so it gets a derived id rather than being dropped. Without this the
-   * library showed 47 of the 1,068 species these vendors actually sell.
-   *
-   * Note what this is NOT: it never guesses that one fish is another. It only
-   * mints a new species from a name the vendor stated explicitly.
-   */
-  /**
-   * Folded onto the canonical record before anything downstream sees it, so a
-   * fish the vendors spelled three ways is priced once. See canonicalSpeciesId.
-   */
-  const minted = m.speciesId
-    ?? (m.scientificNameInTitle ? derivedSpeciesId(m.scientificNameInTitle) : undefined);
-  const speciesId = minted ? canonicalSpeciesId(minted) : undefined;
-  const matchMethod: MarketListing['matchMethod'] = m.speciesId
-    ? m.method
-    : (m.scientificNameInTitle ? 'derived-binomial' : undefined);
+  const { speciesId, matchMethod } = resolveSpecies(m);
 
   return product.variants.map((variant): MarketListing => {
     const parsed = sizeFromVariant(variant);
