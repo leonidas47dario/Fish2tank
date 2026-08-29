@@ -13,6 +13,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { SPECIES_CATALOG } from '@/data/seed/species-catalog';
 import { STORES, type LocalStore, type MarketListing, type StoreInventory } from './types';
 import { discoverSpecies } from './normalize/derive-species';
+import { waterTypeBySpecies, type WaterType } from './normalize/water-type';
 import { surrogateKey } from './surrogate-key';
 
 const WAREHOUSE = 'warehouse';
@@ -51,6 +52,24 @@ async function main() {
     `CREATE TABLE stg_listing AS SELECT * FROM read_json_auto('${LISTINGS}', format='newline_delimited')`,
   );
 
+  /**
+   * Fresh, brackish or salt, resolved once over every listing and applied to
+   * curated and discovered species alike.
+   *
+   * It has to happen here rather than inside discoverSpecies, because the
+   * curated 47 never go through discovery - and an earlier pass that tagged
+   * only the discovered half left the fish actually in the owner's tanks as
+   * the ones the filter could say least about.
+   */
+  const listingRowsForWater: MarketListing[] = readFileSync(LISTINGS, 'utf8')
+    .trim().split('\n').filter(Boolean).map((l) => JSON.parse(l));
+  const vendorWater = new Map<string, WaterType>(
+    STORES
+      .filter((s) => s.waterType === 'freshwater' || s.waterType === 'marine')
+      .map((s) => [s.id, s.waterType as WaterType]),
+  );
+  const waterBySpecies = waterTypeBySpecies(listingRowsForWater, vendorWater);
+
   const stores = STORES.map((s) => ({
     store_key: surrogateKey(s.id).toString(),
     store_id: s.id,
@@ -81,10 +100,9 @@ async function main() {
     temp_max_c: profile.water?.temperatureC?.max ?? null,
     predation_tags: profile.predationTags.join('|'),
     profile_version: profile.profileVersion,
-    // Curated profiles declare no water type: nothing in the profile states
-    // one, and every tank the owner keeps is freshwater, so inferring it from
-    // that would be the app inventing a fact about the fish.
-    water_type: null as string | null,
+    // Same source as every other species: what the vendors selling it said.
+    // Never inferred from the fact that the owner keeps it in fresh water.
+    water_type: waterBySpecies.get(sp.id) ?? null,
     source_label: profile.sources[0]?.label ?? null,
     source_url: profile.sources[0]?.url ?? null,
     valid_from: validFrom,
@@ -102,12 +120,8 @@ async function main() {
   const curatedScientific = new Set(
     SPECIES_CATALOG.map((e) => e.species.scientificName?.toLowerCase()).filter(Boolean) as string[],
   );
-  const listingRows: MarketListing[] = readFileSync(LISTINGS, 'utf8')
-    .trim().split('\n').filter(Boolean).map((l) => JSON.parse(l));
-  const waterTypeByStore = new Map(
-    STORES.filter((s) => s.waterType).map((s) => [s.id, s.waterType!] as const),
-  );
-  const discovered = discoverSpecies(listingRows, curatedScientific, waterTypeByStore);
+  const listingRows = listingRowsForWater;
+  const discovered = discoverSpecies(listingRows, curatedScientific);
 
   for (const d of discovered) {
     species.push({
@@ -123,9 +137,7 @@ async function main() {
       adult_size_in: null, min_volume_gal: null, aggression: null,
       temp_min_c: null, temp_max_c: null, predation_tags: '',
       profile_version: 0,
-      // The one fact the vendors DO settle: a species only LiveAquaria sells
-      // is a marine species. Tagged, not inferred - see DiscoveredSpecies.
-      water_type: d.waterType ?? null,
+      water_type: waterBySpecies.get(d.speciesId) ?? null,
       source_label: 'Discovered from vendor listings - no care profile yet',
       source_url: null,
       valid_from: validFrom, valid_to: null, is_current: true,

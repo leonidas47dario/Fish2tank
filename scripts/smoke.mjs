@@ -127,7 +127,21 @@ await page.waitForTimeout(300);
 for (const [route, name] of [['collection','08-collection'],['tanks','09-tanks'],['journal','10-journal'],['settings','11-settings']]) {
   await page.goto(`${BASE}/#/${route}`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(600);
-  await page.screenshot({ path: `${SHOTS}/${name}.png`, fullPage: true });
+  /**
+   * The catalog is NOT captured full-page, and cannot be.
+   *
+   * Every card renders at once, so at 1,248 freshwater species the page is
+   * 343,000px tall - Chromium refuses a full-page capture past roughly 16,384
+   * and the whole smoke run died here rather than at anything to do with the
+   * product. It was worse before the water filter existed: all 2,178 cards
+   * came to ~599,000px.
+   *
+   * The viewport shot still proves the screen renders, which is what this step
+   * is for. The real fix is the virtualisation already logged as known debt in
+   * the README - a screenshot flag is not it.
+   */
+  const oversized = route === 'collection';
+  await page.screenshot({ path: `${SHOTS}/${name}.png`, fullPage: !oversized });
 }
 
 console.log('CONSOLE ERRORS:', errors.length ? JSON.stringify(errors, null, 2) : 'none');

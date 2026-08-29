@@ -19,6 +19,7 @@ import { deriveCommonName } from './normalize/derive-species';
 import { findProblems, isUsableName, summarise } from '@/data/seed/catalog-quality';
 import { OVERRIDE_BY_ID, SPECIES_SYNONYMS, SYNONYM_IDS } from '@/data/seed/species-overrides';
 import { traitsFor, type OrganismKind, type WaterZone } from '@/data/seed/taxonomy';
+import type { WaterType } from '@/domain/types';
 
 const WAREHOUSE = 'warehouse';
 const OUT_DIR = 'src/data/seed/marts';
@@ -36,11 +37,12 @@ export interface CatalogEntry {
   tempMaxC?: number;
   predationTags: string[];
   /**
-   * Fresh or salt, as declared by the vendors that list it - never inferred
-   * from the fish. Absent for most of the catalog, which is not a claim that
-   * the fish is freshwater. See DiscoveredSpecies.waterType.
+   * Fresh, brackish or salt, from what the vendors selling it said - never
+   * inferred from the fish. Absent means no vendor made a claim, which is not
+   * a claim that it is freshwater; the catalog shows those as "not recorded"
+   * and excludes them from every specific filter. See normalize/water-type.ts.
    */
-  waterType?: 'freshwater' | 'marine';
+  waterType?: WaterType;
   sourceLabel?: string;
   sourceUrl?: string;
   /**
@@ -201,7 +203,7 @@ async function main() {
       tempMinC: num(r.temp_min_c),
       tempMaxC: num(r.temp_max_c),
       predationTags: split(r.predation_tags),
-      ...(nn(r.water_type) ? { waterType: nn(r.water_type) as 'freshwater' | 'marine' } : {}),
+      ...(nn(r.water_type) ? { waterType: nn(r.water_type) as WaterType } : {}),
       sourceLabel: nn(r.source_label),
       sourceUrl: nn(r.source_url),
       // Only ship a picture we can account for. The test used to be a licence
@@ -245,15 +247,21 @@ async function main() {
   const zonedRest = rest.filter((s) => s.waterZone).length;
   console.log('\n  habitat (derived from family)');
   console.log(`    with a water zone         ${zoned}  (${Math.round((zoned / species.length) * 100)}%)`);
-  console.log(`      freshwater / undeclared ${zonedRest} of ${rest.length}  (${Math.round((zonedRest / rest.length) * 100)}%)`);
-  console.log(`      marine-only vendors     ${marine.filter((s) => s.waterZone).length} of ${marine.length}  <- the taxonomy map is freshwater`);
-  console.log('\n  habitat (derived from family)');
-  console.log(`    with a water zone         ${zoned}  (${Math.round((zoned / species.length) * 100)}%)`);
+  console.log(`      fresh / brackish / none ${zonedRest} of ${rest.length}  (${Math.round((zonedRest / rest.length) * 100)}%)`);
+  console.log(`      marine                  ${marine.filter((s) => s.waterZone).length} of ${marine.length}  <- the taxonomy map is freshwater`);
   console.log(`    family unmapped           ${species.filter((s) => !s.family).length}`);
   for (const k of ['fish', 'plant', 'invertebrate', 'amphibian', 'reptile'] as const) {
     const n = species.filter((s) => s.organismKind === k).length;
     if (n) console.log(`    ${k.padEnd(24)}  ${n}`);
   }
+
+  console.log('\n  salinity (vendor tags first, then a single-kind vendor\'s declaration)');
+  for (const t of ['freshwater', 'brackish', 'marine'] as const) {
+    const n = species.filter((s) => s.waterType === t).length;
+    console.log(`    ${t.padEnd(24)}  ${String(n).padStart(4)}  (${Math.round((n / species.length) * 100)}%)`);
+  }
+  const untyped = species.filter((s) => !s.waterType).length;
+  console.log(`    not recorded              ${String(untyped).padStart(4)}  (${Math.round((untyped / species.length) * 100)}%)`);
   console.log(`\n  dropped ${SPECIES_SYNONYMS.length} duplicate species minted by vendor typos`);
   for (const s of SPECIES_SYNONYMS) console.log(`      ${s.speciesId} -> ${s.canonicalId}`);
 

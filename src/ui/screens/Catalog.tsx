@@ -17,7 +17,7 @@ import { useNavigate } from 'react-router-dom';
 import { db } from '@/data/db';
 import { CATALOG, cardPrice, marketAndScarcity, ownership, type CatalogCard } from '@/data/catalog';
 import { deriveQuantity } from '@/domain/holdings';
-import type { AggressionRating } from '@/domain/types';
+import type { AggressionRating, WaterType } from '@/domain/types';
 import type { OrganismKind, WaterZone } from '@/data/seed/taxonomy';
 import { FishCard } from '../components/FishCard';
 
@@ -28,6 +28,38 @@ const FILTERS: Array<{ id: Filter; label: string }> = [
   { id: 'caught', label: 'Caught' },
   { id: 'uncaught', label: 'Not yet' },
   { id: 'kept', label: 'Kept' },
+];
+
+/**
+ * Fresh, brackish or salt - and the one filter that is ON by default.
+ *
+ * WHY IT DEFAULTS. Every tank the owner keeps is freshwater, and 874 of the
+ * 2,178 species in the catalog are reef stock that arrived with LiveAquaria's
+ * marine catalogue. Opening the library on a wall of clownfish and Acropora
+ * makes it somebody else's hobby. Defaulting to freshwater makes the first
+ * screen the owner's own.
+ *
+ * WHY IT IS NOT IN THE "MORE FILTERS" DRAWER. Everything else in there starts
+ * at 'any', so a collapsed row can only ever hide a filter the user turned on
+ * themselves. This one starts on, and a default that quietly removes 40% of
+ * the catalog from behind a fold is exactly the "silently on" failure the
+ * drawer's own comment warns about. So it sits in the open, and when it is
+ * hiding anything it says how much.
+ *
+ * Brackish is its own value rather than being folded into either side: eleven
+ * species are sold as brackish and nothing else, and a brackish fish is not a
+ * freshwater fish. Species nobody tagged are "not recorded" and are excluded
+ * from every specific choice rather than defaulted into one - the same rule
+ * the water-column zone follows.
+ */
+type SalinityFilter = 'any' | WaterType | 'unknown';
+
+const SALINITY: Array<{ id: SalinityFilter; label: string }> = [
+  { id: 'freshwater', label: 'Freshwater' },
+  { id: 'brackish', label: 'Brackish' },
+  { id: 'marine', label: 'Saltwater' },
+  { id: 'unknown', label: 'Unrecorded' },
+  { id: 'any', label: 'All' },
 ];
 
 /**
@@ -85,6 +117,8 @@ export default function Catalog() {
   const [zone, setZone] = useState<ZoneFilter>('any');
   const [kind, setKind] = useState<KindFilter>('any');
   const [aggression, setAggression] = useState<AggressionFilter>('any');
+  // The only filter that does not start at 'any'. See SALINITY above.
+  const [salinity, setSalinity] = useState<SalinityFilter>('freshwater');
 
   const cards = useLiveQuery(async (): Promise<CatalogCard[]> => {
     const [specimens, snapshots, holdings, lifeEvents, residencies, dream, media] = await Promise.all([
@@ -150,6 +184,14 @@ export default function Catalog() {
         if (zone === 'unknown' ? c.species.waterZone !== undefined : zone !== 'any' && c.species.waterZone !== zone) {
           return false;
         }
+        // Same rule as the zone: no recorded salinity means excluded from
+        // every specific choice, never defaulted into one.
+        if (salinity === 'unknown'
+          ? c.species.waterType !== undefined
+          : salinity !== 'any' && c.species.waterType !== salinity) {
+          return false;
+        }
+
         if (kind !== 'any' && c.species.organismKind !== kind) return false;
         if (aggression === 'unknown'
           ? c.species.aggression !== undefined
@@ -169,7 +211,38 @@ export default function Catalog() {
       .sort((a, b) =>
         Number(b.user.inCollection) - Number(a.user.inCollection) ||
         a.species.commonName.localeCompare(b.species.commonName));
-  }, [cards, query, filter, zone, kind, aggression]);
+  }, [cards, query, filter, zone, kind, aggression, salinity]);
+
+  /**
+   * What the water filter is keeping off the screen, counted rather than
+   * described, and broken down COMPLETELY.
+   *
+   * The app's first rule is that it never hides a fact without saying so, and
+   * this filter is on before the user touches anything. A partial breakdown
+   * would be its own small dishonesty - naming 45 unrecorded species while
+   * silently omitting the 1,248 freshwater ones - so every excluded bucket is
+   * listed, and the parts always sum to the total.
+   */
+  const hiddenBySalinity = useMemo(() => {
+    if (!cards || salinity === 'any') return null;
+    const buckets: Array<{ id: SalinityFilter; label: string }> = [
+      { id: 'freshwater', label: 'freshwater' },
+      { id: 'brackish', label: 'brackish' },
+      { id: 'marine', label: 'saltwater' },
+      { id: 'unknown', label: 'with no salinity recorded' },
+    ];
+    const parts = buckets
+      .filter((b) => b.id !== salinity)
+      .map((b) => ({
+        label: b.label,
+        n: cards.filter((c) => (b.id === 'unknown'
+          ? c.species.waterType === undefined
+          : c.species.waterType === b.id)).length,
+      }))
+      .filter((b) => b.n > 0);
+    const total = parts.reduce((sum, b) => sum + b.n, 0);
+    return total === 0 ? null : { total, parts };
+  }, [cards, salinity]);
 
   // Shown on the collapsed summary so a filter left on inside it is never invisible.
   const activeExtra = [zone !== 'any', kind !== 'any', aggression !== 'any'].filter(Boolean).length;
@@ -191,6 +264,34 @@ export default function Catalog() {
         placeholder="Search name, scientific name or trade name…"
         aria-label="Search the catalog"
       />
+
+      {/*
+        Salinity sits above the ownership row because it scopes the whole
+        library: "which of these could ever go in one of my tanks" comes before
+        "which of them have I caught".
+      */}
+      <div className="filters" role="group" aria-label="Filter by fresh or salt water">
+        {SALINITY.map((w) => (
+          <button
+            key={w.id}
+            type="button"
+            className="chip"
+            aria-pressed={salinity === w.id}
+            onClick={() => setSalinity(w.id)}
+          >
+            {w.label}
+          </button>
+        ))}
+      </div>
+
+      {hiddenBySalinity && (
+        <p className="xs muted">
+          {hiddenBySalinity.total.toLocaleString()} species hidden
+          {' — '}
+          {hiddenBySalinity.parts.map((b) => `${b.n.toLocaleString()} ${b.label}`).join(', ')}
+          . Vendor-tagged, never inferred from the fish.
+        </p>
+      )}
 
       <div className="filters" role="group" aria-label="Filter by what you have">
         {FILTERS.map((f) => (

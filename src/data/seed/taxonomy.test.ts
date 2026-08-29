@@ -106,11 +106,35 @@ describe('the shipped catalog', () => {
   const freshwater = species.filter((s) => s.waterType !== 'marine');
   const marine = species.filter((s) => s.waterType === 'marine');
 
-  it('classifies the large majority of the freshwater catalog', () => {
-    const zoned = freshwater.filter((s) => s.waterZone).length;
+  /**
+   * PLANTS ARE EXCLUDED FROM THE DENOMINATOR, and that is a correction rather
+   * than a convenience.
+   *
+   * A plant never gets a water-column zone — the test below asserts exactly
+   * that — so counting the 142 freshwater plants among the species that ought
+   * to have one was always measuring the wrong thing. It went unnoticed while
+   * 180 freshwater species were mis-filed as marine and therefore excluded
+   * from the count entirely; fixing the salinity tag surfaced it.
+   *
+   * Measured properly, coverage is 91.5% of freshwater animals — better than
+   * the 89% the pooled figure ever claimed.
+   */
+  const freshwaterAnimals = freshwater.filter((s) => s.organismKind !== 'plant');
+
+  it('classifies the large majority of freshwater animals', () => {
+    const zoned = freshwaterAnimals.filter((s) => s.waterZone).length;
     // Not 100%, and that is fine — the point is that the gap is small and
     // visible. If this drops, a genus map probably went stale.
-    expect(zoned / freshwater.length).toBeGreaterThan(0.85);
+    expect(zoned / freshwaterAnimals.length).toBeGreaterThan(0.85);
+  });
+
+  it('counts salinity for nearly every species, so the default filter is honest', () => {
+    // The catalog opens filtered to freshwater. That is only defensible while
+    // almost nothing is unclassified — a default that hid hundreds of species
+    // under "not recorded" would be the app hiding a gap rather than showing
+    // one. 45 of 2,178 is a gap you can name.
+    const untyped = species.filter((s) => !s.waterType);
+    expect(untyped.length / species.length).toBeLessThan(0.05);
   });
 
   it('records the marine gap as a gap, never as a default zone', () => {

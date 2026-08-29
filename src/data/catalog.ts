@@ -6,7 +6,7 @@
  *   - market-index   price and availability (from the vendor ETL)
  *   - IndexedDB      what YOU have caught, kept and photographed
  */
-import type { Id } from '@/domain/types';
+import type { Id, WaterType } from '@/domain/types';
 import type { OrganismKind, WaterZone } from './seed/taxonomy';
 import catalogJson from './seed/marts/catalog.json';
 import { marketFor, scarcityFor, bandForSize } from './market';
@@ -43,6 +43,11 @@ export interface CatalogSpecies {
   waterZone?: WaterZone;
   organismKind?: OrganismKind;
   habitatNote?: string;
+  /**
+   * Fresh, brackish or salt, from what the vendors selling it tag. Absent
+   * means nobody said, which is not a claim that it is freshwater.
+   */
+  waterType?: WaterType;
 }
 
 interface CatalogMart {

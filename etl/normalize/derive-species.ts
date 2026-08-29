@@ -213,21 +213,6 @@ export interface DiscoveredSpecies {
   /** Distinct trade names seen, most frequent first. Useful for search. */
   aliases: string[];
   listings: number;
-  /**
-   * Fresh or salt, taken from the vendors that list it - never from the fish.
-   *
-   * StoreConfig.waterType has declared this since LiveAquaria was added, with
-   * the note that it is "used to tag the species it discovers". It was not
-   * actually applied until the big-box refresh, and the cost showed: 3,256
-   * LiveAquaria products put 963 reef species into a catalog whose taxonomy
-   * map is freshwater, and water-zone coverage read as 49% when the
-   * freshwater half was still at 89%. The tag is what makes that gap legible
-   * instead of looking like a stale genus map.
-   *
-   * Undefined means no vendor listing it declared a water type, which is most
-   * of the catalog. It is not a claim that the fish is freshwater.
-   */
-  waterType?: 'freshwater' | 'marine';
 }
 
 /**
@@ -237,13 +222,10 @@ export interface DiscoveredSpecies {
  * profile; those are skipped so the curated entry stays authoritative.
  */
 export function discoverSpecies(
-  listings: Array<{ scientificNameInTitle?: string; title: string; storeId?: string }>,
+  listings: Array<{ scientificNameInTitle?: string; title: string }>,
   curated: Set<string>,
-  /** storeId -> the water type that vendor declares. Absent vendors declare none. */
-  waterTypeByStore: ReadonlyMap<string, 'freshwater' | 'marine' | 'mixed'> = new Map(),
 ): DiscoveredSpecies[] {
   const byBinomial = new Map<string, string[]>();
-  const storesByBinomial = new Map<string, Set<string>>();
   for (const l of listings) {
     const sci = l.scientificNameInTitle;
     if (!sci) continue;
@@ -251,11 +233,6 @@ export function discoverSpecies(
     const bucket = byBinomial.get(sci) ?? [];
     bucket.push(l.title);
     byBinomial.set(sci, bucket);
-    if (l.storeId) {
-      const stores = storesByBinomial.get(sci) ?? new Set<string>();
-      stores.add(l.storeId);
-      storesByBinomial.set(sci, stores);
-    }
   }
 
   return [...byBinomial.entries()]
@@ -268,27 +245,8 @@ export function discoverSpecies(
         commonName: deriveCommonName(titles) ?? scientificName,
         aliases: [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([t]) => t),
         listings: titles.length,
-        waterType: waterTypeOf(storesByBinomial.get(scientificName), waterTypeByStore),
       };
     })
     .sort((a, b) => b.listings - a.listings);
 }
 
-/**
- * A freshwater vendor listing a fish outranks a marine one listing it.
- *
- * Only 'marine' is a claim worth making here, and only when EVERY vendor
- * carrying the species declared itself marine. One freshwater shop stocking it
- * is enough to say a freshwater keeper can buy it, and a vendor that declares
- * nothing settles nothing - the tag stays undefined rather than defaulting.
- */
-function waterTypeOf(
-  stores: Set<string> | undefined,
-  waterTypeByStore: ReadonlyMap<string, 'freshwater' | 'marine' | 'mixed'>,
-): 'freshwater' | 'marine' | undefined {
-  if (!stores?.size) return undefined;
-  const declared = [...stores].map((s) => waterTypeByStore.get(s)).filter(Boolean);
-  if (declared.includes('freshwater')) return 'freshwater';
-  if (declared.length === stores.size && declared.every((d) => d === 'marine')) return 'marine';
-  return undefined;
-}

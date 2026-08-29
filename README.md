@@ -262,6 +262,49 @@ Two different causes, two different fixes:
   *Neocaridina* shrimp whose only names on offer are contradictory colour
   strains, so the card shows the binomial.
 
+## Fresh or salt, and why the catalog opens on freshwater
+
+**The catalog defaults to freshwater only.** Every tank the owner keeps is
+fresh, and 874 of the 2,178 species are reef stock that arrived with
+LiveAquaria's marine catalogue — opening the library on a wall of clownfish and
+Acropora makes it somebody else's hobby. The chips sit above the fold rather
+than in the "More filters" drawer, because every other filter starts at *any*
+and this one starts *on*: a default that quietly removes 40% of the library
+from behind a fold is exactly the thing this app refuses to do. When it hides
+anything it says how much, broken down so the parts sum to the total.
+
+| | Species |
+|---|---|
+| Freshwater | **1,248** |
+| Saltwater | 874 |
+| Brackish | 11 |
+| Not recorded | 45 (2%) |
+
+**The tag comes from the trade, not from the fish.** There is no licensed care
+database yet, and deriving salinity from taxonomy would be the same invented
+fact the aggression rating refuses to be — Gobiidae holds the bumblebee goby
+and a hundred reef gobies. What *is* available is that vendors sort their own
+shops by it: LiveAquaria tags "Marine Fish", "Freshwater Fish" and "Corals",
+Aquatic Arts tags "Freshwater Shrimp", Predatory Fins tags four of its products
+"Marine / Saltwater Fish". Those per-product tags win; a whole-vendor
+declaration is only a fallback for the nine freshwater specialists that tag
+nothing.
+
+That ordering mattered more than expected. LiveAquaria had been declared
+`marine` wholesale on the grounds of being "overwhelmingly marine", and it was
+measurably wrong — **1,147 of its livestock listings are tagged freshwater, and
+the blanket declaration was filing roughly 180 freshwater species under
+saltwater.** It now declares `mixed`, meaning *do not assume*: only its own
+tags may speak for it.
+
+Where a species is tagged two ways, **freshwater wins**. All twelve conflicts
+are genuinely euryhaline — Amano shrimp, archerfish, bumblebee goby, sailfin
+molly — and someone filtering to freshwater wants to be shown a molly. Brackish
+outranks saltwater for the same reason: it is the closer of the two to a tank
+you could actually run. A species nobody tagged is *not recorded* and is
+excluded from every specific choice rather than defaulted into one, the same
+rule the water-column zone follows.
+
 ## Where a fish lives
 
 Every card carries a glyph for its water column zone — top, mid, bottom or all
@@ -275,15 +318,19 @@ using the phrase "bottom-dwelling". What **is** reliable is taxonomy: the
 binomial gives you the genus, genus→family is stable and checkable, and
 water-column habit is overwhelmingly a family-level trait. So
 [`taxonomy.ts`](src/data/seed/taxonomy.ts) maps 560 genera to 221 families and
-each family to a zone with the reason attached. **977 of the 1,121 freshwater
-species (87%)** get one; the rest say "not recorded" and are excluded from every
+each family to a zone with the reason attached. **1,063 of the 1,162 freshwater
+animals (91%)** get one; the rest say "not recorded" and are excluded from every
 zone filter rather than defaulted into one.
 
 **It is a freshwater map, and the catalog now says so out loud.** The 2026-08-29
-refresh brought LiveAquaria's full marine catalogue — 1,057 reef species, whole
+refresh brought LiveAquaria's full marine catalogue — 874 reef species, whole
 genera the map was never built for: *Chaetodon*, *Cirrhilabrus*, *Acropora*.
-Pooled zone coverage therefore reads 50% while the freshwater half stayed at
-87%. Averaging those two would have reported a stale genus map when nothing
+Pooled zone coverage therefore reads 49% while freshwater animals sit at 91%.
+Plants are excluded from that denominator on purpose: the app never assigns a
+zone to a plant, so counting the 142 freshwater plants among the species that
+ought to have one was always measuring the wrong thing. It went unnoticed while
+180 freshwater species were mis-filed as marine and so left out of the count
+entirely. Averaging those two would have reported a stale genus map when nothing
 had gone stale, so `dim_species` now carries a `water_type` tagged **from the
 vendors that list a species, never inferred from the fish** — `StoreConfig`
 has declared that intent since LiveAquaria was added and this is where it

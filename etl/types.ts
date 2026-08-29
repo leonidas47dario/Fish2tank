@@ -26,14 +26,19 @@ export interface StoreConfig {
    */
   currency: string;
   /**
-   * What the store mostly sells.
+   * What the store sells, when it sells ONE kind only.
    *
-   * Declared because LiveAquaria is overwhelmingly marine - corals, anemones
-   * and reef fish - while every other tracked store and every tank the owner
-   * actually keeps is freshwater. Without this the catalog fills with 3,000
-   * coral frags that no freshwater keeper will ever screen, and the library
-   * stops being about their hobby. Used to tag the species it discovers, not
-   * to exclude the store.
+   * A fallback, not the primary signal. Vendors that sort their own shop by
+   * salinity tag it per product, and those tags always win - see
+   * normalize/water-type.ts. This exists for the nine freshwater specialists
+   * that tag nothing, whose catalogues would otherwise read as unknown.
+   *
+   * 'mixed' means "do not assume": the store sells both, so only its
+   * per-listing tags may speak for it. LiveAquaria is the case that made this
+   * necessary. It used to declare 'marine' on the grounds of being
+   * "overwhelmingly marine", which was measurably wrong - 1,147 of its
+   * livestock listings are tagged freshwater, and the blanket declaration was
+   * filing roughly 180 freshwater species under saltwater.
    */
   waterType?: 'freshwater' | 'marine' | 'mixed';
   /**
@@ -293,14 +298,14 @@ export interface MarketIndex {
  * mean something.
  */
 export const STORES: StoreConfig[] = [
-  { id: 'global-exoticquatics', name: 'Global Exoticquatics', host: 'globalexoticquatics.com', currency: 'USD' },
-  { id: 'j4-flowerhorns', name: 'J4 Flowerhorns', host: 'www.j4flowerhorns.com', currency: 'USD' },
-  { id: 'predatory-fins', name: 'Predatory Fins', host: 'www.predatoryfins.com', currency: 'USD' },
-  { id: 'imperial-tropicals', name: 'Imperial Tropicals', host: 'imperialtropicals.com', currency: 'USD' },
-  { id: 'aquatic-arts', name: 'Aquatic Arts', host: 'aquaticarts.com', currency: 'USD' },
-  { id: 'aquarium-coop', name: 'Aquarium Co-Op', host: 'www.aquariumcoop.com', currency: 'USD' },
-  { id: 'flip-aquatics', name: 'Flip Aquatics', host: 'flipaquatics.com', currency: 'USD' },
-  { id: 'aquahuna', name: 'AquaHuna', host: 'www.aquahuna.com', currency: 'USD' },
+  { id: 'global-exoticquatics', name: 'Global Exoticquatics', host: 'globalexoticquatics.com', currency: 'USD', waterType: 'freshwater' },
+  { id: 'j4-flowerhorns', name: 'J4 Flowerhorns', host: 'www.j4flowerhorns.com', currency: 'USD', waterType: 'freshwater' },
+  { id: 'predatory-fins', name: 'Predatory Fins', host: 'www.predatoryfins.com', currency: 'USD', waterType: 'freshwater' },
+  { id: 'imperial-tropicals', name: 'Imperial Tropicals', host: 'imperialtropicals.com', currency: 'USD', waterType: 'freshwater' },
+  { id: 'aquatic-arts', name: 'Aquatic Arts', host: 'aquaticarts.com', currency: 'USD', waterType: 'freshwater' },
+  { id: 'aquarium-coop', name: 'Aquarium Co-Op', host: 'www.aquariumcoop.com', currency: 'USD', waterType: 'freshwater' },
+  { id: 'flip-aquatics', name: 'Flip Aquatics', host: 'flipaquatics.com', currency: 'USD', waterType: 'freshwater' },
+  { id: 'aquahuna', name: 'AquaHuna', host: 'www.aquahuna.com', currency: 'USD', waterType: 'freshwater' },
   /**
    * Added 2026-08-29. Both verified the same way as the original eight:
    * Shopify, robots.txt states public product data is crawlable, and neither
@@ -318,7 +323,7 @@ export const STORES: StoreConfig[] = [
    * products.
    */
   { id: 'nu-aqua', name: 'Nu Aqua', host: 'nuaquashop.com', region: 'Chicagoland', currency: 'USD', waterType: 'freshwater' },
-  { id: 'liveaquaria', name: 'LiveAquaria', host: 'www.liveaquaria.com', currency: 'USD', waterType: 'marine' },
+  { id: 'liveaquaria', name: 'LiveAquaria', host: 'www.liveaquaria.com', currency: 'USD', waterType: 'mixed' },
   /**
    * Added 2026-08-29. The first two big-box vendors, and the first two that
    * are not Shopify - each needed its own reader, and each was permission-
