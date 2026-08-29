@@ -8,6 +8,7 @@
  */
 import { useState } from 'react';
 import { SCENES, THEMES, useTheme } from '@/theme/ThemeProvider';
+import { BUILD_ID, BUILT_AT } from '@/build-info';
 import { db } from '@/data/db';
 import { importInventoryFile } from '@/data/import-service';
 import type { ImportResult } from '@/data/seed/inventory-import';
@@ -75,6 +76,7 @@ export default function Settings() {
 
       <InventoryImport />
       <DataExport />
+      <BuildStamp />
 
       <section className="card">
         <h2>Privacy</h2>
@@ -192,6 +194,64 @@ function DataExport() {
       <button type="button" onClick={() => void exportAll()} disabled={busy}>
         {busy ? 'Preparing…' : 'Export records'}
       </button>
+    </section>
+  );
+}
+
+/**
+ * Which build is running, and a way to insist on the newest one.
+ *
+ * A service worker means the code on a device is not necessarily the code that
+ * was deployed. A stale precached shell is indistinguishable from a fix that
+ * did not work, and on iOS Safari an update can sit unactivated for as long as
+ * a tab stays warm. Both ends of a UAT report were guessing; this makes the
+ * answer readable in one glance.
+ *
+ * The button drops the caches and the worker registration, then reloads.
+ * It deliberately does NOT touch IndexedDB - every catch, photo and record
+ * lives there, and nothing about fetching fresh code should risk them.
+ */
+function BuildStamp() {
+  const [busy, setBusy] = useState(false);
+
+  async function forceLatest() {
+    setBusy(true);
+    try {
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        const dropped = await Promise.all(keys.map((k) => caches.delete(k)));
+        console.info('[build] cleared caches', { keys, dropped });
+      }
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        const gone = await Promise.all(regs.map((r) => r.unregister()));
+        console.info('[build] unregistered workers', { count: regs.length, gone });
+      }
+    } catch (e) {
+      // Worth seeing, but never worth blocking the reload: a hard reload on
+      // its own still stands a good chance of picking up the new build.
+      console.warn('[build] could not fully clear the cached build', e);
+    }
+    window.location.reload();
+  }
+
+  return (
+    <section className="card stack">
+      <h2>Build</h2>
+      <p className="muted small" style={{ marginBottom: 0 }}>
+        Offline support means this device can keep running an older build than the one deployed. If
+        something looks unfixed, check this first.
+      </p>
+      <p className="xs muted data" style={{ marginBottom: 0 }}>
+        {BUILD_ID}
+        {BUILT_AT && ` · built ${new Date(BUILT_AT).toLocaleString()}`}
+      </p>
+      <button type="button" onClick={() => void forceLatest()} disabled={busy}>
+        {busy ? 'Fetching…' : 'Get the latest build'}
+      </button>
+      <p className="xs muted" style={{ marginBottom: 0 }}>
+        Clears the cached copy of the app and reloads. Your catches, photos and tanks are untouched.
+      </p>
     </section>
   );
 }
