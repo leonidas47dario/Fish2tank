@@ -138,13 +138,19 @@ async function main() {
 
     // ---- Petco ---------------------------------------------------------
     //
-    // Locations only, and by design. www.petco.com answers 403 to every
-    // automated request including robots.txt, so there is no permitted route
-    // to its catalogue - see sources/petco.ts. The vendor still earns its row
-    // because its branch pages state which Chicago stores run an aquatics
-    // department, and that is a fact about where fish are, not a guess.
+    // Two hosts, asked separately every run. The store directory is open and
+    // always read. The storefront is behind a CDN bot manager that refuses
+    // datacentre traffic, so it is PROBED rather than assumed either way: the
+    // block is a property of the network, not of the code, and the same run
+    // from an ordinary connection may be waved straight through. Whatever it
+    // answers is recorded as data - see sources/petco.ts.
     if (platform === 'petco') {
-      type Snapshot = { retrievedAt: string; stores: LocalStore[] };
+      type Snapshot = {
+        retrievedAt: string;
+        stores: LocalStore[];
+        products: RetailProduct[];
+        access: petco.StorefrontAccess;
+      };
       let snap: Snapshot;
 
       if (offline) {
@@ -154,7 +160,9 @@ async function main() {
           continue;
         }
         snap = cached;
-        console.log(`  ${store.name}: ${snap.stores.length} ${SAMPLED_CITY.label} stores from cache (${snap.retrievedAt})`);
+        console.log(
+          `  ${store.name}: ${snap.products?.length ?? 0} products, ${snap.stores.length} ${SAMPLED_CITY.label} stores from cache (${snap.retrievedAt})`,
+        );
       } else {
         process.stdout.write(`  ${store.name}: store directory`);
         const urls = await petco.fetchStoreDirectoryUrls();
@@ -163,12 +171,49 @@ async function main() {
         const stores = await petco.fetchStores(storeUrls);
         const aquatics = stores.filter(petco.hasAquatics).length;
         process.stdout.write(`    read ${stores.length}, ${aquatics} run an aquatics department\n`);
-        snap = { retrievedAt, stores };
+
+        process.stdout.write(`    storefront: asking www.petco.com`);
+        const access = await petco.probeStorefront();
+        let products: RetailProduct[] = [];
+        if (!access.readable) {
+          process.stdout.write(` -> HTTP ${access.status}, refused\n`);
+          console.warn(`    ${access.reason}`);
+        } else {
+          process.stdout.write(` -> allowed\n`);
+          const productUrls = await petco.fetchProductUrls();
+          process.stdout.write(`    products: ${productUrls.length} live URLs`);
+          products = await petco.fetchProducts(productUrls, {
+            onProgress: (done, total) => {
+              if (done % 25 === 0 || done === total) process.stdout.write(` ${done}/${total}`);
+            },
+          });
+          process.stdout.write(`\n`);
+          // Allowed in but nothing parsed is a real finding, not a quiet zero:
+          // it means the storefront stopped publishing Product JSON-LD.
+          if (productUrls.length > 0 && products.length === 0) {
+            console.warn(
+              '    storefront was readable but no product carried schema.org Product JSON-LD - ' +
+              'the extraction contract has changed, see etl/sources/schema-org.ts',
+            );
+          }
+        }
+
+        snap = { retrievedAt, stores, products, access };
         writeFileSync(rawPath, JSON.stringify({ store: store.id, ...snap }, null, 2));
       }
 
+      const normalized = normalizeRetailStore(store, snap.products ?? [], catalog, snap.retrievedAt)
+        .filter(isLivestock);
+      allListings.push(...normalized);
       localStores.push(...snap.stores);
-      sources.push({ ...store, listingsFetched: 0, retrievedAt: snap.retrievedAt });
+      sources.push({
+        ...store,
+        listingsFetched: normalized.length,
+        retrievedAt: snap.retrievedAt,
+        // Stated in the shipped index so "Petco: 0 listings" is never left
+        // looking like a broken run.
+        ...(snap.access?.readable ? {} : { accessNote: snap.access?.reason }),
+      });
     }
   }
 
@@ -239,7 +284,15 @@ function report(
       const inStock = rows.filter((i) => (i.onHand ?? 0) > 0).length;
       console.log(`  ${vendorId.padEnd(10)} ${String(mine.length).padStart(2)} branches` +
         (withAquatics ? `, ${withAquatics} with an aquatics department` : '') +
-        (rows.length ? `, ${rows.length} store/sku rows (${carried} carried, ${inStock} with stock on hand)` : ', no listing data - locations only'));
+        (rows.length ? `, ${rows.length} store/sku rows (${carried} carried, ${inStock} with stock on hand)` : ', no per-store stock published'));
+    }
+  }
+
+  const refused = index.sources.filter((s) => s.accessNote);
+  if (refused.length) {
+    console.log('\n─── vendors that refused this run ───');
+    for (const s of refused) {
+      console.log(`  ${s.name}: ${s.accessNote}`);
     }
   }
 

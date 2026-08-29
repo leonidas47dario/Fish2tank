@@ -77,34 +77,71 @@ are normalized. Fetching them would be 1,300 requests at PetSmart's expense to
 produce nothing, so the crawl is scoped to the live-animal aisles — live fish
 and live aquatic plants, 256 URLs. `LIVE_PATH_PREFIXES` widens it in one line.
 
-### Petco — locations only, and that is the honest answer
+### Petco — two hosts, two different answers
 
-**There are no Petco prices here, and none are invented.**
+Petco is one brand behind two very different doors, and the reader treats them
+as separate sources that happen to share a logo.
 
-`www.petco.com` is unreadable from any automated client. Every path on that
-host — *including `/robots.txt` itself* — answers HTTP 403 from the CDN edge
-with a "Whoops! We can't find what you're looking for" page carrying an error
-id and the caller's IP. It is not a User-Agent check: a plain browser
-User-Agent gets the identical 403. And because robots.txt cannot be retrieved
-at all, there is no published crawl permission to rely on either — this project
-checks permission per host rather than assuming it from a brand.
+**`stores.petco.com` is open, and read every run.** A Yext-hosted store
+directory serving a `robots.txt` with **no Disallow rules at all**, pointing at
+its own sitemaps (12,911 URLs), publishing each branch as schema.org `PetStore`
+JSON-LD — address, geo, phone, hours, and the departments that branch operates,
+*including "Aquatics Department"*. That answers a question the price data never
+could: **which Chicago branches actually keep fish.** Seven of the eight do.
+It is a location fact, so it lands in `dim_local_store` and never in
+`fact_listing`.
 
-`stores.petco.com` is a different host and gives a different answer: a
-Yext-hosted store directory serving a `robots.txt` with **no Disallow rules at
-all**, pointing at its own sitemaps (12,911 URLs), publishing each branch as
-schema.org `PetStore` JSON-LD — address, geo, phone, hours, and the departments
-that branch operates, *including "Aquatics Department"*.
+**`www.petco.com` is asked every run, and so far refuses.** The storefront sits
+behind a CDN bot manager that, from a datacentre IP, answers HTTP 403 to every
+path — *including `/robots.txt` itself* — with a "Whoops! We can't find what
+you're looking for" page carrying an error id and the caller's IP. It is not a
+User-Agent check: a plain browser User-Agent gets the identical 403.
 
-So Petco contributes a fact the price data never could: **which Chicago
-branches actually keep fish.** Seven of the eight do. That is a location fact,
-not a market fact, so it lands in `dim_local_store` and never in
-`fact_listing` or the market index. `StoreConfig.dataScope` says
-`'store-locations'` on the vendor row, so zero listings reads as a deliberate
-scope rather than a broken run.
+**So why is there a full Petco listings reader in the tree?** Because the block
+is a property of the network, not of the code. Akamai-class bot managers
+routinely refuse cloud egress while passing ordinary residential traffic, so
+the same pipeline run from a laptop may be waved straight through. Hard-coding
+*"Petco has no catalogue"* would bake an accident of hosting into the design.
+Instead `probeStorefront()` asks on every run — one request, to `robots.txt`,
+because that is the right thing to ask for first — and the outcome becomes
+data:
 
-The nearest honest substitute for Petco's prices is **LiveAquaria**, which is
-Petco's own aquatics brand and has been tracked as its own vendor since before
-this.
+| Probe says | Run does |
+|---|---|
+| robots.txt returns and permits reading | walk the sitemap, read schema.org `Product` JSON-LD, populate listings |
+| robots.txt returns and disallows everything | stop. A 200 that says "no" is still a no |
+| 403, or unreachable | keep the locations, record the status and reason, carry on |
+
+The refusal is written into `market-index.json` as
+`sources[].accessNote`, so a zero next to Petco in the shipped data is always
+explained rather than left looking like a broken pipeline. Today it reads:
+
+> `www.petco.com` answered HTTP 403 for /robots.txt. The CDN edge refuses
+> automated clients from this network, so no crawl permission is published and
+> none is assumed. Locations only this run.
+
+**Two rules the reader will not bend.** Permission is checked *per host, not
+per brand* — which is why the open directory is read and the refusing
+storefront is asked rather than assumed either way. And a refusal is never
+routed around: no disguised User-Agent, no proxy, no scraping a cache. If
+Petco's edge says no, the answer recorded is no.
+
+Until it says yes, the nearest honest stand-in for Petco's prices is
+**LiveAquaria** — Petco's own aquatics brand, already tracked as its own vendor.
+
+### Neither of them is Shopify, and that turned out to be the design
+
+There is no `/products.json` here and no shared platform to lean on, so the
+question was what these two *do* maintain for machines. The answer is
+schema.org: every SEO-driven retailer publishes `Product` JSON-LD on its
+product pages, because Google requires it to show a price in search results.
+That block is deliberate, vendor-maintained, machine-facing — the same bargain
+as Shopify's documented endpoint, and far more stable than markup a redesign
+will change next quarter.
+
+So `etl/sources/schema-org.ts` holds the extraction contract, and both big-box
+readers share it. A third non-Shopify vendor needs a sitemap filter and a
+store-number rule, not a new parser.
 
 ## Sampling Chicago
 
@@ -160,9 +197,10 @@ today's market.
 
 ```
 etl/sources/http.ts        the shared polite client: UA, delay, Retry-After, backoff
+etl/sources/schema-org.ts  the extraction contract for every non-Shopify vendor
 etl/sources/shopify.ts     paginated /products.json client
 etl/sources/petsmart.ts    sitemap → JSON-LD → per-store inventory
-etl/sources/petco.ts       store directory only; see above for why
+etl/sources/petco.ts       open store directory + probed storefront
 etl/normalize/size.ts      "4 - 4.5 inches" → 4.25in;  "Large" → unknown
 etl/normalize/species.ts   title → catalog species
 etl/normalize/listing.ts   Shopify product + variant → MarketListing

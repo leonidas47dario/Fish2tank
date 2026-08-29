@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "builtAt": "2026-08-29T08:05:40.471Z",
+  "builtAt": "2026-08-29T08:32:12.604Z",
   "minimumSampleCount": 3,
   "sources": [
     {
@@ -9,7 +9,7 @@
       "host": "globalexoticquatics.com",
       "currency": "USD",
       "listingsFetched": 331,
-      "retrievedAt": "2026-08-29T08:05:38.669Z"
+      "retrievedAt": "2026-08-29T08:23:53.369Z"
     },
     {
       "id": "j4-flowerhorns",
@@ -17,7 +17,7 @@
       "host": "www.j4flowerhorns.com",
       "currency": "USD",
       "listingsFetched": 634,
-      "retrievedAt": "2026-08-29T08:05:38.705Z"
+      "retrievedAt": "2026-08-29T08:23:54.914Z"
     },
     {
       "id": "predatory-fins",
@@ -25,7 +25,7 @@
       "host": "www.predatoryfins.com",
       "currency": "USD",
       "listingsFetched": 2429,
-      "retrievedAt": "2026-08-29T08:05:38.767Z"
+      "retrievedAt": "2026-08-29T08:23:57.629Z"
     },
     {
       "id": "imperial-tropicals",
@@ -33,7 +33,7 @@
       "host": "imperialtropicals.com",
       "currency": "USD",
       "listingsFetched": 4133,
-      "retrievedAt": "2026-08-29T08:05:38.875Z"
+      "retrievedAt": "2026-08-29T08:24:04.371Z"
     },
     {
       "id": "aquatic-arts",
@@ -41,7 +41,7 @@
       "host": "aquaticarts.com",
       "currency": "USD",
       "listingsFetched": 5127,
-      "retrievedAt": "2026-08-29T08:05:39.035Z"
+      "retrievedAt": "2026-08-29T08:24:13.040Z"
     },
     {
       "id": "aquarium-coop",
@@ -49,7 +49,7 @@
       "host": "www.aquariumcoop.com",
       "currency": "USD",
       "listingsFetched": 375,
-      "retrievedAt": "2026-08-29T08:05:39.324Z"
+      "retrievedAt": "2026-08-29T08:24:24.997Z"
     },
     {
       "id": "flip-aquatics",
@@ -57,7 +57,7 @@
       "host": "flipaquatics.com",
       "currency": "USD",
       "listingsFetched": 1701,
-      "retrievedAt": "2026-08-29T08:05:39.370Z"
+      "retrievedAt": "2026-08-29T08:24:26.846Z"
     },
     {
       "id": "aquahuna",
@@ -65,7 +65,7 @@
       "host": "www.aquahuna.com",
       "currency": "USD",
       "listingsFetched": 704,
-      "retrievedAt": "2026-08-29T08:05:39.489Z"
+      "retrievedAt": "2026-08-29T08:24:33.785Z"
     },
     {
       "id": "nu-aqua",
@@ -75,7 +75,7 @@
       "currency": "USD",
       "waterType": "freshwater",
       "listingsFetched": 1222,
-      "retrievedAt": "2026-08-29T08:05:39.549Z"
+      "retrievedAt": "2026-08-29T08:24:37.006Z"
     },
     {
       "id": "liveaquaria",
@@ -84,7 +84,7 @@
       "currency": "USD",
       "waterType": "marine",
       "listingsFetched": 7714,
-      "retrievedAt": "2026-08-29T08:05:39.664Z"
+      "retrievedAt": "2026-08-29T08:24:44.282Z"
     },
     {
       "id": "petsmart",
@@ -95,7 +95,7 @@
       "dataScope": "listings",
       "waterType": "freshwater",
       "listingsFetched": 254,
-      "retrievedAt": "2026-08-29T07:54:56.604Z"
+      "retrievedAt": "2026-08-29T08:25:04.539Z"
     },
     {
       "id": "petco",
@@ -103,10 +103,11 @@
       "host": "stores.petco.com",
       "currency": "USD",
       "platform": "petco",
-      "dataScope": "store-locations",
+      "dataScope": "listings",
       "waterType": "mixed",
       "listingsFetched": 0,
-      "retrievedAt": "2026-08-29T08:03:15.398Z"
+      "retrievedAt": "2026-08-29T08:32:01.083Z",
+      "accessNote": "www.petco.com answered HTTP 403 for /robots.txt. The CDN edge refuses automated clients from this network, so no crawl permission is published and none is assumed. Locations only this run."
     }
   ],
   "species": {

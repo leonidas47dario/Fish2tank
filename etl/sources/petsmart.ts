@@ -28,6 +28,7 @@
  * not just "can it be shipped".
  */
 import { getWithRetry, postJsonWithRetry, sleep, jsonLdBlocks, sitemapLocations, USER_AGENT } from './http';
+import { parseProductJsonLd } from './schema-org';
 import type { LocalStore, RetailProduct, StoreInventory } from '../types';
 
 const HOST = 'www.petsmart.com';
@@ -105,54 +106,14 @@ export function storeUrlsForCity(all: string[], state: string, citySlug: string)
 
 // --- Product pages ---------------------------------------------------------
 
-const AVAILABLE_RE = /InStock|LimitedAvailability|OnlineOnly|InStoreOnly/i;
-
 /**
  * The `Product` block from a product page.
  *
- * A page with no parseable Product block returns undefined rather than a
- * half-built record: a listing with no price or no sku is not a listing, and
- * carrying it forward as zeroes would quietly poison every median downstream.
+ * The reading itself is schema.org and shared with the other big-box vendor -
+ * see sources/schema-org.ts for why that is the contract rather than markup.
  */
 export function parseProduct(html: string, url: string): RetailProduct | undefined {
-  const blocks = jsonLdBlocks(html);
-  const product = blocks.find(
-    (b) => (b as { '@type'?: string })?.['@type'] === 'Product',
-  ) as Record<string, any> | undefined;
-  if (!product) return undefined;
-
-  const sku = product.sku ?? product.productID;
-  const offer = Array.isArray(product.offers) ? product.offers[0] : product.offers;
-  const price = Number(offer?.price);
-  if (!sku || !Number.isFinite(price)) return undefined;
-
-  // The breadcrumb is the vendor's own aisle for the product, which is the
-  // closest thing PetSmart publishes to Shopify's product_type.
-  const crumbs = blocks.find(
-    (b) => (b as { '@type'?: string })?.['@type'] === 'BreadcrumbList',
-  ) as Record<string, any> | undefined;
-  const trail: string[] = (crumbs?.itemListElement ?? []).map((i: any) => String(i?.name ?? ''));
-
-  return {
-    productId: String(sku),
-    variantId: String(sku),
-    sku: String(sku),
-    title: String(product.name ?? ''),
-    url: String(offer?.url ?? product.url ?? url),
-    // The canonical URL uses the master sku; the sitemap URL uses the page id.
-    // Both resolve, and keeping the one we actually fetched makes a bad row
-    // traceable back to the request that produced it.
-    sourceUrl: url,
-    price,
-    currency: String(offer?.priceCurrency ?? 'USD'),
-    // Nationwide availability. Per-store on-hand counts come from the
-    // inventory index below and are kept separate - they are different facts.
-    available: AVAILABLE_RE.test(String(offer?.availability ?? '')),
-    productType: trail.length > 1 ? trail[trail.length - 2] : undefined,
-    imageUrl: typeof product.image === 'string' ? product.image : undefined,
-    gtin: product.gtin13 ? String(product.gtin13) : undefined,
-    tags: trail.slice(1, -1),
-  };
+  return parseProductJsonLd(html, url);
 }
 
 /** Walk a list of product URLs, one polite request each. */

@@ -19,7 +19,7 @@ npm run dev          # http://localhost:5173
 ```
 
 ```bash
-npm test             # 434 unit + integration tests across 22 files
+npm test             # 456 unit + integration tests across 23 files
 npm run build        # type-check, bundle, generate the service worker
 npm run preview      # serve the production build on :4173
 
@@ -339,17 +339,35 @@ Every other vendor answers *can this be shipped to me*; PetSmart answers *is it
 in a tank twenty minutes away right now*. 254 live listings, and 2,032 on-hand
 rows across all eight Chicago branches.
 
-**Petco contributes locations only, and there are no Petco prices here.**
-`www.petco.com` answers HTTP 403 from the CDN edge to every automated request —
-`/robots.txt` included, and identically with a browser User-Agent — so there is
-no retrievable crawl permission and no permitted route to its catalogue. None
-is faked. Its Yext-hosted store directory at `stores.petco.com` is a different
-host with no `Disallow` rules at all, and publishes each branch as schema.org
-`PetStore` including the departments it runs. So Petco answers a question the
-prices never could: **seven of the eight Chicago branches keep fish.** The
-vendor row carries `dataScope: 'store-locations'` so zero listings reads as a
-scope, not a broken run. The nearest honest stand-in for Petco's prices is
-LiveAquaria — Petco's own aquatics brand, already tracked.
+**Petco is one brand behind two different doors.** `stores.petco.com` is wide
+open — no `Disallow` rules at all — and publishes each branch as schema.org
+`PetStore` including the departments it runs, which answers something the
+prices never could: **seven of the eight Chicago branches keep fish.**
+`www.petco.com` is the opposite: HTTP 403 from the CDN edge to every automated
+request, `/robots.txt` included, identically with a browser User-Agent.
+
+The listings reader is built and wired in anyway, because **that block is a
+property of the network, not of the code** — bot managers of that class refuse
+cloud egress and pass ordinary residential traffic, so the same run from your
+laptop may go straight through. `probeStorefront()` asks on every run and the
+answer becomes data: allowed → walk the sitemap and read the product JSON-LD;
+refused → keep the locations and write the reason into `market-index.json` as
+`sources[].accessNote`, so a zero next to Petco is always explained rather than
+mistaken for a broken pipeline. From this machine it currently reads *403 — the
+CDN edge refuses automated clients from this network.*
+
+Two rules that do not bend: permission is checked **per host, not per brand**,
+and a refusal is never routed around — no disguised User-Agent, no proxy, no
+scraping a cache. Until it says yes, the nearest honest stand-in for Petco's
+prices is LiveAquaria, Petco's own aquatics brand, already tracked.
+
+**Neither chain is Shopify, and that shaped the design.** There is no
+`/products.json` and no shared platform, so the pipeline is built around what
+they *do* maintain for machines: schema.org `Product` JSON-LD, which every
+SEO-driven retailer publishes because Google needs it to show a price. That
+contract lives in `etl/sources/schema-org.ts` and both readers share it — a
+third non-Shopify vendor needs a sitemap filter and a store-number rule, not a
+new parser.
 
 **24,624 listings.**
 

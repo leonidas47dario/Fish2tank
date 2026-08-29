@@ -48,10 +48,13 @@ export interface StoreConfig {
    * never left wondering whether zero listings means a broken run.
    *
    * 'listings'       - prices and products, the normal case.
-   * 'store-locations' - branches only. Petco is the sole case: its storefront
-   *                     answers 403 to every automated request including
-   *                     robots.txt, so there is no permitted route to its
-   *                     catalogue and none is faked. See sources/petco.ts.
+   * 'store-locations' - branches only, by design rather than by accident.
+   *
+   * Petco declares 'listings' because the pipeline attempts them on every run.
+   * Whether it GETS them depends on whether its CDN edge accepts the caller,
+   * which is a property of the network rather than of the configuration - so
+   * the outcome is recorded per run as MarketIndex.sources[].accessNote, not
+   * frozen into this table. See sources/petco.ts.
    */
   dataScope?: 'listings' | 'store-locations';
 }
@@ -238,7 +241,17 @@ export interface MarketIndex {
   builtAt: string;
   /** Minimum comparable listings before stats are published at all. */
   minimumSampleCount: number;
-  sources: Array<StoreConfig & { listingsFetched: number; retrievedAt: string }>;
+  sources: Array<StoreConfig & {
+    listingsFetched: number;
+    retrievedAt: string;
+    /**
+     * Why this vendor contributed no listings, when it contributed none for a
+     * reason rather than by scope. Present on Petco whenever its storefront
+     * refused the run, so a zero in the shipped index is always explained
+     * rather than left looking like a broken pipeline.
+     */
+    accessNote?: string;
+  }>;
   species: Record<string, MarketSpeciesStats>;
   /**
    * Titles that look like a species we do not have in the catalog. Surfaced so
@@ -317,7 +330,7 @@ export const STORES: StoreConfig[] = [
   },
   {
     id: 'petco', name: 'Petco', host: 'stores.petco.com', currency: 'USD',
-    platform: 'petco', dataScope: 'store-locations', waterType: 'mixed',
+    platform: 'petco', dataScope: 'listings', waterType: 'mixed',
   },
 ];
 
