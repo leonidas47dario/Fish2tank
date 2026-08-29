@@ -1,6 +1,6 @@
 # 005 - The catch journey, and putting fish in tanks
 
-**Status:** specified, in build
+**Status:** implemented. Changes A-D in PR #21; E and F in the follow-up PR.
 **Date:** 2026-08-29
 **Touches:** FR-I01 (Unknown is a valid identity state), FR-I04 (no confidence percentages), FR-R05 (the breakdown is shown), FR-R07 (no local rarity claim), FR-T01 (one record follows the fish), FR-T02 (an opening-balance holding has no specimen), FR-P05 (online availability and collecting rarity).
 **Introduces:** Discovery Tier v0.3.0 (market-only), mandatory identification, multi-holding backfill, and a taxonomic gate on species minting.
@@ -64,6 +64,20 @@ Asked and answered before any code was written:
   of scope** - the Drawer rebuild already addressed the placement.
 - **Backfill is folded into this branch** rather than sequenced after it.
 - **Both phantom species are gated and remapped**, not just gated.
+
+### Raised during the build, deferred to spec 006
+
+The tank moves holdings rather than fish: *"I think profile and actual fish
+were treated as the same thing, while it shouldn't."* Correct, and confirmed -
+`TankDetail` binds its move control to a holding, so moving "Rocket gar ×3"
+moves all three, and a holding of three has at most one photo between them.
+
+The unit model is its own spec by decision. Units are to be created **on
+demand** - a holding keeps its count, and any individual you want to
+photograph, name or move alone is split out at that moment - so the Breeder
+Tote's 50 feeder guppies never expand into 50 records unless asked. Change E
+below is the holding-level backfill that precedes it, kept because it is what
+makes a fish reachable at all.
 
 ### Deliberately not in scope
 
@@ -368,8 +382,39 @@ Three parts:
    `speciesId` values on `specimens`, `holdings`, `raritySnapshots`,
    `priceObservations` and `cardPrefs` would strand that record as Unknown.
 
-Marts rebuild from the local `data/market/listings.jsonl` via `npm run marts`.
-No network, so the Predatory Fins edge block does not apply.
+Marts rebuild offline from the warehouse via `npm run marts`, so the Predatory
+Fins edge block does not apply.
+
+`npm run reindex` was deliberately NOT run, and must not be until `etl/raw` is
+repopulated. It rebuilds the market index from the warehouse alone, and the
+warehouse never held Nu Aqua or LiveAquaria - they came from raw snapshots that
+are not committed. Nu Aqua **is one of the three witness stores**, so
+reindexing today would cut the gate from three witnesses to two and move every
+scarcity rating in the app. The two orphan entries left behind in
+`market-index.json` are unreachable from the catalog and clear on the next full
+refresh.
+
+### What the build measured, after
+
+| | Before | After |
+|---|---:|---:|
+| Catalog species | 2,178 | 2,176 |
+| Witness stores | 3 | 3 |
+| Species with a scarcity rating | 475 | 474 |
+
+The single rating that moved is Fish food losing its epic tier, which is the
+whole point.
+
+### A finding this turned up, not fixed here
+
+`taxonomy.ts` documents `GENUS_FAMILY` as covering "every genus the catalog
+contains". It covers 547 genera, and **945 catalog species have a genus in
+neither it nor `MISSPELLED_GENERA`** - almost all legitimate marine fish that
+arrived with LiveAquaria. `traitsFor()` therefore returns undefined for 43% of
+the catalog, so those species get no family, no water zone and no organism
+kind. That is a real gap in the card and filter data, and it is also why the
+strongest possible binomial check - "is this a real genus?" - was not available
+to this spec. Worth its own look.
 
 ## Testing
 
@@ -396,7 +441,13 @@ Component:
 - A record with no label seals every other panel; setting one unseals them.
 - `PriceForm` has no member field; a historical member price still displays.
 
-Whole suite (16 files), `npm run typecheck`, and `npm run smoke` green.
+Whole suite and `npm run build` green. 762 tests across 40 files at the close
+of this spec, up from 712.
+
+One thing learned the hard way and worth repeating: **`vitest run` does not
+typecheck**. A fully green suite twice hid a type error that `npm run build`
+caught immediately - once a fixture missing a required field, once an invalid
+enum value. Run the build before claiming a change is verified.
 
 ## Files
 
