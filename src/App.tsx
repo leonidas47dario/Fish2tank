@@ -5,6 +5,7 @@ import SpeciesDetail from './ui/screens/SpeciesDetail';
 import CatchScreen from './ui/screens/CatchScreen';
 import IdentifyFlow from './ui/screens/IdentifyFlow';
 import Tanks from './ui/screens/Tanks';
+import TankDetail from './ui/screens/TankDetail';
 import Journal from './ui/screens/Journal';
 import SpecimenDetail from './ui/screens/SpecimenDetail';
 import Settings from './ui/screens/Settings';
@@ -33,6 +34,7 @@ export default function App() {
           {/* The guided identify + reveal step, entered straight from a capture. */}
           <Route path="/catch/:specimenId/identify" element={<IdentifyFlow />} />
           <Route path="/tanks" element={<Tanks />} />
+          <Route path="/tanks/:id" element={<TankDetail />} />
           <Route path="/journal" element={<Journal />} />
           <Route path="/specimen/:id" element={<SpecimenDetail />} />
           <Route path="/settings" element={<Settings />} />
