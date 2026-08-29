@@ -26,6 +26,15 @@ const USER_AGENT =
  * returns a 503 interstitial, and headless Chromium and WebFetch fail against
  * it too. Attempting them anyway spends a minute a run to log 79 identical
  * timeouts, which buries the failures that are real.
+ *
+ * aquaticarts.com is kept but is NOT confirmed reachable. During the
+ * images[0] measurement its one listing returned the same Menlo proxy 503
+ * interstitial that blocks predatoryfins.com, rather than a Shopify error. It
+ * stays in because a single 503 does not distinguish a permanent block from a
+ * transient one, and it costs exactly one request and one logged failure per
+ * run to find out. If it 503s again in a real backfill, move it out and say so
+ * here. Do not read this list as "all verified reachable"; read it as "worth
+ * one attempt".
  */
 const STORES: Record<string, string> = {
   'imperialtropicals.com': 'Imperial Tropicals',
