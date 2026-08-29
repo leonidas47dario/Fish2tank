@@ -164,8 +164,11 @@ so it is also just the right shape for the subject.
 |---|---|
 | Species in the catalog | **2,178** |
 | Of those, sold only by marine vendors | 1,057 |
-| Portraits bundled | PLACEHOLDER |
-| Rendering a silhouette | PLACEHOLDER |
+| Portraits bundled | **1,011 (46%)** — 22.3 MB at 480 px, ~22 KB each |
+| ↳ from Wikimedia Commons, under a stated licence | 851 |
+| ↳ from the open web, credited to the site | 100 |
+| ↳ from a vendor product listing, credited to the shop | 60 |
+| Rendering a silhouette | 1,167, most of them the newly added marine species |
 | With a water-column zone | 1,080 — **977 of 1,121 (87%) freshwater**, 103 of 1,057 marine |
 | With a curated care profile | 47 |
 
