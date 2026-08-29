@@ -8,7 +8,7 @@
  */
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { fetchSpeciesPortrait, isPublishable, type SpeciesImage } from './sources/wikimedia';
-import { surrogateKey } from './build-warehouse';
+import { surrogateKey } from './surrogate-key';
 
 const OUT = 'data/market/images.jsonl';
 const CATALOG = 'src/data/seed/marts/catalog.json';
