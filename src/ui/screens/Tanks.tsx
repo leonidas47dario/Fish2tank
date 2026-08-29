@@ -1,24 +1,23 @@
 /**
- * Tanks - PRD 4.1, 4.8.
+ * The tanks index - a way in, not a workspace.
  *
- * A tank with no measurements is shown as unmeasured rather than assumed
- * average, because the screening engine's honesty depends on the difference
- * (FR-E05). Editing the dimensions here is what turns "Not enough data" into
- * a real verdict.
+ * This screen used to render every tank's full resident list along with move
+ * and record-a-loss controls, which is exactly what the Manage tab inside a
+ * tank does. Two places doing the same job drift apart, and the list was the
+ * wrong place for it anyway: a list answers "which tank?", not "what do I do
+ * with this fish?".
+ *
+ * So it is a card per tank - a photo, the numbers worth seeing at a glance,
+ * and a tap to open. Everything that writes lives one level down.
  */
-import { useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
+import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { db } from '@/data/db';
-import { moveHolding, recordDeath } from '@/data/repositories';
+import { setTankPhoto } from '@/data/repositories';
 import { formatVolume } from '@/domain/units';
-import type { Aquarium, StockingState } from '@/domain/types';
-import { useTanksWithResidents } from '../hooks';
+import { useTankSummaries } from '../hooks';
 
 export default function Tanks() {
-  const tanks = useTanksWithResidents();
-  const allTanks = useLiveQuery(() => db.aquariums.toArray(), []);
-  const [editing, setEditing] = useState<string | undefined>();
+  const tanks = useTankSummaries();
 
   return (
     <div className="stack">
@@ -27,129 +26,90 @@ export default function Tanks() {
         <p className="muted small">Your real aquariums, and who actually lives in them.</p>
       </header>
 
-      {tanks?.map(({ aquarium, residents }) => (
-        <section key={aquarium.id} className="card stack">
-          <div className="spread">
-            <span>
-              <strong>{aquarium.name}</strong><br />
-              <span className="xs muted data">
-                {aquarium.volume ? formatVolume(aquarium.volume) : 'volume unrecorded'}
-                {aquarium.dimensions
-                  ? ` · ${aquarium.dimensions.length.value}×${aquarium.dimensions.width.value}×${aquarium.dimensions.height.value}${aquarium.dimensions.length.unit}`
-                  : ' · unmeasured'}
-              </span>
-            </span>
-            <span className="row">
-              <Link to={`/tanks/${aquarium.id}`} className="chip" style={{ textDecoration: 'none' }}>
-                Open
-              </Link>
-              <button type="button" className="btn--ghost" onClick={() => setEditing(editing === aquarium.id ? undefined : aquarium.id)}>
-                {editing === aquarium.id ? 'Done' : 'Edit'}
-              </button>
-            </span>
-          </div>
+      {tanks === undefined && <p className="muted small">Loading…</p>}
 
-          {!aquarium.volume && (
-            <p className="warn">
-              Without a volume and footprint this tank can only ever return “Not enough data”. Measuring it
-              once is what makes every future check real.
-            </p>
-          )}
-
-          {editing === aquarium.id && <TankForm aquarium={aquarium} onDone={() => setEditing(undefined)} />}
-
-          <div>
-            <p className="xs muted">Residents</p>
-            {residents.length === 0 && <p className="muted small">Empty.</p>}
-            <ul className="list">
-              {residents.map(({ holding, quantity, badge }) => (
-                <li key={holding.id} className="card card--raised stack">
-                  <div className="spread">
-                    <span>
-                      <strong>{holding.rawLabel ?? 'Unnamed holding'}</strong>
-                      <span className="muted data"> ×{quantity}</span><br />
-                      {holding.category && <span className="xs muted">{holding.category}</span>}
-                    </span>
-                    {badge === 'current' && <span className="badge badge--suitable"><span aria-hidden="true">✓</span> Current</span>}
-                  </div>
-                  {holding.notes && <p className="xs muted" style={{ marginBottom: 0 }}>{holding.notes}</p>}
-                  <div className="row">
-                    <select
-                      defaultValue=""
-                      aria-label={`Move ${holding.rawLabel ?? 'holding'} to another tank`}
-                      onChange={(e) => { if (e.target.value) void moveHolding(holding.id, e.target.value); }}
-                    >
-                      <option value="" disabled>Move to…</option>
-                      {allTanks?.filter((t) => t.id !== aquarium.id).map((t) => (
-                        <option key={t.id} value={t.id}>{t.name}</option>
-                      ))}
-                    </select>
-                    <button
-                      type="button"
-                      className="btn--ghost"
-                      onClick={() => void recordDeath({ holdingId: holding.id, quantity: 1 })}
-                    >
-                      Record a loss
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
-      ))}
+      <div className="tanklist">
+        {tanks?.map(({ aquarium, stats, photoUrl }) => (
+          <TankCard key={aquarium.id} aquarium={aquarium} stats={stats} photoUrl={photoUrl} />
+        ))}
+      </div>
     </div>
   );
 }
 
-function TankForm({ aquarium, onDone }: { aquarium: Aquarium; onDone: () => void }) {
-  const [gallons, setGallons] = useState(aquarium.volume ? String(aquarium.volume.value) : '');
-  const [l, setL] = useState(aquarium.dimensions ? String(aquarium.dimensions.length.value) : '');
-  const [w, setW] = useState(aquarium.dimensions ? String(aquarium.dimensions.width.value) : '');
-  const [h, setH] = useState(aquarium.dimensions ? String(aquarium.dimensions.height.value) : '');
-  const [stocking, setStocking] = useState<StockingState | ''>(aquarium.stockingState ?? '');
+function TankCard({ aquarium, stats, photoUrl }: {
+  aquarium: { id: string; name: string; volume?: Parameters<typeof formatVolume>[0] };
+  stats: { fish: number; species: number; estimatedValue?: number };
+  photoUrl?: string;
+}) {
+  const input = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string>();
 
-  async function save() {
-    const dims = l && w && h
-      ? {
-          length: { value: Number(l), unit: 'in' as const },
-          width: { value: Number(w), unit: 'in' as const },
-          height: { value: Number(h), unit: 'in' as const },
-        }
-      : undefined;
-    await db.aquariums.update(aquarium.id, {
-      volume: gallons ? { value: Number(gallons), unit: 'gal' } : undefined,
-      dimensions: dims,
-      stockingState: stocking || undefined,
-    });
-    onDone();
+  async function onPick(file: File | undefined) {
+    if (!file) return;
+    setBusy(true);
+    setError(undefined);
+    try {
+      await setTankPhoto(aquarium.id, { kind: 'photo', blob: file, mimeType: file.type || 'image/jpeg' });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not save that photo.');
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
-    <div className="stack">
-      <div>
-        <label htmlFor={`vol-${aquarium.id}`}>Volume (gallons)</label>
-        <input id={`vol-${aquarium.id}`} inputMode="decimal" value={gallons} onChange={(e) => setGallons(e.target.value)} />
-      </div>
-      <div className="row">
-        <div className="grow"><label htmlFor={`l-${aquarium.id}`}>Length (in)</label>
-          <input id={`l-${aquarium.id}`} inputMode="decimal" value={l} onChange={(e) => setL(e.target.value)} /></div>
-        <div className="grow"><label htmlFor={`w-${aquarium.id}`}>Width</label>
-          <input id={`w-${aquarium.id}`} inputMode="decimal" value={w} onChange={(e) => setW(e.target.value)} /></div>
-        <div className="grow"><label htmlFor={`h-${aquarium.id}`}>Height</label>
-          <input id={`h-${aquarium.id}`} inputMode="decimal" value={h} onChange={(e) => setH(e.target.value)} /></div>
-      </div>
-      <div>
-        <label htmlFor={`stock-${aquarium.id}`}>How full does it feel?</label>
-        <select id={`stock-${aquarium.id}`} value={stocking} onChange={(e) => setStocking(e.target.value as StockingState | '')}>
-          <option value="">Not saying</option>
-          <option value="low">Low</option>
-          <option value="moderate">Moderate</option>
-          <option value="crowded">Crowded</option>
-        </select>
-        <p className="xs muted">Your judgement, used as-is. Nothing here is turned into a bioload figure.</p>
-      </div>
-      <button type="button" className="btn--primary" onClick={() => void save()}>Save</button>
-    </div>
+    <article className="tankcard">
+      <Link to={`/tanks/${aquarium.id}`} className="tankcard__link">
+        <span className="tankcard__art">
+          {photoUrl
+            ? <img src={photoUrl} alt="" loading="lazy" />
+            : <span className="tankcard__art--empty" aria-hidden="true">🐟</span>}
+        </span>
+        <span className="tankcard__body">
+          <strong className="tankcard__name">{aquarium.name}</strong>
+          {/* Several tanks are named after their volume ("75G"), so printing
+              both would show the same string twice for no extra fact. */}
+          {(() => {
+            const vol = aquarium.volume ? formatVolume(aquarium.volume) : 'volume unrecorded';
+            return vol.toLowerCase() === aquarium.name.toLowerCase()
+              ? null
+              : <span className="xs muted data">{vol}</span>;
+          })()}
+          <span className="tankcard__stats data">
+            <span>{stats.fish} <span className="muted">fish</span></span>
+            <span>{stats.species} <span className="muted">species</span></span>
+            {stats.estimatedValue !== undefined && (
+              <span>${Math.round(stats.estimatedValue).toLocaleString()} <span className="muted">est.</span></span>
+            )}
+          </span>
+          {!aquarium.volume && (
+            <span className="badge badge--insufficient-data">
+              <span aria-hidden="true">?</span> Unmeasured
+            </span>
+          )}
+        </span>
+      </Link>
+
+      {/* Outside the link, so choosing a photo never navigates away mid-pick. */}
+      <button
+        type="button"
+        className="tankcard__photo-btn btn--ghost"
+        disabled={busy}
+        onClick={() => input.current?.click()}
+      >
+        {busy ? 'Saving…' : photoUrl ? 'Change photo' : 'Add a photo'}
+      </button>
+      <input
+        ref={input}
+        type="file"
+        accept="image/*"
+        hidden
+        aria-label={`Photo of ${aquarium.name}`}
+        onChange={(e) => { void onPick(e.target.files?.[0]); e.target.value = ''; }}
+      />
+      {error && <p className="warn xs" style={{ marginBottom: 0 }}>{error}</p>}
+    </article>
   );
 }

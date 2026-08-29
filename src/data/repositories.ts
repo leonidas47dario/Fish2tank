@@ -1075,3 +1075,86 @@ export async function deleteCatch(specimenId: Id, database: DB = db): Promise<De
 
   return plan;
 }
+
+/**
+ * Set (or replace) the photo that represents a tank.
+ *
+ * The Aquarium type has carried `photoMediaId` since the schema was written and
+ * nothing ever filled it. It stores a real Media row rather than a loose blob,
+ * so a tank photo obeys the same rules as every other picture in the app -
+ * bytes inline (see StoredBlob), original never downsampled (NFR-03).
+ *
+ * It has no encounter and no specimen: `encounterId` is optional and
+ * `specimenIds` is empty, because a photo of the glass is not a sighting of a
+ * fish and must never be counted as one.
+ *
+ * REPLACING DELETES THE OLD ONE. A tank has exactly one photo, so keeping the
+ * previous blob would silently grow the device's storage every time somebody
+ * retook it - and on a phone that budget is the app's to respect.
+ */
+export async function setTankPhoto(
+  aquariumId: Id,
+  file: CaptureFile,
+  database: DB = db,
+): Promise<Media> {
+  const aquarium = await database.aquariums.get(aquariumId);
+  if (!aquarium) throw new Error(`Unknown tank ${aquariumId}`);
+
+  const [detached] = await detachFiles([file]);
+  if (!detached) throw new Error('Could not read that photo.');
+
+  const at = nowIso();
+  const blobKey = newId('blob');
+  const media: Media = {
+    id: newId('media'),
+    kind: 'photo',
+    specimenIds: [],
+    originalBlobKey: blobKey,
+    originalBytes: detached.data.byteLength,
+    mimeType: detached.mimeType,
+    capturedAt: at,
+    syncState: 'local-draft',
+  };
+
+  const previous = aquarium.photoMediaId
+    ? await database.media.get(aquarium.photoMediaId)
+    : undefined;
+
+  try {
+    await database.transaction(
+      'rw',
+      [database.media, database.blobs, database.aquariums],
+      async () => {
+        await database.blobs.add({
+          key: blobKey, data: detached.data, bytes: detached.data.byteLength,
+          mimeType: detached.mimeType, storedAt: at,
+        });
+        await database.media.add(media);
+        await database.aquariums.update(aquariumId, { photoMediaId: media.id });
+        if (previous) {
+          await database.media.delete(previous.id);
+          await database.blobs.delete(previous.originalBlobKey);
+        }
+      },
+    );
+  } catch (cause) {
+    throw storageError(cause, detached.data.byteLength, 1);
+  }
+
+  return media;
+}
+
+/** Remove a tank's photo, leaving the tank itself alone. */
+export async function clearTankPhoto(aquariumId: Id, database: DB = db): Promise<void> {
+  const aquarium = await database.aquariums.get(aquariumId);
+  if (!aquarium?.photoMediaId) return;
+  const media = await database.media.get(aquarium.photoMediaId);
+
+  await database.transaction('rw', [database.media, database.blobs, database.aquariums], async () => {
+    if (media) {
+      await database.media.delete(media.id);
+      await database.blobs.delete(media.originalBlobKey);
+    }
+    await database.aquariums.update(aquariumId, { photoMediaId: undefined });
+  });
+}
