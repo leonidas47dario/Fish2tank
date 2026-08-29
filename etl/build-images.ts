@@ -15,15 +15,18 @@ const CATALOG = 'src/data/seed/marts/catalog.json';
 const MARKET = 'src/data/seed/marts/market-index.json';
 
 /**
- * How many species to fetch portraits for.
+ * How many species to fetch portraits for. Every one of them, by default.
  *
- * The catalog holds ~1,080 species. Bundling a portrait for every one would be
- * roughly 27MB, which no phone should download to browse a fish library. So
- * the budget is spent on the species you would actually meet: ranked by how
- * many listings the vendors carry, which is a good proxy for how likely you
- * are to see one. The tail keeps its silhouette until it earns a picture.
+ * This was capped at 320 on an estimate of ~27MB for full coverage. That
+ * estimate was wrong: measured, 695 bundled portraits come to 9.6MB - about
+ * 14KB each after downscaling - against a 1GB GitHub Pages limit. The cap was
+ * costing two thirds of the library its picture to save nothing.
+ *
+ * Species are still fetched most-listed first, so a run stopped early (or
+ * capped via PORTRAIT_LIMIT for a quick pass) covers the fish you are most
+ * likely to actually meet. Species with no usable image keep their silhouette.
  */
-const LIMIT = Number(process.env.PORTRAIT_LIMIT ?? 320);
+const LIMIT = Number(process.env.PORTRAIT_LIMIT ?? Number.POSITIVE_INFINITY);
 
 interface CatalogRow { speciesId: string; commonName: string; scientificName?: string }
 

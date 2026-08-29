@@ -21,9 +21,9 @@ const IMAGES = 'data/market/images.jsonl';
 const OUT_DIR = 'src/data/seed/assets/portraits';
 
 /**
- * Cards render at ~150 CSS px in the grid, so 320 covers 2x displays. Dropped
- * from 480 when the catalog grew from 47 species to 1,080: at 480 the bundle
- * would have been unusable on a phone.
+ * Cards render at ~150 CSS px in the grid, so 320 covers 2x displays and there
+ * is nothing to gain above it. At this width a portrait averages 14KB, which is
+ * what makes bundling all 695 of them affordable at 9.6MB.
  */
 const MAX_WIDTH = 320;
 const QUALITY = 0.72;
