@@ -1342,6 +1342,34 @@ summary.factor::-webkit-details-marker { display: none; }
   font-size: var(--size-xl); color: var(--color-muted);
 }
 .tank-tile__body { padding: var(--space-2); font-size: var(--size-sm); }
+
+/*
+ * Editing affordances on the tiles.
+ *
+ * A tile that can be tapped to edit has to look like it, without becoming a
+ * second visual language: same card, a pointer, and a real focus ring, since
+ * these are buttons and were links a moment ago.
+ */
+.tank-tile--editable {
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  padding: 0;
+}
+.tank-tile--editable:hover { border-color: var(--color-primary); }
+.tank-tile--open { border-color: var(--color-primary); }
+/* The add tile is an outline, so it reads as a slot rather than a resident. */
+.tank-tile--add {
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  padding: 0;
+  background: transparent;
+  border-style: dashed;
+  color: var(--color-muted);
+}
+.tank-tile--add:hover { border-color: var(--color-primary); color: var(--color-text); }
+.tankedit__bar { align-items: center; }
 .h3 { font-size: var(--size-md); }
 
 /* Tank index cards. Tokens only, like everything else in src/ui. */

@@ -951,6 +951,25 @@ function DeleteCatch({ specimenId, name, onDeleted }: {
             Permanently delete <strong>{name}</strong>
             {parts.length > 0 && <> and {parts.join(', ')}</>}. This cannot be undone.
           </p>
+          {/* The consequence that used to be a refusal. Stated in its own
+              line rather than folded into the list above, and naming the tanks
+              rather than counting them, because "also removes it from 2 tanks"
+              is a number to accept on faith. */}
+          {plan.holdings > 0 && (
+            <p className="warn panel__note--tight">
+              {plan.inTanks.length > 0
+                ? <>
+                    It will also be taken out of{' '}
+                    {plan.inTanks.map((t, i) => (
+                      <span key={t}>
+                        {i > 0 && (i === plan.inTanks.length - 1 ? ' and ' : ', ')}
+                        <strong>{t}</strong>
+                      </span>
+                    ))}.
+                  </>
+                : <>It will also be removed from your tank records.</>}
+            </p>
+          )}
           {plan.mediaSharedElsewhere > 0 && (
             <p className="panel__note panel__note--tight">
               {plan.mediaSharedElsewhere} photo{plan.mediaSharedElsewhere === 1 ? '' : 's'} also used by
