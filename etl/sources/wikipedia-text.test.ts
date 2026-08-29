@@ -63,6 +63,18 @@ describe('stripWikitext', () => {
     expect(stripWikitext('Length {{convert|}} unknown.')).toBe('Length unknown.');
   });
 
+  it('handles the "to(-)" range separator, which silently ate figures', () => {
+    // Real: Striped bass says {{convert|20|to(-)|40|lb|kg|0}}, which rendered
+    // as "Common mature size is 20 to(-)." and lost the range entirely.
+    expect(stripWikitext('Common mature size is {{convert|20|to(-)|40|lb|kg|0}}.'))
+      .toBe('Common mature size is 20–40 lb.');
+  });
+
+  it('handles "and(-)" too', () => {
+    expect(stripWikitext('range between {{convert|10|and(-)|20|mm}}'))
+      .toBe('range between 10–20 mm');
+  });
+
   it('unwraps piped links to the words a reader sees', () => {
     expect(stripWikitext('Found in the [[Amazon basin|Amazon]] and [[Peru]].'))
       .toBe('Found in the Amazon and Peru.');

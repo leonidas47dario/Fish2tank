@@ -27,7 +27,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { MAX_TITLES_PER_REQUEST, fetchWikitextBatch, stripWikitext } from './sources/wikipedia-text';
-import { fetchProductBody } from './sources/vendor-text';
+import { BLOCKED_HOSTS, fetchProductBody, hostOf } from './sources/vendor-text';
 import { CARE_DIR, TEXT_DIR, vendorPath, wikiPath } from './care/paths';
 
 const CATALOG = 'src/data/seed/marts/catalog.json';
@@ -102,6 +102,44 @@ export function isUnprofiled(s: CatalogSpecies): boolean {
  * than papered over with fuzzy matching, which would readmit the false
  * positives this exists to exclude.
  */
+/**
+ * Species the last run proved have no article under the name we hold.
+ *
+ * Read from the previous fetch log rather than from the filesystem, because a
+ * missing article leaves no file behind and so is indistinguishable from a
+ * species never attempted.
+ */
+/**
+ * The title Wikipedia actually served for a cached species, when it differs
+ * from the binomial we asked for.
+ *
+ * Read from the cache file's own header rather than carried forward from the
+ * previous log. The header is written at fetch time and cannot drift; a log
+ * carried forward is lost the first time a run overwrites it, which is exactly
+ * what happened here - two idempotent runs in a row reported "0 redirects"
+ * over a corpus with 304 of them.
+ */
+function cachedTitle(speciesId: string, scientificName?: string): string | undefined {
+  const path = wikiPath(speciesId);
+  if (!scientificName || !existsSync(path)) return undefined;
+  const first = readFileSync(path, 'utf8').split('\n', 1)[0] ?? '';
+  const title = first.startsWith('# ') ? first.slice(2).trim() : '';
+  return title && title !== scientificName ? title : undefined;
+}
+
+function previouslyMissing(): Set<string> {
+  if (!existsSync(LOG)) return new Set();
+  try {
+    const { entries } = JSON.parse(readFileSync(LOG, 'utf8')) as { entries: FetchLogEntry[] };
+    return new Set(entries.filter((e) => e.wikipedia === 'no-article').map((e) => e.speciesId));
+  } catch (err) {
+    // A corrupt log means re-fetching, which is slow but correct. Silently
+    // treating it as "nothing is missing" would be equally slow and silent.
+    console.warn(`  could not read ${LOG} (${(err as Error).message}); re-attempting every species`);
+    return new Set();
+  }
+}
+
 export function isGenusChange(from: string | undefined, to: string | undefined): boolean {
   if (!from || !to) return false;
   const [fromGenus, fromEpithet] = from.toLowerCase().split(' ');
@@ -119,6 +157,7 @@ async function main() {
   const limit = Number(arg('limit') ?? '0');
   const wikipediaOnly = flag('wikipedia-only');
   const vendorOnly = flag('vendor-only');
+  const retryMissing = flag('retry-missing');
 
   let gap = species.filter(isUnprofiled);
   if (limit > 0) gap = gap.slice(0, limit);
@@ -129,24 +168,36 @@ async function main() {
 
   const log = new Map<string, FetchLogEntry>();
   for (const s of gap) {
+    const prior = cachedTitle(s.speciesId, s.scientificName);
     log.set(s.speciesId, {
       speciesId: s.speciesId,
       commonName: s.commonName,
       ...(s.scientificName ? { scientificName: s.scientificName } : {}),
       wikipedia: s.scientificName ? 'no-article' : 'no-scientific-name',
+      ...(prior ? { resolvedTitle: prior } : {}),
       vendor: 'no-listing',
     });
   }
 
   // ---- Wikipedia -----------------------------------------------------------
   if (!vendorOnly) {
+    // "This species has no article" is a RESULT, and re-asking Wikipedia for
+    // it every run is not idempotence, it is 246 wasted requests against a
+    // rate-limited API. The previous run's log is what remembers the answer.
+    // `--retry-missing` re-asks, for when an article may since have been
+    // written or a binomial has been corrected.
+    const knownMissing = retryMissing ? new Set<string>() : previouslyMissing();
+    if (knownMissing.size) {
+      console.log(`  skipping ${knownMissing.size} species recorded as having no article (--retry-missing to re-ask)`);
+    }
+
     const todo = gap.filter((s) => {
       if (!s.scientificName) return false;
       if (existsSync(wikiPath(s.speciesId))) {
         log.get(s.speciesId)!.wikipedia = 'cached';
         return false;
       }
-      return true;
+      return !knownMissing.has(s.speciesId);
     });
 
     console.log(`\n  wikipedia: ${todo.length} to fetch, ${gap.length - todo.length} already cached or unnamed`);
@@ -196,15 +247,31 @@ async function main() {
       if (hit?.productUrl) withListing.push({ s, storeId: hit.storeId, url: hit.productUrl });
     }
 
-    const todo = withListing.filter(({ s }) => {
-      if (existsSync(vendorPath(s.speciesId))) {
-        log.get(s.speciesId)!.vendor = 'cached';
-        return false;
+    const todo: typeof withListing = [];
+    let blocked = 0;
+    for (const item of withListing) {
+      const entry = log.get(item.s.speciesId)!;
+      if (existsSync(vendorPath(item.s.speciesId))) {
+        entry.vendor = 'cached';
+        continue;
       }
-      return true;
-    });
+      // A blocked host is settled, not pending. Counting it as "to fetch"
+      // makes an idempotent run look like it still has 243 requests left.
+      if (BLOCKED_HOSTS.has(hostOf(item.url))) {
+        entry.vendor = 'skipped';
+        entry.vendorStore = item.storeId;
+        entry.vendorUrl = item.url;
+        entry.vendorSkipReason = `host ${hostOf(item.url)} is blocked by the corporate proxy`;
+        blocked++;
+        continue;
+      }
+      todo.push(item);
+    }
 
-    console.log(`\n  vendor: ${withListing.length} species have a listing, ${todo.length} to fetch`);
+    console.log(
+      `\n  vendor: ${withListing.length} species have a listing, ${todo.length} to fetch` +
+        ` (${blocked} on proxy-blocked hosts, no request made)`,
+    );
 
     let got = 0;
     for (const { s, storeId, url } of todo) {
@@ -267,7 +334,17 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error('\ncare:fetch FAILED:', err.message);
-  process.exit(1);
-});
+/**
+ * Only run when invoked as a script, never on import.
+ *
+ * Importing a helper from this file must not start a network fetch. Its own
+ * unit test tripped exactly that, and so did a subagent's verification
+ * harness against the ingest module - a file that does real work merely by
+ * being imported is a trap for everyone who touches it later.
+ */
+if (process.argv[1]?.includes('fetch-care-text')) {
+  main().catch((err) => {
+    console.error('\ncare:fetch FAILED:', err.message);
+    process.exit(1);
+  });
+}

@@ -92,6 +92,15 @@ const CONVERT_UNITS: Record<string, string> = {
 };
 
 /**
+ * Range separators `{{convert}}` accepts between its two values.
+ *
+ * The `(-)` suffixed forms tell the template to render an en-dash in tables
+ * and the word elsewhere; they are ordinary separators, not markup, and
+ * treating them as a unit name is what produced "20 to(-)".
+ */
+const RANGE_SEPARATOR = /^(-|–|—|to|and|or|by|x|\+\/-|±|to about|to around)(\(-\))?$/i;
+
+/**
  * Render `{{convert}}` as its source figure, before templates are stripped.
  *
  * THIS IS THE WHOLE BALL GAME. Wikipedia writes every measurement through this
@@ -117,8 +126,11 @@ export function expandConvert(wikitext: string): string {
     const [first, second, third, fourth] = parts;
     if (!first || !second || !/^-?\d/.test(first)) return ' ';
 
-    // {{convert|22|-|28|C|F}} and {{convert|22|to|28|C}} are ranges.
-    if (third && fourth && /^(-|–|—|to|and)$/i.test(second) && /^-?\d/.test(third)) {
+    // {{convert|22|-|28|C|F}}, {{convert|22|to|28|C}} and the parenthesised
+    // forms {{convert|20|to(-)|40|lb}} are all ranges. That last family is not
+    // exotic: missing it turned "Common mature size is 20 to 40 lb" into
+    // "Common mature size is 20 to(-)." and destroyed the figure.
+    if (third && fourth && RANGE_SEPARATOR.test(second) && /^-?\d/.test(third)) {
       return `${first}–${third} ${CONVERT_UNITS[fourth] ?? fourth}`;
     }
     return `${first} ${CONVERT_UNITS[second] ?? second}`;

@@ -250,9 +250,21 @@ function main() {
   }
 }
 
-try {
-  main();
-} catch (err) {
-  console.error('\ncare:ingest FAILED:', (err as Error).message);
-  process.exit(1);
+/**
+ * Only run when invoked as a script, never on import.
+ *
+ * Without this guard, any module that imports a helper from here executes the
+ * whole ingest as a side effect. That is not hypothetical: a verification
+ * harness imported this file to reuse its types and silently overwrote
+ * species-care.json with a partial rebuild. A module that rewrites shipped
+ * data merely by being imported is a trap, not a tool.
+ */
+const invokedDirectly = process.argv[1]?.includes('ingest-care-proposals');
+if (invokedDirectly) {
+  try {
+    main();
+  } catch (err) {
+    console.error('\ncare:ingest FAILED:', (err as Error).message);
+    process.exit(1);
+  }
 }

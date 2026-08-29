@@ -33,7 +33,12 @@ export function normalizeForMatch(s: string): string {
     .replace(/[‐-―−]/g, '-')
     .replace(/[‘’ʼ]/g, "'")
     .replace(/[“”]/g, '"')
-    .replace(/ /g, ' ')
+    // Every Unicode space separator, not just U+00A0. Wikipedia puts a NARROW
+    // no-break space (U+202F) before a degree sign in some articles and an ordinary
+    // space in others, and a reader copying that sentence cannot see the
+    // difference. Rejecting a correct quote over an invisible character is the
+    // worst kind of false negative: nothing in the output shows why it failed.
+    .replace(/\p{Zs}/gu, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 }
