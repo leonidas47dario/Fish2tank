@@ -47,15 +47,39 @@ describe('plainText', () => {
 });
 
 describe('isPublishable', () => {
-  const base = { speciesId: 's', role: 'portrait', source: 'wikimedia', retrievedAt: 'now' } as const;
+  const base = { speciesId: 's', role: 'portrait', retrievedAt: 'now' } as const;
 
-  it('accepts an image with a stated licence', () => {
-    expect(isPublishable({ ...base, url: 'https://x/y.jpg', license: 'CC BY-SA 4.0' })).toBe(true);
+  it('accepts a Wikimedia image with a stated licence', () => {
+    expect(isPublishable({
+      ...base, source: 'wikimedia', provenance: 'wikimedia',
+      url: 'https://x/y.jpg', license: 'CC BY-SA 4.0',
+      attributionUrl: 'https://commons.wikimedia.org/wiki/File:y.jpg',
+    })).toBe(true);
   });
 
-  it('rejects an image whose licence we cannot state', () => {
-    // Shipping an image we cannot attribute is the one thing this must not do.
-    expect(isPublishable({ ...base, url: 'https://x/y.jpg' })).toBe(false);
+  it('accepts a vendor photo with no licence but a stated source', () => {
+    // Spec 002: the test is "sourced", not "licensed". A vendor listing photo
+    // has no CC licence and never will, but it has a page we can point at.
+    expect(isPublishable({
+      ...base, source: 'vendor', provenance: 'vendor',
+      url: 'https://cdn.shopify.com/s/files/1/x/fish.jpg',
+      attributionUrl: 'https://imperialtropicals.com/products/fish',
+    })).toBe(true);
+  });
+
+  it('rejects an image we cannot point anyone at', () => {
+    // No attribution URL means no way to answer "where did this come from",
+    // which is the whole reason provenance exists.
+    expect(isPublishable({
+      ...base, source: 'web', provenance: 'web', url: 'https://x/y.jpg',
+    })).toBe(false);
     expect(isPublishable(undefined)).toBe(false);
+  });
+
+  it('rejects an image with no url', () => {
+    expect(isPublishable({
+      ...base, source: 'web', provenance: 'web', url: '',
+      attributionUrl: 'https://example.com/page',
+    })).toBe(false);
   });
 });

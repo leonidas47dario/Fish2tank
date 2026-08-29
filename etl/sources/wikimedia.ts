@@ -22,10 +22,19 @@ const COMMONS = 'https://commons.wikimedia.org/w/api.php';
 const USER_AGENT =
   'Fish2TankResearch/0.1 (personal aquarium field guide; +https://github.com/leonidas47dario/Fish2tank)';
 
+/** Where a portrait came from, and therefore how it must be credited. */
+export type Provenance = 'wikimedia' | 'vendor' | 'web';
+
 export interface SpeciesImage {
   speciesId: string;
   role: 'portrait';
-  source: 'wikimedia';
+  source: string;
+  /**
+   * Which credit line the card renders. Split from `source` because `source`
+   * names the fetcher and this names the rights position - a Commons file and
+   * a shop's product photo need different sentences under the picture.
+   */
+  provenance: Provenance;
   url: string;
   license?: string;
   artist?: string;
@@ -133,6 +142,7 @@ export async function fetchSpeciesPortrait(
     speciesId,
     role: 'portrait',
     source: 'wikimedia',
+    provenance: 'wikimedia',
     url,
     license,
     artist,
@@ -144,11 +154,15 @@ export async function fetchSpeciesPortrait(
 }
 
 /**
- * Only images we can attribute are usable.
+ * Only images we can point someone at are usable.
  *
- * A portrait with no licence is dropped rather than shipped hopefully - the
- * same discipline the species catalog applies to care data.
+ * This used to require a licence string. Spec 002 loosened it deliberately:
+ * the product owner chose to accept vendor and web photos for this personal
+ * field guide, and those have no CC licence to state. What has NOT been
+ * loosened is traceability - every shipped portrait must carry a provenance
+ * and a URL a human can open to see where the picture came from. An image we
+ * cannot account for is still an image we do not ship.
  */
 export function isPublishable(image: SpeciesImage | undefined): image is SpeciesImage {
-  return Boolean(image?.url && image.license);
+  return Boolean(image?.url && image.provenance && image.attributionUrl);
 }
