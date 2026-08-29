@@ -8,6 +8,7 @@
  */
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
+import { Link } from 'react-router-dom';
 import { db } from '@/data/db';
 import { moveHolding, recordDeath } from '@/data/repositories';
 import { formatVolume } from '@/domain/units';
@@ -38,9 +39,14 @@ export default function Tanks() {
                   : ' · unmeasured'}
               </span>
             </span>
-            <button type="button" className="btn--ghost" onClick={() => setEditing(editing === aquarium.id ? undefined : aquarium.id)}>
-              {editing === aquarium.id ? 'Done' : 'Edit'}
-            </button>
+            <span className="row">
+              <Link to={`/tanks/${aquarium.id}`} className="chip" style={{ textDecoration: 'none' }}>
+                Open
+              </Link>
+              <button type="button" className="btn--ghost" onClick={() => setEditing(editing === aquarium.id ? undefined : aquarium.id)}>
+                {editing === aquarium.id ? 'Done' : 'Edit'}
+              </button>
+            </span>
           </div>
 
           {!aquarium.volume && (

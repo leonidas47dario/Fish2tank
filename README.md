@@ -19,7 +19,7 @@ npm run dev          # http://localhost:5173
 ```
 
 ```bash
-npm test             # 681 unit + integration tests across 37 files
+npm test             # 692 unit + integration tests across 38 files
 npm run build        # type-check, bundle, generate the service worker
 npm run preview      # serve the production build on :4173
 
@@ -47,7 +47,7 @@ real UI.
 |---|---|
 | **1 — Private shell** | PWA installs and runs offline; drafts are created before media finishes writing; retries never duplicate a catch. Catches can be corrected or deleted, with the cascade named before it happens. No auth — see *No backend* below. |
 | **2 — Catalog** | Species / specimen / encounter modelled separately; Unknown / Provisional / Confirmed identity; reveal ceremony; Dream List. The library is a **card grid of 2,178 species**, filterable by where a fish lives in the tank, what kind of thing it is, and temperament. |
-| **3 — Real tanks** | Aquariums, holdings, dated residencies, full lifecycle events, inventory importer. |
+| **3 — Real tanks** | Aquariums, holdings, dated residencies, full lifecycle events, inventory importer. Each tank opens in two modes: a **Viewer** dashboard built to hand to a guest, and **Manage** for everything that writes. |
 | **4 — Evaluation** | Seven-factor deterministic screening over a versioned rule set, with immutable snapshots. |
 | **5 — Price + journal** | Ask / member / paid kept separate, comparability filtering, story chapters. Prices come from **12 tracked vendors**, each store row linking straight to its product page, and **8 Chicago PetSmart branches report what is in the tank today**. |
 | **6 — Legacy + hardening** | Fish Heaven, Keeper's Code, JSON export, reduced-motion and mute, non-colour status cues. |
@@ -356,6 +356,41 @@ outranks saltwater for the same reason: it is the closer of the two to a tank
 you could actually run. A species nobody tagged is *not recorded* and is
 excluded from every specific choice rather than defaulted into one, the same
 rule the water-column zone follows.
+
+## Showing someone your tank
+
+A tank page used to be an inventory list, which is the right tool for the
+keeper and the wrong one for the person standing next to the glass. Each tank
+now opens in two modes, and they are separate because they serve different
+people at different moments — a guest tapping around your tank should not be
+able to retire a fish by accident.
+
+**Viewer** answers what a visitor actually asks. How many fish, how many
+species, what it is worth, what the biggest one grows to. Where everyone swims,
+drawn as bands in the order the fish occupy them — the geometry carries the
+depth, so no colour ramp is needed and no legend has to be read. The
+temperament mix, in the same severity vocabulary the verdict badges already
+use, because a second visual language for one idea is how a design system rots.
+What the tank *becomes*, since the two-inch fish in front of them is a
+fourteen-inch fish later. Then the fish themselves as portraits you can tap
+through to the species page.
+
+**Manage** is the old screen: move a fish, record a loss.
+
+**Every total reports its own denominator.** Twelve of the sixty-one seeded
+holdings are labels nobody could resolve to a species, and the 75-gallon's
+estimate covers 10 of its 22 fish. The dashboard says so, in the panel named
+*What this leaves out*, rather than averaging over 80% of a tank and presenting
+it as the tank. That is the same rule the rest of the app follows, applied
+where it is most tempting to break.
+
+**On chart colour.** The fills are `color-mix` against the theme tokens, so the
+whole dashboard re-themes with everything else and `src/ui` still names no
+colour. The direction of that mix was measured, not eyeballed: mixing toward
+the *surface* is the intuitive move and it put the light theme's bars at
+**1.75:1**, well under the 3:1 floor for a mark. Mixing toward the *ink*
+instead raises contrast in every territory at once, because the token flips
+with the theme. Measured live in all three: 3.56:1 at worst.
 
 ## Where a fish lives
 

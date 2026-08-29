@@ -325,15 +325,7 @@ export default function SpecimenDetail() {
           <p className="small muted">
             Nothing here needs to happen. A catch is documentation, not acquisition.
           </p>
-          <label htmlFor="acquire-tank">Bring into</label>
-          <select
-            id="acquire-tank"
-            defaultValue=""
-            onChange={(e) => { if (e.target.value) void acquireSpecimen(id, e.target.value); }}
-          >
-            <option value="" disabled>Choose a tank…</option>
-            {aquariums?.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-          </select>
+          <BringHome specimenId={id} aquariums={aquariums ?? []} />
         </section>
       )}
 
@@ -344,6 +336,49 @@ export default function SpecimenDetail() {
         onDeleted={() => navigate('/')}
       />
     </div>
+  );
+}
+
+/**
+ * Bring a catch home - deliberately two steps.
+ *
+ * This used to commit on the select's onChange, which made choosing a tank
+ * from a dropdown silently create a holding, a dated residency and an
+ * "acquired" life event, and flip the specimen to resident. The only feedback
+ * was the section disappearing. Since catches held in a tank cannot be
+ * deleted, one stray tap also permanently blocked removing that catch.
+ *
+ * So the tank choice is now just a choice, and a labelled button does the
+ * writing - after saying in words what it is about to record.
+ */
+function BringHome({ specimenId, aquariums }: {
+  specimenId: string; aquariums: Array<{ id: string; name: string }>;
+}) {
+  const [tankId, setTankId] = useState('');
+  const [busy, setBusy] = useState(false);
+  const chosen = aquariums.find((t) => t.id === tankId);
+
+  return (
+    <>
+      <label htmlFor="acquire-tank">Bring into</label>
+      <select id="acquire-tank" value={tankId} onChange={(e) => setTankId(e.target.value)}>
+        <option value="">Choose a tank…</option>
+        {aquariums.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+      </select>
+
+      {chosen && (
+        <>
+          <p className="xs muted" style={{ marginBottom: 0 }}>
+            Records that you own this fish and that it lives in {chosen.name} from today. It then
+            appears in that tank, and the catch can no longer be deleted.
+          </p>
+          <button type="button" className="btn--primary" disabled={busy}
+            onClick={async () => { setBusy(true); await acquireSpecimen(specimenId, chosen.id); setBusy(false); }}>
+            {busy ? 'Recording…' : `Add to ${chosen.name}`}
+          </button>
+        </>
+      )}
+    </>
   );
 }
 
