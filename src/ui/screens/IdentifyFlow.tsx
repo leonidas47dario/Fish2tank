@@ -23,7 +23,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { blobFor, db } from '@/data/db';
 import { CATALOG } from '@/data/catalog';
-import { canShareFiles, identifyFromText, isConfident, type Candidate } from '@/data/identify';
+import { canShareFiles, identifyFromText, isConfident, shareForLens, type Candidate } from '@/data/identify';
 import { assertIdentity, revealSpecimen } from '@/data/repositories';
 import type { RaritySnapshot } from '@/domain/types';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -88,16 +88,8 @@ export default function IdentifyFlow() {
   async function onShare() {
     if (!shareFile) return;
     setError(undefined);
-    try {
-      await navigator.share({
-        files: [shareFile],
-        title: 'What fish is this?',
-        text: 'Identify this fish',
-      });
-    } catch (e) {
-      // Cancelling the share sheet rejects with AbortError. That is the user
-      // changing their mind, not a failure worth shouting about.
-      if (e instanceof Error && e.name === 'AbortError') return;
+    const result = await shareForLens(shareFile);
+    if (result === 'unavailable') {
       setError('This device would not open the share sheet. Search by name instead.');
     }
   }
@@ -179,9 +171,10 @@ export default function IdentifyFlow() {
 
       {canShare && (
         <p className="xs muted">
-          Hands the photo to Google Lens or whichever visual search you have installed. It leaves
-          this device only when you tap that, and only to the app you choose. Come back with a name
-          and type it below — nothing is confirmed for you.
+          Shares the photo on its own, so Lens gets a picture rather than a caption to search.
+          Pick Chrome or Google in the sheet — iOS decides that order, not this app, and it moves
+          what you choose nearer the front over time. Come back with a name and type it below;
+          nothing is confirmed for you.
         </p>
       )}
 

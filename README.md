@@ -19,7 +19,7 @@ npm run dev          # http://localhost:5173
 ```
 
 ```bash
-npm test             # 692 unit + integration tests across 38 files
+npm test             # 696 unit + integration tests across 38 files
 npm run build        # type-check, bundle, generate the service worker
 npm run preview      # serve the production build on :4173
 
@@ -443,7 +443,22 @@ this exactly — *"the product does not claim embedded Google Lens capability; t
 user returns and confirms the result manually"* — so the photo goes to Lens only
 through a share sheet you tap, and the app does the half that actually saves
 taps: turning whatever text comes back into a ranked shortlist of real catalog
-species. Paste `Parachromis managuensis` and Jaguar Cichlid is first; paste a
+species.
+
+**The share carries the image and nothing else, and that is load-bearing.** It
+used to send a title and a caption alongside the photo. A share carrying text is
+a different kind of share: the receiving app gets a text payload too, and Chrome
+on iOS acts on the words — opening a tab, or searching for them — instead of
+routing the image into Lens. Picture-plus-caption also reads to iOS as a
+message, which is why its sheet led with contacts. Neither string was read by
+anything; Lens wants a picture. `identify.test.ts` asserts the payload has
+exactly one key.
+
+**No web page can choose which app receives a share.** `navigator.share()` has
+no target parameter on any platform, by design — the OS owns that choice, and on
+iOS the order of the sheet is Apple's, learned from what you actually pick.
+Sending a clean image share is the whole of what a web app is allowed to
+influence, so that is what this does. Paste `Parachromis managuensis` and Jaguar Cichlid is first; paste a
 whole messy Lens caption and it still resolves; type `freshwater aquarium fish`
 and it matches **nothing**, rather than ranking the catalog by how often the word
 "fish" appears.

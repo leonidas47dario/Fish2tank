@@ -7,7 +7,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { CATALOG } from './catalog';
-import { canShareFiles, identifyFromText, isConfident, lensSearchUrl } from './identify';
+import { canShareFiles, identifyFromText, isConfident, lensSearchUrl, shareForLens } from './identify';
 
 const catalog = CATALOG.species;
 
@@ -95,5 +95,36 @@ describe('handoff plumbing', () => {
     expect(url).toBe(
       'https://lens.google.com/uploadbyurl?url=https%3A%2F%2Fexample.com%2Fa%20b.jpg%3Fx%3D1%26y%3D2',
     );
+  });
+});
+
+describe('shareForLens', () => {
+  const file = () => new File([''], 'catch.jpg', { type: 'image/jpeg' });
+
+  it('shares the image and NOTHING else', async () => {
+    // This is the whole point. A share carrying text is a different kind of
+    // share: Chrome on iOS acts on the words - opening a tab or a web search -
+    // instead of routing the image into Lens, and iOS reads picture-plus-
+    // caption as a message and leads its sheet with contacts.
+    let got: ShareData | undefined;
+    await shareForLens(file(), async (d) => { got = d; });
+
+    expect(got!.files).toHaveLength(1);
+    expect(got).not.toHaveProperty('text');
+    expect(got).not.toHaveProperty('title');
+    expect(Object.keys(got!)).toEqual(['files']);
+  });
+
+  it('reports a dismissed sheet as cancelled, not as a failure', async () => {
+    const abort = Object.assign(new Error('cancelled'), { name: 'AbortError' });
+    expect(await shareForLens(file(), () => Promise.reject(abort))).toBe('cancelled');
+  });
+
+  it('reports a real refusal as unavailable, so the UI can offer typing instead', async () => {
+    expect(await shareForLens(file(), () => Promise.reject(new Error('nope')))).toBe('unavailable');
+  });
+
+  it('reports success', async () => {
+    expect(await shareForLens(file(), async () => {})).toBe('shared');
   });
 });
