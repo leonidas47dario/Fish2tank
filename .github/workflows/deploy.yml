@@ -1,12 +1,20 @@
-# Build the PWA and publish it to GitHub Pages.
+# Publish both environments to the single GitHub Pages site.
 #
-# Pages on a PRIVATE repository requires a paid GitHub plan; this repository is
-# public, so the free plan covers it.
+#   main → https://leonidas47dario.github.io/Fish2tank/        (production)
+#   uat  → https://leonidas47dario.github.io/Fish2tank/uat/    (staging)
+#
+# GitHub Pages serves one site per repository, so both environments are built
+# here and assembled into a single artifact. That is why a push to EITHER
+# branch rebuilds BOTH: the artifact is published whole, and publishing only
+# half of it would delete the other environment.
+#
+# Branch flow: feature → uat → main. Nothing reaches production without having
+# been live on /uat/ first.
 name: Deploy
 
 on:
   push:
-    branches: [main]
+    branches: [main, uat]
   workflow_dispatch:
 
 permissions:
@@ -14,7 +22,7 @@ permissions:
   pages: write
   id-token: write
 
-# Never let two deploys race; let a newer commit supersede an in-flight one.
+# Never let two deploys race; a newer commit supersedes an in-flight one.
 concurrency:
   group: pages
   cancel-in-progress: true
@@ -23,37 +31,79 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      # Each environment is built from its own branch, not from whichever
+      # branch happened to trigger this run.
+      - name: Check out production (main)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: prod
+
+      - name: Does a uat branch exist yet?
+        id: uat
+        run: |
+          if git ls-remote --exit-code --heads \
+              "https://github.com/${{ github.repository }}.git" uat >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No uat branch yet; publishing production only."
+          fi
+
+      - name: Check out staging (uat)
+        if: steps.uat.outputs.exists == 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: uat
+          path: uat
 
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
 
-      - run: npm ci
-
-      # The engines are the product's honesty guarantee - a deploy that skips
-      # them is not worth shipping.
-      - name: Test
-        run: npm test
-
-      - name: Build
+      # --- production ------------------------------------------------------
+      - name: Build production
+        working-directory: prod
         env:
-          # Project Pages serves from https://<user>.github.io/<repo>/
           VITE_BASE: /${{ github.event.repository.name }}/
-        run: npm run build
+        run: |
+          npm ci
+          npm test
+          npm run build
+
+      # --- staging ---------------------------------------------------------
+      # Staging runs the tests too. The point of a staging site is to exercise
+      # a real release candidate, not any candidate.
+      - name: Build staging
+        if: steps.uat.outputs.exists == 'true'
+        working-directory: uat
+        env:
+          VITE_BASE: /${{ github.event.repository.name }}/uat/
+        run: |
+          npm ci
+          npm test
+          npm run build
+
+      - name: Assemble the site
+        run: |
+          mkdir -p site
+          cp -r prod/dist/. site/
+          if [ "${{ steps.uat.outputs.exists }}" = "true" ]; then
+            mkdir -p site/uat
+            cp -r uat/dist/. site/uat/
+          fi
+          echo "--- published tree ---"
+          find site -maxdepth 2 -type d | sort
 
       # enablement:true turns Pages on via the API when it has never been
-      # configured, instead of failing with a 404 and requiring someone to
-      # click through repository settings first. Also means a fork gets a
-      # working deploy without manual setup.
+      # configured, so a fork gets a working deploy without manual setup.
       - uses: actions/configure-pages@v5
         with:
           enablement: true
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: site
 
   deploy:
     needs: build

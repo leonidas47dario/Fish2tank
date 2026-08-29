@@ -18,7 +18,7 @@
  */
 import type { Species } from '@/domain/types';
 
-export type MatchMethod = 'scientific-name' | 'common-name' | 'alias';
+export type MatchMethod = 'scientific-name' | 'common-name' | 'alias' | 'derived-binomial';
 
 export interface SpeciesMatch {
   speciesId?: string;

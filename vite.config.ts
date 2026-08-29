@@ -8,6 +8,14 @@ import { fileURLToPath, URL } from 'node:url';
 // (Netlify, Cloudflare Pages, Vercel).
 const base = process.env.VITE_BASE ?? '/';
 
+// Staging lives under the production base (/Fish2tank/uat/), which means a
+// service worker registered for production has a scope that CONTAINS staging.
+// Left alone, a user who visits production first would then get production's
+// cached shell served for every /uat/ navigation, and staging would silently
+// show the wrong build. Production therefore disowns the /uat/ subtree.
+const isStaging = base.endsWith('/uat/');
+const navigateFallbackDenylist = [/^\/api\//, ...(isStaging ? [] : [/\/uat(\/|$)/])];
+
 export default defineConfig({
   base,
   resolve: {
@@ -18,10 +26,16 @@ export default defineConfig({
     // FR-O01 / NFR-07: installable, mobile-first, works offline (NFR-02).
     VitePWA({
       registerType: 'autoUpdate',
+      // Registration lives in src/pwa.ts instead: the injected script is a bare
+      // register() that never reloads, which made a new deploy show up only on
+      // the second visit. See the note there.
+      injectRegister: null,
       includeAssets: ['favicon.svg'],
       manifest: {
-        name: 'Fish2Tank',
-        short_name: 'Fish2Tank',
+        // Distinguishable on the home screen, so an installed staging build
+        // is never mistaken for production.
+        name: isStaging ? 'Fish2Tank (UAT)' : 'Fish2Tank',
+        short_name: isStaging ? 'F2T UAT' : 'Fish2Tank',
         description: 'Catch the encounter. Keep every story.',
         theme_color: '#0b1d2a',
         background_color: '#0b1d2a',
@@ -37,9 +51,14 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        // Portraits are part of the library, so they are precached: a catalog that
+        // cannot draw itself offline has failed the core promise (NFR-02).
+        globPatterns: ['**/*.{js,css,html,svg,png,jpg,woff2}'],
+        // ~1MB of portraits pushes past the 2MiB default.
+        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
         // Media originals live in IndexedDB, never in the SW cache (NFR-03).
-        navigateFallbackDenylist: [/^\/api\//],
+        // /uat/ is excluded from production's scope; see the note above.
+        navigateFallbackDenylist,
       },
     }),
   ],

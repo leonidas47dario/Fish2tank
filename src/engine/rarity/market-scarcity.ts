@@ -50,7 +50,13 @@ export interface MarketScarcityConfig {
     stockPressureMax: number;
     priceLevelMax: number;
   };
-  /** Total stores tracked by the ETL. */
+  /**
+   * Total vendors behind the index.
+   *
+   * Do not rely on the default: callers should pass the real count, which
+   * `scarcityFor()` in data/market.ts reads from the index itself. The default
+   * exists only so the engine is usable standalone in tests.
+   */
   trackedStores: number;
   /** Listings at or above which a species counts as freely offered. */
   depthSaturation: number;
@@ -64,7 +70,7 @@ export interface MarketScarcityConfig {
 export const DEFAULT_SCARCITY_CONFIG: MarketScarcityConfig = {
   formulaVersion: 'market-scarcity-v0.1.0',
   points: { storeBreadthMax: 30, listingDepthMax: 30, stockPressureMax: 25, priceLevelMax: 15 },
-  trackedStores: 3,
+  trackedStores: 8,
   depthSaturation: 20,
   priceCeiling: 200,
   minimumListings: 3,

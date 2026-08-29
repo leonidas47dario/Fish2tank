@@ -11,7 +11,8 @@
  */
 import type { LengthMeasurement } from '@/domain/types';
 import { toCm } from '@/domain/units';
-import indexJson from './seed/market/market-index.json';
+import { computeMarketScarcity, DEFAULT_SCARCITY_CONFIG } from '@/engine/rarity/market-scarcity';
+import indexJson from './seed/marts/market-index.json';
 
 export interface MarketSizeBand {
   sizeIn: number;
@@ -50,6 +51,31 @@ export const STORE_NAMES: Record<string, string> = Object.fromEntries(
 export function marketFor(speciesId: string | undefined): MarketSpeciesStats | undefined {
   if (!speciesId) return undefined;
   return MARKET_INDEX.species[speciesId];
+}
+
+/**
+ * How many vendors produced this index.
+ *
+ * Read from the data rather than configured, because the scarcity rating
+ * divides by it. A hardcoded count that drifts from the real vendor list
+ * silently mis-rates every species - and it drifts the moment someone adds a
+ * store without remembering there is a second place to update.
+ */
+export const TRACKED_STORES = MARKET_INDEX.sources.length;
+
+/**
+ * Rate a species' market scarcity with the store count the index was actually
+ * built from.
+ *
+ * The single entry point the UI should use. Calling computeMarketScarcity
+ * directly with the default config works, but risks the drift above; this
+ * cannot.
+ */
+export function scarcityFor(speciesId: string | undefined) {
+  return computeMarketScarcity(marketFor(speciesId), {
+    ...DEFAULT_SCARCITY_CONFIG,
+    trackedStores: TRACKED_STORES,
+  });
 }
 
 /**

@@ -10,6 +10,7 @@ import type { ShopifyProduct, ShopifyVariant } from '../sources/shopify';
 import { productUrl } from '../sources/shopify';
 import { parseSize } from './size';
 import { buildMatcher } from './species';
+import { derivedSpeciesId } from './derive-species';
 
 /**
  * The size can appear on any of the three option slots depending on how the
@@ -34,6 +35,20 @@ export function normalizeProduct(
 ): MarketListing[] {
   const m = match(product.title);
 
+  /**
+   * A binomial the curated catalog does not cover still names a real species,
+   * so it gets a derived id rather than being dropped. Without this the
+   * library showed 47 of the 1,068 species these vendors actually sell.
+   *
+   * Note what this is NOT: it never guesses that one fish is another. It only
+   * mints a new species from a name the vendor stated explicitly.
+   */
+  const speciesId = m.speciesId
+    ?? (m.scientificNameInTitle ? derivedSpeciesId(m.scientificNameInTitle) : undefined);
+  const matchMethod = m.speciesId
+    ? m.method
+    : (m.scientificNameInTitle ? ('derived-binomial' as const) : undefined);
+
   return product.variants.map((variant): MarketListing => {
     const parsed = sizeFromVariant(variant);
     const price = Number(variant.price);
@@ -50,8 +65,8 @@ export function normalizeProduct(
       productType: product.product_type || undefined,
       tags: product.tags ?? [],
 
-      speciesId: m.speciesId,
-      matchMethod: m.method,
+      speciesId,
+      matchMethod,
       scientificNameInTitle: m.scientificNameInTitle,
 
       price: Number.isFinite(price) ? price : 0,

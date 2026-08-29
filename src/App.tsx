@@ -1,6 +1,7 @@
-import { NavLink, Route, Routes } from 'react-router-dom';
+import { Navigate, NavLink, Route, Routes } from 'react-router-dom';
 import Home from './ui/screens/Home';
-import Collection from './ui/screens/Collection';
+import Catalog from './ui/screens/Catalog';
+import SpeciesDetail from './ui/screens/SpeciesDetail';
 import CatchScreen from './ui/screens/CatchScreen';
 import Tanks from './ui/screens/Tanks';
 import Journal from './ui/screens/Journal';
@@ -10,7 +11,7 @@ import Settings from './ui/screens/Settings';
 /** PRD 3.2 navigation model. Catch is the central action. */
 const DESTINATIONS = [
   { to: '/', glyph: '⌂', label: 'Home', end: true },
-  { to: '/collection', glyph: '◈', label: 'Collection', end: false },
+  { to: '/catalog', glyph: '◈', label: 'Catalog', end: false },
   { to: '/catch', glyph: '◉', label: 'Catch', end: false },
   { to: '/tanks', glyph: '▤', label: 'Tanks', end: false },
   { to: '/journal', glyph: '✎', label: 'Journal', end: false },
@@ -22,7 +23,11 @@ export default function App() {
       <main className="app">
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/collection" element={<Collection />} />
+          <Route path="/catalog" element={<Catalog />} />
+          {/* /collection kept as a redirect: it was the nav item for three
+              releases and may be bookmarked or linked from a story. */}
+          <Route path="/collection" element={<Navigate to="/catalog" replace />} />
+          <Route path="/species/:id" element={<SpeciesDetail />} />
           <Route path="/catch" element={<CatchScreen />} />
           <Route path="/tanks" element={<Tanks />} />
           <Route path="/journal" element={<Journal />} />

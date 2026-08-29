@@ -11,3 +11,9 @@ coverage/
 !.env.example
 smoke-shots/
 etl/raw/
+
+# Superseded by the Parquet warehouse: listings.jsonl is 10MB and rebuilds from
+# etl/raw, while fact_listing.parquet holds the same rows in 488KB. Committing
+# both would burn the git headroom the warehouse design depends on.
+data/market/listings.jsonl
+data/market/listings.csv

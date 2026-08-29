@@ -32,6 +32,7 @@ import type {
 import { deriveQuantity, planMove } from '@/domain/holdings';
 import { evaluateAllTanks, type CandidateInput, type ResidentInput, type TankInput } from '@/engine/compatibility/engine';
 import { computeDiscoveryTier } from '@/engine/rarity/discovery-tier';
+import { scarcityFor } from './market';
 import { db, newId, nowIso, today, type Fish2TankDB } from './db';
 
 type DB = Fish2TankDB;
@@ -376,6 +377,9 @@ export async function revealSpecimen(specimenId: Id, database: DB = db): Promise
   const encounter = (await database.encounters.where('specimenId').equals(specimenId).toArray())
     .sort((a, b) => a.observedAt.localeCompare(b.observedAt))[0];
 
+  // Market scarcity is a scored component as of formula v0.2.0.
+  const market = scarcityFor(specimen.speciesId);
+
   const snapshot = computeDiscoveryTier({
     specimenId,
     speciesId: specimen.speciesId,
@@ -385,6 +389,7 @@ export async function revealSpecimen(specimenId: Id, database: DB = db): Promise
     priorConfirmedCatches: priorConfirmed.length,
     priorCatchesOfSpecies: priorOfSpecies.length,
     isExceptionalSpecimen: specimen.exceptional ?? false,
+    marketScarcityScore: market.available ? market.score : undefined,
     golden: Boolean(specimen.golden),
   });
 
@@ -458,6 +463,112 @@ export async function acquireSpecimen(
   );
 
   return { holding, residency, event };
+}
+
+/**
+ * The specimen a holding always implied, minted on demand.
+ *
+ * WHY THIS EXISTS. Media hangs off specimens, and an opening-balance holding
+ * has no specimen - `Holding.specimenId` is optional by design (FR-T02),
+ * because an imported inventory row records a fish you own without any
+ * encounter ever having happened. The honest consequence was that a fish you
+ * have kept for years had nowhere to put a photo.
+ *
+ * So the first photo mints it. The specimen is `resident`, not `encountered`:
+ * you did not meet this fish in a store, it is simply yours. The identity goes
+ * through assertIdentity with source 'import' rather than being stamped onto
+ * the record, so the answer to "how do we know what this is?" stays auditable -
+ * it came from your own spreadsheet, and the raw label travels with it
+ * verbatim (FR-O05).
+ *
+ * Idempotent: a holding that already has a specimen returns it untouched.
+ */
+export async function ensureSpecimenForHolding(holdingId: Id, database: DB = db): Promise<Specimen> {
+  const holding = await database.holdings.get(holdingId);
+  if (!holding) throw new Error(`Unknown holding ${holdingId}`);
+
+  if (holding.specimenId) {
+    const existing = await database.specimens.get(holding.specimenId);
+    if (existing) return existing;
+  }
+
+  const at = nowIso();
+  const specimen: Specimen = {
+    id: newId('spec'),
+    kind: holding.kind,
+    rawLabel: holding.rawLabel,
+    identityStatus: 'unknown',
+    status: 'resident',
+    createdAt: at,
+    updatedAt: at,
+  };
+
+  await database.transaction('rw', [database.specimens, database.holdings], async () => {
+    await database.specimens.add(specimen);
+    await database.holdings.update(holdingId, { specimenId: specimen.id });
+  });
+
+  if (holding.speciesId) {
+    await assertIdentity(
+      {
+        specimenId: specimen.id,
+        speciesId: holding.speciesId,
+        rawText: holding.rawLabel,
+        source: 'import',
+        status: 'user-confirmed',
+        note: holding.openingBalance
+          ? 'Named in your own inventory, so the identity is yours rather than a guess.'
+          : undefined,
+      },
+      database,
+    );
+    return { ...specimen, speciesId: holding.speciesId, identityStatus: 'user-confirmed' };
+  }
+
+  return specimen;
+}
+
+/**
+ * Add photos or video to a specimen you already have.
+ *
+ * Deliberately not an encounter: `createCatchDraft` is for meeting a fish, and
+ * reusing it here would invent a store visit that never happened. This is just
+ * another look at a fish that is already yours, so it writes media and nothing
+ * else. The blob is stored untouched (NFR-03).
+ */
+export async function addPhotos(
+  input: { specimenId: Id; files: CaptureFile[]; capturedAt?: Instant },
+  database: DB = db,
+): Promise<Media[]> {
+  const specimen = await database.specimens.get(input.specimenId);
+  if (!specimen) throw new Error(`Unknown specimen ${input.specimenId}`);
+  if (input.files.length === 0) return [];
+
+  const at = input.capturedAt ?? nowIso();
+  const media: Media[] = [];
+  const blobs = input.files.map((f) => {
+    const key = newId('blob');
+    media.push({
+      id: newId('media'),
+      kind: f.kind,
+      specimenIds: [input.specimenId],
+      originalBlobKey: key,
+      originalBytes: f.blob.size,
+      mimeType: f.mimeType,
+      durationSeconds: f.durationSeconds,
+      capturedAt: at,
+      syncState: 'local-draft',
+    });
+    return { key, blob: f.blob, bytes: f.blob.size, mimeType: f.mimeType, storedAt: at };
+  });
+
+  await database.transaction('rw', [database.media, database.blobs, database.specimens], async () => {
+    await database.media.bulkAdd(media);
+    await database.blobs.bulkAdd(blobs);
+    await database.specimens.update(input.specimenId, { updatedAt: at });
+  });
+
+  return media;
 }
 
 /** FR-T02: an owned fish with no prior catch, e.g. an inventory opening balance. */

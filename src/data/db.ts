@@ -45,6 +45,23 @@ export interface StoredBlob {
 }
 
 /**
+ * How the catalog should illustrate a species you have caught.
+ *
+ * Principle P3 says "the exact specimen matters", so when you have your own
+ * photo of a fish that is the default art - a stock portrait of the species is
+ * a fallback, not the point. This lets you flip back per species anyway,
+ * because a bad phone photo through algae is sometimes worse than the
+ * reference shot.
+ */
+export interface CardPref {
+  speciesId: Id;
+  artSource: 'own' | 'portrait';
+  /** Which of your photos, when you have several. */
+  preferredMediaId?: Id;
+  updatedAt: string;
+}
+
+/**
  * A catch draft is created before its media finishes writing (FR-C02), so the
  * client key lets a retry find the existing draft instead of making a second
  * one (FR-C07).
@@ -77,6 +94,7 @@ export class Fish2TankDB extends Dexie {
   memorials!: EntityTable<Memorial, 'id'>;
   keeperPrinciples!: EntityTable<KeeperPrinciple, 'id'>;
   draftKeys!: EntityTable<DraftKey, 'clientKey'>;
+  cardPrefs!: EntityTable<CardPref, 'speciesId'>;
 
   constructor(name = 'fish2tank') {
     super(name);
@@ -101,6 +119,12 @@ export class Fish2TankDB extends Dexie {
       memorials: 'id, holdingId, specimenId, occurredOn',
       keeperPrinciples: 'id, sourceMemorialId',
       draftKeys: 'clientKey, specimenId',
+    });
+
+    // v2 adds catalog art preferences. Dexie carries v1 data forward
+    // untouched; no migration function is needed for a pure addition.
+    this.version(2).stores({
+      cardPrefs: 'speciesId',
     });
   }
 }
