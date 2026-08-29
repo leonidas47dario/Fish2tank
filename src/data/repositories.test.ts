@@ -9,8 +9,12 @@ import {
   assessmentHistory,
   awardGolden,
   clearTankPhoto,
+  createAquarium,
   createCatchDraft,
   deleteCatch,
+  deleteTank,
+  planDeleteTank,
+  setAquariumStatus,
   setTankPhoto,
   planDeleteCatch,
   updateCatch,
@@ -838,5 +842,112 @@ describe('tank photos', () => {
   it('clearing a tank that has no photo is a no-op, not an error', async () => {
     const id = await aTank();
     await expect(clearTankPhoto(id, db)).resolves.toBeUndefined();
+  });
+});
+
+describe('adding, retiring and deleting tanks', () => {
+  it('creates a tank with just a name and a kind', async () => {
+    const tank = await createAquarium({ name: '  Dune  ', kind: 'display' }, db);
+    // Trimmed, and active from the start.
+    expect(tank.name).toBe('Dune');
+    expect(tank.status).toBe('active');
+    // Unmeasured on purpose - screening reports what it is missing rather than
+    // working from a guessed footprint.
+    expect(tank.volume).toBeUndefined();
+    expect(tank.dimensions).toBeUndefined();
+    expect(await db.aquariums.get(tank.id)).toMatchObject({ name: 'Dune' });
+  });
+
+  it('refuses a tank with no name', async () => {
+    await expect(createAquarium({ name: '   ', kind: 'display' }, db)).rejects.toThrow(/needs a name/i);
+  });
+
+  it('deletes a tank that never held a fish, and remembers it is gone', async () => {
+    const tank = await createAquarium({ name: 'Spare', kind: 'tote' }, db);
+    const plan = await deleteTank(tank.id, db);
+
+    expect(plan.allowed).toBe(true);
+    expect(await db.aquariums.get(tank.id)).toBeUndefined();
+    // Tombstoned, so first-run seeding cannot bring a deleted tank back.
+    expect(await db.deletedRecords.get(tank.id)).toMatchObject({ kind: 'aquarium' });
+  });
+
+  it('takes the tank photo with it, and tombstones that too', async () => {
+    const tank = await createAquarium({ name: 'Spare', kind: 'tote' }, db);
+    await setTankPhoto(tank.id, photo(), db);
+    const withPhoto = await db.aquariums.get(tank.id);
+    const mediaId = withPhoto!.photoMediaId!;
+    expect(mediaId).toBeTruthy();
+
+    const plan = await deleteTank(tank.id, db);
+    expect(plan.photo).toBe(true);
+    expect(await db.media.get(mediaId)).toBeUndefined();
+    expect(await db.deletedRecords.get(mediaId)).toMatchObject({ kind: 'media' });
+  });
+
+  it('refuses to delete a tank that still holds fish, and says what to do', async () => {
+    await db.aquariums.add(seventyFive());
+    await createOpeningBalanceHolding(
+      { aquariumId: 'tank_75g', speciesId: 'sp_neon_tetra', rawLabel: 'Neon Tetra', kind: 'group', openingQuantity: 6 },
+      db,
+    );
+
+    const plan = await planDeleteTank('tank_75g', db);
+    expect(plan.allowed).toBe(false);
+    expect(plan.residents).toBe(1);
+    expect(plan.reason).toMatch(/move them/i);
+
+    // And the refusal is enforced, not merely advertised.
+    await deleteTank('tank_75g', db);
+    expect(await db.aquariums.get('tank_75g')).toBeDefined();
+  });
+
+  /**
+   * The case that makes retire exist. Once a fish has lived somewhere, its
+   * residency names that tank forever; deleting the tank would leave the
+   * timeline reading "moved to tank_a3f9c2".
+   */
+  it('refuses to delete a tank whose history is still referenced, and points at retiring', async () => {
+    await db.aquariums.add(seventyFive());
+    const spare = await createAquarium({ name: 'Spare', kind: 'tote' }, db);
+    const { holding } = await createOpeningBalanceHolding(
+      { aquariumId: spare.id, speciesId: 'sp_neon_tetra', rawLabel: 'Neon Tetra', kind: 'group', openingQuantity: 6 },
+      db,
+    );
+    await moveHolding(holding.id, 'tank_75g', undefined, db);
+
+    const plan = await planDeleteTank(spare.id, db);
+    expect(plan.allowed).toBe(false);
+    expect(plan.residents).toBe(0);          // nothing lives there now
+    expect(plan.pastResidencies).toBe(1);    // but something did
+    expect(plan.reason).toMatch(/retire it instead/i);
+    await deleteTank(spare.id, db);
+    expect(await db.aquariums.get(spare.id)).toBeDefined();
+  });
+
+  it('retires and reinstates without touching the history that names the tank', async () => {
+    await db.aquariums.add(seventyFive());
+    await createOpeningBalanceHolding(
+      { aquariumId: 'tank_75g', speciesId: 'sp_neon_tetra', rawLabel: 'Neon Tetra', kind: 'group', openingQuantity: 6 },
+      db,
+    );
+    const before = await db.residencies.where('aquariumId').equals('tank_75g').toArray();
+
+    await setAquariumStatus('tank_75g', 'retired', db);
+    expect((await db.aquariums.get('tank_75g'))!.status).toBe('retired');
+    expect(await db.residencies.where('aquariumId').equals('tank_75g').toArray()).toEqual(before);
+
+    await setAquariumStatus('tank_75g', 'active', db);
+    expect((await db.aquariums.get('tank_75g'))!.status).toBe('active');
+  });
+
+  it('tombstones a tank photo the owner removes, so bootstrap cannot re-seed it', async () => {
+    const tank = await createAquarium({ name: 'Spare', kind: 'tote' }, db);
+    await setTankPhoto(tank.id, photo(), db);
+    const mediaId = (await db.aquariums.get(tank.id))!.photoMediaId!;
+
+    await clearTankPhoto(tank.id, db);
+    expect((await db.aquariums.get(tank.id))!.photoMediaId).toBeUndefined();
+    expect(await db.deletedRecords.get(mediaId)).toMatchObject({ kind: 'media' });
   });
 });

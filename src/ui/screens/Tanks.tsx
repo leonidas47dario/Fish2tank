@@ -12,13 +12,21 @@
  */
 import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { setTankPhoto } from '@/data/repositories';
+import { createAquarium, setTankPhoto } from '@/data/repositories';
 import { formatVolume } from '@/domain/units';
-import type { Aquarium } from '@/domain/types';
+import type { Aquarium, AquariumKind } from '@/domain/types';
 import { useTankSummaries } from '../hooks';
 
 export default function Tanks() {
   const tanks = useTankSummaries();
+  const [adding, setAdding] = useState(false);
+  const [showRetired, setShowRetired] = useState(false);
+
+  // By name, because the underlying order is by generated id - which put a tank
+  // you just added at an arbitrary point in the list, with nothing to say why.
+  const byName = [...(tanks ?? [])].sort((a, b) => a.aquarium.name.localeCompare(b.aquarium.name));
+  const active = byName.filter((t) => t.aquarium.status !== 'retired');
+  const retired = byName.filter((t) => t.aquarium.status === 'retired');
 
   return (
     <div className="stack">
@@ -30,11 +38,139 @@ export default function Tanks() {
       {tanks === undefined && <p className="muted small">Loading…</p>}
 
       <div className="tanklist">
-        {tanks?.map(({ aquarium, stats, photoUrl }) => (
+        {active.map(({ aquarium, stats, photoUrl }) => (
           <TankCard key={aquarium.id} aquarium={aquarium} stats={stats} photoUrl={photoUrl} />
         ))}
       </div>
+
+      {tanks !== undefined && active.length === 0 && (
+        <p className="muted small">No active tanks. Add one below.</p>
+      )}
+
+      {adding
+        ? <NewTankForm onDone={() => setAdding(false)} />
+        : (
+          <button type="button" className="btn--primary" onClick={() => setAdding(true)}>
+            Add a tank
+          </button>
+        )}
+
+      {/* Retired tanks are still real records - out of the way, never hidden. */}
+      {retired.length > 0 && (
+        <section className="stack">
+          <button type="button" className="btn--ghost" onClick={() => setShowRetired(!showRetired)}>
+            {showRetired ? 'Hide' : 'Show'} retired ({retired.length})
+          </button>
+          {showRetired && (
+            <div className="tanklist">
+              {retired.map(({ aquarium, stats, photoUrl }) => (
+                <TankCard key={aquarium.id} aquarium={aquarium} stats={stats} photoUrl={photoUrl} />
+              ))}
+            </div>
+          )}
+        </section>
+      )}
     </div>
+  );
+}
+
+const KINDS: Array<{ value: AquariumKind; label: string }> = [
+  { value: 'display', label: 'Display tank' },
+  { value: 'tote', label: 'Tote' },
+  { value: 'quarantine', label: 'Quarantine' },
+  { value: 'grow-out', label: 'Grow-out' },
+  { value: 'pond', label: 'Pond' },
+];
+
+/**
+ * Add a tank.
+ *
+ * Name and kind are all it asks for. Volume is offered but never required, and
+ * dimensions are not asked for here at all - a tank you have just set up is
+ * usually one you have not measured, and the Manage tab takes the measurements
+ * whenever you have them. Screening reports what it is missing in the meantime,
+ * which is the point of FR-E05.
+ */
+function NewTankForm({ onDone }: { onDone: () => void }) {
+  const [name, setName] = useState('');
+  const [kind, setKind] = useState<AquariumKind>('display');
+  const [gallons, setGallons] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string>();
+
+  const trimmed = name.trim();
+  // Rejected rather than silently stored: a volume of "big" would read as a
+  // measurement on every screen that shows it.
+  const volumeBad = gallons.trim() !== '' && !(Number(gallons) > 0);
+
+  async function save() {
+    setBusy(true);
+    setError(undefined);
+    try {
+      await createAquarium({
+        name: trimmed,
+        kind,
+        volume: gallons.trim() && !volumeBad ? { value: Number(gallons), unit: 'gal' } : undefined,
+      });
+      onDone();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not add that tank.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section className="card stack">
+      <strong>Add a tank</strong>
+      <div>
+        <label htmlFor="new-tank-name">Name</label>
+        <input
+          id="new-tank-name"
+          value={name}
+          placeholder="Deep Sea Collector"
+          onChange={(e) => setName(e.target.value)}
+        />
+      </div>
+      <div>
+        <label htmlFor="new-tank-kind">Kind</label>
+        <select
+          id="new-tank-kind"
+          value={kind}
+          onChange={(e) => setKind(e.target.value as AquariumKind)}
+        >
+          {KINDS.map((k) => <option key={k.value} value={k.value}>{k.label}</option>)}
+        </select>
+      </div>
+      <div>
+        <label htmlFor="new-tank-vol">Volume in gallons (optional)</label>
+        <input
+          id="new-tank-vol"
+          inputMode="decimal"
+          value={gallons}
+          onChange={(e) => setGallons(e.target.value)}
+        />
+        <p className="xs muted">
+          Leave it blank if you have not measured it. Add the footprint later on the Manage tab -
+          screening needs both, and says so until it has them.
+        </p>
+      </div>
+      {volumeBad && <p className="warn xs">Volume needs to be a number of gallons above zero.</p>}
+      {error && <p className="warn xs">{error}</p>}
+      <div className="row">
+        <button
+          type="button"
+          className="btn--primary"
+          disabled={!trimmed || volumeBad || busy}
+          onClick={() => void save()}
+        >
+          {busy ? 'Adding…' : 'Add tank'}
+        </button>
+        <button type="button" className="btn--ghost" disabled={busy} onClick={onDone}>
+          Cancel
+        </button>
+      </div>
+    </section>
   );
 }
 

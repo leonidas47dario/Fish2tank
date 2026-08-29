@@ -87,7 +87,9 @@ export default function Home() {
       <section>
         <h2>Your tanks</h2>
         <ul className="list">
-          {tanks?.map(({ aquarium, residents }) => (
+          {/* Retired tanks keep their records but are not part of "your tanks"
+              any more, so the home summary stops at the active ones. */}
+          {tanks?.filter(({ aquarium }) => aquarium.status !== 'retired').map(({ aquarium, residents }) => (
             <li key={aquarium.id}>
               {/* Opens the tank itself. This used to be inert text, which put
                   the one screen a visitor is shown two taps behind a nav item. */}

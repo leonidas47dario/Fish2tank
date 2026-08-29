@@ -8,6 +8,8 @@
  */
 import type {
   Aquarium,
+  AquariumKind,
+  AquariumStatus,
   CalendarDate,
   CauseConfidence,
   CompatibilityAssessment,
@@ -23,11 +25,13 @@ import type {
   Memorial,
   PriceBasis,
   PriceObservation,
+  Dimensions,
   RaritySnapshot,
   Residency,
   Species,
   SpeciesProfile,
   Specimen,
+  VolumeMeasurement,
 } from '@/domain/types';
 import { deriveQuantity, planMove } from '@/domain/holdings';
 import { evaluateAllTanks, type CandidateInput, type ResidentInput, type TankInput } from '@/engine/compatibility/engine';
@@ -1150,11 +1154,192 @@ export async function clearTankPhoto(aquariumId: Id, database: DB = db): Promise
   if (!aquarium?.photoMediaId) return;
   const media = await database.media.get(aquarium.photoMediaId);
 
-  await database.transaction('rw', [database.media, database.blobs, database.aquariums], async () => {
-    if (media) {
-      await database.media.delete(media.id);
-      await database.blobs.delete(media.originalBlobKey);
-    }
-    await database.aquariums.update(aquariumId, { photoMediaId: undefined });
-  });
+  await database.transaction(
+    'rw',
+    [database.media, database.blobs, database.aquariums, database.deletedRecords],
+    async () => {
+      if (media) {
+        await database.media.delete(media.id);
+        await database.blobs.delete(media.originalBlobKey);
+      }
+      await database.aquariums.update(aquariumId, { photoMediaId: undefined });
+      // Tombstoned, or bootstrap's seedTankPhoto puts a bundled photo straight
+      // back on the next load - the same way the Panther used to return.
+      if (media) {
+        await database.deletedRecords.put({ id: media.id, kind: 'media', deletedAt: nowIso() });
+      }
+    },
+  );
+}
+
+/**
+ * Create a tank.
+ *
+ * Volume and dimensions are optional on purpose. A tank you have not measured
+ * yet is a real tank, and FR-E05 wants "Not enough data" rather than a guess -
+ * so this refuses to invent a footprint from a gallon figure, and the screening
+ * rules simply report what they are missing until someone measures it.
+ */
+export async function createAquarium(
+  input: {
+    name: string;
+    kind: AquariumKind;
+    volume?: VolumeMeasurement;
+    dimensions?: Dimensions;
+    notes?: string;
+  },
+  database: DB = db,
+): Promise<Aquarium> {
+  const name = input.name.trim();
+  if (!name) throw new Error('A tank needs a name.');
+
+  const aquarium: Aquarium = {
+    id: newId('tank'),
+    name,
+    kind: input.kind,
+    volume: input.volume,
+    dimensions: input.dimensions,
+    status: 'active',
+    notes: input.notes?.trim() || undefined,
+    createdAt: nowIso(),
+  };
+  await database.aquariums.add(aquarium);
+  return aquarium;
+}
+
+/**
+ * Retire a tank, or bring it back.
+ *
+ * Retiring is the non-destructive way to get a broken-down tank out of the way:
+ * the record and every residency that names it stay exactly as they were, so a
+ * fish that lived there still says so. AquariumStatus has carried 'retired'
+ * since the schema was written and nothing could ever set it.
+ */
+export async function setAquariumStatus(
+  aquariumId: Id,
+  status: AquariumStatus,
+  database: DB = db,
+): Promise<void> {
+  await database.aquariums.update(aquariumId, { status });
+}
+
+export interface DeleteTankPlan {
+  allowed: boolean;
+  /** Why not, in words a person can act on. Present only when refused. */
+  reason?: string;
+  /** Fish living in it right now. */
+  residents: number;
+  /** Ended residencies - fish that lived here and have since moved on. */
+  pastResidencies: number;
+  /** Move events naming this tank as an origin or destination. */
+  moveEvents: number;
+  /** Cached screenings against this tank, discarded with it. */
+  assessments: number;
+  /** Whether a tank photo goes with it. */
+  photo: boolean;
+}
+
+/**
+ * What deleting this tank would take with it, and whether it may go at all.
+ *
+ * Two refusals, for two different reasons:
+ *
+ * OCCUPIED. Fish live there. Deleting the tank under them would strand the
+ * holdings - rows describing a fish in a place that no longer exists. Move them
+ * or record the loss first; both are one tap away on the same screen.
+ *
+ * HISTORICAL. A residency or a move event names this tank in the past. Those
+ * rows are history, and principle 3 is that the app never rewrites it. Deleting
+ * the tank does not delete them; it leaves them pointing at nothing, and a
+ * fish's timeline that said "moved to Predator Tank" starts saying "moved to
+ * tank_a3f9c2". Retiring is the honest way to put such a tank away - it stops
+ * appearing among your active tanks and every record that names it still reads
+ * correctly.
+ *
+ * A tank that never held anything has no history to protect, so it just goes.
+ */
+export async function planDeleteTank(aquariumId: Id, database: DB = db): Promise<DeleteTankPlan> {
+  const [aquarium, residencies, events, assessments] = await Promise.all([
+    database.aquariums.get(aquariumId),
+    database.residencies.where('aquariumId').equals(aquariumId).toArray(),
+    database.lifeEvents.toArray(),
+    database.assessments.where('aquariumId').equals(aquariumId).toArray(),
+  ]);
+
+  const current = residencies.filter((r) => !r.endDate);
+  const past = residencies.filter((r) => r.endDate);
+  const moves = events.filter(
+    (e) => e.fromAquariumId === aquariumId || e.toAquariumId === aquariumId,
+  );
+
+  const plan: DeleteTankPlan = {
+    allowed: true,
+    residents: current.length,
+    pastResidencies: past.length,
+    moveEvents: moves.length,
+    assessments: assessments.length,
+    photo: Boolean(aquarium?.photoMediaId),
+  };
+
+  if (!aquarium) return { ...plan, allowed: false, reason: 'That tank no longer exists.' };
+
+  if (current.length > 0) {
+    const fish = current.length === 1 ? 'one group of fish' : `${current.length} groups of fish`;
+    return {
+      ...plan,
+      allowed: false,
+      reason: `${aquarium.name} still holds ${fish}. Move them to another tank, or record the loss, `
+        + 'and then it can go.',
+    };
+  }
+
+  if (past.length > 0 || moves.length > 0) {
+    return {
+      ...plan,
+      allowed: false,
+      reason: `Fish have lived in ${aquarium.name} before, and their history still names it. `
+        + 'Deleting the tank would leave those records pointing at nothing. Retire it instead - '
+        + 'it leaves your active tanks and every past record still reads correctly.',
+    };
+  }
+
+  return plan;
+}
+
+/**
+ * Delete a tank that never held a fish.
+ *
+ * planDeleteTank refuses anything with residents or history, so by the time we
+ * get here the only things to clean up are the tank, its photo, and any cached
+ * screening against it. Assessments are derived - re-running the check
+ * regenerates them - so they go without ceremony.
+ */
+export async function deleteTank(aquariumId: Id, database: DB = db): Promise<DeleteTankPlan> {
+  const plan = await planDeleteTank(aquariumId, database);
+  if (!plan.allowed) return plan;
+
+  const aquarium = await database.aquariums.get(aquariumId);
+  const media = aquarium?.photoMediaId ? await database.media.get(aquarium.photoMediaId) : undefined;
+  const assessments = await database.assessments.where('aquariumId').equals(aquariumId).toArray();
+
+  await database.transaction(
+    'rw',
+    [
+      database.aquariums, database.media, database.blobs,
+      database.assessments, database.deletedRecords,
+    ],
+    async () => {
+      if (media) {
+        await database.media.delete(media.id);
+        await database.blobs.delete(media.originalBlobKey);
+        await database.deletedRecords.put({ id: media.id, kind: 'media', deletedAt: nowIso() });
+      }
+      await database.assessments.bulkDelete(assessments.map((a) => a.id));
+      await database.aquariums.delete(aquariumId);
+      // Remembered so a seeded tank cannot come back on the next boot.
+      await database.deletedRecords.put({ id: aquariumId, kind: 'aquarium', deletedAt: nowIso() });
+    },
+  );
+
+  return plan;
 }
