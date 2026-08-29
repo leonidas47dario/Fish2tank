@@ -11,7 +11,8 @@
 import { DuckDBInstance, type DuckDBConnection } from '@duckdb/node-api';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { SPECIES_CATALOG } from '@/data/seed/species-catalog';
-import { STORES } from './types';
+import { STORES, type MarketListing } from './types';
+import { discoverSpecies } from './normalize/derive-species';
 
 const WAREHOUSE = 'warehouse';
 const LISTINGS = 'data/market/listings.jsonl';
@@ -91,6 +92,40 @@ async function main() {
     valid_to: null,
     is_current: true,
   }));
+
+  /**
+   * The species dimension is the union of two sources, and the order matters:
+   * curated profiles are authoritative, and discovery only fills the gaps.
+   *
+   * Without the discovered half, dim_species held 47 rows while the vendors
+   * named 1,068 species - the library was showing 4% of itself.
+   */
+  const curatedScientific = new Set(
+    SPECIES_CATALOG.map((e) => e.species.scientificName?.toLowerCase()).filter(Boolean) as string[],
+  );
+  const listingRows: MarketListing[] = readFileSync(LISTINGS, 'utf8')
+    .trim().split('\n').filter(Boolean).map((l) => JSON.parse(l));
+  const discovered = discoverSpecies(listingRows, curatedScientific);
+
+  for (const d of discovered) {
+    species.push({
+      species_key: surrogateKey(d.speciesId, validFrom).toString(),
+      species_id: d.speciesId,
+      common_name: d.commonName,
+      scientific_name: d.scientificName,
+      aliases: d.aliases.join('|'),
+      // No care data, deliberately. The compatibility engine will return
+      // "Not enough data" for these, which is correct - nobody has profiled
+      // them. Inventing values here would be the fastest way to make every
+      // downstream verdict untrustworthy.
+      adult_size_in: null, min_volume_gal: null, aggression: null,
+      temp_min_c: null, temp_max_c: null, predation_tags: '',
+      profile_version: 0,
+      source_label: 'Discovered from vendor listings - no care profile yet',
+      source_url: null,
+      valid_from: validFrom, valid_to: null, is_current: true,
+    });
+  }
 
   writeFileSync('/tmp/_stores.jsonl', stores.map((s) => JSON.stringify(s)).join('\n'));
   writeFileSync('/tmp/_species.jsonl', species.map((s) => JSON.stringify(s)).join('\n'));

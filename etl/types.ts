@@ -40,8 +40,12 @@ export interface MarketListing {
 
   /** Resolved catalog species, when the title matched confidently. */
   speciesId?: string;
-  /** How the match was made, so a bad match is traceable. */
-  matchMethod?: 'scientific-name' | 'common-name' | 'alias';
+  /**
+   * How the species was resolved, so a bad match is traceable.
+   * 'derived-binomial' means the vendor stated a scientific name the curated
+   * catalog does not cover, and a species was minted from it.
+   */
+  matchMethod?: 'scientific-name' | 'common-name' | 'alias' | 'derived-binomial';
   /** Scientific name lifted from the title, even when it matched no catalog entry. */
   scientificNameInTitle?: string;
 

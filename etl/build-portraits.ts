@@ -20,9 +20,13 @@ import { join } from 'node:path';
 const IMAGES = 'data/market/images.jsonl';
 const OUT_DIR = 'src/data/seed/assets/portraits';
 
-/** Cards render at ~150-260 CSS px; 480 covers 2x displays without waste. */
-const MAX_WIDTH = 480;
-const QUALITY = 0.78;
+/**
+ * Cards render at ~150 CSS px in the grid, so 320 covers 2x displays. Dropped
+ * from 480 when the catalog grew from 47 species to 1,080: at 480 the bundle
+ * would have been unusable on a phone.
+ */
+const MAX_WIDTH = 320;
+const QUALITY = 0.72;
 
 /**
  * Wikimedia rate-limits bursts, and a first run without this got 429s on 7 of
