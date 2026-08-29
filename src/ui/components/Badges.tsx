@@ -86,7 +86,10 @@ export function ScarcityBadge({ band }: { band: MarketScarcityBand }) {
     : band === 'uncommon' ? 'tier--rare'
     : 'tier--familiar';
   return (
-    <span className={`tier ${tone}`} title="How hard this is to buy from the tracked stores">
+    // Borrows the tier pill's styling, but carries its own marker class: a
+    // scarcity badge is not a Discovery tier, and anything selecting ".tier"
+    // must be able to tell them apart. FR-P05 in the DOM, not just in prose.
+    <span className={`tier scarcity ${tone}`} title="How likely you are to find this on a shelf">
       <span aria-hidden="true">{SCARCITY_GLYPH[band]}</span>
       {SCARCITY_LABELS[band]}
     </span>

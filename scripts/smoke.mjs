@@ -101,9 +101,11 @@ await page.screenshot({ path: `${SHOTS}/05-factors.png`, fullPage: true });
 // the stored snapshot rather than a Reveal button. PRD 7.5: "no full-screen
 // delay after the first viewing." revealSpecimen() is idempotent, so the tier
 // here must be the same one the ceremony stamped.
-await page.waitForSelector('.tier', { timeout: 10000 });
+// ":not(.scarcity)" matters: the market scarcity badge reuses the tier pill's
+// styling, so a bare ".tier" can match it instead of the Discovery tier.
+await page.waitForSelector('.tier:not(.scarcity)', { timeout: 10000 });
 await page.screenshot({ path: `${SHOTS}/06-reveal.png`, fullPage: true });
-const tierText = await page.locator('.tier').first().innerText();
+const tierText = await page.locator('.tier:not(.scarcity)').first().innerText();
 console.log('TIER (persisted, not replayed):', tierText);
 if (await page.getByRole('button', { name: /^Reveal$/ }).count()) {
   throw new Error('Specimen page still offers Reveal after the ceremony already ran');
