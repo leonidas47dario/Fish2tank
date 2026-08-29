@@ -1,0 +1,184 @@
+{
+  "batch": "06",
+  "species": [
+    {
+      "speciesId": "sp_hoplias_curupira",
+      "commonName": "Black Wolf Fish",
+      "scientificName": "Hoplias curupira",
+      "family": "Erythrinidae",
+      "wikipediaFile": "data/care/text/sp_hoplias_curupira.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_carnegiella_marthae",
+      "commonName": "Black-Wing Hatchetfish",
+      "scientificName": "Carnegiella marthae",
+      "family": "Gasteropelecidae",
+      "wikipediaFile": "data/care/text/sp_carnegiella_marthae.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_wallagonia_micropogon",
+      "commonName": "Blackhawk Wallago Catfish",
+      "scientificName": "Wallagonia micropogon",
+      "family": "Siluridae",
+      "wikipediaFile": "data/care/text/sp_wallagonia_micropogon.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_astatheros_macracanthus",
+      "commonName": "Blackthroat Cichlid",
+      "scientificName": "Astatheros macracanthus",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_astatheros_macracanthus.wikipedia.txt",
+      "vendorFile": "data/care/text/sp_astatheros_macracanthus.vendor.txt"
+    },
+    {
+      "speciesId": "sp_carcharhinus_melanopterus",
+      "commonName": "Blacktip Reef Shark",
+      "scientificName": "Carcharhinus melanopterus",
+      "family": "Carcharhinidae",
+      "wikipediaFile": "data/care/text/sp_carcharhinus_melanopterus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_utricularia_graminifolia",
+      "commonName": "Bladderwort Tissue Culture",
+      "scientificName": "Utricularia graminifolia",
+      "family": "Lentibulariaceae",
+      "wikipediaFile": "data/care/text/sp_utricularia_graminifolia.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_chilatherina_bleheri",
+      "commonName": "Bleher S Rainbowfish",
+      "scientificName": "Chilatherina bleheri",
+      "family": "Melanotaeniidae",
+      "wikipediaFile": "data/care/text/sp_chilatherina_bleheri.wikipedia.txt",
+      "vendorFile": "data/care/text/sp_chilatherina_bleheri.vendor.txt"
+    },
+    {
+      "speciesId": "sp_pimelodus_blochii",
+      "commonName": "Bloch S Catfish",
+      "scientificName": "Pimelodus blochii",
+      "family": "Pimelodidae",
+      "wikipediaFile": "data/care/text/sp_pimelodus_blochii.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_prionobrama_filigera",
+      "commonName": "Glass Bloodfin Tetra",
+      "scientificName": "Prionobrama filigera",
+      "family": "Characidae",
+      "wikipediaFile": "data/care/text/sp_prionobrama_filigera.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_botia_modesta",
+      "commonName": "Blue Botia",
+      "scientificName": "Botia modesta",
+      "family": "Botiidae",
+      "wikipediaFile": "data/care/text/sp_botia_modesta.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_apistogramma_eunotus",
+      "commonName": "Blue Cheek Apisto",
+      "scientificName": "Apistogramma eunotus",
+      "family": "Cichlidae",
+      "vendorFile": "data/care/text/sp_apistogramma_eunotus.vendor.txt"
+    },
+    {
+      "speciesId": "sp_metriaclima_callainos",
+      "commonName": "Blue Cobalt Zebra",
+      "scientificName": "Metriaclima callainos",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_metriaclima_callainos.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_alestopetersius_smykalai",
+      "commonName": "Blue Diamond Tetra",
+      "scientificName": "Alestopetersius smykalai",
+      "family": "Alestidae",
+      "wikipediaFile": "data/care/text/sp_alestopetersius_smykalai.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_cyrtocara_moorii",
+      "commonName": "Blue Dolphin",
+      "scientificName": "Cyrtocara moorii",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_cyrtocara_moorii.wikipedia.txt",
+      "vendorFile": "data/care/text/sp_cyrtocara_moorii.vendor.txt"
+    },
+    {
+      "speciesId": "sp_panaque_cochliodon",
+      "commonName": "Blue Eye Panaque",
+      "scientificName": "Panaque cochliodon",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_panaque_cochliodon.wikipedia.txt",
+      "vendorFile": "data/care/text/sp_panaque_cochliodon.vendor.txt"
+    },
+    {
+      "speciesId": "sp_panaque_suttonorum",
+      "commonName": "Blue Eyed Pleco",
+      "scientificName": "Panaque suttonorum",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_panaque_suttonorum.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_lucania_goodei",
+      "commonName": "Blue Fin Killifish",
+      "scientificName": "Lucania goodei",
+      "family": "Fundulidae",
+      "wikipediaFile": "data/care/text/sp_lucania_goodei.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_fundulopanchax_gardneri",
+      "commonName": "Blue Gardner S",
+      "scientificName": "Fundulopanchax gardneri",
+      "family": "Nothobranchiidae",
+      "wikipediaFile": "data/care/text/sp_fundulopanchax_gardneri.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_geophagus_argyrostictus",
+      "commonName": "Blue Lip Geophagus",
+      "scientificName": "Geophagus argyrostictus",
+      "family": "Cichlidae",
+      "vendorFile": "data/care/text/sp_geophagus_argyrostictus.vendor.txt"
+    },
+    {
+      "speciesId": "sp_paracyprichromis_nigripinnis",
+      "commonName": "Blue Neon Paracyprichromis",
+      "scientificName": "Paracyprichromis nigripinnis",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_paracyprichromis_nigripinnis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_sundadanio_axelrodi",
+      "commonName": "Blue Neon Rasbora",
+      "scientificName": "Sundadanio axelrodi",
+      "family": "Sundadanionidae",
+      "wikipediaFile": "data/care/text/sp_sundadanio_axelrodi.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_aulonocara_kandeensis",
+      "commonName": "Blue Orchid Peacock",
+      "scientificName": "Aulonocara kandeensis",
+      "family": "Cichlidae",
+      "vendorFile": "data/care/text/sp_aulonocara_kandeensis.vendor.txt"
+    },
+    {
+      "speciesId": "sp_baryancistrus_beggini",
+      "commonName": "Blue Panaque Pleco",
+      "scientificName": "Baryancistrus beggini",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_baryancistrus_beggini.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_retroculus_lapidifer",
+      "commonName": "Blue Retroculus Cichlid",
+      "scientificName": "Retroculus lapidifer",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_retroculus_lapidifer.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_knodus_borki",
+      "commonName": "Blue Tetra",
+      "scientificName": "Knodus borki",
+      "family": "Stevardiidae",
+      "wikipediaFile": "data/care/text/sp_knodus_borki.wikipedia.txt"
+    }
+  ]
+}

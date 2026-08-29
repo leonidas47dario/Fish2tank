@@ -69,7 +69,7 @@ export function MarketPanel({ speciesId, observedSize, yourPrice }: Props) {
         <details className="card card--raised">
           <summary className="spread" style={{ cursor: 'pointer', listStyle: 'none' }}>
             <span>
-              <span className="xs muted">Market scarcity</span><br />
+              <span className="xs muted">Local-shelf scarcity</span><br />
               <ScarcityBadge band={scarcity.band} />
             </span>
             <span className="data">{scarcity.score} / 100</span>
@@ -78,13 +78,19 @@ export function MarketPanel({ speciesId, observedSize, yourPrice }: Props) {
             {(Object.keys(scarcity.components) as Array<keyof typeof scarcity.components>).map((k) => (
               <div key={k} style={{ display: 'contents' }}>
                 <dt>{SCARCITY_COMPONENT_LABELS[k]}</dt>
-                <dd>+{scarcity.components[k]}</dd>
+                {/* The depth nudge is negative. Never render "+-5". */}
+                <dd>{scarcity.components[k] >= 0 ? '+' : ''}{scarcity.components[k]}</dd>
               </div>
             ))}
           </dl>
           <p className="xs muted" style={{ marginTop: 'var(--space-3)', marginBottom: 0 }}>
-            How hard this is to buy from {MARKET_INDEX.sources.length} mail-order stores. That is a different
-            question from how rarely you run into one locally, so it is kept out of your Discovery tier.
+            How likely you are to find this on a shelf, measured across{' '}
+            {scarcity.basis.witnessesTracked} general{' '}
+            {scarcity.basis.witnessesTracked === 1 ? 'store' : 'stores'}
+            {' '}({scarcity.basis.carriedBy.map((id) => STORE_NAMES[id] ?? id).join(', ')} carr
+            {scarcity.basis.witnessesCarrying === 1 ? 'ies' : 'y'} it). Specialist importers are left out
+            on purpose: they stock rarities as a matter of course, so their having one tells you nothing
+            about whether you will see it locally.
           </p>
           <p className="xs muted data" style={{ marginBottom: 0 }}>Formula {scarcity.formulaVersion}</p>
         </details>

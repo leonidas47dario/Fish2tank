@@ -1,0 +1,183 @@
+{
+  "batch": "03",
+  "species": [
+    {
+      "speciesId": "sp_melanochromis_auratus",
+      "commonName": "Albino Golden Cichlid",
+      "scientificName": "Melanochromis auratus",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_melanochromis_auratus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_synodontis_greshoffi",
+      "commonName": "Albino Greshoffi Synodontis",
+      "scientificName": "Synodontis greshoffi",
+      "family": "Mochokidae",
+      "wikipediaFile": "data/care/text/sp_synodontis_greshoffi.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pangasius_hypophthalmus",
+      "commonName": "Albino Iridescent Shark",
+      "scientificName": "Pangasius hypophthalmus",
+      "family": "Pangasiidae",
+      "wikipediaFile": "data/care/text/sp_pangasius_hypophthalmus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_labeotropheus_fuelleborni",
+      "commonName": "Albino Katale Island",
+      "scientificName": "Labeotropheus fuelleborni",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_labeotropheus_fuelleborni.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_dimidiochromis_compressiceps",
+      "commonName": "Albino Malawi Eyebiter",
+      "scientificName": "Dimidiochromis compressiceps",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_dimidiochromis_compressiceps.wikipedia.txt",
+      "vendorFile": "data/care/text/sp_dimidiochromis_compressiceps.vendor.txt"
+    },
+    {
+      "speciesId": "sp_glossolepis_pseudoincisus",
+      "commonName": "Albino Millennium Rainbowfish",
+      "scientificName": "Glossolepis pseudoincisus",
+      "family": "Melanotaeniidae",
+      "wikipediaFile": "data/care/text/sp_glossolepis_pseudoincisus.wikipedia.txt",
+      "vendorFile": "data/care/text/sp_glossolepis_pseudoincisus.vendor.txt"
+    },
+    {
+      "speciesId": "sp_prochilodus_lineatus",
+      "commonName": "Albino Prochilodus",
+      "scientificName": "Prochilodus lineatus",
+      "family": "Prochilodontidae",
+      "wikipediaFile": "data/care/text/sp_prochilodus_lineatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_protomelas_taeniolatus",
+      "commonName": "Albino Red Empress",
+      "scientificName": "Protomelas taeniolatus",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_protomelas_taeniolatus.wikipedia.txt",
+      "vendorFile": "data/care/text/sp_protomelas_taeniolatus.vendor.txt"
+    },
+    {
+      "speciesId": "sp_sturisomatichthys_aureus",
+      "commonName": "Albino Royal Farlowella",
+      "scientificName": "Sturisomatichthys aureus",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_sturisomatichthys_aureus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_brycinus_longipinnis",
+      "commonName": "Aleste Longfin Tetra",
+      "scientificName": "Brycinus longipinnis",
+      "family": "Alestidae",
+      "wikipediaFile": "data/care/text/sp_brycinus_longipinnis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_crossocheilus_siamensis",
+      "commonName": "Siamese Algae Eater",
+      "scientificName": "Crossocheilus siamensis",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_crossocheilus_siamensis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_atractosteus_spatula",
+      "commonName": "Alligator Gar",
+      "scientificName": "Atractosteus spatula",
+      "family": "Lepisosteidae",
+      "wikipediaFile": "data/care/text/sp_atractosteus_spatula.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hyphessobrycon_amapaensis",
+      "commonName": "Amapa Tetra Brazil",
+      "scientificName": "Hyphessobrycon amapaensis",
+      "family": "Characidae",
+      "wikipediaFile": "data/care/text/sp_hyphessobrycon_amapaensis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_monocirrhus_polyacanthus",
+      "commonName": "Amazon Leaf Fish",
+      "scientificName": "Monocirrhus polyacanthus",
+      "family": "Polycentridae",
+      "wikipediaFile": "data/care/text/sp_monocirrhus_polyacanthus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_colomesus_asellus",
+      "commonName": "Amazon Puffer",
+      "scientificName": "Colomesus asellus",
+      "family": "Tetraodontidae",
+      "wikipediaFile": "data/care/text/sp_colomesus_asellus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_echinodorus_bleheri",
+      "commonName": "Amazon Sword",
+      "scientificName": "Echinodorus bleheri",
+      "family": "Alismataceae",
+      "wikipediaFile": "data/care/text/sp_echinodorus_bleheri.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_ambystoma_mexicanum",
+      "commonName": "Axolotl",
+      "scientificName": "Ambystoma mexicanum",
+      "family": "Ambystomatidae",
+      "wikipediaFile": "data/care/text/sp_ambystoma_mexicanum.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_jordanella_floridae",
+      "commonName": "American Flagfish Killifish",
+      "scientificName": "Jordanella floridae",
+      "family": "Cyprinodontidae",
+      "wikipediaFile": "data/care/text/sp_jordanella_floridae.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_littorella_uniflora",
+      "commonName": "American Shoreweed Clump",
+      "scientificName": "Littorella uniflora",
+      "family": "Plantaginaceae",
+      "wikipediaFile": "data/care/text/sp_littorella_uniflora.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_esox_reichertii",
+      "commonName": "Amur Pike",
+      "scientificName": "Esox reichertii",
+      "family": "Esocidae",
+      "wikipediaFile": "data/care/text/sp_esox_reichertii.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pterophyllum_altum",
+      "commonName": "Angelfish",
+      "scientificName": "Pterophyllum altum",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_pterophyllum_altum.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_polypterus_ansorgii",
+      "commonName": "Ansorgii Bichir",
+      "scientificName": "Polypterus ansorgii",
+      "family": "Polypteridae",
+      "wikipediaFile": "data/care/text/sp_polypterus_ansorgii.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_phalacronotus_apogon",
+      "commonName": "Apogon Catfish",
+      "scientificName": "Phalacronotus apogon",
+      "family": "Siluridae",
+      "wikipediaFile": "data/care/text/sp_phalacronotus_apogon.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_luciosoma_setigerum",
+      "commonName": "Apollo Shark",
+      "scientificName": "Luciosoma setigerum",
+      "family": "Danionidae",
+      "wikipediaFile": "data/care/text/sp_luciosoma_setigerum.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_nymphaea_stellata",
+      "commonName": "Aquarium Lily Bulb",
+      "scientificName": "Nymphaea stellata",
+      "family": "Nymphaeaceae",
+      "wikipediaFile": "data/care/text/sp_nymphaea_stellata.wikipedia.txt"
+    }
+  ]
+}

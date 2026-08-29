@@ -81,9 +81,17 @@ immediately, and measuring them once is what makes every later check real.
 **2. It never invents a number.** No confidence percentage on a manual
 identification. No median price below the minimum sample count. No bioload
 calculation from a "Crowded" checkbox. No Chicago rarity without a community
-dataset. A species the vendors named but nobody has profiled carries **no care
-data at all**, so screening it returns *Not enough data* rather than a guess.
-Where a fact is unknown, the app says so and shows what it would need.
+dataset. Where a fact is unknown, the app says so and shows what it would need.
+
+Care data is where this rule is now *mechanically enforced* rather than merely
+observed. Every backfilled value carries the verbatim sentence it came from,
+and `etl/ingest-care-proposals.ts` checks that sentence is really in the cached
+source text **and** that it really contains the figure attributed to it. A
+fabricated number cannot reach the catalog, because the sentence it claims to
+come from is not on disk. What no source states stays empty: 90% of the
+catalog still has no minimum tank volume, so screening those species returns
+*Not enough data* rather than a guess. That gap is the honest outcome of
+refusing to fill it.
 
 **3. It never rewrites history.** Correcting an identity supersedes the earlier
 assertion rather than replacing it. Re-running a screening adds a snapshot
@@ -170,7 +178,9 @@ so it is also just the right shape for the subject.
 | ↳ from a vendor product listing, credited to the shop | 60 |
 | Rendering a silhouette | 1,167, most of them the newly added marine species |
 | With a water-column zone | 1,080 — **977 of 1,121 (87%) freshwater**, 103 of 1,057 marine |
-| With a curated care profile | 47 |
+| With any care data | 697 — **697 of 1,121 (62%) freshwater**, 0 of 1,057 marine |
+| ↳ hand-curated profile | 47 |
+| ↳ backfilled from cited sources | 658 |
 
 **Two of those numbers moved sharply on 2026-08-29 and neither is a
 regression to hide.** Adding PetSmart and Petco meant re-reading every existing
@@ -186,14 +196,45 @@ freshwater coverage and the marine gap separately so neither can hide inside an
 average.
 
 The species dimension is derived from **what the vendors actually sell**, with
-the curated care profiles as an enrichment layer on top. Building it the other
+the care profiles as an enrichment layer on top. Building it the other
 way round — matching listings to a hand-written seed — was an early design
 error that left 96% of the library invisible.
 
 A binomial the curated catalog does not cover mints a species from the name the
 vendor stated explicitly. Note what this is not: it never guesses that one fish
-is another. Discovered species carry no care data, deliberately, so the
-compatibility engine returns *Not enough data* for them.
+is another.
+
+### Care coverage, per field
+
+96% of the freshwater catalog had no care data at all until the spec 003
+backfill read the source documents for it. Shares below are **of the 1,121
+freshwater species**, which is the population the backfill ran against;
+against all 2,178 including the marine half they roughly halve.
+
+| Field | Species | Share of freshwater | Backfilled |
+|---|---:|---:|---:|
+| Adult size | 689 | 61% | 642 |
+| Temperature range | 217 | 19% | 170 |
+| Temperament | 206 | 18% | 159 |
+| Minimum tank volume | 92 | 8% | 45 |
+
+Reported per field, because a single coverage number would hide the shape of
+it. Wikipedia states a body length for most species it covers and a minimum
+tank volume for almost none, so **most species still screen as *Not enough
+data***, which is the correct answer while no source states the figure. The
+hand-curated 47 are never overwritten: the backfill fills gaps only, so a
+scraped sentence can never overrule a person.
+
+**The 1,057 marine species have no care data.** They entered the catalog in
+the same-day vendor expansion that doubled it, after this backfill had already
+read its sources. Re-running the pipeline over them is `npm run care:fetch`
+followed by a fresh extraction pass; it has not been done, and the table says
+so rather than averaging the gap away.
+
+Every backfilled value links to the sentence it came from, per field — a fish's
+size can come from Wikipedia while its tank volume comes from a store listing,
+and the species page credits each separately. The sentences themselves live in
+`src/data/seed/species-care.json`, which is the audit record.
 
 Portraits are precached (~22.3 MB, up from 14.9 MB when coverage went from 695
 species to 1,011) so the library draws itself offline per NFR-02. The install
@@ -201,9 +242,10 @@ happens in the background after first paint and cards lazy-load, so it does not
 sit in front of the first render.
 
 **Known performance debt, logged rather than quietly accepted:** the marts are
-inlined into the JS bundle (2,649 KB raw / 410 KB gzip, up from 1,185/262 —
-the catalog doubled and the index now publishes 2,176 species rather than 310)
-and should be separate fetched assets, and all 2,178 cards render at once. That
+inlined into the JS bundle (2,944 KB raw / 456 KB gzip, up from 1,185/262 —
+the catalog doubled, the index now publishes 2,176 species rather than 310,
+and the care backfill added ~46 KB gzip of values and per-field credits) and
+should be separate fetched assets, and all 2,178 cards render at once. That
 growth makes both halves of the sentence considerably more urgent.
 
 ---
@@ -265,7 +307,7 @@ Two different causes, two different fixes:
 ## Fresh or salt, and why the catalog opens on freshwater
 
 **The catalog defaults to freshwater only.** Every tank the owner keeps is
-fresh, and 874 of the 2,178 species are reef stock that arrived with
+fresh, and 868 of the 2,178 species are reef stock that arrived with
 LiveAquaria's marine catalogue — opening the library on a wall of clownfish and
 Acropora makes it somebody else's hobby. The chips sit above the fold rather
 than in the "More filters" drawer, because every other filter starts at *any*
@@ -275,10 +317,10 @@ anything it says how much, broken down so the parts sum to the total.
 
 | | Species |
 |---|---|
-| Freshwater | **1,248** |
-| Saltwater | 874 |
-| Brackish | 11 |
-| Not recorded | 45 (2%) |
+| Freshwater | **1,264** |
+| Saltwater | 868 |
+| Brackish | 8 |
+| Not recorded | 38 (1.7%) |
 
 **The tag comes from the trade, not from the fish.** There is no licensed care
 database yet, and deriving salinity from taxonomy would be the same invented
@@ -323,7 +365,7 @@ animals (91%)** get one; the rest say "not recorded" and are excluded from every
 zone filter rather than defaulted into one.
 
 **It is a freshwater map, and the catalog now says so out loud.** The 2026-08-29
-refresh brought LiveAquaria's full marine catalogue — 874 reef species, whole
+refresh brought LiveAquaria's full marine catalogue — 868 reef species, whole
 genera the map was never built for: *Chaetodon*, *Cirrhilabrus*, *Acropora*.
 Pooled zone coverage therefore reads 49% while freshwater animals sit at 91%.
 Plants are excluded from that denominator on purpose: the app never assigns a
@@ -458,6 +500,34 @@ Snowflake, Databricks or Postgres can run it unchanged.
 Details in [`docs/MARKET_ETL.md`](docs/MARKET_ETL.md) and
 [`docs/DATA_WAREHOUSE.md`](docs/DATA_WAREHOUSE.md).
 
+### The care backfill
+
+A separate pipeline, run deliberately and rarely, specified in
+[`docs/specs/003-care-profile-backfill.md`](docs/specs/003-care-profile-backfill.md):
+
+```bash
+npm run care:fetch     # cache Wikipedia + vendor prose to data/care/text/
+npm run care:plan      # split what has text into agent batches
+#                        (extraction agents read the cache and write proposals)
+npm run care:ingest    # verify every quote, then write species-care.json
+npm run marts          # overlay the result onto the catalog
+```
+
+Fetch and ingest are separate steps so a bad extraction never costs a re-fetch,
+and so the text a claim came from is still on disk when the gate checks it.
+`care:fetch` is idempotent — a second run makes zero network calls, including
+for the 246 species with no article, whose absence is remembered rather than
+re-asked. The cached prose is gitignored (it regenerates, and it is several
+megabytes that churn on every Wikipedia edit); the derived records beside it
+are committed, because those are the audit trail.
+
+**What this machine cannot reach.** FishBase, SeriouslyFish and Wikidata all
+return 503 through DRW's Menlo Security proxy, as do two of the eight vendor
+hosts — 233 Predatory Fins listings and 10 Aquatic Arts ones are unreachable
+here and are recorded as skipped rather than retried into a wall. The care
+databases that would answer this question properly are simply not available
+from this network.
+
 ### Rarity is one score, not two
 
 Market scarcity is a weighted **component** of the Discovery Tier
@@ -465,6 +535,22 @@ Market scarcity is a weighted **component** of the Discovery Tier
 25 dream-list hit / 15 personal-encounter scarcity / 10 exceptional specimen /
 15 market scarcity. Historical snapshots each store their own formula version,
 so retuning the weights later leaves every past reveal exactly as the user saw
+it.
+
+That market component is now **local-shelf scarcity**
+(`market-scarcity-v1.0.0`): how many of the general shops that resemble a local
+shelf carry the fish, and nothing else. Specialist importers are excluded from
+the sample, and a shop's silence counts as evidence only where that shop
+demonstrably resolves its own catalogue. Price and stock were dropped - one is
+a consequence of rarity rather than evidence of it, the other tracked Shopify
+leaving sold-out products published. See
+[`docs/specs/004-local-shelf-scarcity.md`](docs/specs/004-local-shelf-scarcity.md).
+
+Three shops currently qualify as witnesses - Imperial Tropicals, AquaHuna and
+**Nu Aqua**, the one vendor in the list you can walk into. Neon Tetra,
+Cardinal Tetra and Bristlenose Pleco read *widely available*; Oscar and Jack
+Dempsey read *available*. Nothing reads *rarely listed*: that takes five
+witnesses, and the rating declines its strongest word until the sample earns
 it.
 
 ---

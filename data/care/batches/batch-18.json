@@ -1,0 +1,180 @@
+{
+  "batch": "18",
+  "species": [
+    {
+      "speciesId": "sp_leporacanthicus_joselimai",
+      "commonName": "L Sultan Pleco",
+      "scientificName": "Leporacanthicus joselimai",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_leporacanthicus_joselimai.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pseudolithoxus_tigris",
+      "commonName": "L Tiger Pleco",
+      "scientificName": "Pseudolithoxus tigris",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_pseudolithoxus_tigris.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hypancistrus_zebra",
+      "commonName": "L Zebra Pleco",
+      "scientificName": "Hypancistrus zebra",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_hypancistrus_zebra.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_crenicichla_lacustris",
+      "commonName": "Lacustris Pike Cichlid",
+      "scientificName": "Crenicichla lacustris",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_crenicichla_lacustris.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_trigonostigma_espei",
+      "commonName": "Lambchop Rasbora",
+      "scientificName": "Trigonostigma espei",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_trigonostigma_espei.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_poropanchax_normani",
+      "commonName": "S Lampeye Killifish",
+      "scientificName": "Poropanchax normani",
+      "family": "Procatopodidae",
+      "wikipediaFile": "data/care/text/sp_poropanchax_normani.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_bagroides_melapterus",
+      "commonName": "Lancer Catfish",
+      "scientificName": "Bagroides melapterus",
+      "family": "Bagridae",
+      "wikipediaFile": "data/care/text/sp_bagroides_melapterus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_polypterus_lapradei",
+      "commonName": "Lapradei Koliba Bichir",
+      "scientificName": "Polypterus lapradei",
+      "family": "Polypteridae",
+      "wikipediaFile": "data/care/text/sp_polypterus_lapradei.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_boraras_urophthalmoides",
+      "commonName": "Least Rasbora",
+      "scientificName": "Boraras urophthalmoides",
+      "family": "Danionidae",
+      "wikipediaFile": "data/care/text/sp_boraras_urophthalmoides.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_mangifera_indica",
+      "commonName": "Leaves Dried Botanicals",
+      "scientificName": "Mangifera indica",
+      "family": "Anacardiaceae",
+      "wikipediaFile": "data/care/text/sp_mangifera_indica.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_bacopa_caroliniana",
+      "commonName": "Lemon Bacopa",
+      "scientificName": "Bacopa caroliniana",
+      "family": "Plantaginaceae",
+      "wikipediaFile": "data/care/text/sp_bacopa_caroliniana.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_neolamprologus_leleupi",
+      "commonName": "Lemon Cichlid",
+      "scientificName": "Neolamprologus leleupi",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_neolamprologus_leleupi.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hypsibarbus_wetmorei",
+      "commonName": "Lemon Fin Barb",
+      "scientificName": "Hypsibarbus wetmorei",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_hypsibarbus_wetmorei.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_crenicichla_lenticulata",
+      "commonName": "Lenticulata Pike Cichlid",
+      "scientificName": "Crenicichla lenticulata",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_crenicichla_lenticulata.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_synodontis_petricola",
+      "commonName": "Pygmy Leopard Catfish",
+      "scientificName": "Synodontis petricola",
+      "family": "Mochokidae",
+      "wikipediaFile": "data/care/text/sp_synodontis_petricola.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_gastromyzon_embalohensis",
+      "commonName": "Leopard Hillstream Loach",
+      "scientificName": "Gastromyzon embalohensis",
+      "family": "Gastromyzontidae",
+      "wikipediaFile": "data/care/text/sp_gastromyzon_embalohensis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_ctenopoma_acutirostre",
+      "commonName": "Leopard Leaf Fish",
+      "scientificName": "Ctenopoma acutirostre",
+      "family": "Anabantidae",
+      "wikipediaFile": "data/care/text/sp_ctenopoma_acutirostre.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_dichotomyctere_nigroviridis",
+      "commonName": "Leopard Puffer Fish",
+      "scientificName": "Dichotomyctere nigroviridis",
+      "family": "Tetraodontidae",
+      "wikipediaFile": "data/care/text/sp_dichotomyctere_nigroviridis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_synodontis_pardalis",
+      "commonName": "Leopard Synodontis",
+      "scientificName": "Synodontis pardalis",
+      "family": "Mochokidae",
+      "wikipediaFile": "data/care/text/sp_synodontis_pardalis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_macrognathus_aculeatus",
+      "commonName": "Lesser Spiny Eel",
+      "scientificName": "Macrognathus aculeatus",
+      "family": "Mastacembelidae",
+      "wikipediaFile": "data/care/text/sp_macrognathus_aculeatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_zephyranthes_candida",
+      "commonName": "Lily Bulb Plant",
+      "scientificName": "Zephyranthes candida",
+      "family": "Amaryllidaceae",
+      "wikipediaFile": "data/care/text/sp_zephyranthes_candida.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_spathiphyllum_wallisii",
+      "commonName": "Lily Tissue Culture",
+      "scientificName": "Spathiphyllum wallisii",
+      "family": "Araceae",
+      "wikipediaFile": "data/care/text/sp_spathiphyllum_wallisii.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_sorubim_lima",
+      "commonName": "Lima Shovelnose Catfish",
+      "scientificName": "Sorubim lima",
+      "family": "Pimelodidae",
+      "wikipediaFile": "data/care/text/sp_sorubim_lima.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_limia_tridens",
+      "commonName": "Limia Usa Bred",
+      "scientificName": "Limia tridens",
+      "family": "Poeciliidae",
+      "wikipediaFile": "data/care/text/sp_limia_tridens.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_septaria_porcellana",
+      "commonName": "Limpet Nerite Snail",
+      "scientificName": "Septaria porcellana",
+      "family": "Neritidae",
+      "wikipediaFile": "data/care/text/sp_septaria_porcellana.wikipedia.txt"
+    }
+  ]
+}

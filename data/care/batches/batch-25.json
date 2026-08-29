@@ -1,0 +1,179 @@
+{
+  "batch": "25",
+  "species": [
+    {
+      "speciesId": "sp_spinibarbus_denticulatus",
+      "commonName": "Red Phoenix Barb",
+      "scientificName": "Spinibarbus denticulatus",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_spinibarbus_denticulatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_indoplanorbis_exustus",
+      "commonName": "Red Ramshorn Snail",
+      "scientificName": "Indoplanorbis exustus",
+      "family": "Bulinidae",
+      "wikipediaFile": "data/care/text/sp_indoplanorbis_exustus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_cyprinella_lutrensis",
+      "commonName": "Red Shiner",
+      "scientificName": "Cyprinella lutrensis",
+      "family": "Leuciscidae",
+      "wikipediaFile": "data/care/text/sp_cyprinella_lutrensis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_stiphodon_rutilaureus",
+      "commonName": "Red Stiphodon Goby",
+      "scientificName": "Stiphodon rutilaureus",
+      "family": "Gobiidae",
+      "wikipediaFile": "data/care/text/sp_stiphodon_rutilaureus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_osphronemus_laticlavius",
+      "commonName": "Red Tail Gourami",
+      "scientificName": "Osphronemus laticlavius",
+      "family": "Osphronemidae",
+      "wikipediaFile": "data/care/text/sp_osphronemus_laticlavius.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_carinotetraodon_irrubesco",
+      "commonName": "Red Tail Puffer",
+      "scientificName": "Carinotetraodon irrubesco",
+      "family": "Tetraodontidae",
+      "wikipediaFile": "data/care/text/sp_carinotetraodon_irrubesco.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hyphessobrycon_amandae",
+      "commonName": "Ember",
+      "scientificName": "Hyphessobrycon amandae",
+      "family": "Characidae",
+      "wikipediaFile": "data/care/text/sp_hyphessobrycon_amandae.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_panaqolus_claustellifer",
+      "commonName": "Red Tiger Pleco",
+      "scientificName": "Panaqolus claustellifer",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_panaqolus_claustellifer.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_geosesarma_larsi",
+      "commonName": "Red Vampire Crab",
+      "scientificName": "Geosesarma larsi",
+      "family": "Sesarmidae",
+      "wikipediaFile": "data/care/text/sp_geosesarma_larsi.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_tor_yingjiangensis",
+      "commonName": "Red-Tailed Golden Mahseer",
+      "scientificName": "Tor yingjiangensis",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_tor_yingjiangensis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_sicyopterus_lagocephalus",
+      "commonName": "Red-Tailed Rock Goby",
+      "scientificName": "Sicyopterus lagocephalus",
+      "family": "Oxudercidae",
+      "wikipediaFile": "data/care/text/sp_sicyopterus_lagocephalus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pseudacanthicus_pitanga",
+      "commonName": "Redfin Cactus Pleco",
+      "scientificName": "Pseudacanthicus pitanga",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_pseudacanthicus_pitanga.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_geophagus_steindachneri",
+      "commonName": "Redhump Eartheater",
+      "scientificName": "Geophagus steindachneri",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_geophagus_steindachneri.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pseudacanthicus_leopardus",
+      "commonName": "Redtail Leopard Pleco",
+      "scientificName": "Pseudacanthicus leopardus",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_pseudacanthicus_leopardus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_kapuasia_maculiceps",
+      "commonName": "Redtail Sand Loach",
+      "scientificName": "Kapuasia maculiceps",
+      "family": "Nemacheilidae",
+      "wikipediaFile": "data/care/text/sp_kapuasia_maculiceps.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_eichornia_crassipes",
+      "commonName": "Regular And Jumbo",
+      "scientificName": "Eichornia crassipes",
+      "wikipediaFile": "data/care/text/sp_eichornia_crassipes.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_riccia_fluitans",
+      "commonName": "Floating Crystalwort",
+      "scientificName": "Riccia fluitans",
+      "family": "Ricciaceae",
+      "wikipediaFile": "data/care/text/sp_riccia_fluitans.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_oryzias_javanicus",
+      "commonName": "Javanese Ricefish",
+      "scientificName": "Oryzias javanicus",
+      "family": "Adrianichthyidae",
+      "wikipediaFile": "data/care/text/sp_oryzias_javanicus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_oxydoras_niger",
+      "commonName": "Ripsaw Catfish",
+      "scientificName": "Oxydoras niger",
+      "family": "Doradidae",
+      "wikipediaFile": "data/care/text/sp_oxydoras_niger.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_tetraodon_pustulatus",
+      "commonName": "River Puffer Fish",
+      "scientificName": "Tetraodon pustulatus",
+      "family": "Tetraodontidae",
+      "wikipediaFile": "data/care/text/sp_tetraodon_pustulatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_synodontis_robertsi",
+      "commonName": "Roberts Squeaker Catfish",
+      "scientificName": "Synodontis robertsi",
+      "family": "Mochokidae",
+      "wikipediaFile": "data/care/text/sp_synodontis_robertsi.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_lithodoras_dorsalis",
+      "commonName": "Rock Bacu Catfish",
+      "scientificName": "Lithodoras dorsalis",
+      "family": "Doradidae",
+      "wikipediaFile": "data/care/text/sp_lithodoras_dorsalis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_epiplatys_annulatus",
+      "commonName": "Clown Killifish",
+      "scientificName": "Epiplatys annulatus",
+      "family": "Nothobranchiidae",
+      "wikipediaFile": "data/care/text/sp_epiplatys_annulatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_sahyadria_denisonii",
+      "commonName": "Roseline Shark",
+      "scientificName": "Sahyadria denisonii",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_sahyadria_denisonii.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_crenicichla_rosemariae",
+      "commonName": "Rosemariae Pike Cichlid",
+      "scientificName": "Crenicichla rosemariae",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_crenicichla_rosemariae.wikipedia.txt"
+    }
+  ]
+}

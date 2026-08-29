@@ -1,0 +1,180 @@
+{
+  "batch": "05",
+  "species": [
+    {
+      "speciesId": "sp_puntius_conchonius",
+      "commonName": "Rosy Barb",
+      "scientificName": "Puntius conchonius",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_puntius_conchonius.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_puntius_semifasciolatus",
+      "commonName": "Gold Barb",
+      "scientificName": "Puntius semifasciolatus",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_puntius_semifasciolatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_brachyplatystoma_platynemum",
+      "commonName": "Barba Slobbering Catfish",
+      "scientificName": "Brachyplatystoma platynemum",
+      "family": "Pimelodidae",
+      "wikipediaFile": "data/care/text/sp_brachyplatystoma_platynemum.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_lates_calcarifer",
+      "commonName": "Barramundi",
+      "scientificName": "Lates calcarifer",
+      "family": "Latidae",
+      "wikipediaFile": "data/care/text/sp_lates_calcarifer.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_nannostomus_espei",
+      "commonName": "Barred Pencilfish",
+      "scientificName": "Nannostomus espei",
+      "family": "Lebiasinidae",
+      "wikipediaFile": "data/care/text/sp_nannostomus_espei.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_myloplus_schomburgkii",
+      "commonName": "Barred Silver Dollar",
+      "scientificName": "Myloplus schomburgkii",
+      "family": "Serrasalmidae",
+      "wikipediaFile": "data/care/text/sp_myloplus_schomburgkii.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_neritina_auriculata",
+      "commonName": "Batman Nerite Snail",
+      "scientificName": "Neritina auriculata",
+      "family": "Neritidae",
+      "wikipediaFile": "data/care/text/sp_neritina_auriculata.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_nannostomus_beckfordi",
+      "commonName": "Beckford S Pencilfish",
+      "scientificName": "Nannostomus beckfordi",
+      "family": "Lebiasinidae",
+      "wikipediaFile": "data/care/text/sp_nannostomus_beckfordi.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_aulonocara_baenschi",
+      "commonName": "Benga Sunshine Peacock",
+      "scientificName": "Aulonocara baenschi",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_aulonocara_baenschi.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_acaronia_nassa",
+      "commonName": "Bigeye Cichlid",
+      "scientificName": "Acaronia nassa",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_acaronia_nassa.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_leporinus_fasciatus",
+      "commonName": "Black Banded Leporinus",
+      "scientificName": "Leporinus fasciatus",
+      "family": "Anostomidae",
+      "wikipediaFile": "data/care/text/sp_leporinus_fasciatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_melanotaenia_nigrans",
+      "commonName": "Black Banded Rainbowfish",
+      "scientificName": "Melanotaenia nigrans",
+      "family": "Melanotaeniidae",
+      "wikipediaFile": "data/care/text/sp_melanotaenia_nigrans.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_vieja_maculicauda",
+      "commonName": "Black Belt Cichlid",
+      "scientificName": "Vieja maculicauda",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_vieja_maculicauda.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_ameiurus_melas",
+      "commonName": "Black Bullhead Catfish",
+      "scientificName": "Ameiurus melas",
+      "family": "Ictaluridae",
+      "wikipediaFile": "data/care/text/sp_ameiurus_melas.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pseudacanthicus_major",
+      "commonName": "Black Cactus Pleco",
+      "scientificName": "Pseudacanthicus major",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_pseudacanthicus_major.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hemibagrus_wyckii",
+      "commonName": "Black Devil Catfish",
+      "scientificName": "Hemibagrus wyckii",
+      "family": "Bagridae",
+      "wikipediaFile": "data/care/text/sp_hemibagrus_wyckii.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pseudacanthicus_serratus",
+      "commonName": "Black Dragon Pleco",
+      "scientificName": "Pseudacanthicus serratus",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_pseudacanthicus_serratus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_apteronotus_albifrons",
+      "commonName": "Black Ghost Knifefish",
+      "scientificName": "Apteronotus albifrons",
+      "family": "Apteronotidae",
+      "wikipediaFile": "data/care/text/sp_apteronotus_albifrons.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_barbodes_bunau",
+      "commonName": "Black Ink Barb",
+      "scientificName": "Barbodes bunau",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_barbodes_bunau.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_bagrichthys_macracanthus",
+      "commonName": "Black Lancer Catfish",
+      "scientificName": "Bagrichthys macracanthus",
+      "family": "Bagridae",
+      "wikipediaFile": "data/care/text/sp_bagrichthys_macracanthus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_otothyropsis_piribebuy",
+      "commonName": "Black Oto",
+      "scientificName": "Otothyropsis piribebuy",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_otothyropsis_piribebuy.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_colossoma_macropomum",
+      "commonName": "Black Pacu",
+      "scientificName": "Colossoma macropomum",
+      "family": "Serrasalmidae",
+      "wikipediaFile": "data/care/text/sp_colossoma_macropomum.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_megalamphodus_megalopterus",
+      "commonName": "Black Phantom Tetra",
+      "scientificName": "Megalamphodus megalopterus",
+      "family": "Acestrorhamphidae",
+      "wikipediaFile": "data/care/text/sp_megalamphodus_megalopterus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_cherax_holthuisi",
+      "commonName": "Black Scorpion Crayfish",
+      "scientificName": "Cherax holthuisi",
+      "family": "Parastacidae",
+      "wikipediaFile": "data/care/text/sp_cherax_holthuisi.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_labeotropheus_trewavasae",
+      "commonName": "Black Top Mara",
+      "scientificName": "Labeotropheus trewavasae",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_labeotropheus_trewavasae.wikipedia.txt"
+    }
+  ]
+}

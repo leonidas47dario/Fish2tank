@@ -1,0 +1,180 @@
+{
+  "batch": "30",
+  "species": [
+    {
+      "speciesId": "sp_phenacogrammus_interruptus",
+      "commonName": "Congo Tetra",
+      "scientificName": "Phenacogrammus interruptus",
+      "family": "Alestidae",
+      "wikipediaFile": "data/care/text/sp_phenacogrammus_interruptus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pristella_maxillaris",
+      "commonName": "X-Ray Tetra",
+      "scientificName": "Pristella maxillaris",
+      "family": "Characidae",
+      "wikipediaFile": "data/care/text/sp_pristella_maxillaris.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hyphessobrycon_flammeus",
+      "commonName": "Von Rio Tetra",
+      "scientificName": "Hyphessobrycon flammeus",
+      "family": "Characidae",
+      "wikipediaFile": "data/care/text/sp_hyphessobrycon_flammeus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_gymnocorymbus_ternetzi",
+      "commonName": "Black Skirt Tetra",
+      "scientificName": "Gymnocorymbus ternetzi",
+      "family": "Acestrorhamphidae",
+      "wikipediaFile": "data/care/text/sp_gymnocorymbus_ternetzi.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_herichthys_cyanoguttatus",
+      "commonName": "Texas Cichlid",
+      "scientificName": "Herichthys cyanoguttatus",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_herichthys_cyanoguttatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_neolissochilus_stracheyi",
+      "commonName": "Thai Blue Mahseer",
+      "scientificName": "Neolissochilus stracheyi",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_neolissochilus_stracheyi.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_tor_tambroides",
+      "commonName": "Thai Mahseer",
+      "scientificName": "Tor tambroides",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_tor_tambroides.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_limnopilos_naiyanetri",
+      "commonName": "Thai Micro Crabs",
+      "scientificName": "Limnopilos naiyanetri",
+      "family": "Hymenosomatidae",
+      "wikipediaFile": "data/care/text/sp_limnopilos_naiyanetri.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_petrochromis_trewavasae",
+      "commonName": "Threadfin Cichlid",
+      "scientificName": "Petrochromis trewavasae",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_petrochromis_trewavasae.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_leporacanthicus_triactis",
+      "commonName": "Three Beacon Pleco",
+      "scientificName": "Leporacanthicus triactis",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_leporacanthicus_triactis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_cherax_pulcher",
+      "commonName": "Thunderbolt Crayfish",
+      "scientificName": "Cherax pulcher",
+      "family": "Parastacidae",
+      "wikipediaFile": "data/care/text/sp_cherax_pulcher.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_puntius_tetrazona",
+      "commonName": "Tiger Barb",
+      "scientificName": "Puntius tetrazona",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_puntius_tetrazona.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_puntigrus_tetrazona",
+      "commonName": "Tiger Barb",
+      "scientificName": "Puntigrus tetrazona",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_puntigrus_tetrazona.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_datnioides_campbelli",
+      "commonName": "Tiger Datnoid Ngt",
+      "scientificName": "Datnioides campbelli",
+      "family": "Datnioididae",
+      "wikipediaFile": "data/care/text/sp_datnioides_campbelli.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_gymnothorax_polyuranodon",
+      "commonName": "Tiger Moray Eel",
+      "scientificName": "Gymnothorax polyuranodon",
+      "family": "Muraenidae",
+      "wikipediaFile": "data/care/text/sp_gymnothorax_polyuranodon.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_parachromis_motaguensis",
+      "commonName": "Tiger Motaguensis Cichlid",
+      "scientificName": "Parachromis motaguensis",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_parachromis_motaguensis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pseudoplatystoma_fasciatum",
+      "commonName": "Tiger Shovelnose Catfish",
+      "scientificName": "Pseudoplatystoma fasciatum",
+      "family": "Pimelodidae",
+      "wikipediaFile": "data/care/text/sp_pseudoplatystoma_fasciatum.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_potamotrygon_tigrina",
+      "commonName": "Tiger Stingray",
+      "scientificName": "Potamotrygon tigrina",
+      "family": "Potamotrygonidae",
+      "wikipediaFile": "data/care/text/sp_potamotrygon_tigrina.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_brachyplatystoma_tigrinum",
+      "commonName": "Tigrinus Catfish",
+      "scientificName": "Brachyplatystoma tigrinum",
+      "family": "Pimelodidae",
+      "wikipediaFile": "data/care/text/sp_brachyplatystoma_tigrinum.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_barbonymus_schwanenfeldii",
+      "commonName": "Tinfoil Barb",
+      "scientificName": "Barbonymus schwanenfeldii",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_barbonymus_schwanenfeldii.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_panaque_titan",
+      "commonName": "Titan Royal Pleco",
+      "scientificName": "Panaque titan",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_panaque_titan.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_anubias_nana",
+      "commonName": "To Inches Tall",
+      "scientificName": "Anubias nana",
+      "family": "Araceae",
+      "wikipediaFile": "data/care/text/sp_anubias_nana.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_tenellus_trimaculatus",
+      "commonName": "Trimaculatus Dolphin Catfish",
+      "scientificName": "Tenellus trimaculatus",
+      "family": "Doradidae",
+      "wikipediaFile": "data/care/text/sp_tenellus_trimaculatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_lepisosteus_oculatus",
+      "commonName": "Trinity Spotted Gar",
+      "scientificName": "Lepisosteus oculatus",
+      "family": "Lepisosteidae",
+      "wikipediaFile": "data/care/text/sp_lepisosteus_oculatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_atractosteus_tropicus",
+      "commonName": "Tropical Gar",
+      "scientificName": "Atractosteus tropicus",
+      "family": "Lepisosteidae",
+      "wikipediaFile": "data/care/text/sp_atractosteus_tropicus.wikipedia.txt"
+    }
+  ]
+}

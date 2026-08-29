@@ -22,22 +22,30 @@
  * not a patch. A full `npm run refresh` reproduces it.
  *
  * WHAT IT CANNOT DO, and does not pretend to:
- *   - It cannot add a vendor. The warehouse holds the stores that were
- *     scraped, so the index it writes covers exactly those.
  *   - It cannot discover a species. dim_species is fixed here, so a listing
  *     whose binomial the catalog does not carry is counted and reported, then
  *     dropped rather than published as an entry no screen can render.
+ *
+ * IT CAN NOW ADD A VENDOR THE WAREHOUSE NEVER HELD, from a raw snapshot in
+ * `etl/raw/`. That is here because three vendors - Predatory Fins, Aquatic
+ * Arts, Flip Aquatics - are unreachable behind DRW's egress filter, while the
+ * two the warehouse is missing (Nu Aqua, LiveAquaria) fetch fine. Without
+ * this, shipping Nu Aqua would need a full scrape that cannot complete from
+ * this network, and Nu Aqua is the only vendor in the list that is an actual
+ * local fish store. The warehouse supplies the blocked three; the snapshots
+ * supply the two it never saw.
  */
 import { DuckDBInstance } from '@duckdb/node-api';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { buildMarketIndex } from './index-builder';
 import { buildMatcher } from './normalize/species';
-import { resolveSpecies } from './normalize/listing';
+import { resolveSpecies, normalizeStore, isLivestock } from './normalize/listing';
 import { parseSize } from './normalize/size';
 import { STORES, type MarketListing } from './types';
-import { SPECIES_CATALOG } from '@/data/seed/species-catalog';
+import type { Species } from '@/domain/types';
 
 const WAREHOUSE = 'warehouse';
+const RAW_DIR = 'etl/raw';
 const APP_INDEX = 'src/data/seed/marts/market-index.json';
 const CATALOG_MART = 'src/data/seed/marts/catalog.json';
 
@@ -45,8 +53,32 @@ async function main() {
   const fact = `${WAREHOUSE}/fact/fact_listing.parquet`;
   if (!existsSync(fact)) throw new Error(`${fact} not found - run "npm run warehouse" first.`);
 
-  const catalog = JSON.parse(readFileSync(CATALOG_MART, 'utf8')) as { species: Array<{ speciesId: string }> };
+  const catalog = JSON.parse(readFileSync(CATALOG_MART, 'utf8')) as {
+    species: Array<{ speciesId: string; commonName: string; scientificName?: string; aliases?: string[] }>;
+  };
   const known = new Set(catalog.species.map((s) => s.speciesId));
+
+  /**
+   * Match against every species the catalog knows, not the curated 47.
+   *
+   * The curated seed is 47 entries; the other ~1,400 were minted from
+   * binomials vendors wrote in their own titles. Matching only the 47 means a
+   * shop that writes "Black Ruby Barb - L" instead of "Puntius
+   * nigrofasciatus" resolves almost nothing and silently drops out of every
+   * downstream number. Nu Aqua: 1,222 livestock listings, 39 matched, 3.2%.
+   * Against the full catalogue the same snapshot resolves 24.1%.
+   *
+   * Safe here in a way it would not be elsewhere: every name comes from the
+   * mart, so a match cannot mint a species the app has no card for, and the
+   * `known` filter below stays as the backstop.
+   */
+  const vocabulary: Species[] = catalog.species.map((s) => ({
+    id: s.speciesId,
+    commonName: s.commonName,
+    scientificName: s.scientificName,
+    aliases: s.aliases ?? [],
+    createdAt: new Date(0).toISOString(),
+  }));
 
   const instance = await DuckDBInstance.create(':memory:');
   const c = await instance.connect();
@@ -60,7 +92,7 @@ async function main() {
            ON d.date_key = f.published_date_key
   `)).getRowObjects();
 
-  const match = buildMatcher(SPECIES_CATALOG.map((e) => e.species));
+  const match = buildMatcher(vocabulary);
   const retrievedAt = new Date().toISOString();
 
   let unknownSpecies = 0;
@@ -106,6 +138,38 @@ async function main() {
     });
   }
 
+  /**
+   * Fold in any declared vendor the warehouse never held but `etl/raw/` has.
+   *
+   * Read through the same normalizeStore + isLivestock path the scrape uses,
+   * against the same vocabulary, so a snapshot-sourced store is not a second
+   * class of row - just one whose bytes came from disk instead of DuckDB.
+   */
+  for (const store of STORES) {
+    if (perStore.has(store.id)) continue;
+    const snapshot = `${RAW_DIR}/${store.id}.json`;
+    if (!existsSync(snapshot)) continue;
+
+    const cached = JSON.parse(readFileSync(snapshot, 'utf8')) as {
+      retrievedAt: string; products: Parameters<typeof normalizeStore>[1];
+    };
+    const rows = normalizeStore(store, cached.products, vocabulary, cached.retrievedAt)
+      .filter(isLivestock);
+
+    let dropped = 0;
+    for (const l of rows) {
+      if (l.speciesId && !known.has(l.speciesId)) { dropped += 1; unknownSpecies += 1; continue; }
+      perStore.set(store.id, (perStore.get(store.id) ?? 0) + 1);
+      listings.push(l);
+    }
+    // Outcome, not intent: a snapshot that folded in zero usable rows is the
+    // thing worth seeing in the log.
+    console.log(
+      `  + ${store.name}: ${rows.length} livestock from snapshot (${cached.retrievedAt.slice(0, 10)}), ` +
+      `${perStore.get(store.id) ?? 0} kept, ${dropped} dropped as unknown species`,
+    );
+  }
+
   const sources = [...perStore].map(([storeId, listingsFetched]) => {
     const cfg = STORES.find((s) => s.id === storeId);
     if (!cfg) throw new Error(`warehouse has store "${storeId}" which STORES does not declare`);
@@ -117,6 +181,9 @@ async function main() {
    * this index, not a rounding error: every median and the market-scarcity
    * denominator are computed over the stores present. Stamped into the
    * artifact so the gap travels with the data.
+   *
+   * After the snapshot fold above, this is the set with neither warehouse rows
+   * nor a cached snapshot - genuinely absent, not merely un-scraped this run.
    */
   const missing = STORES.filter((s) => !perStore.has(s.id))
     .map((s) => ({ storeId: s.id, reason: 'not in the warehouse - never scraped' }));

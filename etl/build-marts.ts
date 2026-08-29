@@ -20,6 +20,7 @@ import { findProblems, isUsableName, summarise } from '@/data/seed/catalog-quali
 import { OVERRIDE_BY_ID, SPECIES_SYNONYMS, SYNONYM_IDS } from '@/data/seed/species-overrides';
 import { traitsFor, type OrganismKind, type WaterZone } from '@/data/seed/taxonomy';
 import type { WaterType } from '@/domain/types';
+import { loadCareBackfill, type CareRecord } from './care/backfill';
 
 const WAREHOUSE = 'warehouse';
 const OUT_DIR = 'src/data/seed/marts';
@@ -45,6 +46,20 @@ export interface CatalogEntry {
   waterType?: WaterType;
   sourceLabel?: string;
   sourceUrl?: string;
+  /**
+   * Where each backfilled care value came from, keyed by the field it backs.
+   *
+   * One source per species stopped being true under spec 003: adult size
+   * commonly comes from a Wikipedia article while minimum tank volume comes
+   * from a store listing, and a card that credits only one of them is
+   * miscrediting the other. Absent for the curated profiles, which cite a
+   * single source for the whole profile.
+   *
+   * The sentence that proves each value is deliberately NOT here - it lives in
+   * src/data/seed/species-care.json. The mart is inlined into the JS bundle,
+   * and four quotes per species would add roughly 250KB to it.
+   */
+  careSources?: Record<string, { source: string; url?: string }>;
   /**
    * The card's portrait, and where it came from.
    *
@@ -88,6 +103,57 @@ const num = (v: unknown): number | undefined =>
   v === null || v === undefined ? undefined : Number(v);
 const split = (v: unknown): string[] =>
   !v ? [] : String(v).split('|').filter(Boolean);
+
+/**
+ * Overlay the verified care backfill onto one warehouse row.
+ *
+ * FILLS GAPS ONLY. A field the warehouse already has - which means a curated
+ * profile wrote it - is never touched, so a scraped sentence can never
+ * overrule a person. That single rule is what keeps the hand-written 47
+ * authoritative without needing a list of which species they are.
+ *
+ * Returns the merged values plus the per-field credit for exactly the fields
+ * this layer supplied, so the UI credits the backfill for its own work and
+ * nothing else.
+ */
+function applyCareBackfill(
+  row: {
+    adultSizeIn?: number;
+    minVolumeGal?: number;
+    aggression?: string;
+    tempMinC?: number;
+    tempMaxC?: number;
+  },
+  care: CareRecord | undefined,
+) {
+  if (!care) return { ...row, careSources: undefined };
+
+  const sources: Record<string, { source: string; url?: string }> = {};
+  const credit = (field: string, v: { source: string; sourceUrl?: string }) => {
+    sources[field] = { source: v.source, ...(v.sourceUrl ? { url: v.sourceUrl } : {}) };
+  };
+
+  const out = { ...row };
+  if (out.adultSizeIn === undefined && care.adultSizeIn) {
+    out.adultSizeIn = care.adultSizeIn.value;
+    credit('adultSizeIn', care.adultSizeIn);
+  }
+  if (out.minVolumeGal === undefined && care.minVolumeGal) {
+    out.minVolumeGal = care.minVolumeGal.value;
+    credit('minVolumeGal', care.minVolumeGal);
+  }
+  if (out.aggression === undefined && care.aggression) {
+    out.aggression = care.aggression.value;
+    credit('aggression', care.aggression);
+  }
+  if (out.tempMinC === undefined && out.tempMaxC === undefined && care.tempC) {
+    out.tempMinC = care.tempC.value.min;
+    out.tempMaxC = care.tempC.value.max;
+    credit('tempC', care.tempC);
+  }
+
+  return { ...out, careSources: Object.keys(sources).length ? sources : undefined };
+}
 
 /**
  * The species display name, in three layers of decreasing machine confidence.
@@ -171,6 +237,8 @@ async function main() {
   `);
 
   const naming = { rederived: 0, overridden: 0, fellBack: 0 };
+  const careBackfill = loadCareBackfill();
+  const careStats = { species: 0, fields: {} as Record<string, number> };
 
   const species: CatalogEntry[] = rows.getRowObjects()
     // Vendor typos minted the same fish two or three times over. Dropping the
@@ -183,6 +251,20 @@ async function main() {
     const scientificName = nn(r.scientific_name);
     const aliases = split(r.aliases);
     const traits = traitsFor(scientificName);
+    const cared = applyCareBackfill(
+      {
+        adultSizeIn: num(r.adult_size_in),
+        minVolumeGal: num(r.min_volume_gal),
+        aggression: nn(r.aggression),
+        tempMinC: num(r.temp_min_c),
+        tempMaxC: num(r.temp_max_c),
+      },
+      careBackfill.get(speciesId),
+    );
+    if (cared.careSources) {
+      careStats.species++;
+      for (const f of Object.keys(cared.careSources)) careStats.fields[f] = (careStats.fields[f] ?? 0) + 1;
+    }
 
     return {
       speciesId,
@@ -197,15 +279,20 @@ async function main() {
             ...(traits.zone ? { waterZone: traits.zone } : {}),
           }
         : {}),
-      adultSizeIn: num(r.adult_size_in),
-      minVolumeGal: num(r.min_volume_gal),
-      aggression: nn(r.aggression),
-      tempMinC: num(r.temp_min_c),
-      tempMaxC: num(r.temp_max_c),
+      adultSizeIn: cared.adultSizeIn,
+      minVolumeGal: cared.minVolumeGal,
+      aggression: cared.aggression,
+      tempMinC: cared.tempMinC,
+      tempMaxC: cared.tempMaxC,
       predationTags: split(r.predation_tags),
       ...(nn(r.water_type) ? { waterType: nn(r.water_type) as WaterType } : {}),
-      sourceLabel: nn(r.source_label),
-      sourceUrl: nn(r.source_url),
+      // A backfilled species is no longer "no care profile yet", and saying so
+      // on a card that now shows an adult size would be visibly untrue.
+      sourceLabel: cared.careSources
+        ? 'Backfilled from cited sources - each value links to the sentence it came from'
+        : nn(r.source_label),
+      sourceUrl: cared.careSources ? undefined : nn(r.source_url),
+      ...(cared.careSources ? { careSources: cared.careSources } : {}),
       // Only ship a picture we can account for. The test used to be a licence
       // string; spec 002 changed it to traceability, because vendor photos
       // have no licence and are shipped deliberately with visible credit.
@@ -237,6 +324,26 @@ async function main() {
   console.log(`  species          ${species.length}`);
   console.log(`  with a portrait  ${withArt}  (${Math.round((withArt / species.length) * 100)}%)`);
   console.log(`  without          ${species.length - withArt}`);
+
+  // Reported per field, never as one total. A single "care coverage" number
+  // would hide that adult size fills in for most of the catalog while minimum
+  // volume and temperament barely move, which is the whole shape of what this
+  // backfill can and cannot do.
+  const has = (p: (s: CatalogEntry) => boolean) => species.filter(p).length;
+  const pct = (n: number) => `${Math.round((n / species.length) * 100)}%`.padStart(4);
+  console.log('\n  care coverage             now   of which backfilled');
+  const coverage: Array<[string, (s: CatalogEntry) => boolean, string]> = [
+    ['adult size', (s) => s.adultSizeIn !== undefined, 'adultSizeIn'],
+    ['minimum volume', (s) => s.minVolumeGal !== undefined, 'minVolumeGal'],
+    ['temperament', (s) => s.aggression !== undefined, 'aggression'],
+    ['temperature', (s) => s.tempMinC !== undefined, 'tempC'],
+  ];
+  for (const [label, present, field] of coverage) {
+    const n = has(present);
+    console.log(`    ${label.padEnd(22)} ${String(n).padStart(5)} ${pct(n)}   ${careStats.fields[field] ?? 0}`);
+  }
+  console.log(`    ${'any care data'.padEnd(22)} ${String(has((s) => s.adultSizeIn !== undefined || s.minVolumeGal !== undefined || s.aggression !== undefined)).padStart(5)}`);
+  console.log(`    ${'species backfilled'.padEnd(22)} ${String(careStats.species).padStart(5)}`);
 
   const zoned = species.filter((s) => s.waterZone).length;
   // Reported split, because the pooled number hides which half is missing.

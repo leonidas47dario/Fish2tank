@@ -59,7 +59,11 @@ const SALINITY: Array<{ id: SalinityFilter; label: string }> = [
   { id: 'brackish', label: 'Brackish' },
   { id: 'marine', label: 'Saltwater' },
   { id: 'unknown', label: 'Unrecorded' },
-  { id: 'any', label: 'All' },
+  // "Any water", not "All": the ownership row below already has an "All" chip,
+  // and two buttons with the same name is ambiguous to anyone navigating by
+  // label. It also matches how the other neutral options read - "Any level",
+  // "Any temperament".
+  { id: 'any', label: 'Any water' },
 ];
 
 /**

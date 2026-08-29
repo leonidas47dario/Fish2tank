@@ -24,6 +24,9 @@ export interface CatalogPortrait {
   height?: number;
 }
 
+/** The care fields the backfill can source, and therefore can credit. */
+export type CareField = 'adultSizeIn' | 'minVolumeGal' | 'aggression' | 'tempC';
+
 export interface CatalogSpecies {
   speciesId: string;
   commonName: string;
@@ -37,6 +40,13 @@ export interface CatalogSpecies {
   predationTags: string[];
   sourceLabel?: string;
   sourceUrl?: string;
+  /**
+   * Where each backfilled care value came from, keyed by field. Present only
+   * for species filled in by the spec 003 backfill, where size may come from
+   * Wikipedia and tank volume from a store, so a single species-level credit
+   * would be wrong about one of them.
+   */
+  careSources?: Partial<Record<CareField, { source: string; url?: string }>>;
   portrait?: CatalogPortrait;
   /** Taxonomic family, and what it implies. Derived — see seed/taxonomy.ts. */
   family?: string;
