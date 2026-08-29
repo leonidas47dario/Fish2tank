@@ -1,5 +1,38 @@
 # Profile record implementation plan (spec 005, Release 1)
 
+**Status: complete.** All seven tasks executed 2026-08-29. 729 tests passing
+(from a 712 baseline, +17), `tsc` clean, `npm run build` clean, `npm run
+smoke` reporting no console errors.
+
+Three deviations from the plan as written, recorded rather than quietly
+absorbed:
+
+1. **`src/data/bootstrap.ts` was never modified.** The plan's file table gave
+   it the job of running the one-time legacy fold at startup. It did not need
+   to: `ThemeProvider` calls `loadProfile(db, cachedRaw())` on mount, which
+   both creates the row and folds the old localStorage settings into it, and
+   the provider always mounts. Adding a second call site in bootstrap would
+   have been a redundant path to the same idempotent function.
+2. **Task 1 Step 2 expected the type-check to FAIL. It passed.** That is a
+   stronger result than the plan assumed, not a weaker one: nothing in the
+   codebase constructs a `UserSettings` at all, so the type was wholly dead
+   rather than partly unused.
+3. **`@phosphor-icons/react` had to be installed** before anything could be
+   type-checked. It is declared on `uat` but was missing from the parent
+   checkout's `node_modules`, which this worktree resolves upward into.
+   Installed with `npm ci`, which does not write `package-lock.json`;
+   verified afterwards that the lockfile hash was unchanged and that
+   `grep -c drwholdings package-lock.json` was still 0.
+
+The verification that matters most, run live in a browser rather than
+asserted: deleting a keeper's `users` row and reloading with only legacy
+localStorage settings present folded `playful-collector` / `moon-sand` /
+`reducedMotion: true` into a new profile, left `muted` out of it, and lost
+**zero rows across all 22 tables**, with the real 61-row inventory, 6
+aquariums and 3 media blobs intact.
+
+---
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build the user profile the types have been promising since v1, so
