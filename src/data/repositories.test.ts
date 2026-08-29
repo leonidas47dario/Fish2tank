@@ -27,6 +27,7 @@ import {
   moveHolding,
   recordDeath,
   recordPrice,
+  recordStoreLabel,
   revealSpecimen,
   searchSpecies,
   upsertAquarium,
@@ -635,6 +636,107 @@ describe('photos on a fish you keep but never caught', () => {
 
   it('refuses to attach a photo to a specimen that does not exist', async () => {
     await expect(addPhotos({ specimenId: 'spec_nope', files: [photo()] }, db)).rejects.toThrow();
+  });
+});
+
+describe('recording a store label for a fish the catalog lacks (spec 005)', () => {
+  async function anUnknownCatch() {
+    return createCatchDraft({ files: [], clientKey: newId('k') }, db);
+  }
+
+  it('records the wording verbatim and marks the identity provisional', async () => {
+    const { specimen } = await anUnknownCatch();
+    await recordStoreLabel(specimen.id, '  Emerald Puffer (LFS tag)  ', db);
+
+    const after = await db.specimens.get(specimen.id);
+    // Trimmed, but not otherwise touched - FR-O05 keeps the store's wording.
+    expect(after!.rawLabel).toBe('Emerald Puffer (LFS tag)');
+    expect(after!.identityStatus).toBe('provisional');
+  });
+
+  it('invents no speciesId, so nothing downstream reads it as a catalog match', async () => {
+    const { specimen } = await anUnknownCatch();
+    await recordStoreLabel(specimen.id, 'Mystery loach', db);
+    expect((await db.specimens.get(specimen.id))!.speciesId).toBeUndefined();
+  });
+
+  it('leaves an auditable assertion rather than stamping the record (FR-I06)', async () => {
+    const { specimen } = await anUnknownCatch();
+    await recordStoreLabel(specimen.id, 'Mystery loach', db);
+
+    const history = await identityHistory(specimen.id, db);
+    expect(history).toHaveLength(1);
+    expect(history[0]!.candidateRawText).toBe('Mystery loach');
+    expect(history[0]!.candidateSpeciesId).toBeUndefined();
+  });
+
+  it('refuses a blank label, because blank is the skip this replaces', async () => {
+    const { specimen } = await anUnknownCatch();
+    await expect(recordStoreLabel(specimen.id, '   ', db)).rejects.toThrow(/cannot be blank/i);
+    expect((await db.specimens.get(specimen.id))!.identityStatus).toBe('unknown');
+  });
+
+  it('does not rate it: Discovery needs a species to find market evidence for', async () => {
+    const { specimen } = await anUnknownCatch();
+    await recordStoreLabel(specimen.id, 'Mystery loach', db);
+
+    const outcome = await revealSpecimen(specimen.id, db);
+    expect(outcome.status).toBe('not-identified');
+    expect(await db.raritySnapshots.where('specimenId').equals(specimen.id).count()).toBe(0);
+  });
+
+  it('can be superseded later by a real catalog match', async () => {
+    const { specimen } = await anUnknownCatch();
+    await recordStoreLabel(specimen.id, 'Jag 6"', db);
+    await assertIdentity(
+      { specimenId: specimen.id, speciesId: 'sp_jaguar_cichlid', source: 'user', status: 'user-confirmed' },
+      db,
+    );
+
+    const after = await db.specimens.get(specimen.id);
+    expect(after!.identityStatus).toBe('user-confirmed');
+    expect(after!.speciesId).toBe('sp_jaguar_cichlid');
+    // FR-O05: the store's wording survives being corrected.
+    expect(after!.rawLabel).toBe('Jag 6"');
+    expect(await identityHistory(specimen.id, db)).toHaveLength(2);
+  });
+});
+
+describe('a reveal declines when there is no shelf evidence (spec 005)', () => {
+  it('returns the refusal and its reason, and writes no snapshot', async () => {
+    const draft = await createCatchDraft({ files: [], clientKey: newId('k') }, db);
+    // Listed only by Predatory Fins, which is not a qualifying witness store.
+    await assertIdentity(
+      { specimenId: draft.specimen.id, speciesId: 'sp_liosomadoras_oncinus', source: 'user', status: 'user-confirmed' },
+      db,
+    );
+
+    const outcome = await revealSpecimen(draft.specimen.id, db);
+    expect(outcome.status).toBe('no-market-evidence');
+    expect((outcome as Extract<typeof outcome, { status: 'no-market-evidence' }>).reason).toBeTruthy();
+    expect(await db.raritySnapshots.where('specimenId').equals(draft.specimen.id).count()).toBe(0);
+  });
+
+  it('still marks a Dream List wish fulfilled, even though nothing was rated', async () => {
+    const draft = await createCatchDraft({ files: [], clientKey: newId('k') }, db);
+    await db.dreamList.add({
+      id: newId('dream'),
+      speciesId: 'sp_liosomadoras_oncinus',
+      addedAt: '2026-01-01T00:00:00.000Z',
+      source: 'manual',
+    });
+    await assertIdentity(
+      { specimenId: draft.specimen.id, speciesId: 'sp_liosomadoras_oncinus', source: 'user', status: 'user-confirmed' },
+      db,
+    );
+
+    expect((await revealSpecimen(draft.specimen.id, db)).status).toBe('no-market-evidence');
+
+    // The regression this guards: fulfilment used to live inside the snapshot
+    // transaction, so a declined reveal would have silently stopped granting
+    // wishes for the 78% of the catalog that has no shelf evidence.
+    const wish = await db.dreamList.where('speciesId').equals('sp_liosomadoras_oncinus').first();
+    expect(wish!.fulfilledBySpecimenId).toBe(draft.specimen.id);
   });
 });
 

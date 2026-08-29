@@ -298,6 +298,52 @@ export async function assertIdentity(
   return assertion;
 }
 
+/**
+ * Record what the tag said, for a fish the catalog does not contain (spec 005).
+ *
+ * The escape hatch from mandatory identification. Since "all records must be
+ * identified", the identify flow no longer lets you leave a catch Unknown -
+ * but the catalog holds 2,178 species and a shop will sell one it has never
+ * heard of, so without this a real catch could reach a screen with no exit.
+ *
+ * What makes this an identification rather than a skip: it demands the store's
+ * wording, keeps it verbatim (FR-O05), and records `provisional` - which the
+ * record then displays as weaker than a confirmed match rather than dressing
+ * it up as one. No speciesId is invented, so nothing downstream can mistake
+ * this for a catalog species.
+ */
+export async function recordStoreLabel(
+  specimenId: Id,
+  label: string,
+  database: DB = db,
+): Promise<void> {
+  const text = label.trim();
+  if (!text) throw new Error('A store label cannot be blank.');
+
+  await assertIdentity(
+    {
+      specimenId,
+      rawText: text,
+      source: 'user',
+      status: 'provisional',
+      note: 'Not in the catalog. Recorded as the store labelled it.',
+    },
+    database,
+  );
+  await database.specimens.update(specimenId, { rawLabel: text, updatedAt: nowIso() });
+
+  // Verify, rather than reporting a success nobody checked.
+  const after = await database.specimens.get(specimenId);
+  if (after?.identityStatus !== 'provisional' || after.rawLabel !== text) {
+    console.error('[identify] store label did not stick', {
+      specimenId, wanted: text,
+      gotLabel: after?.rawLabel, gotStatus: after?.identityStatus,
+    });
+    throw new Error('That label could not be saved.');
+  }
+  console.info('[identify] recorded store label', { specimenId, label: text, status: 'provisional' });
+}
+
 /** Full identification history for a specimen, newest first (FR-I06, NFR-09). */
 export async function identityHistory(specimenId: Id, database: DB = db): Promise<IdentificationAssertion[]> {
   const all = await database.identifications.where('specimenId').equals(specimenId).toArray();
