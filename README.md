@@ -318,9 +318,12 @@ a consequence of rarity rather than evidence of it, the other tracked Shopify
 leaving sold-out products published. See
 [`docs/specs/004-local-shelf-scarcity.md`](docs/specs/004-local-shelf-scarcity.md).
 
-It rates nothing on the currently shipped index, on purpose: only one store
-qualifies as a witness, and breadth is a comparison. It activates on the next
-full ETL run.
+Three shops currently qualify as witnesses - Imperial Tropicals, AquaHuna and
+**Nu Aqua**, the one vendor in the list you can walk into. Neon Tetra,
+Cardinal Tetra and Bristlenose Pleco read *widely available*; Oscar and Jack
+Dempsey read *available*. Nothing reads *rarely listed*: that takes five
+witnesses, and the rating declines its strongest word until the sample earns
+it.
 
 ---
 
