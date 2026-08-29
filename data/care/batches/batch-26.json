@@ -1,0 +1,181 @@
+{
+  "batch": "26",
+  "species": [
+    {
+      "speciesId": "sp_hypostomus_roseopunctatus",
+      "commonName": "Roseopunctatus Sailfin Pleco",
+      "scientificName": "Hypostomus roseopunctatus",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_hypostomus_roseopunctatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_rhodeus_ocellatus_ocellatus",
+      "commonName": "Rosy Bitterling",
+      "scientificName": "Rhodeus ocellatus ocellatus",
+      "family": "Acheilognathidae",
+      "wikipediaFile": "data/care/text/sp_rhodeus_ocellatus_ocellatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_chitala_blanci",
+      "commonName": "Royal Clown Knifefish",
+      "scientificName": "Chitala blanci",
+      "family": "Notopteridae",
+      "wikipediaFile": "data/care/text/sp_chitala_blanci.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_panaque_armbrusteri",
+      "commonName": "Royal Pleco",
+      "scientificName": "Panaque armbrusteri",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_panaque_armbrusteri.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_panaque_nigrolineatus",
+      "commonName": "Royal Pleco",
+      "scientificName": "Panaque nigrolineatus",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_panaque_nigrolineatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_parancistrus_aurantiacus",
+      "commonName": "Rubber Pleco",
+      "scientificName": "Parancistrus aurantiacus",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_parancistrus_aurantiacus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pethia_nigrofasciata",
+      "commonName": "Black Ruby Barb",
+      "scientificName": "Pethia nigrofasciata",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_pethia_nigrofasciata.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_axelrodia_riesei",
+      "commonName": "Ruby Tetra",
+      "scientificName": "Axelrodia riesei",
+      "family": "Acestrorhamphidae",
+      "wikipediaFile": "data/care/text/sp_axelrodia_riesei.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_nothobranchius_eggersi",
+      "commonName": "Egger S Killifish",
+      "scientificName": "Nothobranchius eggersi",
+      "family": "Nothobranchiidae",
+      "wikipediaFile": "data/care/text/sp_nothobranchius_eggersi.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_dawkinsia_rohani",
+      "commonName": "S Tear-Spot Barb",
+      "scientificName": "Dawkinsia rohani",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_dawkinsia_rohani.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_belonesox_belizanus",
+      "commonName": "Saber Tooth Pike",
+      "scientificName": "Belonesox belizanus",
+      "family": "Poeciliidae",
+      "wikipediaFile": "data/care/text/sp_belonesox_belizanus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hypostomus_luteus",
+      "commonName": "Sailfin Luteus Pleco",
+      "scientificName": "Hypostomus luteus",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_hypostomus_luteus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_glyptoperichthys_gibbiceps",
+      "commonName": "Sailfin Pleco",
+      "scientificName": "Glyptoperichthys gibbiceps",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_glyptoperichthys_gibbiceps.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_salvinia_minima",
+      "commonName": "Water Spangles",
+      "scientificName": "Salvinia minima",
+      "family": "Salviniaceae",
+      "wikipediaFile": "data/care/text/sp_salvinia_minima.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pseudacanthicus_pirarara",
+      "commonName": "Scarlet Cactus Pleco",
+      "scientificName": "Pseudacanthicus pirarara",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_pseudacanthicus_pirarara.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_alternanthera_reineckii",
+      "commonName": "Scarlet Temple",
+      "scientificName": "Alternanthera reineckii",
+      "family": "Amaranthaceae",
+      "wikipediaFile": "data/care/text/sp_alternanthera_reineckii.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_scatophagus_argus",
+      "commonName": "Scat",
+      "scientificName": "Scatophagus argus",
+      "family": "Scatophagidae",
+      "wikipediaFile": "data/care/text/sp_scatophagus_argus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_potamotrygon_scobina",
+      "commonName": "Scobina Stingray",
+      "scientificName": "Potamotrygon scobina",
+      "family": "Potamotrygonidae",
+      "wikipediaFile": "data/care/text/sp_potamotrygon_scobina.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hypostomus_sertanejo",
+      "commonName": "Sertanejo Sailfin Pleco",
+      "scientificName": "Hypostomus sertanejo",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_hypostomus_sertanejo.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_heros_efasciatus",
+      "commonName": "Severum",
+      "scientificName": "Heros efasciatus",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_heros_efasciatus.wikipedia.txt",
+      "vendorFile": "data/care/text/sp_heros_efasciatus.vendor.txt"
+    },
+    {
+      "speciesId": "sp_hyalobagrus_flavus",
+      "commonName": "Shadow Catfish",
+      "scientificName": "Hyalobagrus flavus",
+      "family": "Bagridae",
+      "wikipediaFile": "data/care/text/sp_hyalobagrus_flavus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_acnodon_normani",
+      "commonName": "Sheep Head Pacu",
+      "scientificName": "Acnodon normani",
+      "family": "Serrasalmidae",
+      "wikipediaFile": "data/care/text/sp_acnodon_normani.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pseudoplatystoma_tigrinum",
+      "commonName": "Shovelnose Catfish",
+      "scientificName": "Pseudoplatystoma tigrinum",
+      "family": "Pimelodidae",
+      "wikipediaFile": "data/care/text/sp_pseudoplatystoma_tigrinum.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_caridina_multidentata",
+      "commonName": "Shrimp",
+      "scientificName": "Caridina multidentata",
+      "family": "Atyidae",
+      "wikipediaFile": "data/care/text/sp_caridina_multidentata.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_crossocheilus_oblongus",
+      "commonName": "Siamese Algae Eater",
+      "scientificName": "Crossocheilus oblongus",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_crossocheilus_oblongus.wikipedia.txt"
+    }
+  ]
+}

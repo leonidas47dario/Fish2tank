@@ -63,7 +63,12 @@ const TO_GALLONS: Record<string, number> = {
   liter: 1 / 3.785411784, liters: 1 / 3.785411784,
 };
 
-const NUMBER_UNIT = /(\d+(?:[.,]\d+)?)\s*(?:\(|\s)?\s*([a-z°µ]+)/gi;
+/**
+ * `\+?` is not decoration. Stores and hobby prose write "a 10+ gallon tank"
+ * and "20+ gallons" constantly, and without it every one of those figures
+ * reads as unsupported and the value is thrown away.
+ */
+const NUMBER_UNIT = /(\d+(?:[.,]\d+)?)\+?\s*(?:\(|\s)?\s*([a-z°µ]+)/gi;
 
 /**
  * Stores write "75 degrees F" where Wikipedia writes "24 °C". Without this the
@@ -134,12 +139,34 @@ export function figureSupportedBy(
  */
 export function rangeSupportedBy(min: number, max: number, quote: string): boolean {
   const norm = foldDegreeWords(normalizeForMatch(quote));
-  const ranges = norm.matchAll(/(\d+(?:\.\d+)?)\s*(?:-|to|and)\s*(\d+(?:\.\d+)?)\s*°?\s*(c|f)\b/gi);
+  // The unit letter is optional, because sources routinely omit it - and they
+  // do not agree on what it means when they do. Wikipedia writes
+  // "warm (24–28°)" meaning Celsius; vendor spec sheets write
+  // "Temperature : 70-85°" meaning Fahrenheit. Defaulting to either one
+  // silently discards every value written the other way.
+  //
+  // So a bare degree sign is checked under BOTH readings and passes if either
+  // matches the claim. That is weaker than reading a stated unit, and it is
+  // deliberately bounded: the claimed values must still clear the 4-40 °C
+  // plausibility check in the caller, which is what makes the ambiguity
+  // harmless in practice. 24-28 °F is ice and 70-85 °C is a kettle, so only
+  // one reading of a real range ever survives both tests. Inferring a unit is
+  // not inventing a value - the figures remain the source's own.
+  // The word boundary applies only when a unit LETTER was matched. Requiring
+  // it after a bare "°" fails at end-of-string, because there is no word
+  // character on either side of the degree sign to bound.
+  const ranges = norm.matchAll(
+    /(\d+(?:\.\d+)?)\s*(?:-|to|and)\s*(\d+(?:\.\d+)?)\s*(?:°\s*(c|f)\b|°|\s(c|f)\b)/gi,
+  );
   for (const m of ranges) {
-    const [, lo, hi, unit] = m;
-    if (!lo || !hi || !unit) continue;
-    const toC = (v: number) => (unit.toLowerCase() === 'f' ? ((v - 32) * 5) / 9 : v);
-    if (Math.abs(toC(Number(lo)) - min) <= 1 && Math.abs(toC(Number(hi)) - max) <= 1) return true;
+    const [, lo, hi, unitA, unitB] = m;
+    if (!lo || !hi) continue;
+    const stated = (unitA ?? unitB)?.toLowerCase();
+    const readings = stated ? [stated] : ['c', 'f'];
+    for (const unit of readings) {
+      const toC = (v: number) => (unit === 'f' ? ((v - 32) * 5) / 9 : v);
+      if (Math.abs(toC(Number(lo)) - min) <= 1 && Math.abs(toC(Number(hi)) - max) <= 1) return true;
+    }
   }
   // Fall back to two independent figures, for "between 22 °C and 28 °C".
   return figureSupportedBy(min, 'temp-c', quote) && figureSupportedBy(max, 'temp-c', quote);
@@ -159,8 +186,12 @@ export function rangeSupportedBy(min: number, max: number, quote: string): boole
  */
 const TEMPERAMENT_TERMS: Record<AggressionRating, RegExp> = {
   peaceful: /\b(peaceful|docile|non-?aggressive|gentle|community fish|good community)\b/,
-  'semi-aggressive': /\b(semi-?aggressive|territorial|boisterous|feisty|nippy|fin-?nipp\w*|moderately aggressive)\b/,
-  aggressive: /\b(aggressive|pugnacious|belligerent|combative|quarrelsome)\b/,
+  // "somewhat aggressive towards those of its own kind" is the single most
+  // common way an article describes a semi-aggressive fish, and the first
+  // version of this lexicon rejected every one of them.
+  'semi-aggressive':
+    /\b(semi-?aggressive|territorial|boisterous|feisty|nippy|fin-?nipp\w*|(moderately|somewhat|slightly|mildly|can be|may be) aggressive|aggressive (towards|toward) (its |their )?own)\b/,
+  aggressive: /\b(aggressive|pugnacious|belligerent|combative|quarrelsome|hostile|will attack|may attack)\b/,
   'highly-aggressive': /\b(highly aggressive|extremely aggressive|very aggressive|predatory|vicious|will kill)\b/,
 };
 
@@ -192,7 +223,12 @@ export function temperamentSupportedBy(rating: AggressionRating, quote: string):
  */
 export const PLAUSIBLE = {
   'adult_size_in': { min: 0.2, max: 120 },
-  'min_volume_gal': { min: 1, max: 2000 },
+  // 10,000 gal, not 2,000. This catalog carries arapaima, sturgeon and a
+  // goliath tigerfish, and a source really did state 4,000 gallons for the
+  // last of those. A cap that rejects a true figure is not a safety check,
+  // it is a silent data loss. Unit errors are caught by figureSupportedBy,
+  // which re-derives the value from the quote; this is only a backstop.
+  'min_volume_gal': { min: 1, max: 10000 },
   'temp_c': { min: 4, max: 40 },
 } as const;
 

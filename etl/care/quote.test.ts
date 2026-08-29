@@ -76,6 +76,10 @@ describe('figureSupportedBy', () => {
     expect(figureSupportedBy(20, 'volume-gal', 'a tank of at least 75 litres')).toBe(true);
   });
 
+  it('reads "10+ gallon", which is how hobby prose states a minimum', () => {
+    expect(figureSupportedBy(10, 'volume-gal', 'it usually requires a 10+ gallon aquarium')).toBe(true);
+  });
+
   it('converts fahrenheit to celsius', () => {
     expect(figureSupportedBy(24, 'temp-c', 'Suggested Water Temperature: 75 degrees F')).toBe(true);
   });
@@ -92,6 +96,21 @@ describe('rangeSupportedBy', () => {
 
   it('rejects a range the quote does not state', () => {
     expect(rangeSupportedBy(10, 15, 'water that ranges from 22–28 °C')).toBe(false);
+  });
+
+  it('reads a bare degree sign as celsius when the source means celsius', () => {
+    // Wikipedia: "Living in alkalescent, warm (24–28°), and slow-flowing rivers"
+    expect(rangeSupportedBy(24, 28, 'warm (24–28°), and slow-flowing rivers')).toBe(true);
+  });
+
+  it('reads the same bare degree sign as fahrenheit when the source means that', () => {
+    // Vendor spec sheets write "Temperature : 70-85°" and mean fahrenheit.
+    // Defaulting to one reading discards every value written the other way.
+    expect(rangeSupportedBy(21, 29, 'Temperature : 70-85°')).toBe(true);
+  });
+
+  it('still rejects a claim neither reading of a bare sign supports', () => {
+    expect(rangeSupportedBy(10, 12, 'Temperature : 70-85°')).toBe(false);
   });
 });
 
@@ -110,6 +129,15 @@ describe('temperamentSupportedBy', () => {
 
   it('rejects a rating the sentence contradicts', () => {
     expect(temperamentSupportedBy('highly-aggressive', 'It is a generally peaceful fish')).toBe(false);
+  });
+
+  it('accepts "somewhat aggressive" as semi-aggressive, the commonest phrasing', () => {
+    expect(temperamentSupportedBy('semi-aggressive', 'it becomes somewhat aggressive towards those of its own kind'))
+      .toBe(true);
+  });
+
+  it('accepts "hostile to most other inhabitants" as aggressive', () => {
+    expect(temperamentSupportedBy('aggressive', 'are hostile to most other inhabitants')).toBe(true);
   });
 });
 

@@ -1,0 +1,182 @@
+{
+  "batch": "12",
+  "species": [
+    {
+      "speciesId": "sp_notoglanidium_macrostoma",
+      "commonName": "Dwarf Giraffe Catfish",
+      "scientificName": "Notoglanidium macrostoma",
+      "family": "Claroteidae",
+      "wikipediaFile": "data/care/text/sp_notoglanidium_macrostoma.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_eleocharis_parvula",
+      "commonName": "Dwarf Hairgrass",
+      "scientificName": "Eleocharis parvula",
+      "family": "Cyperaceae",
+      "wikipediaFile": "data/care/text/sp_eleocharis_parvula.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_carinotetraodon_travancoricus",
+      "commonName": "Dwarf Pea Puffer",
+      "scientificName": "Carinotetraodon travancoricus",
+      "family": "Tetraodontidae",
+      "wikipediaFile": "data/care/text/sp_carinotetraodon_travancoricus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_synodontis_lucipinnis",
+      "commonName": "Dwarf Petricola",
+      "scientificName": "Synodontis lucipinnis",
+      "family": "Mochokidae",
+      "wikipediaFile": "data/care/text/sp_synodontis_lucipinnis.wikipedia.txt",
+      "vendorFile": "data/care/text/sp_synodontis_lucipinnis.vendor.txt"
+    },
+    {
+      "speciesId": "sp_wallaciia_regani",
+      "commonName": "Dwarf Pike Cichlid",
+      "scientificName": "Wallaciia regani",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_wallaciia_regani.wikipedia.txt",
+      "vendorFile": "data/care/text/sp_wallaciia_regani.vendor.txt"
+    },
+    {
+      "speciesId": "sp_melanotaenia_parva",
+      "commonName": "Lake Kurumoi Rainbowfish",
+      "scientificName": "Melanotaenia parva",
+      "family": "Melanotaeniidae",
+      "wikipediaFile": "data/care/text/sp_melanotaenia_parva.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pangasius_larnaudii",
+      "commonName": "Ear Pangasius Catfish",
+      "scientificName": "Pangasius larnaudii",
+      "family": "Pangasiidae",
+      "wikipediaFile": "data/care/text/sp_pangasius_larnaudii.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_sciaenochromis_fryeri",
+      "commonName": "Electric Blue Fryeri",
+      "scientificName": "Sciaenochromis fryeri",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_sciaenochromis_fryeri.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_electrophorus_electricus",
+      "commonName": "Electric Eel",
+      "scientificName": "Electrophorus electricus",
+      "family": "Gymnotidae",
+      "wikipediaFile": "data/care/text/sp_electrophorus_electricus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_nannostomus_limatus",
+      "commonName": "Elegant Pencilfish",
+      "scientificName": "Nannostomus limatus",
+      "family": "Lebiasinidae",
+      "wikipediaFile": "data/care/text/sp_nannostomus_limatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_eleocharis_vivipara",
+      "commonName": "Umbrella Hairgrass",
+      "scientificName": "Eleocharis vivipara",
+      "family": "Cyperaceae",
+      "wikipediaFile": "data/care/text/sp_eleocharis_vivipara.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_gnathonemus_petersii",
+      "commonName": "Elephantnose Fish",
+      "scientificName": "Gnathonemus petersii",
+      "family": "Mormyridae",
+      "wikipediaFile": "data/care/text/sp_gnathonemus_petersii.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_boulengerochromis_microlepis",
+      "commonName": "Emperor Cichlid",
+      "scientificName": "Boulengerochromis microlepis",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_boulengerochromis_microlepis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_polypterus_endlicheri",
+      "commonName": "Endlicheri Bichir",
+      "scientificName": "Polypterus endlicheri",
+      "family": "Polypteridae",
+      "wikipediaFile": "data/care/text/sp_polypterus_endlicheri.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_mylochromis_ericotaenia",
+      "commonName": "Ericotaenia Hap Cichlid",
+      "scientificName": "Mylochromis ericotaenia",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_mylochromis_ericotaenia.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_doras_micropoeus",
+      "commonName": "Essequibo Thorny Catfish",
+      "scientificName": "Doras micropoeus",
+      "family": "Doradidae",
+      "wikipediaFile": "data/care/text/sp_doras_micropoeus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_coenobita_brevimanus",
+      "commonName": "Exotic Terrestrial Invertebrate",
+      "scientificName": "Coenobita brevimanus",
+      "family": "Coenobitidae",
+      "wikipediaFile": "data/care/text/sp_coenobita_brevimanus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pseudomugil_luminatus",
+      "commonName": "Red Neon Blue-Eye",
+      "scientificName": "Pseudomugil luminatus",
+      "family": "Pseudomugilidae",
+      "wikipediaFile": "data/care/text/sp_pseudomugil_luminatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_moenkhausia_sanctaefilomenae",
+      "commonName": "Red Eye Tetra",
+      "scientificName": "Moenkhausia sanctaefilomenae",
+      "family": "Acestrorhamphidae",
+      "wikipediaFile": "data/care/text/sp_moenkhausia_sanctaefilomenae.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_synodontis_longirostris",
+      "commonName": "Eyespot Synodontis Catfish",
+      "scientificName": "Synodontis longirostris",
+      "family": "Mochokidae",
+      "wikipediaFile": "data/care/text/sp_synodontis_longirostris.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_tetraodon_lineatus",
+      "commonName": "Fahaka Puffer Fish",
+      "scientificName": "Tetraodon lineatus",
+      "family": "Tetraodontidae",
+      "wikipediaFile": "data/care/text/sp_tetraodon_lineatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_neolamprologus_brichardi",
+      "commonName": "Princess Cichlid",
+      "scientificName": "Neolamprologus brichardi",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_neolamprologus_brichardi.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_potamotrygon_falkneri",
+      "commonName": "Falkneri Stingray",
+      "scientificName": "Potamotrygon falkneri",
+      "family": "Potamotrygonidae",
+      "wikipediaFile": "data/care/text/sp_potamotrygon_falkneri.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_bolbitis_heudelotii",
+      "commonName": "African Water Fern",
+      "scientificName": "Bolbitis heudelotii",
+      "family": "Dryopteridaceae",
+      "wikipediaFile": "data/care/text/sp_bolbitis_heudelotii.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_mesonauta_guyanae",
+      "commonName": "Festivum Cichlid",
+      "scientificName": "Mesonauta guyanae",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_mesonauta_guyanae.wikipedia.txt"
+    }
+  ]
+}

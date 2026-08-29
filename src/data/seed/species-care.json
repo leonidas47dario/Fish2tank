@@ -1,0 +1,246 @@
+{
+  "schemaVersion": 1,
+  "builtAt": "2026-08-29T08:04:39.651Z",
+  "species": [
+    {
+      "speciesId": "sp_ancistrus_aguaboensis",
+      "adultSizeIn": {
+        "value": 2.6,
+        "quote": "it reaches a standard length of 6.7 cm",
+        "source": "wikipedia",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Ancistrus_aguaboensis"
+      }
+    },
+    {
+      "speciesId": "sp_azolla_caroliniana",
+      "adultSizeIn": {
+        "value": 0.4,
+        "quote": "with scale-like fronds 5–10 mm long",
+        "source": "wikipedia",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Azolla_cristata"
+      },
+      "tempC": {
+        "value": {
+          "min": 25,
+          "max": 30
+        },
+        "quote": "with optimum summer growth between 25-30 °C",
+        "source": "wikipedia",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Azolla_cristata"
+      }
+    },
+    {
+      "speciesId": "sp_badis_badis",
+      "adultSizeIn": {
+        "value": 3.1,
+        "quote": "Maximum total length is around 8 cm",
+        "source": "wikipedia",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Badis_badis"
+      }
+    },
+    {
+      "speciesId": "sp_celestichthys_margaritatus",
+      "adultSizeIn": {
+        "value": 1.2,
+        "quote": "a few individuals are able to reach 3 cm",
+        "source": "wikipedia",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Danio_margaritatus"
+      },
+      "aggression": {
+        "value": "peaceful",
+        "quote": "The celestial pearl danio seems overall quite peaceful, though some fin-nipping occurs",
+        "source": "wikipedia",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Danio_margaritatus"
+      }
+    },
+    {
+      "speciesId": "sp_corydoras_agassizii",
+      "adultSizeIn": {
+        "value": 2,
+        "quote": "the fish has a standard length of 5.2 cm",
+        "source": "wikipedia",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Brochis_agassizii"
+      },
+      "tempC": {
+        "value": {
+          "min": 22,
+          "max": 26
+        },
+        "quote": "a water temperature of 22–26 °C",
+        "source": "wikipedia",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Brochis_agassizii"
+      }
+    },
+    {
+      "speciesId": "sp_dario_dario",
+      "adultSizeIn": {
+        "value": 1.6,
+        "quote": "the maximum length can reach 3.5 cm to 4 cm",
+        "source": "wikipedia",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Scarlet_badis"
+      }
+    },
+    {
+      "speciesId": "sp_garra_rufa",
+      "adultSizeIn": {
+        "value": 9.4,
+        "quote": "some individuals can reach as much as 24 cm",
+        "source": "wikipedia",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Red_garra"
+      }
+    },
+    {
+      "speciesId": "sp_hara_jerdoni",
+      "adultSizeIn": {
+        "value": 1.6,
+        "quote": "This species grows to a length of 4 cm TL",
+        "source": "wikipedia",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Hara_jerdoni"
+      }
+    },
+    {
+      "speciesId": "sp_hepsetus_odoe",
+      "adultSizeIn": {
+        "value": 11,
+        "quote": "This species can reach up to about 28 cm in length",
+        "source": "wikipedia",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Hepsetus_odoe"
+      }
+    },
+    {
+      "speciesId": "sp_hoplias_aimara",
+      "adultSizeIn": {
+        "value": 47.2,
+        "quote": "specimens caught at a length of 120 cm",
+        "source": "wikipedia",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Hoplias_aimara"
+      }
+    },
+    {
+      "speciesId": "sp_hydrocynus_forskahlii",
+      "adultSizeIn": {
+        "value": 17.7,
+        "quote": "large specimens may be 45 cm",
+        "source": "wikipedia",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Hydrocynus_forskahlii"
+      }
+    },
+    {
+      "speciesId": "sp_hydrocynus_goliath",
+      "adultSizeIn": {
+        "value": 78.7,
+        "quote": "they can reach a maximum recorded length of about 2 m",
+        "source": "wikipedia",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Hydrocynus_goliath"
+      }
+    },
+    {
+      "speciesId": "sp_hydrocynus_vittatus",
+      "adultSizeIn": {
+        "value": 41.3,
+        "quote": "It grows to a length of 105 cm SL",
+        "source": "wikipedia",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Hydrocynus_vittatus"
+      },
+      "minVolumeGal": {
+        "value": 634,
+        "quote": "may require tanks of at least 2400 L",
+        "source": "wikipedia",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Hydrocynus_vittatus"
+      }
+    },
+    {
+      "speciesId": "sp_labeo_chrysophekadion",
+      "adultSizeIn": {
+        "value": 35.4,
+        "quote": "It can reach a length of 90 cm",
+        "source": "wikipedia",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Black_sharkminnow"
+      },
+      "aggression": {
+        "value": "aggressive",
+        "quote": "generally unsuitable for home aquaria due to its large adult size and territorial, aggressive behavior",
+        "source": "wikipedia",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Black_sharkminnow"
+      }
+    },
+    {
+      "speciesId": "sp_luciobarbus_brachycephalus",
+      "adultSizeIn": {
+        "value": 35.4,
+        "quote": "It reaches a maximum length of 90 cm",
+        "source": "wikipedia",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Aral_barbel"
+      }
+    },
+    {
+      "speciesId": "sp_mesonoemacheilus_triangularis",
+      "adultSizeIn": {
+        "value": 2.3,
+        "quote": "This fish grows to a length of 5.8 cm SL",
+        "source": "wikipedia",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Mesonoemacheilus_triangularis"
+      }
+    },
+    {
+      "speciesId": "sp_polypterus_retropinnis",
+      "adultSizeIn": {
+        "value": 13.4,
+        "quote": "grows to a maximum length of about 34 cm",
+        "source": "wikipedia",
+        "sourceUrl": "https://en.wikipedia.org/wiki/West_African_bichir"
+      },
+      "aggression": {
+        "value": "semi-aggressive",
+        "quote": "This species is territorial, with territory holders threatening intruders",
+        "source": "wikipedia",
+        "sourceUrl": "https://en.wikipedia.org/wiki/West_African_bichir"
+      }
+    },
+    {
+      "speciesId": "sp_protopterus_aethiopicus",
+      "adultSizeIn": {
+        "value": 78.7,
+        "quote": "They can reach a length of up to 2 m",
+        "source": "wikipedia",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Marbled_lungfish"
+      }
+    },
+    {
+      "speciesId": "sp_raiamas_senegalensis",
+      "adultSizeIn": {
+        "value": 9.6,
+        "quote": "The maximum total length is 245 mm",
+        "source": "wikipedia",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Raiamas_senegalensis"
+      }
+    },
+    {
+      "speciesId": "sp_scatophagus_tetracanthus",
+      "adultSizeIn": {
+        "value": 11.8,
+        "quote": "This species attains a maximum total length of 30 cm",
+        "source": "wikipedia",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Scatophagus_tetracanthus"
+      }
+    },
+    {
+      "speciesId": "sp_tetraodon_palembangensis",
+      "adultSizeIn": {
+        "value": 7.6,
+        "quote": "Pao palembangensis grows to a length of 19.4 cm SL",
+        "source": "wikipedia",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Pao_palembangensis"
+      }
+    },
+    {
+      "speciesId": "sp_xenomystus_nigri",
+      "adultSizeIn": {
+        "value": 12,
+        "quote": "This fish reaches 30 cm (12 in) in standard length",
+        "source": "wikipedia",
+        "sourceUrl": "https://en.wikipedia.org/wiki/African_brown_knifefish"
+      }
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{"speciesId":"sp_xenomystus_nigri","kind":"rejected-field","field":"aggression","reason":"the quote uses no word supporting this temperament","claimed":"semi-aggressive from \"it becomes somewhat aggressive towards those of its own kind\""}
+{"speciesId":"sp_hydrocynus_goliath","kind":"rejected-field","field":"min_volume_gal","reason":"value outside the plausible range (likely a unit error)","claimed":4000}
+{"speciesId":"sp_hydrocynus_goliath","kind":"rejected-field","field":"aggression","reason":"the quote uses no word supporting this temperament","claimed":"aggressive from \"They are predatory fish with razor-sharp teeth and are hostile to most other inhabitants\""}
+{"speciesId":"sp_hydrocynus_vittatus","kind":"rejected-field","field":"aggression","reason":"the quote uses no word supporting this temperament","claimed":"aggressive from \"The species is highly predatory and may attack or consume smaller tankmates\""}
+{"speciesId":"sp_corydoras_agassizii","kind":"taxonomy-correction","reason":"proposed rename to \"Brochis agassizii\""}
+{"speciesId":"sp_tetraodon_palembangensis","kind":"taxonomy-correction","reason":"proposed rename to \"Pao palembangensis\""}
+{"speciesId":"sp_tetraodon_palembangensis","kind":"rejected-field","field":"temp_c","reason":"the quote does not state this range","claimed":"24-28 from \"Living in alkalescent, warm (24–28°), and slow-flowing rivers\""}
+{"speciesId":"sp_azolla_caroliniana","kind":"taxonomy-correction","reason":"proposed rename to \"Azolla cristata\""}
+{"speciesId":"sp_celestichthys_margaritatus","kind":"taxonomy-correction","reason":"proposed rename to \"Danio margaritatus\""}

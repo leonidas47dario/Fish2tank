@@ -1,0 +1,181 @@
+{
+  "batch": "11",
+  "species": [
+    {
+      "speciesId": "sp_cyprinus_rubrofuscus",
+      "commonName": "Koi",
+      "scientificName": "Cyprinus rubrofuscus",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_cyprinus_rubrofuscus.wikipedia.txt",
+      "vendorFile": "data/care/text/sp_cyprinus_rubrofuscus.vendor.txt"
+    },
+    {
+      "speciesId": "sp_porcellio_laevis",
+      "commonName": "Dairy Cow Isopods",
+      "scientificName": "Porcellio laevis",
+      "family": "Porcellionidae",
+      "wikipediaFile": "data/care/text/sp_porcellio_laevis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_danio_albolineatus",
+      "commonName": "Pearl Danio",
+      "scientificName": "Danio albolineatus",
+      "family": "Danionidae",
+      "wikipediaFile": "data/care/text/sp_danio_albolineatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_danio_rerio",
+      "commonName": "Zebra Danio",
+      "scientificName": "Danio rerio",
+      "family": "Danionidae",
+      "wikipediaFile": "data/care/text/sp_danio_rerio.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_kuhlia_marginata",
+      "commonName": "Dark-Margined Flagtail",
+      "scientificName": "Kuhlia marginata",
+      "family": "Kuhliidae",
+      "wikipediaFile": "data/care/text/sp_kuhlia_marginata.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_datnioides_microlepis",
+      "commonName": "Datnoid Tiger Fish",
+      "scientificName": "Datnioides microlepis",
+      "family": "Datnioididae",
+      "wikipediaFile": "data/care/text/sp_datnioides_microlepis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_datnioides_polota",
+      "commonName": "Datnoid Tiger Fish",
+      "scientificName": "Datnioides polota",
+      "family": "Datnioididae",
+      "wikipediaFile": "data/care/text/sp_datnioides_polota.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_datnioides_undecimradiatus",
+      "commonName": "Datnoid Tiger Fish",
+      "scientificName": "Datnioides undecimradiatus",
+      "family": "Datnioididae",
+      "wikipediaFile": "data/care/text/sp_datnioides_undecimradiatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_geosesarma_hagen",
+      "commonName": "Devil Vampire Crab",
+      "scientificName": "Geosesarma hagen",
+      "family": "Sesarmidae",
+      "wikipediaFile": "data/care/text/sp_geosesarma_hagen.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_acipenser_gueldenstaedtii",
+      "commonName": "Diamondback Sturgeon",
+      "scientificName": "Acipenser gueldenstaedtii",
+      "family": "Acipenseridae",
+      "wikipediaFile": "data/care/text/sp_acipenser_gueldenstaedtii.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_symphysodon_aequifasciatus",
+      "commonName": "Blue Discus",
+      "scientificName": "Symphysodon aequifasciatus",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_symphysodon_aequifasciatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_distichodus_sexfasciatus",
+      "commonName": "Distichodus",
+      "scientificName": "Distichodus sexfasciatus",
+      "family": "Distichodontidae",
+      "wikipediaFile": "data/care/text/sp_distichodus_sexfasciatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_misgurnus_anguillicaudatus",
+      "commonName": "Dojo Loach",
+      "scientificName": "Misgurnus anguillicaudatus",
+      "family": "Cobitidae",
+      "wikipediaFile": "data/care/text/sp_misgurnus_anguillicaudatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_brachyplatystoma_rousseauxii",
+      "commonName": "Dorado Catfish",
+      "scientificName": "Brachyplatystoma rousseauxii",
+      "family": "Pimelodidae",
+      "wikipediaFile": "data/care/text/sp_brachyplatystoma_rousseauxii.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pogostemon_helferi",
+      "commonName": "Downoi Tissue Culture",
+      "scientificName": "Pogostemon helferi",
+      "family": "Lamiaceae",
+      "wikipediaFile": "data/care/text/sp_pogostemon_helferi.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_trachycorystes_trachycorystes",
+      "commonName": "Driftwood Catfish",
+      "scientificName": "Trachycorystes trachycorystes",
+      "family": "Auchenipteridae",
+      "wikipediaFile": "data/care/text/sp_trachycorystes_trachycorystes.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_tetraodon_duboisi",
+      "commonName": "Duboisi Puffer Fish",
+      "scientificName": "Tetraodon duboisi",
+      "family": "Tetraodontidae",
+      "wikipediaFile": "data/care/text/sp_tetraodon_duboisi.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_lemna_minor",
+      "commonName": "Duckweed",
+      "scientificName": "Lemna minor",
+      "family": "Araceae",
+      "wikipediaFile": "data/care/text/sp_lemna_minor.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_spirodela_polyrhiza",
+      "commonName": "Giant Duckweed",
+      "scientificName": "Spirodela polyrhiza",
+      "family": "Araceae",
+      "wikipediaFile": "data/care/text/sp_spirodela_polyrhiza.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_semilabeo_obscurus",
+      "commonName": "Dusky Barbel",
+      "scientificName": "Semilabeo obscurus",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_semilabeo_obscurus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pethia_gelius",
+      "commonName": "Golden Dwarf Barb",
+      "scientificName": "Pethia gelius",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_pethia_gelius.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_microglanis_iheringi",
+      "commonName": "Dwarf Bumblebee Catfish",
+      "scientificName": "Microglanis iheringi",
+      "family": "Pseudopimelodidae",
+      "wikipediaFile": "data/care/text/sp_microglanis_iheringi.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_apistogramma_bitaeniata",
+      "commonName": "Two-Striped Dwarf Cichlid",
+      "scientificName": "Apistogramma bitaeniata",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_apistogramma_bitaeniata.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_mikrogeophagus_altispinosus",
+      "commonName": "Ram Dwarf Cichlid",
+      "scientificName": "Mikrogeophagus altispinosus",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_mikrogeophagus_altispinosus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_apistogramma_macmasteri",
+      "commonName": "Red Shoulder Dwarf Cichlid",
+      "scientificName": "Apistogramma macmasteri",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_apistogramma_macmasteri.wikipedia.txt"
+    }
+  ]
+}

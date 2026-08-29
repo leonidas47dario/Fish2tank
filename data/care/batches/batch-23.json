@@ -1,0 +1,180 @@
+{
+  "batch": "23",
+  "species": [
+    {
+      "speciesId": "sp_nymphoides_aquatica",
+      "commonName": "Plant",
+      "scientificName": "Nymphoides aquatica",
+      "family": "Menyanthaceae",
+      "wikipediaFile": "data/care/text/sp_nymphoides_aquatica.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_crinum_thaianum",
+      "commonName": "Plant With Bulb",
+      "scientificName": "Crinum thaianum",
+      "family": "Amaryllidaceae",
+      "wikipediaFile": "data/care/text/sp_crinum_thaianum.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_crinum_calamistratum",
+      "commonName": "Plant With Bulb",
+      "scientificName": "Crinum calamistratum",
+      "family": "Amaryllidaceae",
+      "wikipediaFile": "data/care/text/sp_crinum_calamistratum.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_xiphophorus_variatus",
+      "commonName": "Variatus Platy",
+      "scientificName": "Xiphophorus variatus",
+      "family": "Poeciliidae",
+      "wikipediaFile": "data/care/text/sp_xiphophorus_variatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_leporacanthicus_galaxias",
+      "commonName": "Galaxy Pleco",
+      "scientificName": "Leporacanthicus galaxias",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_leporacanthicus_galaxias.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_panaqolus_albivermis",
+      "commonName": "Flash Pleco",
+      "scientificName": "Panaqolus albivermis",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_panaqolus_albivermis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_baryancistrus_xanthellus",
+      "commonName": "Gold Nugget Pleco",
+      "scientificName": "Baryancistrus xanthellus",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_baryancistrus_xanthellus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_aegle_marmelos",
+      "commonName": "Pods Dried Botanicals",
+      "scientificName": "Aegle marmelos",
+      "wikipediaFile": "data/care/text/sp_aegle_marmelos.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_poecilia_latipinna",
+      "commonName": "Sailfin Molly",
+      "scientificName": "Poecilia latipinna",
+      "family": "Poeciliidae",
+      "wikipediaFile": "data/care/text/sp_poecilia_latipinna.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_botia_kubotai",
+      "commonName": "Polka Dot Loach",
+      "scientificName": "Botia kubotai",
+      "family": "Botiidae",
+      "wikipediaFile": "data/care/text/sp_botia_kubotai.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_spectracanthicus_zuanoni",
+      "commonName": "Polka Dot Pleco",
+      "scientificName": "Spectracanthicus zuanoni",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_spectracanthicus_zuanoni.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_synodontis_angelicus",
+      "commonName": "Polkadot Synodontis",
+      "scientificName": "Synodontis angelicus",
+      "family": "Mochokidae",
+      "wikipediaFile": "data/care/text/sp_synodontis_angelicus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_polypterus_polli",
+      "commonName": "Polli Marbled Bichir",
+      "scientificName": "Polypterus polli",
+      "family": "Polypteridae",
+      "wikipediaFile": "data/care/text/sp_polypterus_polli.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_papyrocranus_afer",
+      "commonName": "Pom Marbled Knifefish",
+      "scientificName": "Papyrocranus afer",
+      "family": "Notopteridae",
+      "wikipediaFile": "data/care/text/sp_papyrocranus_afer.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_epipremnum_aureum",
+      "commonName": "Pothos Tissue Culture",
+      "scientificName": "Epipremnum aureum",
+      "family": "Araceae",
+      "wikipediaFile": "data/care/text/sp_epipremnum_aureum.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_dionaea_muscipula",
+      "commonName": "Potted Carnivorous Plant",
+      "scientificName": "Dionaea muscipula",
+      "family": "Droseraceae",
+      "wikipediaFile": "data/care/text/sp_dionaea_muscipula.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_melanotaenia_praecox",
+      "commonName": "Dwarf Neon Rainbowfish",
+      "scientificName": "Melanotaenia praecox",
+      "family": "Melanotaeniidae",
+      "wikipediaFile": "data/care/text/sp_melanotaenia_praecox.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_chanodichthys_erythropterus",
+      "commonName": "Predatory Carp",
+      "scientificName": "Chanodichthys erythropterus",
+      "family": "Xenocyprididae",
+      "wikipediaFile": "data/care/text/sp_chanodichthys_erythropterus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_procambarus_alleni",
+      "commonName": "Electric Blue Crayfish",
+      "scientificName": "Procambarus alleni",
+      "family": "Cambaridae",
+      "wikipediaFile": "data/care/text/sp_procambarus_alleni.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_procambarus_clarkii",
+      "commonName": "Red Swamp Crayfish",
+      "scientificName": "Procambarus clarkii",
+      "family": "Cambaridae",
+      "wikipediaFile": "data/care/text/sp_procambarus_clarkii.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pterophyllum_scalare",
+      "commonName": "Freshwater Angelfish",
+      "scientificName": "Pterophyllum scalare",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_pterophyllum_scalare.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pterygoplichthys_gibbiceps",
+      "commonName": "Leopard Sailfin Catfish",
+      "scientificName": "Pterygoplichthys gibbiceps",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_pterygoplichthys_gibbiceps.wikipedia.txt",
+      "vendorFile": "data/care/text/sp_pterygoplichthys_gibbiceps.vendor.txt"
+    },
+    {
+      "speciesId": "sp_tetraodon_mbu",
+      "commonName": "Puffer Fish",
+      "scientificName": "Tetraodon mbu",
+      "family": "Tetraodontidae",
+      "wikipediaFile": "data/care/text/sp_tetraodon_mbu.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_cetopsis_candiru",
+      "commonName": "Purple Cobra Candiru",
+      "scientificName": "Cetopsis candiru",
+      "family": "Cetopsidae",
+      "wikipediaFile": "data/care/text/sp_cetopsis_candiru.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hemigraphis_alternata",
+      "commonName": "Purple Waffle Plant",
+      "scientificName": "Hemigraphis alternata",
+      "family": "Acanthaceae",
+      "wikipediaFile": "data/care/text/sp_hemigraphis_alternata.wikipedia.txt"
+    }
+  ]
+}

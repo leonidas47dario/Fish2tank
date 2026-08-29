@@ -21,6 +21,7 @@
     "portraits": "tsx etl/build-portraits.ts",
     "backfill:urls": "tsx etl/backfill-product-urls.ts",
     "care:fetch": "tsx etl/fetch-care-text.ts",
+    "care:plan": "tsx etl/plan-care-batches.ts",
     "care:ingest": "tsx etl/ingest-care-proposals.ts"
   },
   "dependencies": {

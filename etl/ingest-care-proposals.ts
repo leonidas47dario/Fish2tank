@@ -20,11 +20,12 @@
  * logs which check failed, and a run that accepts nothing throws rather than
  * writing an empty file over a good one.
  */
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { verifyProposal, type AcceptedCare, type CareProposal, type SourceDoc, type SourceKind } from './care/verify';
 import { vendorPath, wikiPath } from './care/paths';
 
-const PROPOSALS = 'data/care/care-proposals.jsonl';
+const PROPOSALS_DIR = 'data/care/proposals';
 const REVIEW = 'data/care/care-review.jsonl';
 const OUT = 'src/data/seed/species-care.json';
 
@@ -67,27 +68,62 @@ export interface ReviewRow {
   claimed?: unknown;
 }
 
-/** Existing accepted records, so waves merge instead of clobbering. */
-function loadExisting(): Map<string, AcceptedCare> {
-  if (!existsSync(OUT)) return new Map();
+/**
+ * Existing accepted records, so a single-file run tops up rather than wipes.
+ *
+ * A whole-directory run starts FRESH instead. The directory is the complete
+ * set of proposals, so merging a previous run's output into it would preserve
+ * values whose proposal has since been corrected or withdrawn - stale data
+ * kept alive by the very step that is supposed to be verifying it.
+ */
+function loadExisting(merge: boolean): Map<string, AcceptedCare> {
+  if (!merge || !existsSync(OUT)) return new Map();
   const prev = JSON.parse(readFileSync(OUT, 'utf8')) as { species?: AcceptedCare[] };
   return new Map((prev.species ?? []).map((s) => [s.speciesId, s]));
 }
 
+/**
+ * Every proposal row, from one file or from the whole batch directory.
+ *
+ * Each extraction agent writes its own file so that thirty of them appending
+ * to one shared JSONL cannot interleave a half-written line. Reassembly is
+ * this function's job, and it reads the directory in sorted order so a run is
+ * reproducible.
+ */
+function collectProposalLines(source: string): { lines: string[]; files: string[] } {
+  const files = source.endsWith('.jsonl')
+    ? [source]
+    : readdirSync(source)
+        .filter((f) => f.endsWith('.jsonl'))
+        .sort()
+        .map((f) => join(source, f));
+
+  const lines: string[] = [];
+  for (const f of files) {
+    lines.push(...readFileSync(f, 'utf8').split('\n').filter((l) => l.trim().length > 0));
+  }
+  return { lines, files };
+}
+
 function main() {
-  const proposalsPath = arg('proposals') ?? PROPOSALS;
+  const proposalsPath = arg('proposals') ?? PROPOSALS_DIR;
   mkdirSync('data/care', { recursive: true });
 
   if (!existsSync(proposalsPath)) {
     throw new Error(`no proposals at ${proposalsPath} - run the extraction stage first`);
   }
 
-  const lines = readFileSync(proposalsPath, 'utf8').split('\n').filter((l) => l.trim().length > 0);
+  const { lines, files } = collectProposalLines(proposalsPath);
   console.log('─── care: ingest proposals ───');
-  console.log(`  proposals        ${lines.length} rows from ${proposalsPath}`);
+  console.log(`  proposals        ${lines.length} rows from ${files.length} file(s) in ${proposalsPath}`);
+  if (lines.length === 0) {
+    throw new Error(`${proposalsPath} holds no proposal rows - nothing to ingest`);
+  }
 
-  const accepted = loadExisting();
+  const singleFile = proposalsPath.endsWith('.jsonl');
+  const accepted = loadExisting(singleFile);
   const carriedOver = accepted.size;
+  console.log(`  mode             ${singleFile ? 'single file, merging into existing' : 'full directory, rebuilding from scratch'}`);
   const review: ReviewRow[] = [];
   const seen = new Set<string>();
 

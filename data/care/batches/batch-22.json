@@ -1,0 +1,181 @@
+{
+  "batch": "22",
+  "species": [
+    {
+      "speciesId": "sp_garra_flavatra",
+      "commonName": "Panda Garra",
+      "scientificName": "Garra flavatra",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_garra_flavatra.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_yaoshania_pachychilus",
+      "commonName": "Panda Loach",
+      "scientificName": "Yaoshania pachychilus",
+      "family": "Gastromyzontidae",
+      "wikipediaFile": "data/care/text/sp_yaoshania_pachychilus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_aphyocharax_nattereri",
+      "commonName": "Dawn",
+      "scientificName": "Aphyocharax nattereri",
+      "family": "Characidae",
+      "wikipediaFile": "data/care/text/sp_aphyocharax_nattereri.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_uaru_fernandezyepezi",
+      "commonName": "Panda Uaru Cichlid",
+      "scientificName": "Uaru fernandezyepezi",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_uaru_fernandezyepezi.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_parathelphusa_pantherina",
+      "commonName": "Panther Crab",
+      "scientificName": "Parathelphusa pantherina",
+      "family": "Gecarcinucidae",
+      "wikipediaFile": "data/care/text/sp_parathelphusa_pantherina.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_panaque_bathyphilus",
+      "commonName": "Papa Lyretail Pleco",
+      "scientificName": "Panaque bathyphilus",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_panaque_bathyphilus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_neoarius_graeffei",
+      "commonName": "Papuan Shark Catfish",
+      "scientificName": "Neoarius graeffei",
+      "family": "Ariidae",
+      "wikipediaFile": "data/care/text/sp_neoarius_graeffei.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_paracheirodon_axelrodi",
+      "commonName": "Cardinal Tetra",
+      "scientificName": "Paracheirodon axelrodi",
+      "family": "Acestrorhamphidae",
+      "wikipediaFile": "data/care/text/sp_paracheirodon_axelrodi.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_macropodus_opercularis",
+      "commonName": "Paradise Gourami",
+      "scientificName": "Macropodus opercularis",
+      "family": "Osphronemidae",
+      "wikipediaFile": "data/care/text/sp_macropodus_opercularis.wikipedia.txt",
+      "vendorFile": "data/care/text/sp_macropodus_opercularis.vendor.txt"
+    },
+    {
+      "speciesId": "sp_loricaria_parnahybae",
+      "commonName": "Parnahyba Whiptail",
+      "scientificName": "Loricaria parnahybae",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_loricaria_parnahybae.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pterygoplichthys_parnaibae",
+      "commonName": "Parnaibae Sailfin Pleco",
+      "scientificName": "Pterygoplichthys parnaibae",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_pterygoplichthys_parnaibae.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hydrolycus_tatauaia",
+      "commonName": "Payara Vampire Tetra",
+      "scientificName": "Hydrolycus tatauaia",
+      "family": "Cynodontidae",
+      "wikipediaFile": "data/care/text/sp_hydrolycus_tatauaia.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_aulonocara_koningsi",
+      "commonName": "Peacock",
+      "scientificName": "Aulonocara koningsi",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_aulonocara_koningsi.wikipedia.txt",
+      "vendorFile": "data/care/text/sp_aulonocara_koningsi.vendor.txt"
+    },
+    {
+      "speciesId": "sp_macrognathus_siamensis",
+      "commonName": "Peacock Eel",
+      "scientificName": "Macrognathus siamensis",
+      "family": "Mastacembelidae",
+      "wikipediaFile": "data/care/text/sp_macrognathus_siamensis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_peckoltia_compta",
+      "commonName": "Leopard Frog Pleco",
+      "scientificName": "Peckoltia compta",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_peckoltia_compta.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pelvicachromis_pulcher",
+      "commonName": "Kribensis",
+      "scientificName": "Pelvicachromis pulcher",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_pelvicachromis_pulcher.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_parancistrus_nudiventris",
+      "commonName": "Peppermint Pleco Brazil",
+      "scientificName": "Parancistrus nudiventris",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_parancistrus_nudiventris.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_kryptopterus_vitreolus",
+      "commonName": "Phantom Glass Catfish",
+      "scientificName": "Kryptopterus vitreolus",
+      "family": "Siluridae",
+      "wikipediaFile": "data/care/text/sp_kryptopterus_vitreolus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hyphessobrycon_sweglesi",
+      "commonName": "Red Phantom Tetra",
+      "scientificName": "Hyphessobrycon sweglesi",
+      "family": "Characidae",
+      "wikipediaFile": "data/care/text/sp_hyphessobrycon_sweglesi.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_boraras_merah",
+      "commonName": "Phoenix Rasbora",
+      "scientificName": "Boraras merah",
+      "family": "Danionidae",
+      "wikipediaFile": "data/care/text/sp_boraras_merah.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_phyllanthus_fluitans",
+      "commonName": "Red Root Floater",
+      "scientificName": "Phyllanthus fluitans",
+      "family": "Phyllanthaceae",
+      "wikipediaFile": "data/care/text/sp_phyllanthus_fluitans.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pimelodus_pictus",
+      "commonName": "Pictus Catfish",
+      "scientificName": "Pimelodus pictus",
+      "family": "Pimelodidae",
+      "wikipediaFile": "data/care/text/sp_pimelodus_pictus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_paretroplus_menarambo",
+      "commonName": "Pinstripe Damba Cichlid",
+      "scientificName": "Paretroplus menarambo",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_paretroplus_menarambo.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_vietorintalia_rubrum",
+      "commonName": "Pirate Crab",
+      "scientificName": "Vietorintalia rubrum",
+      "wikipediaFile": "data/care/text/sp_vietorintalia_rubrum.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pistia_stratiotes",
+      "commonName": "Water Lettuce",
+      "scientificName": "Pistia stratiotes",
+      "family": "Araceae",
+      "wikipediaFile": "data/care/text/sp_pistia_stratiotes.wikipedia.txt"
+    }
+  ]
+}

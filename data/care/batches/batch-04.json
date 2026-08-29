@@ -1,0 +1,180 @@
+{
+  "batch": "04",
+  "species": [
+    {
+      "speciesId": "sp_nymphaea_zenkeri",
+      "commonName": "Aquarium Lily Bulb",
+      "scientificName": "Nymphaea zenkeri",
+      "family": "Nymphaeaceae",
+      "wikipediaFile": "data/care/text/sp_nymphaea_zenkeri.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_laetacara_araguaiae",
+      "commonName": "Araguaia Dwarf Acara",
+      "scientificName": "Laetacara araguaiae",
+      "family": "Cichlidae",
+      "vendorFile": "data/care/text/sp_laetacara_araguaiae.vendor.txt"
+    },
+    {
+      "speciesId": "sp_arapaima_gigas",
+      "commonName": "Arapaima",
+      "scientificName": "Arapaima gigas",
+      "family": "Arapaimidae",
+      "wikipediaFile": "data/care/text/sp_arapaima_gigas.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_toxotes_blythii",
+      "commonName": "Archerfish",
+      "scientificName": "Toxotes blythii",
+      "family": "Toxotidae",
+      "wikipediaFile": "data/care/text/sp_toxotes_blythii.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pseudacanthicus_histrix",
+      "commonName": "Armored Catfish",
+      "scientificName": "Pseudacanthicus histrix",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_pseudacanthicus_histrix.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_terminalia_arjuna",
+      "commonName": "Arts Arjuna Leaves",
+      "scientificName": "Terminalia arjuna",
+      "family": "Combretaceae",
+      "wikipediaFile": "data/care/text/sp_terminalia_arjuna.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hemibagrus_wyckioides",
+      "commonName": "Asian Redtail Catfish",
+      "scientificName": "Hemibagrus wyckioides",
+      "family": "Bagridae",
+      "wikipediaFile": "data/care/text/sp_hemibagrus_wyckioides.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_monopterus_albus",
+      "commonName": "Asian Swamp Eel",
+      "scientificName": "Monopterus albus",
+      "family": "Synbranchidae",
+      "wikipediaFile": "data/care/text/sp_monopterus_albus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_clea_helena",
+      "commonName": "Assassin Snails",
+      "scientificName": "Clea helena",
+      "family": "Nassariidae",
+      "wikipediaFile": "data/care/text/sp_clea_helena.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_astronotus_ocellatus",
+      "commonName": "Oscar",
+      "scientificName": "Astronotus ocellatus",
+      "family": "Cichlidae",
+      "wikipediaFile": "data/care/text/sp_astronotus_ocellatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_dekeyseria_picta",
+      "commonName": "Atabapo Butterfly Pleco",
+      "scientificName": "Dekeyseria picta",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_dekeyseria_picta.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_dasyatis_sabina",
+      "commonName": "Atlantic Stingray",
+      "scientificName": "Dasyatis sabina",
+      "family": "Dasyatidae",
+      "wikipediaFile": "data/care/text/sp_dasyatis_sabina.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_megalops_atlanticus",
+      "commonName": "Atlantic Tarpon",
+      "scientificName": "Megalops atlanticus",
+      "family": "Megalopidae",
+      "wikipediaFile": "data/care/text/sp_megalops_atlanticus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_auriglobus_modestus",
+      "commonName": "Golden Puffer",
+      "scientificName": "Auriglobus modestus",
+      "family": "Tetraodontidae",
+      "wikipediaFile": "data/care/text/sp_auriglobus_modestus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_neoceratodus_forsteri",
+      "commonName": "Australian Lungfish",
+      "scientificName": "Neoceratodus forsteri",
+      "family": "Neoceratodontidae",
+      "wikipediaFile": "data/care/text/sp_neoceratodus_forsteri.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_cherax_quadricarinatus",
+      "commonName": "Australian Redclaw Crayfish",
+      "scientificName": "Cherax quadricarinatus",
+      "family": "Parastacidae",
+      "wikipediaFile": "data/care/text/sp_cherax_quadricarinatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hoplias_australis",
+      "commonName": "Australis Wolf Fish",
+      "scientificName": "Hoplias australis",
+      "family": "Erythrinidae",
+      "wikipediaFile": "data/care/text/sp_hoplias_australis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_balantiocheilus_melanopterus",
+      "commonName": "Bala Shark",
+      "scientificName": "Balantiocheilus melanopterus",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_balantiocheilus_melanopterus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_balantiocheilos_melanopterus",
+      "commonName": "Bala Shark",
+      "scientificName": "Balantiocheilos melanopterus",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_balantiocheilos_melanopterus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_aegagropila_linnaei",
+      "commonName": "Balls - Inch",
+      "scientificName": "Aegagropila linnaei",
+      "family": "Pithophoraceae",
+      "wikipediaFile": "data/care/text/sp_aegagropila_linnaei.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_toxotes_jaculatrix",
+      "commonName": "Banded Archerfish",
+      "scientificName": "Toxotes jaculatrix",
+      "family": "Toxotidae",
+      "wikipediaFile": "data/care/text/sp_toxotes_jaculatrix.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_desmopuntius_rhomboocellatus",
+      "commonName": "Barb",
+      "scientificName": "Desmopuntius rhomboocellatus",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_desmopuntius_rhomboocellatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_pethia_padamya",
+      "commonName": "Odessa Barb",
+      "scientificName": "Pethia padamya",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_pethia_padamya.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_sawbwa_resplendens",
+      "commonName": "Rummy Nose Rasbora",
+      "scientificName": "Sawbwa resplendens",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_sawbwa_resplendens.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_barbus_fasciolatus",
+      "commonName": "African Banded Barb",
+      "scientificName": "Barbus fasciolatus",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_barbus_fasciolatus.wikipedia.txt"
+    }
+  ]
+}

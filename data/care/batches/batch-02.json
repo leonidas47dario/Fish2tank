@@ -1,0 +1,180 @@
+{
+  "batch": "02",
+  "species": [
+    {
+      "speciesId": "sp_polypterus_retropinnis",
+      "commonName": "African Green Bichir",
+      "scientificName": "Polypterus retropinnis",
+      "family": "Polypteridae",
+      "wikipediaFile": "data/care/text/sp_polypterus_retropinnis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_xenomystus_nigri",
+      "commonName": "African Knifefish",
+      "scientificName": "Xenomystus nigri",
+      "family": "Notopteridae",
+      "wikipediaFile": "data/care/text/sp_xenomystus_nigri.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_protopterus_aethiopicus",
+      "commonName": "African Lungfish",
+      "scientificName": "Protopterus aethiopicus",
+      "family": "Protopteridae",
+      "wikipediaFile": "data/care/text/sp_protopterus_aethiopicus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hepsetus_odoe",
+      "commonName": "African Pike",
+      "scientificName": "Hepsetus odoe",
+      "family": "Hepsetidae",
+      "wikipediaFile": "data/care/text/sp_hepsetus_odoe.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hydrocynus_goliath",
+      "commonName": "African Tiger Fish",
+      "scientificName": "Hydrocynus goliath",
+      "family": "Alestidae",
+      "wikipediaFile": "data/care/text/sp_hydrocynus_goliath.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hydrocynus_vittatus",
+      "commonName": "African Tiger Fish",
+      "scientificName": "Hydrocynus vittatus",
+      "family": "Alestidae",
+      "wikipediaFile": "data/care/text/sp_hydrocynus_vittatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hydrocynus_forskahlii",
+      "commonName": "African Tiger Fish",
+      "scientificName": "Hydrocynus forskahlii",
+      "family": "Alestidae",
+      "wikipediaFile": "data/care/text/sp_hydrocynus_forskahlii.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_scatophagus_tetracanthus",
+      "commonName": "African Tiger Scat",
+      "scientificName": "Scatophagus tetracanthus",
+      "family": "Scatophagidae",
+      "wikipediaFile": "data/care/text/sp_scatophagus_tetracanthus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_raiamas_senegalensis",
+      "commonName": "African Trout Minnow",
+      "scientificName": "Raiamas senegalensis",
+      "family": "Danionidae",
+      "wikipediaFile": "data/care/text/sp_raiamas_senegalensis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_corydoras_agassizii",
+      "commonName": "Agassizi Corydoras Catfish",
+      "scientificName": "Corydoras agassizii",
+      "family": "Callichthyidae",
+      "wikipediaFile": "data/care/text/sp_corydoras_agassizii.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_ancistrus_aguaboensis",
+      "commonName": "Aguaboa Bushynose Pleco",
+      "scientificName": "Ancistrus aguaboensis",
+      "family": "Loricariidae",
+      "wikipediaFile": "data/care/text/sp_ancistrus_aguaboensis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hoplias_aimara",
+      "commonName": "Aimara Wolf Fish",
+      "scientificName": "Hoplias aimara",
+      "family": "Erythrinidae",
+      "wikipediaFile": "data/care/text/sp_hoplias_aimara.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_hara_jerdoni",
+      "commonName": "Aka Anchor Catfish",
+      "scientificName": "Hara jerdoni",
+      "family": "Sisoridae",
+      "wikipediaFile": "data/care/text/sp_hara_jerdoni.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_tetraodon_palembangensis",
+      "commonName": "Aka Band Puffer",
+      "scientificName": "Tetraodon palembangensis",
+      "family": "Tetraodontidae",
+      "wikipediaFile": "data/care/text/sp_tetraodon_palembangensis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_mesonoemacheilus_triangularis",
+      "commonName": "Aka Batik Loach",
+      "scientificName": "Mesonoemacheilus triangularis",
+      "family": "Nemacheilidae",
+      "wikipediaFile": "data/care/text/sp_mesonoemacheilus_triangularis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_badis_badis",
+      "commonName": "Aka Chameleon Fish",
+      "scientificName": "Badis badis",
+      "family": "Badidae",
+      "wikipediaFile": "data/care/text/sp_badis_badis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_brevibora_exilis",
+      "commonName": "Aka Eyespot Rasbora",
+      "scientificName": "Brevibora exilis",
+      "family": "Danionidae",
+      "wikipediaFile": "data/care/text/sp_brevibora_exilis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_azolla_caroliniana",
+      "commonName": "Aka Fairy Moss",
+      "scientificName": "Azolla caroliniana",
+      "family": "Salviniaceae",
+      "wikipediaFile": "data/care/text/sp_azolla_caroliniana.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_celestichthys_margaritatus",
+      "commonName": "Aka Galaxy Rasbora",
+      "scientificName": "Celestichthys margaritatus",
+      "family": "Danionidae",
+      "wikipediaFile": "data/care/text/sp_celestichthys_margaritatus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_dario_dario",
+      "commonName": "Aka Gem Badis",
+      "scientificName": "Dario dario",
+      "family": "Badidae",
+      "wikipediaFile": "data/care/text/sp_dario_dario.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_garra_rufa",
+      "commonName": "Aka Pedicure Fish",
+      "scientificName": "Garra rufa",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_garra_rufa.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_eleocharis_montevidensis",
+      "commonName": "Aka Sand Spikerush",
+      "scientificName": "Eleocharis montevidensis",
+      "family": "Cyperaceae",
+      "wikipediaFile": "data/care/text/sp_eleocharis_montevidensis.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_luciobarbus_brachycephalus",
+      "commonName": "Albino Aral Barbel",
+      "scientificName": "Luciobarbus brachycephalus",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_luciobarbus_brachycephalus.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_labeo_chrysophekadion",
+      "commonName": "Albino Black Shark",
+      "scientificName": "Labeo chrysophekadion",
+      "family": "Cyprinidae",
+      "wikipediaFile": "data/care/text/sp_labeo_chrysophekadion.wikipedia.txt"
+    },
+    {
+      "speciesId": "sp_ictalurus_punctatus",
+      "commonName": "Albino Channel Catfish",
+      "scientificName": "Ictalurus punctatus",
+      "family": "Ictaluridae",
+      "wikipediaFile": "data/care/text/sp_ictalurus_punctatus.wikipedia.txt"
+    }
+  ]
+}
