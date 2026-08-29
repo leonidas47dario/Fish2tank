@@ -19,6 +19,7 @@
     "marts": "tsx etl/build-marts.ts",
     "refresh": "npm run etl && npm run images && npm run portraits && npm run warehouse && npm run marts",
     "portraits": "tsx etl/build-portraits.ts",
+    "ingest:portraits": "tsx etl/ingest-proposals.ts",
     "backfill:urls": "tsx etl/backfill-product-urls.ts"
   },
   "dependencies": {
