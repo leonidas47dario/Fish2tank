@@ -150,8 +150,8 @@ Gem positions are borrowed deliberately. A card game trains the eye to find
 cost at the top-left, so that holds market price; adult size and minimum tank
 volume sit bottom-right — the three numbers a keeper actually decides on.
 
-**The tiles are landscape, because the photographs are.** 612 of the 695
-bundled portraits (88%) are wider than they are tall, at a median aspect ratio
+**The tiles are landscape, because the photographs are.** 879 of the 1,011
+bundled portraits (87%) are wider than they are tall, at a median aspect ratio
 of 1.50. The card used to be 3:4 with `object-fit: cover`, so a 3:2 photograph
 kept about 37% of its width and the crop went straight through the fish — head
 and tail outside the frame, a belly in the middle. Matching the tile to the
@@ -162,9 +162,11 @@ so it is also just the right shape for the subject.
 | | |
 |---|---|
 | Species in the catalog | **1,076** |
-| With a licensed portrait on Wikimedia Commons | 699 (65%) |
-| Portraits bundled | 695 — 14.9 MB at 480 px, ~21 KB each |
-| Rendering a silhouette | 377, plus 5 downloads that failed |
+| Portraits bundled | **1,011 (94%)** — 22.3 MB at 480 px, ~22 KB each |
+| ↳ from Wikimedia Commons, under a stated licence | 851 |
+| ↳ from the open web, credited to the site | 100 |
+| ↳ from a vendor product listing, credited to the shop | 60 |
+| Rendering a silhouette | 65 |
 | With a water-column zone | 956 (89%) |
 | With a curated care profile | 47 |
 
@@ -178,9 +180,10 @@ vendor stated explicitly. Note what this is not: it never guesses that one fish
 is another. Discovered species carry no care data, deliberately, so the
 compatibility engine returns *Not enough data* for them.
 
-Portraits are precached (~14.9 MB) so the library draws itself
-offline per NFR-02. The install happens in the background after first paint and
-cards lazy-load, so it does not sit in front of the first render.
+Portraits are precached (~22.3 MB, up from 14.9 MB when coverage went from 695
+species to 1,011) so the library draws itself offline per NFR-02. The install
+happens in the background after first paint and cards lazy-load, so it does not
+sit in front of the first render.
 
 **Known performance debt, logged rather than quietly accepted:** the marts are
 inlined into the JS bundle (1,185 KB raw / 262 KB gzip) and should be separate
@@ -346,8 +349,20 @@ face.
 
 Per your decision, **Wikipedia is the placeholder source** until a licensed
 care database is chosen (PRD 12.1). Every curated profile carries a real
-article URL, and every portrait carries licence, artist and attribution URL —
-an image whose licence cannot be stated is dropped rather than shipped
+article URL.
+
+**Portraits come from three places, and each says which.** Wikimedia Commons
+files carry a stated licence and credit the photographer. Vendor product
+listings and open-web photos carry no licence, and are used by your decision
+(spec 002) for the species Commons will never cover: line-bred colour morphs,
+hybrids, and fish described too recently for anyone to have photographed them
+freely. Those render as `Photo: Imperial Tropicals (product listing)` rather
+than borrowing the shape of a licence line, because implying a licence nobody
+granted would be the actual dishonesty.
+
+The rule an image must pass is **traceability, not licensing**: every shipped
+portrait carries a provenance and a URL you can open to see where it came
+from. An image we cannot account for is still dropped rather than shipped
 hopefully.
 
 One caveat worth keeping in view: Wikipedia species articles are good on
