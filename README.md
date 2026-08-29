@@ -19,14 +19,20 @@ npm run dev          # http://localhost:5173
 ```
 
 ```bash
-npm test             # 182 unit + integration tests
+npm test             # 332 unit + integration tests across 15 files
 npm run build        # type-check, bundle, generate the service worker
 npm run preview      # serve the production build on :4173
 
 # End-to-end: drives the whole Panther scenario through a real browser
 npm run build && npm run preview &
 npm run smoke
+
+# Proves a new deploy is picked up on the first load, not the second
+npm run verify:sw
 ```
+
+Refreshing the shipped market data is a separate act from shipping code — see
+[Data pipeline](#data-pipeline) below and [`docs/RELEASING.md`](docs/RELEASING.md).
 
 ---
 
@@ -40,10 +46,10 @@ real UI.
 | PRD slice (11.1) | State |
 |---|---|
 | **1 — Private shell** | PWA installs and runs offline; drafts are created before media finishes writing; retries never duplicate a catch. No auth — see *No backend* below. |
-| **2 — Collection** | Species / specimen / encounter modelled separately; Unknown / Provisional / Confirmed identity; reveal ceremony; Dream List. |
+| **2 — Catalog** | Species / specimen / encounter modelled separately; Unknown / Provisional / Confirmed identity; reveal ceremony; Dream List. The library is a **card grid of 1,080 species** with search and filters. |
 | **3 — Real tanks** | Aquariums, holdings, dated residencies, full lifecycle events, inventory importer. |
 | **4 — Evaluation** | Seven-factor deterministic screening over a versioned rule set, with immutable snapshots. |
-| **5 — Price + journal** | Ask / member / paid kept separate, comparability filtering, story chapters. |
+| **5 — Price + journal** | Ask / member / paid kept separate, comparability filtering, story chapters. Prices come from **8 tracked vendors**. |
 | **6 — Legacy + hardening** | Fish Heaven, Keeper's Code, JSON export, reduced-motion and mute, non-colour status cues. |
 
 ### Deliberately not built yet
@@ -51,13 +57,14 @@ real UI.
 All of these are **P1 or P2** in the PRD's own priority legend, so none of them
 block a first usable release:
 
-- Audio and video memos, and transcription (FR-J02, FR-J03)
+- Audio and video *memos*, and transcription (FR-J02, FR-J03). Video files are
+  accepted as encounter media; a recorded memo attached to a chapter is not.
 - External visual-search handoff (FR-I03)
 - Geolocation capture — a favourite store is seeded, but there is no permission flow (FR-C03)
 - Opt-in "finish your story later" reminder (FR-C08)
 - User override on a verdict — modelled in the types, no UI (FR-E08)
 - AI explanation of a verdict (FR-E09)
-- Collection filtering (FR-R09) and size-over-time tracking (FR-T07)
+- Size-over-time tracking (FR-T07)
 - Restore from an export — export works, import does not
 
 ---
@@ -75,7 +82,9 @@ immediately, and measuring them once is what makes every later check real.
 **2. It never invents a number.** No confidence percentage on a manual
 identification. No median price below the minimum sample count. No bioload
 calculation from a "Crowded" checkbox. No Chicago rarity without a community
-dataset. Where a fact is unknown, the app says so and shows what it would need.
+dataset. A species the vendors named but nobody has profiled carries **no care
+data at all**, so screening it returns *Not enough data* rather than a guess.
+Where a fact is unknown, the app says so and shows what it would need.
 
 **3. It never rewrites history.** Correcting an identity supersedes the earlier
 assertion rather than replacing it. Re-running a screening adds a snapshot
@@ -92,11 +101,19 @@ src/
 │                  derivations (quantity, residency, badges, tankmates)
 ├── engine/        The three deterministic systems. No I/O, no React, no model calls.
 │   ├── compatibility/   PRD 5.1/5.2 — seven factors, versioned rules
-│   ├── rarity/          PRD 5.3   — Personal Discovery Tier v0
+│   ├── rarity/          PRD 5.3   — Discovery Tier v0.2.0 (market scarcity merged in)
 │   └── pricing/         PRD 5.4   — comparability and price fit
-├── data/          Dexie/IndexedDB schema, repositories, seed catalog, importer
+├── data/          Dexie/IndexedDB schema, repositories, importer
+│   └── seed/      Hand-maintained source (species-catalog.ts, fish_inventory.csv,
+│                  assets/) plus marts/ — generated, never hand-edited
 ├── theme/         Design tokens (PRD 7.3) and the three territories (7.2)
+├── pwa.ts         Service-worker registration and the reload-on-new-build rule
 └── ui/            Screens and components — consume tokens only, never literals
+
+etl/               The refresh pipeline: vendor scrape → normalize → warehouse → marts
+warehouse/         Parquet star schema + schema.sql, the portable migration contract
+scripts/           smoke.mjs (full-UI walkthrough), verify-sw-update.mjs
+docs/              PRD, plus DATA_WAREHOUSE / MARKET_ETL / INVENTORY_IMPORT / RELEASING
 ```
 
 The engines are pure functions of `(stored inputs, versioned config)`. That is
@@ -104,6 +121,13 @@ what makes principle **P5 — "Rules before AI"** enforceable: a verdict is
 reproducible, inspectable, and stamped with the rule version that produced it.
 `src/ui` contains no colour, radius or duration literal, which is what makes a
 theme swap provably incapable of touching a record or a calculation.
+
+### Generated vs hand-written
+
+Anything under `src/data/seed/marts/` is build output and is overwritten by the
+next refresh. Everything else under `src/data/seed/` is maintained by a person.
+That split is the whole convention — see
+[`src/data/seed/marts/README.md`](src/data/seed/marts/README.md).
 
 ### No backend
 
@@ -115,13 +139,95 @@ nowhere yet. Nothing leaves the device.
 
 ---
 
+## The catalog
+
+The library is a Hearthstone-style card grid, not a text list. Every species is
+a card; the ones you have caught or keep are in colour, the rest greyed and
+locked. There is one browser, not a "mine" screen and an "all" screen —
+`/collection` redirects to `/catalog`, since it was the nav item for three
+releases.
+
+Gem positions are borrowed deliberately. A card game trains the eye to find
+cost at the top-left and the creature's two stats in the bottom corners, so
+those hold market price, adult size and minimum tank volume — the three numbers
+a keeper actually decides on.
+
+| | |
+|---|---|
+| Species in the catalog | **1,080** |
+| With a licensed portrait on Wikimedia Commons | 700 (65%) |
+| Portraits bundled | 695 — 9.6 MB at 320 px, ~14 KB each |
+| Rendering a silhouette | 380, plus 5 downloads that failed |
+| With enough listings for price stats | 299 |
+| With a curated care profile | 47 |
+
+The species dimension is derived from **what the vendors actually sell**, with
+the curated care profiles as an enrichment layer on top. Building it the other
+way round — matching listings to a hand-written seed — was an early design
+error that left 96% of the library invisible.
+
+A binomial the curated catalog does not cover mints a species from the name the
+vendor stated explicitly. Note what this is not: it never guesses that one fish
+is another. Discovered species carry no care data, deliberately, so the
+compatibility engine returns *Not enough data* for them.
+
+Portraits are precached (677 entries, ~9.1 MB) so the library draws itself
+offline per NFR-02. The install happens in the background after first paint and
+cards lazy-load, so it does not sit in front of the first render.
+
+**Known performance debt, logged rather than quietly accepted:** the marts are
+inlined into the JS bundle (1,185 KB raw / 262 KB gzip) and should be separate
+fetched assets, and all 1,080 cards render at once.
+
+---
+
+## Data pipeline
+
+Eight Shopify storefronts are tracked: Global Exoticquatics, J4 Flowerhorns,
+Predatory Fins, Imperial Tropicals, Aquatic Arts, Aquarium Co-Op, Flip Aquatics
+and AquaHuna. Each was verified individually — Shopify, `robots.txt` permits
+public product data, `/products.json` not disallowed. **15,434 listings.**
+
+```bash
+npm run refresh            # etl → images → portraits → warehouse → marts
+npm run etl -- --offline   # rebuild from cached raw snapshots, no network
+```
+
+The pipeline is **not scheduled**, on purpose: a refresh is a deliberate act
+that produces a reviewable diff, so a vendor's pricing change cannot silently
+alter what production shows. These are small businesses' servers — the client
+identifies itself with a contactable User-Agent, waits between requests,
+honours `Retry-After`, backs off on 429/5xx, and caps pagination. Do not raise
+the concurrency.
+
+Output lands in a **Parquet star schema** under `warehouse/`: `dim_store`,
+`dim_species` (Type 2 SCD), `dim_date`, `dim_image`, `fact_listing`,
+`fact_price_observation`. The grain is one row per (store, variant,
+snapshot_date), so re-running accumulates a real time series that no single
+pull could contain. `warehouse/schema.sql` is portable DDL — Athena, BigQuery,
+Snowflake, Databricks or Postgres can run it unchanged.
+
+Details in [`docs/MARKET_ETL.md`](docs/MARKET_ETL.md) and
+[`docs/DATA_WAREHOUSE.md`](docs/DATA_WAREHOUSE.md).
+
+### Rarity is one score, not two
+
+Market scarcity is a weighted **component** of the Discovery Tier
+(`discovery-tier-v0.2.0`), not a separate rating: 35 first-confirmed species /
+25 dream-list hit / 15 personal-encounter scarcity / 10 exceptional specimen /
+15 market scarcity. Historical snapshots each store their own formula version,
+so retuning the weights later leaves every past reveal exactly as the user saw
+it.
+
+---
+
 ## Real data, seeded
 
 The app opens on Ryan's actual system, not an empty shell:
 
 - **All 61 inventory rows** across the six real enclosures, imported as opening
   balances from [`docs/fish_inventory.xlsx`](docs/fish_inventory.xlsx)
-- **47 species profiles**, covering the fish that are actually in those tanks
+- **47 curated species profiles**, covering the fish that are actually in those tanks
 - **The Panther**, with the real encounter photo, $100 asking / $75 member, and
   the story
 
@@ -132,10 +238,27 @@ fish it would fight, the Geophagus it would kill, and the 125-gallon minimum a
 honest answer was always "nowhere", and the app says so without needing him to
 buy anything to find out.
 
+### A fish you keep is yours
+
+An imported opening-balance holding has no specimen — `Holding.specimenId` is
+optional by design (FR-T02), because an inventory row records a fish you own
+without any encounter having happened. Ownership is therefore derived from
+holdings *and* specimens in one place (`catalog.ts`), not per screen. Before
+that fix, 1 card rendered in colour; after it, 43.
+
+Photos can go onto anything you own. The species page mints the specimen the
+holding always implied and puts the identity through `assertIdentity` with
+source `import`, so "how do we know what this is?" stays auditable instead of
+being stamped onto the row. Tapping one of your own photos makes it the card's
+face.
+
 ## About the species data
 
 Per your decision, **Wikipedia is the placeholder source** until a licensed
-care database is chosen (PRD 12.1). Every profile carries a real article URL.
+care database is chosen (PRD 12.1). Every curated profile carries a real
+article URL, and every portrait carries licence, artist and attribution URL —
+an image whose licence cannot be stated is dropped rather than shipped
+hopefully.
 
 One caveat worth keeping in view: Wikipedia species articles are good on
 taxonomy and adult size, and **thin on exactly what this engine screens** —
@@ -179,37 +302,54 @@ constant.
 
 ## Environments
 
-| | URL | Branch |
+Two environments publish from one GitHub Pages site, built by
+`.github/workflows/deploy.yml`:
+
+```
+feature branch  ──▶  uat  ──▶  main
+                     │          │
+                     ▼          ▼
+              /Fish2tank/uat/  /Fish2tank/
+                 staging        production
+```
+
+| Branch | URL | Purpose |
 |---|---|---|
-| Production | https://leonidas47dario.github.io/Fish2tank/ | `main` |
-| Staging | https://leonidas47dario.github.io/Fish2tank/uat/ | `uat` |
+| `uat` | https://leonidas47dario.github.io/Fish2tank/uat/ | Every change lands here first and is exercised live |
+| `main` | https://leonidas47dario.github.io/Fish2tank/ | Production. Only ever receives merges from `uat` |
 
-Branch flow is `feature → uat → main`; nothing reaches production without
-having been live on staging first. Both environments are published from one
-Pages site by a single workflow, so a push to either branch rebuilds both — see
-[`docs/RELEASING.md`](docs/RELEASING.md) for why, and for how to refresh the
-vendor data.
+**Nothing goes to production without having been live on `/uat/` first.**
 
-## Running it as a live web app
+GitHub Pages serves one site per repository, so both branches are checked out,
+built with their own base path, and published as a single artifact. The
+consequence worth knowing: **a push to either branch rebuilds both**, and both
+builds run the tests.
 
-A deploy workflow is committed at `.github/workflows/deploy.yml`. Push to
-`main` and it tests, builds and publishes to GitHub Pages at
-`https://leonidas47dario.github.io/Fish2tank/`.
+Staging lives underneath production's path, so production's service worker
+scope contains `/uat/`. Production disowns it via `navigateFallbackDenylist`,
+and staging installs as *Fish2Tank (UAT)* so it cannot be mistaken for
+production on a home screen.
+
+A new build is picked up on the **first** load rather than the second:
+`src/pwa.ts` reloads once on `controllerchange`, guarded so the first-ever
+visit does not flash for nothing. `npm run verify:sw` proves it end to end.
 
 The workflow enables Pages itself on first run (`enablement: true`), so no
 manual setup is needed. If you ever need to set it by hand, it is Settings →
 Pages → Source: **GitHub Actions**.
 
-Note that Pages on a *private* repository needs a paid GitHub plan. This
-repository is public, so the free plan covers it. To host it privately
-instead, the build is fully static and Netlify, Cloudflare Pages or Vercel
-will each serve it from a private repo on their free tier — build command
-`npm run build`, publish directory `dist`, and leave `VITE_BASE` unset since
-those hosts serve from the root.
+Pages on a *private* repository needs a paid GitHub plan. This repository is
+public, so the free plan covers it. To host it privately instead, the build is
+fully static and Netlify, Cloudflare Pages or Vercel will each serve it from a
+private repo on their free tier — build command `npm run build`, publish
+directory `dist`, and leave `VITE_BASE` unset since those hosts serve from the
+root.
 
 Because there is no backend, "deployed" means the app is installable from that
 URL and then runs entirely on the device. Data never leaves the phone, and it
 keeps working offline once installed.
+
+Full promotion and refresh procedure: [`docs/RELEASING.md`](docs/RELEASING.md).
 
 ---
 
