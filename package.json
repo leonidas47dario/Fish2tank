@@ -18,15 +18,19 @@
     "images": "tsx etl/build-images.ts",
     "marts": "tsx etl/build-marts.ts",
     "reindex": "tsx etl/rebuild-index.ts",
-    "refresh": "npm run etl && npm run images && npm run portraits && npm run warehouse && npm run marts",
+    "refresh": "npm run etl && npm run images && npm run portraits && npm run plates && npm run warehouse && npm run marts",
     "portraits": "tsx etl/build-portraits.ts",
     "ingest:portraits": "tsx etl/ingest-proposals.ts",
     "backfill:urls": "tsx etl/backfill-product-urls.ts",
     "care:fetch": "tsx etl/fetch-care-text.ts",
     "care:plan": "tsx etl/plan-care-batches.ts",
-    "care:ingest": "tsx etl/ingest-care-proposals.ts"
+    "care:ingest": "tsx etl/ingest-care-proposals.ts",
+    "contrast": "node scripts/contrast-audit.mjs",
+    "shots": "node scripts/review-shots.mjs",
+    "plates": "node scripts/derive-plates.mjs"
   },
   "dependencies": {
+    "@phosphor-icons/react": "^2.1.10",
     "dexie": "^4.0.10",
     "dexie-react-hooks": "^1.1.7",
     "react": "^18.3.1",

@@ -826,6 +826,26 @@ export async function addToDreamList(speciesId: Id, notes?: string, database: DB
   });
 }
 
+/**
+ * Take a species back off the Dream List.
+ *
+ * The list and its scoring existed from the start - a fish you had listed and
+ * then found is worth 25 points on the Discovery tier - but no screen could
+ * add to it and none could take anything off it, so in practice it was
+ * permanently empty and Home rendered a standing instruction to use a screen
+ * that did not do this. Adding without removing is a one-way door; a wanted
+ * list you cannot stop wanting from stops being one within a month.
+ *
+ * A FULFILLED entry is never deleted here. That one is history: it records
+ * that you wanted this fish before you found it, which is the whole reason
+ * the tier can award for it. See revealSpecimen.
+ */
+export async function removeFromDreamList(speciesId: Id, database: DB = db): Promise<void> {
+  const existing = await database.dreamList.where('speciesId').equals(speciesId).first();
+  if (!existing || existing.fulfilledBySpecimenId) return;
+  await database.dreamList.delete(existing.id);
+}
+
 /** FR-I02: search common names, scientific names and store aliases alike. */
 export async function searchSpecies(query: string, database: DB = db): Promise<Species[]> {
   const q = query.trim().toLowerCase();

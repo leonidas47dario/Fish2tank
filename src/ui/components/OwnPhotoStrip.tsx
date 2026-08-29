@@ -6,10 +6,10 @@
  * the document, and on a screen that re-renders on every Dexie write that adds
  * up to the photo library sitting in memory twice.
  */
-import { useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { blobFor, db } from '@/data/db';
 import type { Id } from '@/domain/types';
+import { useBlobUrls } from '../blob-url';
 
 interface Props {
   mediaIds: Id[];
@@ -31,14 +31,7 @@ export function OwnPhotoStrip({ mediaIds, selected, onPick }: Props) {
     return found;
   }, [key]);
 
-  const [urls, setUrls] = useState<Array<{ id: Id; url: string }>>([]);
-
-  useEffect(() => {
-    if (!blobs) return;
-    const made = blobs.map((b) => ({ id: b.id, url: URL.createObjectURL(b.blob) }));
-    setUrls(made);
-    return () => made.forEach((m) => URL.revokeObjectURL(m.url));
-  }, [blobs]);
+  const urls = useBlobUrls(blobs);
 
   if (urls.length === 0) return null;
 

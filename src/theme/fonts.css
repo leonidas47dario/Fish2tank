@@ -1,0 +1,47 @@
+/*
+ * Self-hosted faces. No CDN link anywhere.
+ *
+ * This is an offline-first PWA (NFR-02), and a font it cannot fetch is a font
+ * it does not have. A <link> to Google Fonts means the first launch in a shop
+ * basement on one bar of signal renders the whole app in the fallback.
+ *
+ * Three files, 157 KB total, sitting next to 24 MB of bundled portraits. The
+ * weight question that was open here answered itself once the assets were
+ * measured: the type is 0.6% of what the app already ships.
+ *
+ * Geist replaces Georgia, which was the display face. Georgia is a system
+ * serif, which means it is a DIFFERENT system serif on every device, and on
+ * the ones without it the app fell back to whatever the platform called
+ * "serif". A design that specifies a face it does not ship has not specified
+ * a face.
+ *
+ * Source Sans 3 Italic is here for exactly one job: binomials. Geist ships no
+ * italic axis, so `Hypselecara temporalis` was a synthesised oblique - the
+ * browser shearing upright letterforms - on an app whose subject is 2,176
+ * Latin names. This is the one place in the system where italic carries
+ * meaning rather than emphasis, so it gets real italic letterforms.
+ */
+
+@font-face {
+  font-family: 'Geist';
+  src: url('/fonts/Geist-Variable.woff2') format('woff2-variations');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('/fonts/GeistMono-Variable.woff2') format('woff2-variations');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Source Sans 3';
+  src: url('/fonts/SourceSans3-Italic.woff2') format('woff2');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}

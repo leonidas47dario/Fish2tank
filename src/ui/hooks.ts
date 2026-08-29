@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { blobFor, db } from '@/data/db';
 import { CATALOG_BY_SPECIES, cardPrice, portraitAsset } from '@/data/catalog';
@@ -5,6 +6,7 @@ import { marketFor } from '@/data/market';
 import { deriveBadge, deriveQuantity } from '@/domain/holdings';
 import type { TankResident } from '@/domain/tank-stats';
 import type { Aquarium, Id } from '@/domain/types';
+import { useBlobUrls } from './blob-url';
 
 export function useSpecies(id?: Id) {
   return useLiveQuery(async () => (id ? db.species.get(id) : undefined), [id]);
@@ -41,19 +43,39 @@ export function useTanksWithResidents() {
   }, []);
 }
 
-/** Original media for a specimen, newest first, as object URLs (FR-J01). */
+/**
+ * Original media for a specimen, newest first, as object URLs (FR-J01).
+ *
+ * The query yields blobs and `useBlobUrls` owns the URLs, because this hook
+ * re-runs on every write to `media` or `blobs` and minting a URL inside it
+ * pinned one more copy of every photo, permanently, each time.
+ *
+ * The query result is passed through unmapped on purpose: `useLiveQuery` keeps
+ * one array identity between runs, and a `.map()` here would hand the hook a
+ * new array every render and re-mint the whole set each frame.
+ */
 export function useSpecimenMedia(specimenId?: Id) {
-  return useLiveQuery(async () => {
+  const rows = useLiveQuery(async () => {
     if (!specimenId) return [];
     const media = await db.media.where('specimenIds').equals(specimenId).toArray();
-    const withUrls = await Promise.all(
-      media.map(async (m) => {
-        const blob = blobFor(await db.blobs.get(m.originalBlobKey));
-        return { media: m, url: blob ? URL.createObjectURL(blob) : undefined };
-      }),
+    const withBlobs = await Promise.all(
+      media.map(async (m) => ({
+        id: m.id,
+        media: m,
+        blob: blobFor(await db.blobs.get(m.originalBlobKey)),
+      })),
     );
-    return withUrls.sort((a, b) => b.media.capturedAt.localeCompare(a.media.capturedAt));
+    return withBlobs
+      .filter((r): r is { id: Id; media: typeof r.media; blob: Blob } => Boolean(r.blob))
+      .sort((a, b) => b.media.capturedAt.localeCompare(a.media.capturedAt));
   }, [specimenId]);
+
+  const urls = useBlobUrls(rows);
+
+  return useMemo(
+    () => rows?.map((r) => ({ media: r.media, url: urls.find((u) => u.id === r.id)?.url })),
+    [rows, urls],
+  );
 }
 
 /**
