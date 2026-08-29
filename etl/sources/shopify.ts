@@ -69,6 +69,36 @@ const DEFAULTS = {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+/**
+ * Tell a vendor outage apart from your own network blocking the vendor.
+ *
+ * A corporate web filter answers for the origin, so the reply is a plain 5xx
+ * carrying an HTML interstitial rather than anything the store sent. It looks
+ * exactly like the store being down, and it does not recover, so a refresh can
+ * be retried for an hour against a site that was never down. On 2026-08-29
+ * that was predatoryfins.com behind a Palo Alto / Menlo filter, and the whole
+ * diagnosis was one look at the response body.
+ *
+ * Cheap to check, and only ever runs on the failure path where the request has
+ * already cost more than reading it.
+ */
+const FILTER_VENDORS = /menlosecurity|paloCategory|zscaler|forcepoint|bluecoat|websense|umbrella\.com/i;
+
+async function filterHint(res: Response): Promise<string> {
+  try {
+    const body = (await res.clone().text()).slice(0, 4000);
+    if (!/^\s*<(!doctype|html)/i.test(body)) return '';
+    const filter = body.match(FILTER_VENDORS);
+    if (!filter) return '';
+    return ` - the response is an HTML interstitial from a network filter (matched "${filter[0]}"),`
+      + ' not the store. The vendor is probably up and unreachable from this network;'
+      + ' retrying will not help.';
+  } catch {
+    // Diagnostics must never mask the real failure being reported.
+    return '';
+  }
+}
+
 async function getWithRetry(
   url: string,
   userAgent: string,
@@ -81,7 +111,7 @@ async function getWithRetry(
 
   const retryable = res.status === 429 || res.status >= 500;
   if (!retryable || attempt >= 3) {
-    throw new Error(`GET ${url} failed: HTTP ${res.status}`);
+    throw new Error(`GET ${url} failed: HTTP ${res.status}${await filterHint(res)}`);
   }
   // Honour Retry-After whenever the store sends one - including 0, which means
   // "retry now" and must not be mistaken for "header absent".
