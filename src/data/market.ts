@@ -90,14 +90,6 @@ export function hasPriceEstimate(
   return stats?.price !== undefined;
 }
 
-/**
- * How many vendors produced this index.
- *
- * Read from the data rather than configured. The UI quotes it; it no longer
- * drives the rating, which counts witnesses instead - see WITNESS_STORES.
- */
-export const TRACKED_STORES = MARKET_INDEX.sources.length;
-
 /** Listings each store actually contributed to the published index. */
 function publishedListingsByStore(): Record<string, number> {
   const counts: Record<string, number> = {};
@@ -128,10 +120,29 @@ export const STORE_RESOLVE_RATES: Record<string, number> = (() => {
   );
 })();
 
+/**
+ * Share of the published catalog each store carries.
+ *
+ * The second half of the witness gate. A store can be perfectly legible and
+ * still have nothing to say: Aquarium Co-Op publishes 35 species out of 2,176.
+ */
+export const STORE_COVERAGE: Record<string, number> = (() => {
+  const all = Object.values(MARKET_INDEX.species);
+  const seen: Record<string, number> = {};
+  for (const stats of all) for (const s of stats.stores) seen[s.storeId] = (seen[s.storeId] ?? 0) + 1;
+  return Object.fromEntries(
+    MARKET_INDEX.sources.map((s) => [s.id, all.length ? (seen[s.id] ?? 0) / all.length : 0]),
+  );
+})();
+
 /** Every community-channel store in the index, gate not yet applied. */
 export const COMMUNITY_WITNESSES: ScarcityWitness[] = MARKET_INDEX.sources
   .filter((s) => STORE_CHANNELS[s.id] === 'community')
-  .map((s) => ({ storeId: s.id, resolveRate: STORE_RESOLVE_RATES[s.id] ?? 0 }));
+  .map((s) => ({
+    storeId: s.id,
+    resolveRate: STORE_RESOLVE_RATES[s.id] ?? 0,
+    coverage: STORE_COVERAGE[s.id] ?? 0,
+  }));
 
 /**
  * The community stores that clear the gate - the actual denominator.
@@ -140,7 +151,8 @@ export const COMMUNITY_WITNESSES: ScarcityWitness[] = MARKET_INDEX.sources
  * implying it consulted every vendor in the list.
  */
 export const WITNESS_STORES: ScarcityWitness[] = COMMUNITY_WITNESSES.filter(
-  (w) => w.resolveRate >= DEFAULT_SCARCITY_CONFIG.witnessMinResolveRate,
+  (w) => w.resolveRate >= DEFAULT_SCARCITY_CONFIG.witnessMinResolveRate
+    && w.coverage >= DEFAULT_SCARCITY_CONFIG.witnessMinCoverage,
 );
 
 /**
@@ -151,7 +163,14 @@ export const WITNESS_STORES: ScarcityWitness[] = COMMUNITY_WITNESSES.filter(
  * this cannot.
  */
 export function scarcityFor(speciesId: string | undefined) {
-  return computeMarketScarcity(marketFor(speciesId), COMMUNITY_WITNESSES);
+  return computeMarketScarcity(
+    marketFor(speciesId),
+    COMMUNITY_WITNESSES,
+    DEFAULT_SCARCITY_CONFIG,
+    // "Predatory Fins", not "predatory-fins". The refusal text is read by a
+    // person, and STORE_NAMES already exists for exactly this.
+    (id) => STORE_NAMES[id] ?? id,
+  );
 }
 
 /**

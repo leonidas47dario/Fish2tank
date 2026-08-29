@@ -468,16 +468,15 @@ describe('End-to-end acceptance: the Panther (PRD 10)', () => {
     // Asserted against the live index rather than a hardcoded number, because
     // the score moves whenever a vendor is added - expected, not a regression.
     //
-    // ZERO IS A VALID ANSWER, and currently the right one. Under
-    // market-scarcity v1.0.0 the shipped index has too few qualifying witness
-    // stores to rate anything, so scarcityFor returns "not enough data" and
-    // this component honestly scores nothing rather than importing a number
-    // that was really measuring Predatory Fins' stock list. It comes back when
-    // the ETL republishes with the two-pass matcher.
     const expectedMarket = snapshot!.components.marketScarcity;
-    expect(expectedMarket).toBeGreaterThanOrEqual(0);
+    expect(expectedMarket).toBeGreaterThan(0);
     expect(expectedMarket).toBeLessThanOrEqual(15);
     expect(snapshot!.totalScore).toBe(35 + expectedMarket);
+    // The acceptance criterion itself. Asserting only "total == 35 + whatever
+    // the snapshot says" is circular and would survive the market component
+    // silently going to zero, which is exactly what happened while the
+    // scarcity rewrite was mid-flight.
+    expect(snapshot!.tier).toBe('rare');
     expect(snapshot!.formulaVersion).toBe('discovery-tier-v0.2.0');
 
     await awardGolden(draft.specimen.id, 'The way he tracked me across the glass.', db);

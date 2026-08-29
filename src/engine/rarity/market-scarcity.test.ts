@@ -7,7 +7,7 @@ import type { MarketSpeciesStats } from '@/data/market';
 
 /** Witnesses well clear of the gate, so a test opts into the gate deliberately. */
 const witnesses = (n: number): ScarcityWitness[] =>
-  Array.from({ length: n }, (_, i) => ({ storeId: `w${i}`, resolveRate: 0.5 }));
+  Array.from({ length: n }, (_, i) => ({ storeId: `w${i}`, resolveRate: 0.5, coverage: 0.5 }));
 
 function stats(storeIds: string[], listingsEach = 2): MarketSpeciesStats {
   return {
@@ -71,8 +71,8 @@ describe('depth is a nudge, not a signal', () => {
 describe('the witness gate', () => {
   it('refuses when the community stores cannot resolve their own catalogues', () => {
     const weak: ScarcityWitness[] = [
-      { storeId: 'w0', resolveRate: 0.02 },
-      { storeId: 'w1', resolveRate: 0.03 },
+      { storeId: 'w0', resolveRate: 0.02, coverage: 0.5 },
+      { storeId: 'w1', resolveRate: 0.03, coverage: 0.5 },
     ];
     const r = computeMarketScarcity(stats(['w0']), weak);
     expect(r.available).toBe(false);
@@ -81,19 +81,31 @@ describe('the witness gate', () => {
 
   it('rates the same species once those stores clear the threshold', () => {
     const strong: ScarcityWitness[] = [
-      { storeId: 'w0', resolveRate: 0.5 },
-      { storeId: 'w1', resolveRate: 0.5 },
+      { storeId: 'w0', resolveRate: 0.5, coverage: 0.5 },
+      { storeId: 'w1', resolveRate: 0.5, coverage: 0.5 },
     ];
     expect(computeMarketScarcity(stats(['w0']), strong).available).toBe(true);
   });
 
   it('uses the configured threshold, not a hardcoded one', () => {
     const stores: ScarcityWitness[] = [
-      { storeId: 'w0', resolveRate: 0.05 },
-      { storeId: 'w1', resolveRate: 0.05 },
+      { storeId: 'w0', resolveRate: 0.05, coverage: 0.5 },
+      { storeId: 'w1', resolveRate: 0.05, coverage: 0.5 },
     ];
     const lenient = { ...DEFAULT_SCARCITY_CONFIG, witnessMinResolveRate: 0.01 };
     expect(computeMarketScarcity(stats(['w0']), stores, lenient).available).toBe(true);
+  });
+
+  it('refuses a store that is legible but carries almost nothing', () => {
+    // Aquarium Co-Op's shape: clean listings, 1.6% of the catalog. Its
+    // silence is coverage, not scarcity.
+    const thin: ScarcityWitness[] = [
+      { storeId: 'w0', resolveRate: 0.5, coverage: 0.5 },
+      { storeId: 'w1', resolveRate: 0.5, coverage: 0.01 },
+    ];
+    const r = computeMarketScarcity(stats(['w0']), thin);
+    expect(r.available).toBe(false);
+    if (!r.available) expect(r.reason).toBe('No local-shelf sample');
   });
 
   it('refuses on a single witness, because one store cannot make a comparison', () => {
@@ -135,28 +147,48 @@ describe('refusing to rate is one rule: no witness carries it', () => {
 });
 
 describe('the ceiling rises with the witness count', () => {
-  // The guard against "fixing" low coverage by loosening the gate: doing that
-  // has to move visible bands. Score is 100 * (1 - 1/N) minus the depth nudge
-  // for two listings, round(4 * ln 3) = 4.
+  // The band comes from breadth = 100 * (1 - 1/N), so a sole-witness fish
+  // climbs as the sample grows. The guard against "fixing" thin coverage by
+  // loosening the gate: doing that has to move visible bands.
   const sole = (n: number) => rate(['w0'], n);
 
   it('cannot call anything rarely listed on two witnesses', () => {
-    expect(sole(2).score).toBe(46);
+    expect(sole(2).components.storeBreadth).toBe(50);
     expect(sole(2).band).toBe('uncommon');
   });
 
   it('reaches scarce at three', () => {
-    expect(sole(3).score).toBe(63);
     expect(sole(3).band).toBe('scarce');
   });
 
-  it('reaches rarely listed at five, the sole-source case the rating exists for', () => {
-    expect(sole(5).score).toBe(76);
-    expect(sole(5).band).toBe('rarely-listed');
+  it('reaches rarely listed at four, which the real store list can produce', () => {
+    // The point of taking depth out of the band decision. While the nudge
+    // could move a band, breadth 75 scored 72 and the top band was
+    // unreachable at every witness count STORE_CHANNELS can actually yield.
+    expect(sole(4).components.storeBreadth).toBe(75);
+    expect(sole(4).band).toBe('rarely-listed');
   });
 
   it('stays there as more witnesses join', () => {
     expect(sole(6).band).toBe('rarely-listed');
+  });
+});
+
+describe('depth orders within a band but never moves one', () => {
+  it('gives the same band to a thin and a deep sole-witness listing', () => {
+    const thin = rate(['w0'], 4, 1);
+    const deep = rate(['w0'], 4, 500);
+    expect(thin.band).toBe(deep.band);
+    // ...while still ranking the deep one as easier to find.
+    expect(deep.score).toBeLessThan(thin.score);
+  });
+
+  it('is not swayed across a boundary by variant granularity', () => {
+    // `listings` counts Shopify variant rows, so one product split into 20
+    // sizes must not promote a fish a whole band. This is the assertion that
+    // keeps that catalogue artifact out of the rating.
+    const bands = new Set([1, 5, 20, 100, 1000].map((n) => rate(['w0'], 3, n).band));
+    expect(bands.size).toBe(1);
   });
 });
 

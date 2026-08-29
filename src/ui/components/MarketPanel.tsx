@@ -87,7 +87,7 @@ export function MarketPanel({ speciesId, observedSize, yourPrice }: Props) {
             How likely you are to find this on a shelf, measured across{' '}
             {scarcity.basis.witnessesTracked} general{' '}
             {scarcity.basis.witnessesTracked === 1 ? 'store' : 'stores'}
-            {' '}({scarcity.basis.carriedBy.join(', ')} carr
+            {' '}({scarcity.basis.carriedBy.map((id) => STORE_NAMES[id] ?? id).join(', ')} carr
             {scarcity.basis.witnessesCarrying === 1 ? 'ies' : 'y'} it). Specialist importers are left out
             on purpose: they stock rarities as a matter of course, so their having one tells you nothing
             about whether you will see it locally.

@@ -2,9 +2,9 @@
  * What kind of buyer each tracked store serves.
  *
  * ONE map, so a vendor cannot be classified in the app and forgotten in the
- * ETL - the same drift TRACKED_STORES exists to prevent, in a second place it
- * could have happened. store-channels.test.ts fails the build if a store in
- * STORES or in the shipped index has no channel.
+ * ETL. store-channels.test.ts fails the build if a store in STORES or in the
+ * shipped index has no channel, so a vendor cannot be added on one side and
+ * forgotten on the other.
  *
  * WHY THIS DECIDES THE RATING. Market scarcity asks "would I see this on a
  * local shelf", so the sample has to be stores that resemble a local shelf.
@@ -21,9 +21,17 @@ export const STORE_CHANNELS: Record<string, StoreChannel> = {
   'imperial-tropicals': 'community',
   'aquahuna': 'community',
   'aquarium-coop': 'community',
-  // The one vendor Ryan can physically walk into (Orland Park, IL), and so the
-  // single most legitimate witness in the list for a question about shelves.
+  // The one independent vendor Ryan can physically walk into (Orland Park, IL).
   'nu-aqua': 'community',
+  /**
+   * The big-box chains, and the closest thing in this list to the question the
+   * rating actually asks. A fish stocked by the Petco down the road is not
+   * rare; a fish neither chain carries is one you have to go looking for.
+   * Both are tracked per-store for Chicago specifically, which is why they
+   * count as shelves where mail-order does not.
+   */
+  'petsmart': 'community',
+  'petco': 'community',
 
   // --- specialist: importers, aggregators and single-niche boutiques. They
   // prove an animal exists in trade and they price it. They are never evidence

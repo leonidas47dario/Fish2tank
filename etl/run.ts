@@ -16,12 +16,14 @@ import { fetchAllProducts, type ShopifyProduct } from './sources/shopify';
 import * as petsmart from './sources/petsmart';
 import * as petco from './sources/petco';
 import { normalizeStore, isLivestock } from './normalize/listing';
+import { discoverSpecies } from './normalize/derive-species';
 import { normalizeRetailStore } from './normalize/retail';
 import { buildMarketIndex } from './index-builder';
 import {
   SAMPLED_CITY, STORES,
   type LocalStore, type MarketListing, type RetailProduct, type StoreInventory,
 } from './types';
+import type { Species } from '@/domain/types';
 import { SPECIES_CATALOG } from '@/data/seed/species-catalog';
 
 const RAW_DIR = 'etl/raw';
@@ -45,6 +47,8 @@ async function main() {
     listingsFetched: number; retrievedAt: string; accessNote?: string;
   }> = [];
   const failures: Array<{ storeId: string; reason: string }> = [];
+  /** Shopify stores held back for the second matching pass below. */
+  const shopify: Array<{ store: (typeof STORES)[number]; products: ShopifyProduct[]; retrievedAt: string }> = [];
 
   const readCache = <T,>(path: string): T | undefined =>
     existsSync(path) ? (JSON.parse(readFileSync(path, 'utf8')) as T) : undefined;
@@ -249,7 +253,77 @@ async function main() {
       writeFileSync(rawPath, JSON.stringify({ store: store.id, retrievedAt, products }, null, 2));
     }
 
-    const normalized = normalizeStore(store, products, catalog, retrievedAt).filter(isLivestock);
+    shopify.push({ store, products, retrievedAt });
+  }
+
+  /**
+   * SECOND PASS, because one pass can only read the vendors who write Latin.
+   *
+   * The curated catalog is 47 species; everything else the app knows was
+   * minted from binomials vendors put in their own titles. So a shop listing
+   * "Black Ruby Barb - L" rather than "Puntius nigrofasciatus" can only ever
+   * match those 47 and silently contributes nothing. Nu Aqua - the one
+   * independent shop Ryan can walk into - resolved 39 of 1,222 listings, 3.2%.
+   *
+   * Pass 1 resolves what the vendors name outright and mints species from it.
+   * Pass 2 re-reads every store against curated + discovered.
+   *
+   * ONLY UNAMBIGUOUS DISCOVERED NAMES ARE TRUSTED, and that restriction is
+   * load-bearing rather than cautious. deriveCommonName shortens titles to a
+   * shared tail, which for "Regal Angelfish EXPERT ONLY" and friends produces
+   * the common name "Expert Only" - a two-word name that phrase-matches inside
+   * any longer title and, unfiltered, swallowed 302 listings whose titles
+   * state a completely different binomial ("Chili Coral EXPERT ONLY" filed as
+   * a marine angelfish). The "Bass" / "Peacock Bass" guard in
+   * normalize/species.ts only protects SINGLE-word names, and two words is
+   * exactly what deriveCommonName emits. A name claimed by more than one
+   * species is evidence it names none of them, so it is dropped. Raw product
+   * titles are not used as match aliases at all.
+   */
+  const pass1 = shopify
+    .flatMap((f) => normalizeStore(f.store, f.products, catalog, f.retrievedAt))
+    .filter(isLivestock);
+
+  const curatedBinomials = new Set(
+    catalog.map((s) => s.scientificName?.toLowerCase()).filter((n): n is string => Boolean(n)),
+  );
+  const discovered = discoverSpecies(pass1, curatedBinomials);
+
+  const claims = new Map<string, number>();
+  for (const d of discovered) {
+    const n = d.commonName.toLowerCase();
+    claims.set(n, (claims.get(n) ?? 0) + 1);
+  }
+  let ambiguous = 0;
+  const vocabulary: Species[] = [
+    ...catalog,
+    ...discovered.map((d) => {
+      const unique = (claims.get(d.commonName.toLowerCase()) ?? 0) === 1;
+      if (!unique) ambiguous += 1;
+      return {
+        id: d.speciesId,
+        commonName: unique ? d.commonName : d.scientificName,
+        scientificName: d.scientificName,
+        aliases: [],
+        createdAt: new Date(0).toISOString(),
+      };
+    }),
+  ];
+  console.log(
+    `\n  vocabulary: ${catalog.length} curated + ${discovered.length} discovered ` +
+    `(${ambiguous} common names dropped as ambiguous)`,
+  );
+
+  for (const { store, products, retrievedAt } of shopify) {
+    const before = pass1.filter((l) => l.storeId === store.id);
+    const normalized = normalizeStore(store, products, vocabulary, retrievedAt).filter(isLivestock);
+    const rate = (ls: MarketListing[]) => (ls.length ? ls.filter((l) => l.speciesId).length / ls.length : 0);
+    // Outcome, not intent: a pass that resolved nothing extra is what you need
+    // to see in the log.
+    console.log(
+      `  ${store.name}: ${normalized.length} livestock, resolve ` +
+      `${(rate(before) * 100).toFixed(1)}% -> ${(rate(normalized) * 100).toFixed(1)}%`,
+    );
     allListings.push(...normalized);
     sources.push({ ...store, listingsFetched: normalized.length, retrievedAt });
   }

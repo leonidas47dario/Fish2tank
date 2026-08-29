@@ -30,19 +30,30 @@
  *     Predatory Fins and 198 were sole-source there. REBUILT on community
  *     stores only.
  *
- * THE WITNESS GATE. A store's silence is evidence only if that store can
- * speak. A community store joins the denominator only once its resolve rate
- * clears `witnessMinResolveRate`; below that its absence is discarded rather
- * than counted against the fish. This is what makes absence usable at all,
- * and it is self-repairing - as ETL matching improves, stores rejoin and the
- * scale gains rungs.
+ * THE WITNESS GATE, which has two halves and needs both. A store's silence is
+ * evidence only if that store can speak AND has something to say.
  *
- * THE CEILING RISES WITH THE SAMPLE. A sole-witness species scores
- * 100 * (1 - 1/N). On two witnesses that is 50, so the app *cannot* call
- * anything rarely listed; on five it is 80 and sole-source lands in the top
- * band, which is the whole point of the rating. The formula has to earn its
- * strongest word. Do not "fix" thin coverage by lowering the threshold - the
- * ceiling test exists to make that trade visible rather than quiet.
+ *   - `witnessMinResolveRate` - can we read it? A store whose titles we cannot
+ *     match contributes absence that is really our own failure.
+ *   - `witnessMinCoverage` - does it stock enough to have an opinion? Aquarium
+ *     Co-Op resolves 11% of its listings cleanly and publishes 35 species out
+ *     of 2,176. Legible, and almost entirely silent. Counting that silence as
+ *     absence is what rated Betta and Molly "rarely listed".
+ *
+ * Self-repairing: as ETL matching and coverage improve, stores rejoin the
+ * denominator and the scale gains rungs.
+ *
+ * THE BAND COMES FROM BREADTH ALONE. Depth orders fish within a band and must
+ * never move one across a boundary - see the note at the return below. One
+ * consequence worth knowing before you read a distribution: N witnesses give
+ * exactly N rateable values, and which bands they land in is fixed by N.
+ *
+ *   N=3 -> 0, 33, 67          widely-available, available, scarce
+ *   N=4 -> 0, 25, 50, 75      adds uncommon and rarely-listed, drops scarce
+ *   N=5 -> 0, 20, 40, 60, 80  all five, one per rung
+ *
+ * So an empty band is usually a property of the sample size rather than a bug.
+ * Do not "fix" it by loosening a gate; grow the sample.
  *
  * See docs/specs/004-local-shelf-scarcity.md.
  */
@@ -55,7 +66,7 @@ export type MarketScarcityBand =
   | 'scarce'
   | 'rarely-listed';
 
-/** A community store, and how much of its own catalogue it resolves. */
+/** A community store, and whether it is in a position to testify. */
 export interface ScarcityWitness {
   storeId: string;
   /**
@@ -63,6 +74,17 @@ export interface ScarcityWitness {
    * data/market.ts from the index itself, never hardcoded.
    */
   resolveRate: number;
+  /**
+   * Share of the published catalog this store carries.
+   *
+   * Separate from resolveRate, and both are needed. Resolve rate says whether
+   * we can READ a store; coverage says whether it holds enough of a catalogue
+   * to be worth asking. Aquarium Co-Op resolves 11% of its listings cleanly
+   * but publishes 35 species out of 2,176 - legible and almost entirely
+   * silent. Counting that silence as absence is what rated Betta and Molly
+   * "rarely listed".
+   */
+  coverage: number;
 }
 
 export interface MarketScarcityComponents {
@@ -76,6 +98,11 @@ export interface MarketScarcityConfig {
   formulaVersion: string;
   /** A community store below this resolve rate is not a witness. */
   witnessMinResolveRate: number;
+  /**
+   * A community store carrying less than this share of the catalog is not a
+   * witness either. See ScarcityWitness.coverage.
+   */
+  witnessMinCoverage: number;
   /**
    * Fewest witnesses that can produce a rating at all.
    *
@@ -95,14 +122,14 @@ export interface MarketScarcityConfig {
 export const DEFAULT_SCARCITY_CONFIG: MarketScarcityConfig = {
   formulaVersion: 'market-scarcity-v1.0.0',
   witnessMinResolveRate: 0.1,
+  witnessMinCoverage: 0.05,
   minimumWitnesses: 2,
   depthNudgeMax: 12,
   depthNudgeScale: 4,
   bands: [
-    // 75, not 80. The depth nudge subtracts up to 12, so at an 80 cut a
-    // sole-source fish would never reach the top band even on six witnesses -
-    // the nudge pushes it back into "scarce" - which would quietly defeat the
-    // one thing this rating exists to say.
+    // 75 rather than 80, so a sole-witness fish reaches the top band at four
+    // witnesses instead of needing five. Four is what the community store
+    // list can realistically produce; five was aspirational.
     { band: 'rarely-listed', minScore: 75 },
     { band: 'scarce', minScore: 60 },
     { band: 'uncommon', minScore: 40 },
@@ -150,6 +177,8 @@ export function computeMarketScarcity(
   stats: MarketSpeciesStats | undefined,
   community: ScarcityWitness[],
   cfg: MarketScarcityConfig = DEFAULT_SCARCITY_CONFIG,
+  /** Display names for the ids in `basis` and the refusal text. */
+  storeName: (id: string) => string = (id) => id,
 ): MarketScarcity {
   if (!stats) {
     return {
@@ -160,13 +189,15 @@ export function computeMarketScarcity(
     };
   }
 
-  const witnesses = community.filter((w) => w.resolveRate >= cfg.witnessMinResolveRate);
+  const witnesses = community.filter(
+    (w) => w.resolveRate >= cfg.witnessMinResolveRate && w.coverage >= cfg.witnessMinCoverage,
+  );
   if (witnesses.length < cfg.minimumWitnesses) {
     return {
       available: false,
       reason: 'No local-shelf sample',
       explanation:
-        `Rating a shelf takes at least ${cfg.minimumWitnesses} general stores that resolve enough of their own catalog to be worth believing, and there ${witnesses.length === 1 ? 'is 1' : `are ${witnesses.length}`}. Nothing is rated rather than guessed.`,
+        `Rating a shelf takes at least ${cfg.minimumWitnesses} general stores that both resolve enough of their own catalog to be readable and carry enough of it to have an opinion, and there ${witnesses.length === 1 ? 'is 1' : `are ${witnesses.length}`}. Nothing is rated rather than guessed.`,
     };
   }
 
@@ -177,7 +208,7 @@ export function computeMarketScarcity(
   // evidence we hold comes from a store that cannot resolve its own catalog,
   // and "rare" is indistinguishable from "the matcher missed it".
   if (carrying.length === 0) {
-    const others = stats.stores.map((s) => s.storeId);
+    const others = stats.stores.map((s) => storeName(s.storeId));
     return {
       available: false,
       reason: 'Not enough data',
@@ -200,7 +231,18 @@ export function computeMarketScarcity(
   return {
     available: true,
     score,
-    band: bandForScore(score, cfg),
+    // THE BAND COMES FROM BREADTH ALONE, not from the score. Depth orders
+    // fish within a band; it must never move one across a boundary. Two
+    // reasons, and both bit this formula before the rule was explicit:
+    //
+    //   - `listings` counts Shopify VARIANT rows, so a vendor splitting one
+    //     product into 20 sizes could promote a fish a whole band. That is
+    //     the same catalogue artifact stock pressure was deleted for.
+    //   - With the nudge in play the top band became unreachable: a
+    //     sole-witness fish at four witnesses scored 75-3=72 against a cut of
+    //     75, so "rarely listed" could never render at any witness count the
+    //     store list can actually produce.
+    band: bandForScore(storeBreadth, cfg),
     components,
     formulaVersion: cfg.formulaVersion,
     basis: {

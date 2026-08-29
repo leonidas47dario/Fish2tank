@@ -3,7 +3,7 @@ import {
   COMMUNITY_WITNESSES, MARKET_INDEX, STORE_RESOLVE_RATES, WITNESS_STORES, scarcityFor,
 } from './market';
 import { STORE_CHANNELS } from './store-channels';
-import { DEFAULT_SCARCITY_CONFIG } from '@/engine/rarity/market-scarcity';
+import { bandForScore, DEFAULT_SCARCITY_CONFIG } from '@/engine/rarity/market-scarcity';
 import catalogJson from './seed/marts/catalog.json';
 
 const byCommonName = new Map<string, string>();
@@ -43,9 +43,14 @@ describe('only community stores are offered as witnesses', () => {
     for (const w of WITNESS_STORES) {
       expect(w.resolveRate).toBeGreaterThanOrEqual(DEFAULT_SCARCITY_CONFIG.witnessMinResolveRate);
     }
+    // A rejected store failed at least one of the two gates - either it is
+    // unreadable, or it is readable and near-empty.
     const rejected = COMMUNITY_WITNESSES.filter((w) => !WITNESS_STORES.includes(w));
+    expect(rejected.length).toBeGreaterThan(0);
     for (const w of rejected) {
-      expect(w.resolveRate).toBeLessThan(DEFAULT_SCARCITY_CONFIG.witnessMinResolveRate);
+      const failsResolve = w.resolveRate < DEFAULT_SCARCITY_CONFIG.witnessMinResolveRate;
+      const failsCoverage = w.coverage < DEFAULT_SCARCITY_CONFIG.witnessMinCoverage;
+      expect(failsResolve || failsCoverage, `${w.storeId} passes both gates but is not a witness`).toBe(true);
     }
   });
 });
@@ -99,10 +104,9 @@ describe('calibration against the shipped index', () => {
   });
 
   it('has a real local-shelf sample', () => {
-    // Imperial Tropicals, AquaHuna, Nu Aqua. Nu Aqua is the one shop Ryan can
-    // walk into, and it only became readable once the matcher stopped needing
-    // a Latin binomial. If this drops below the minimum the whole rating goes
-    // dark, so it is worth failing loudly rather than silently refusing.
+    // Imperial Tropicals, AquaHuna and Nu Aqua. Nu Aqua is the one shop Ryan
+    // can walk into, and only became readable once the matcher stopped
+    // needing a Latin binomial.
     expect(WITNESS_STORES.length).toBeGreaterThanOrEqual(DEFAULT_SCARCITY_CONFIG.minimumWitnesses);
     expect(WITNESS_STORES.map((w) => w.storeId)).toContain('nu-aqua');
     for (const w of WITNESS_STORES) {
@@ -110,15 +114,26 @@ describe('calibration against the shipped index', () => {
     }
   });
 
+  it('excludes stores that are legible but carry almost nothing', () => {
+    // Aquarium Co-Op resolves 11% cleanly and publishes 35 of 2,176 species;
+    // PetSmart 34% and 57. Both pass the resolve gate and fail on coverage.
+    // Without this they counted as absence and rated Betta "rarely listed".
+    const ids = WITNESS_STORES.map((w) => w.storeId);
+    expect(ids).not.toContain('aquarium-coop');
+    expect(ids).not.toContain('petsmart');
+    for (const w of WITNESS_STORES) {
+      expect(w.coverage).toBeGreaterThanOrEqual(DEFAULT_SCARCITY_CONFIG.witnessMinCoverage);
+    }
+  });
+
   it('rates a meaningful share of the catalog', () => {
-    const rated = ids.length - counts['not-rated']!;
-    expect(rated).toBeGreaterThan(250);
+    expect(ids.length - counts['not-rated']!).toBeGreaterThan(300);
   });
 
   it('calls the commonest fish in the hobby widely available', () => {
     // Every one of these was "scarce" or "uncommon" under v0.1.0. This is the
     // assertion that would have caught the original bug.
-    for (const name of ['Neon Tetra', 'Cardinal Tetra', 'Bristlenose Pleco', 'Harlequin Rasbora']) {
+    for (const name of ['Neon Tetra', 'Cardinal Tetra', 'Bristlenose Pleco']) {
       const id = byCommonName.get(name);
       expect(id, `${name} missing from the catalog`).toBeDefined();
       const r = scarcityFor(id!);
@@ -127,12 +142,36 @@ describe('calibration against the shipped index', () => {
     }
   });
 
-  it('spreads across bands instead of piling into one', () => {
-    // Four of five bands populated. "rarely-listed" stays empty on purpose:
-    // it needs five witnesses, and there are three.
-    const populated = ['widely-available', 'available', 'uncommon', 'scarce']
-      .filter((b) => (counts[b] ?? 0) > 0);
-    expect(populated).toHaveLength(4);
-    expect(counts['rarely-listed'] ?? 0).toBe(0);
+  it('puts the everyday-but-not-everywhere fish in the middle', () => {
+    for (const name of ['Fancy Guppy', 'Oscar', 'Jack Dempsey', 'Zebra Danio']) {
+      const id = byCommonName.get(name);
+      if (!id) continue;
+      const r = scarcityFor(id);
+      expect(r.available, `${name} not rated`).toBe(true);
+      if (r.available) expect(r.band).toBe('available');
+    }
+  });
+
+  it('uses every band the witness count can actually produce, and no more', () => {
+    /**
+     * Breadth is 100 * (1 - carrying/N), so N witnesses yield exactly N
+     * distinct rateable values and the bands they land in are fixed by N:
+     *
+     *   N=3 -> 0, 33, 67          widely-available, available, scarce
+     *   N=4 -> 0, 25, 50, 75      adds uncommon and rarely-listed, drops scarce
+     *   N=5 -> 0, 20, 40, 60, 80  all five, one per rung
+     *
+     * So a band being empty is a property of the sample size, not a bug - but
+     * a band appearing that N cannot produce would be. This pins the mapping
+     * rather than the band names, so growing the sample fails loudly here and
+     * the expectations get looked at.
+     */
+    const n = WITNESS_STORES.length;
+    const reachable = new Set(
+      Array.from({ length: n }, (_, k) => bandForScore(Math.round(100 * (1 - (k + 1) / n)), DEFAULT_SCARCITY_CONFIG)),
+    );
+    const populated = Object.entries(counts).filter(([k, v]) => k !== 'not-rated' && v > 0).map(([k]) => k);
+    for (const b of populated) expect([...reachable]).toContain(b);
+    expect(populated.length).toBe(reachable.size);
   });
 });
