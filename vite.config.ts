@@ -16,8 +16,22 @@ const base = process.env.VITE_BASE ?? '/';
 const isStaging = base.endsWith('/uat/');
 const navigateFallbackDenylist = [/^\/api\//, ...(isStaging ? [] : [/\/uat(\/|$)/])];
 
+// Which build is actually running, baked in so the app can say so out loud.
+//
+// A service worker means the code on a device is NOT necessarily the code that
+// was deployed - a stale precached shell looks identical to a failed fix, and
+// "did the deploy land?" becomes unanswerable from either end. Settings shows
+// this, so a UAT report can name its build instead of guessing at it.
+// GITHUB_SHA is set by Actions; a local build honestly says so.
+const buildId = (process.env.GITHUB_SHA ?? 'local').slice(0, 7);
+const builtAt = new Date().toISOString();
+
 export default defineConfig({
   base,
+  define: {
+    __BUILD_ID__: JSON.stringify(buildId),
+    __BUILT_AT__: JSON.stringify(builtAt),
+  },
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
