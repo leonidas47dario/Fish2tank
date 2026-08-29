@@ -11,8 +11,9 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useNavigate, useParams } from 'react-router-dom';
 import { db } from '@/data/db';
 import {
-  acquireSpecimen, addEncounterChapter, assertIdentity, awardGolden, evaluateSpecimen,
-  recordPrice, revealSpecimen, searchSpecies,
+  acquireSpecimen, addEncounterChapter, assertIdentity, awardGolden, deleteCatch,
+  evaluateSpecimen, planDeleteCatch, recordPrice, revealSpecimen, searchSpecies, updateCatch,
+  type DeleteCatchPlan,
 } from '@/data/repositories';
 import { evaluatePriceFit } from '@/engine/pricing/price-fit';
 import { COMPONENT_LABELS, LOCAL_RARITY_UNAVAILABLE } from '@/engine/rarity/discovery-tier';
@@ -60,6 +61,7 @@ export default function SpecimenDetail() {
     [specimen?.speciesId],
   );
   const aquariums = useLiveQuery(() => db.aquariums.where('status').equals('active').toArray(), []);
+  const places = useLiveQuery(() => db.places.toArray(), []);
   const media = useSpecimenMedia(id);
 
   const [query, setQuery] = useState('');
@@ -307,6 +309,15 @@ export default function SpecimenDetail() {
         </ul>
       </section>
 
+      {/* --- Correct the record (FR-C03) ----------------------------------- */}
+      <EditCatchForm
+        specimenId={id}
+        nickname={specimen.nickname}
+        rawLabel={specimen.rawLabel}
+        encounter={latest}
+        places={places ?? []}
+      />
+
       {/* --- Bring home (PRD 4.8) ----------------------------------------- */}
       {specimen.status !== 'resident' && (
         <section className="card stack">
@@ -325,7 +336,222 @@ export default function SpecimenDetail() {
           </select>
         </section>
       )}
+
+      {/* --- Delete. Last, and behind a confirmation that states the cost. -- */}
+      <DeleteCatch
+        specimenId={id}
+        name={specimen.nickname ?? specimen.rawLabel ?? 'this catch'}
+        onDeleted={() => navigate('/')}
+      />
     </div>
+  );
+}
+
+/** Local datetime for an <input type="datetime-local">, which will not take an ISO Z string. */
+function toLocalInput(iso: string | undefined): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/**
+ * Correct what you recorded.
+ *
+ * Collapsed by default: on a screen whose whole point is the fish, an edit form
+ * open by default would push the photo off the top. Deliberately does NOT
+ * include the species - changing that goes through the Identity block above,
+ * which supersedes the old assertion instead of overwriting it.
+ */
+function EditCatchForm({ specimenId, nickname, rawLabel, encounter, places }: {
+  specimenId: string;
+  nickname?: string;
+  rawLabel?: string;
+  encounter?: { id: string; observedAt: string; placeId?: string; quantitySeen?: number; notes?: string };
+  places: Array<{ id: string; name: string }>;
+}) {
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState({
+    nickname: nickname ?? '',
+    rawLabel: rawLabel ?? '',
+    observedAt: toLocalInput(encounter?.observedAt),
+    placeId: encounter?.placeId ?? '',
+    quantitySeen: encounter?.quantitySeen ? String(encounter.quantitySeen) : '',
+    notes: encounter?.notes ?? '',
+  });
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  // Re-seed the fields when the record changes underneath (a live query update,
+  // or opening a different catch) - but never while the user is mid-edit.
+  function reopen() {
+    if (!open) {
+      setForm({
+        nickname: nickname ?? '',
+        rawLabel: rawLabel ?? '',
+        observedAt: toLocalInput(encounter?.observedAt),
+        placeId: encounter?.placeId ?? '',
+        quantitySeen: encounter?.quantitySeen ? String(encounter.quantitySeen) : '',
+        notes: encounter?.notes ?? '',
+      });
+      setSaved(false);
+    }
+    setOpen(!open);
+  }
+
+  async function save() {
+    setSaving(true);
+    const qty = form.quantitySeen.trim();
+    await updateCatch({
+      specimenId,
+      encounterId: encounter?.id,
+      // Empty means "clear it", which null expresses and undefined does not.
+      nickname: form.nickname.trim() || null,
+      rawLabel: form.rawLabel.trim() || null,
+      ...(form.observedAt ? { observedAt: new Date(form.observedAt).toISOString() } : {}),
+      placeId: form.placeId || null,
+      quantitySeen: qty ? Number(qty) : null,
+      notes: form.notes.trim() || null,
+    });
+    setSaving(false);
+    setSaved(true);
+  }
+
+  const set = (k: keyof typeof form) => (e: { target: { value: string } }) => {
+    setForm((f) => ({ ...f, [k]: e.target.value }));
+    setSaved(false);
+  };
+
+  return (
+    <section className="card stack">
+      <button type="button" className="btn--ghost spread" onClick={reopen} aria-expanded={open}>
+        <span>Edit this catch</span>
+        <span aria-hidden="true">{open ? '▾' : '▸'}</span>
+      </button>
+
+      {open && (
+        <>
+          <p className="xs muted" style={{ marginBottom: 0 }}>
+            Corrects what you recorded. To change which species this is, use Identity above —
+            that keeps the earlier answer instead of overwriting it.
+          </p>
+
+          <label htmlFor="edit-nickname">Name</label>
+          <input id="edit-nickname" value={form.nickname} onChange={set('nickname')}
+            placeholder="the Panther" />
+
+          <label htmlFor="edit-rawlabel">The store's label, as written</label>
+          <input id="edit-rawlabel" value={form.rawLabel} onChange={set('rawLabel')}
+            placeholder={'Jaguar Cichlid 6"'} />
+
+          <label htmlFor="edit-observedat">When you saw it</label>
+          <input id="edit-observedat" type="datetime-local" value={form.observedAt}
+            onChange={set('observedAt')} />
+
+          <label htmlFor="edit-place">Where</label>
+          <select id="edit-place" value={form.placeId} onChange={set('placeId')}>
+            <option value="">Not recorded</option>
+            {places.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+          </select>
+
+          <label htmlFor="edit-qty">How many you saw</label>
+          <input id="edit-qty" type="number" min="1" inputMode="numeric"
+            value={form.quantitySeen} onChange={set('quantitySeen')} />
+
+          <label htmlFor="edit-notes">Note on this chapter</label>
+          <textarea id="edit-notes" rows={3} value={form.notes} onChange={set('notes')} />
+
+          <button type="button" className="btn--primary" onClick={() => void save()} disabled={saving}>
+            {saving ? 'Saving…' : 'Save corrections'}
+          </button>
+          {saved && <p className="xs muted" role="status" style={{ marginBottom: 0 }}>Saved.</p>}
+        </>
+      )}
+    </section>
+  );
+}
+
+/**
+ * Delete a catch that should not exist - a mis-tap, a duplicate, test data.
+ *
+ * Two-step on purpose, and the second step is not a generic "are you sure":
+ * it names what goes with it, because the cascade reaches photos, prices and
+ * the reveal. Where the fish is in a tank or has a memorial, the repository
+ * refuses and the reason is shown instead of a button.
+ */
+function DeleteCatch({ specimenId, name, onDeleted }: {
+  specimenId: string; name: string; onDeleted: () => void;
+}) {
+  const [plan, setPlan] = useState<DeleteCatchPlan | undefined>();
+  const [busy, setBusy] = useState(false);
+
+  async function ask() {
+    setBusy(true);
+    setPlan(await planDeleteCatch(specimenId));
+    setBusy(false);
+  }
+
+  async function confirmDelete() {
+    setBusy(true);
+    const result = await deleteCatch(specimenId);
+    setBusy(false);
+    if (result.allowed) onDeleted();
+    else setPlan(result);
+  }
+
+  const parts = plan ? [
+    plan.media && `${plan.media} photo${plan.media === 1 ? '' : 's'}`,
+    plan.prices && `${plan.prices} price note${plan.prices === 1 ? '' : 's'}`,
+    plan.assessments && `${plan.assessments} tank screening${plan.assessments === 1 ? '' : 's'}`,
+    plan.reveals && 'its reveal',
+    plan.identifications && 'its identification history',
+  ].filter(Boolean) as string[] : [];
+
+  return (
+    <section className="card stack">
+      <h2>Delete</h2>
+      {!plan && (
+        <>
+          <p className="small muted" style={{ marginBottom: 0 }}>
+            For a catch that should not exist — a mis-tap, a duplicate, test data. A fish you were
+            wrong about does not need deleting; correct its identity instead.
+          </p>
+          <button type="button" onClick={() => void ask()} disabled={busy}>
+            Delete this catch…
+          </button>
+        </>
+      )}
+
+      {plan && !plan.allowed && (
+        <>
+          <p className="small" style={{ marginBottom: 0 }}>{plan.reason}</p>
+          <button type="button" className="btn--ghost" onClick={() => setPlan(undefined)}>Back</button>
+        </>
+      )}
+
+      {plan && plan.allowed && (
+        <>
+          <p className="small" style={{ marginBottom: 0 }}>
+            Permanently delete <strong>{name}</strong>
+            {parts.length > 0 && <> and {parts.join(', ')}</>}. This cannot be undone.
+          </p>
+          {plan.mediaSharedElsewhere > 0 && (
+            <p className="xs muted" style={{ marginBottom: 0 }}>
+              {plan.mediaSharedElsewhere} photo{plan.mediaSharedElsewhere === 1 ? '' : 's'} also used by
+              another catch will be kept.
+            </p>
+          )}
+          <div className="row">
+            <button type="button" className="btn--danger" onClick={() => void confirmDelete()} disabled={busy}>
+              {busy ? 'Deleting…' : 'Yes, delete it'}
+            </button>
+            <button type="button" className="btn--ghost" onClick={() => setPlan(undefined)} disabled={busy}>
+              Keep it
+            </button>
+          </div>
+        </>
+      )}
+    </section>
   );
 }
 

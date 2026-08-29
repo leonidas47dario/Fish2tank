@@ -86,6 +86,18 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 }
 .btn--big { width: 100%; padding: var(--space-4); font-size: var(--size-lg); }
 .btn--ghost { background: transparent; }
+/*
+ * Irreversible actions. The token is defined by all three territories, so this
+ * reads correctly in every theme without src/ui naming a colour.
+ *
+ * Colour is reinforcement here, never the only cue (NFR-06): the button says
+ * "Yes, delete it" and sits behind a confirmation that names what goes with it.
+ */
+.btn--danger {
+  background: var(--color-danger);
+  border-color: var(--color-danger);
+  color: var(--color-canvas);
+}
 
 input, select, textarea {
   font: inherit;

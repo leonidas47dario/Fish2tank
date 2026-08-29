@@ -108,6 +108,26 @@ export interface DraftKey {
   createdAt: string;
 }
 
+/**
+ * A record the user deleted on purpose.
+ *
+ * WHY A TOMBSTONE AND NOT JUST A DELETE. Some records are seeded on boot -
+ * the Panther, the starter tanks, the inventory import - and every one of those
+ * seeders is guarded by "does this id already exist?". Deleting a seeded record
+ * therefore un-guards its seeder, and the thing the user just removed comes
+ * back on the next load. That is the single most infuriating outcome a delete
+ * button can have, so the id is remembered and the seeder checks it.
+ *
+ * It stores an id and a date, never the content. This is a note that something
+ * was deleted, not a recycle bin - the user asked for the record to be gone.
+ */
+export interface DeletedRecord {
+  id: Id;
+  deletedAt: string;
+  /** What kind of thing it was, so a future undo or audit can tell them apart. */
+  kind: 'specimen';
+}
+
 export class Fish2TankDB extends Dexie {
   users!: EntityTable<User, 'id'>;
   places!: EntityTable<Place, 'id'>;
@@ -130,6 +150,7 @@ export class Fish2TankDB extends Dexie {
   keeperPrinciples!: EntityTable<KeeperPrinciple, 'id'>;
   draftKeys!: EntityTable<DraftKey, 'clientKey'>;
   cardPrefs!: EntityTable<CardPref, 'speciesId'>;
+  deletedRecords!: EntityTable<DeletedRecord, 'id'>;
 
   constructor(name = 'fish2tank') {
     super(name);
@@ -160,6 +181,12 @@ export class Fish2TankDB extends Dexie {
     // untouched; no migration function is needed for a pure addition.
     this.version(2).stores({
       cardPrefs: 'speciesId',
+    });
+
+    // v3 adds deletion tombstones, so a deleted seed record stays deleted.
+    // Pure addition again; existing data is carried forward untouched.
+    this.version(3).stores({
+      deletedRecords: 'id, deletedAt',
     });
   }
 }

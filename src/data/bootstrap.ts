@@ -65,6 +65,10 @@ const PANTHER_ENCOUNTER_ID = 'enc_the_panther';
  */
 async function seedPanther(): Promise<void> {
   if (await db.specimens.get(PANTHER_ID)) return;
+  // Deleted on purpose stays deleted. Without this the seeder's own "does it
+  // exist?" guard turns a delete into a temporary hide, and the Panther walks
+  // back in on the next load.
+  if (await db.deletedRecords.get(PANTHER_ID)) return;
 
   const observedAt = '2026-08-27T15:04:00.000Z';
   await db.specimens.add({

@@ -9,6 +9,9 @@ import {
   assessmentHistory,
   awardGolden,
   createCatchDraft,
+  deleteCatch,
+  planDeleteCatch,
+  updateCatch,
   storageError,
   createKeeperPrinciple,
   createOpeningBalanceHolding,
@@ -620,5 +623,158 @@ describe('photos on a fish you keep but never caught', () => {
 
   it('refuses to attach a photo to a specimen that does not exist', async () => {
     await expect(addPhotos({ specimenId: 'spec_nope', files: [photo()] }, db)).rejects.toThrow();
+  });
+});
+
+describe('editing a catch', () => {
+  async function aCatch() {
+    const draft = await createCatchDraft({
+      files: [], clientKey: newId('k'), rawLabel: 'Jag 6"', observedAt: '2026-08-01T10:00:00.000Z',
+    }, db);
+    return draft;
+  }
+
+  it('corrects the fields the user actually observed', async () => {
+    const { specimen } = await aCatch();
+    await updateCatch({
+      specimenId: specimen.id,
+      nickname: 'the Panther',
+      observedAt: '2026-07-30T09:00:00.000Z',
+      notes: 'Went in for plants.',
+      quantitySeen: 2,
+    }, db);
+
+    const after = await db.specimens.get(specimen.id);
+    const enc = (await db.encounters.where('specimenId').equals(specimen.id).toArray())[0];
+    expect(after!.nickname).toBe('the Panther');
+    expect(enc!.observedAt).toBe('2026-07-30T09:00:00.000Z');
+    expect(enc!.notes).toBe('Went in for plants.');
+    expect(enc!.quantitySeen).toBe(2);
+  });
+
+  it('leaves untouched fields alone, so a partial form cannot blank the rest', async () => {
+    const { specimen } = await aCatch();
+    await updateCatch({ specimenId: specimen.id, notes: 'first' }, db);
+    await updateCatch({ specimenId: specimen.id, nickname: 'Spot' }, db);
+
+    const enc = (await db.encounters.where('specimenId').equals(specimen.id).toArray())[0];
+    expect(enc!.notes).toBe('first');
+    expect((await db.specimens.get(specimen.id))!.rawLabel).toBe('Jag 6"');
+  });
+
+  it('clears a field on null, which undefined cannot express', async () => {
+    const { specimen } = await aCatch();
+    await updateCatch({ specimenId: specimen.id, nickname: 'Spot' }, db);
+    await updateCatch({ specimenId: specimen.id, nickname: null }, db);
+    expect((await db.specimens.get(specimen.id))!.nickname).toBeUndefined();
+  });
+
+  it('never changes identity — that path supersedes rather than overwrites', async () => {
+    // The audit trail would have a hole in it exactly where the interesting
+    // decisions happen if an edit could quietly set speciesId.
+    const { specimen } = await aCatch();
+    await assertIdentity(
+      { specimenId: specimen.id, speciesId: 'sp_jaguar_cichlid', source: 'user', status: 'user-confirmed' },
+      db,
+    );
+    await updateCatch({ specimenId: specimen.id, nickname: 'Spot' }, db);
+
+    const after = await db.specimens.get(specimen.id);
+    expect(after!.speciesId).toBe('sp_jaguar_cichlid');
+    expect(after!.identityStatus).toBe('user-confirmed');
+    expect(await identityHistory(specimen.id, db)).toHaveLength(1);
+  });
+
+  it('bumps updatedAt so the record shows it was touched', async () => {
+    const { specimen } = await aCatch();
+    await updateCatch({ specimenId: specimen.id, nickname: 'Spot' }, db);
+    expect((await db.specimens.get(specimen.id))!.updatedAt >= specimen.updatedAt).toBe(true);
+  });
+});
+
+describe('deleting a catch', () => {
+  async function aFullCatch() {
+    const { specimen, encounter } = await createCatchDraft({
+      files: [photo()],
+      clientKey: newId('k'),
+    }, db);
+    await assertIdentity(
+      { specimenId: specimen.id, speciesId: 'sp_jaguar_cichlid', source: 'user', status: 'user-confirmed' },
+      db,
+    );
+    await recordPrice({
+      specimenId: specimen.id, speciesId: 'sp_jaguar_cichlid', encounterId: encounter.id, askingPrice: 100,
+    }, db);
+    await revealSpecimen(specimen.id, db);
+    return { specimen, encounter };
+  }
+
+  it('states what it will remove before removing it', async () => {
+    const { specimen } = await aFullCatch();
+    const plan = await planDeleteCatch(specimen.id, db);
+    expect(plan.allowed).toBe(true);
+    expect(plan).toMatchObject({ encounters: 1, media: 1, prices: 1, identifications: 1 });
+  });
+
+  it('removes the catch and everything downstream of it', async () => {
+    const { specimen } = await aFullCatch();
+    await deleteCatch(specimen.id, db);
+
+    expect(await db.specimens.get(specimen.id)).toBeUndefined();
+    expect(await db.encounters.where('specimenId').equals(specimen.id).count()).toBe(0);
+    expect(await db.media.where('specimenIds').equals(specimen.id).count()).toBe(0);
+    expect(await db.identifications.where('specimenId').equals(specimen.id).count()).toBe(0);
+    expect(await db.priceObservations.where('specimenId').equals(specimen.id).count()).toBe(0);
+    expect(await db.raritySnapshots.where('specimenId').equals(specimen.id).count()).toBe(0);
+    expect(await db.blobs.count()).toBe(0);
+  });
+
+  it('leaves species-level price notes alone', async () => {
+    // A price seen elsewhere is a market observation; it outlives the catch.
+    const { specimen } = await aFullCatch();
+    await recordPrice(
+      { speciesId: 'sp_jaguar_cichlid', askingPrice: 50, source: 'online-manual' },
+      db,
+    );
+    await deleteCatch(specimen.id, db);
+    expect(await db.priceObservations.where('speciesId').equals('sp_jaguar_cichlid').count()).toBe(1);
+  });
+
+  it('detaches a shared photo rather than destroying it', async () => {
+    // The media IS the record. Deleting one catch must never take another
+    // catch's only photo with it.
+    const a = await aFullCatch();
+    const b = await createCatchDraft({ files: [], clientKey: newId('k') }, db);
+    const shot = (await db.media.where('specimenIds').equals(a.specimen.id).toArray())[0]!;
+    await db.media.update(shot.id, { specimenIds: [a.specimen.id, b.specimen.id] });
+
+    await deleteCatch(a.specimen.id, db);
+
+    const kept = await db.media.get(shot.id);
+    expect(kept).toBeDefined();
+    expect(kept!.specimenIds).toEqual([b.specimen.id]);
+    expect(await db.blobs.get(shot.originalBlobKey!)).toBeDefined();
+  });
+
+  it('refuses when the fish is in one of your tanks', async () => {
+    // Tank history is not the catch's to delete - principle 3.
+    const { specimen } = await aFullCatch();
+    await db.holdings.add({
+      id: newId('hold'), specimenId: specimen.id, speciesId: 'sp_jaguar_cichlid',
+      quantity: 1, openingBalance: false, acquiredOn: '2026-08-01', createdAt: '2026-08-01T00:00:00.000Z',
+    } as never);
+
+    const result = await deleteCatch(specimen.id, db);
+    expect(result.allowed).toBe(false);
+    expect(result.reason).toMatch(/tank/i);
+    expect(await db.specimens.get(specimen.id)).toBeDefined();
+  });
+
+  it('remembers the deletion, so a seeded catch cannot come back', async () => {
+    // Every seeder is guarded by "does this id exist?", so without the
+    // tombstone a delete is only a hide until the next boot.
+    const { specimen } = await aFullCatch();
+    await deleteCatch(specimen.id, db);
+    expect(await db.deletedRecords.get(specimen.id)).toMatchObject({ kind: 'specimen' });
   });
 });

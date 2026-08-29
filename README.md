@@ -19,7 +19,7 @@ npm run dev          # http://localhost:5173
 ```
 
 ```bash
-npm test             # 478 unit + integration tests across 25 files
+npm test             # 681 unit + integration tests across 37 files
 npm run build        # type-check, bundle, generate the service worker
 npm run preview      # serve the production build on :4173
 
@@ -45,7 +45,7 @@ real UI.
 
 | PRD slice (11.1) | State |
 |---|---|
-| **1 — Private shell** | PWA installs and runs offline; drafts are created before media finishes writing; retries never duplicate a catch. No auth — see *No backend* below. |
+| **1 — Private shell** | PWA installs and runs offline; drafts are created before media finishes writing; retries never duplicate a catch. Catches can be corrected or deleted, with the cascade named before it happens. No auth — see *No backend* below. |
 | **2 — Catalog** | Species / specimen / encounter modelled separately; Unknown / Provisional / Confirmed identity; reveal ceremony; Dream List. The library is a **card grid of 2,178 species**, filterable by where a fish lives in the tank, what kind of thing it is, and temperament. |
 | **3 — Real tanks** | Aquariums, holdings, dated residencies, full lifecycle events, inventory importer. |
 | **4 — Evaluation** | Seven-factor deterministic screening over a versioned rule set, with immutable snapshots. |
@@ -97,6 +97,16 @@ refusing to fill it.
 assertion rather than replacing it. Re-running a screening adds a snapshot
 rather than mutating one. Moving a fish closes one dated residency and opens
 another. A fish that dies stays in the tank history it lived through.
+
+*You can still edit and delete your own catches, and that is not a contradiction.*
+Correcting a mistyped date or a nickname makes the record **true**; it is the
+species, the verdicts and the tiers — the things the app concluded — that are
+superseded rather than overwritten, so the edit form deliberately has no species
+field. And deleting says *this encounter never happened* — a mis-tap, a
+duplicate, test data — which is a different claim from *I was wrong* or *it
+died*, both of which have their own paths that keep the past. A catch held in a
+tank or carrying a memorial cannot be deleted at all; the app says so and points
+you at the tank instead.
 
 ---
 
