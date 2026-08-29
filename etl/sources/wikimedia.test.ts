@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   commonsSearchUrl, fileNameFromUrl, isPublishable, plainText,
   searchCommonsPortrait, stripTracking,
@@ -172,11 +172,20 @@ describe('searchCommonsPortrait', () => {
     expect(got).toBeUndefined();
   });
 
-  it('returns undefined rather than throwing when the API errors', async () => {
-    const got = await searchCommonsPortrait('sp_x', 'Piabina argentea', {
-      fetchImpl: (async () => new Response('nope', { status: 500 })) as unknown as typeof fetch,
-    });
-    expect(got).toBeUndefined();
+  it('returns undefined rather than throwing when the API errors, and logs rather than swallowing it', async () => {
+    // A caught-and-ignored error is an invisible branch: without this log line,
+    // a Commons outage looks identical to 138 species genuinely having no
+    // photo, and the run reports ordinary coverage gaps while actually broken.
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    try {
+      const got = await searchCommonsPortrait('sp_x', 'Piabina argentea', {
+        fetchImpl: (async () => new Response('nope', { status: 500 })) as unknown as typeof fetch,
+      });
+      expect(got).toBeUndefined();
+      expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('Piabina argentea'));
+    } finally {
+      logSpy.mockRestore();
+    }
   });
 
   it('skips a radiograph in favour of the live fish lower down the results', async () => {
@@ -204,13 +213,26 @@ describe('searchCommonsPortrait', () => {
     expect(got).toBeUndefined();
   });
 
-  it('does not reject a live snail just because its title says shell', async () => {
-    // The catalog stocks snails. "mollusc shell" and the museum collection
-    // prefixes catch the specimen scans; a bare "shell" would cost real
-    // portraits, so it is excluded from the pattern on purpose.
-    const got = await searchCommonsPortrait('sp_x', 'Clithon corona', {
-      fetchImpl: stub([page('File:Clithon corona shell detail.jpg')]),
-    });
-    expect(got?.url).toContain('Clithon');
+  it('does not reject titles containing shell, plate or map, which are excluded on purpose', async () => {
+    // The NOT_A_PORTRAIT comment names these three as deliberate omissions:
+    // the catalog stocks snails, and a bare "shell", "plate" or "map" would
+    // cost real portraits to catch museum scans that more specific terms
+    // ("mollusc shell", collection prefixes) already catch. Without this test
+    // they are just a comment, and the next person to widen the pattern to
+    // catch one more museum scan would silently start dropping live snails
+    // and any file innocently named plate or map. Driven through
+    // searchCommonsPortrait, not the regex directly, to keep NOT_A_PORTRAIT
+    // private - it is an implementation detail of the title filter, not part
+    // of this module's public surface.
+    for (const title of [
+      'File:Clithon corona shell detail.jpg',
+      'File:Fish plate.jpg',
+      'File:Mappa fish.jpg',
+    ]) {
+      const got = await searchCommonsPortrait('sp_x', 'irrelevant for this check', {
+        fetchImpl: stub([page(title)]),
+      });
+      expect(got).toBeDefined();
+    }
   });
 });

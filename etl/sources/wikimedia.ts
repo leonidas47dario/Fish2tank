@@ -234,9 +234,12 @@ export async function searchCommonsPortrait(
   try {
     const res = await getJson(commonsSearchUrl(scientificName), fetchImpl);
     pages = res?.query?.pages ?? [];
-  } catch {
-    // Search failed. The caller logs it as "no image" and moves on; a single
-    // unreachable query must not take the whole run down.
+  } catch (e) {
+    // Never swallow this silently. It is the only network call here, and a
+    // Commons outage would otherwise be indistinguishable from 138 species
+    // genuinely having no photograph: the run would look like ordinary
+    // coverage gaps while actually being broken.
+    console.log(`  commons search failed for ${scientificName}: ${e instanceof Error ? e.message : 'error'}`);
     return undefined;
   }
 
