@@ -19,8 +19,6 @@ const WAREHOUSE = 'warehouse';
 const LISTINGS = 'data/market/listings.jsonl';
 const IMAGES = 'data/market/images.jsonl';
 
-export { surrogateKey };
-
 export const dateKey = (iso: string): number => Number(iso.slice(0, 10).replace(/-/g, ''));
 
 async function writeTable(c: DuckDBConnection, name: string, folder: 'dim' | 'fact') {
