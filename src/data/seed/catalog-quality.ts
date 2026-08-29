@@ -26,6 +26,7 @@ export type ProblemCode =
   | 'has-digit'
   | 'ambiguous-generic'
   | 'no-identity'
+  | 'not-a-binomial'
   | 'too-short'
   | 'unsourced-override';
 
@@ -81,6 +82,49 @@ export const GENERIC_NAMES: ReadonlySet<string> = new Set([
   'ricefish', 'platy', 'molly', 'swordtail', 'lobster', 'shellfish',
 ]);
 
+/**
+ * Words that appear inside parentheses in a vendor title but are not taxonomy.
+ *
+ * THE FAILURE THIS EXISTS FOR. The matcher reads parenthesised text in a
+ * listing title as a scientific name, which is right far more often than it is
+ * wrong: "Jaguar Cichlid (Parachromis managuensis)" is the house style across
+ * every vendor. But J4 Flowerhorns published
+ *
+ *     Red Wolf Fish ( Roofvissen fotografie ) 4"
+ *
+ * where the parens hold a PHOTO CREDIT - Dutch for "predatory fish
+ * photography". It passes every structural test for a binomial: two words,
+ * capitalised genus, lowercase epithet, Latin alphabet. So shape cannot catch
+ * it and vocabulary has to.
+ *
+ * WHAT THIS CAN AND CANNOT DO, stated plainly so nobody trusts it too far.
+ * Like TRADE_JUNK, every entry here was observed in the generated catalog
+ * rather than imagined, and a list of observed words cannot anticipate the
+ * next language a vendor credits a photographer in. It is a net for known
+ * failures, not a proof of taxonomic validity.
+ *
+ * The stronger check - "is this genus real?" - is not available. taxonomy.ts
+ * has GENUS_FAMILY, but it covers 547 genera against a catalog that now holds
+ * 945 species whose genus is absent from it, nearly all of them legitimate
+ * marine fish from LiveAquaria. Absence would reject 43% of the catalog.
+ */
+/**
+ * Open-nomenclature qualifiers, which stand where an epithet would.
+ *
+ * "Geophagus sp." is a complete and correct way to name an undescribed
+ * species, not a truncation. Vendors use it because the fish genuinely has no
+ * epithet yet.
+ */
+export const OPEN_NOMENCLATURE: ReadonlySet<string> = new Set(['sp.', 'spp.', 'cf.', 'aff.']);
+
+export const NON_TAXONOMIC: readonly string[] = [
+  // Photography credits, which is how the two known phantoms arrived.
+  'fotografie', 'fotografia', 'photography', 'photographie', 'photo', 'photos',
+  'image', 'images', 'picture', 'pictures',
+  // Not an animal at all.
+  'food', 'pellets', 'flakes', 'wafers', 'sticks',
+];
+
 /** The minimal shape these rules need. Both the mart and the ETL satisfy it. */
 export interface NameCheckable {
   speciesId: string;
@@ -95,6 +139,63 @@ export interface NameCheckable {
  */
 export function isUsableName(name: string): boolean {
   return nameProblems(name).length === 0;
+}
+
+/**
+ * Is this string plausibly a scientific name?
+ *
+ * Used by the ETL to reject a parenthesised candidate before it mints a
+ * species from it. Checks the two things that are checkable without a
+ * taxonomic authority: the shape of a binomial, and whether it contains
+ * vocabulary that is definitely not taxonomy. See NON_TAXONOMIC on why this is
+ * a net rather than a proof.
+ */
+export function isUsableBinomial(name: string): boolean {
+  return binomialProblems(name).length === 0;
+}
+
+/** The context-free problems with a candidate scientific name. */
+function binomialProblems(name: string): Array<{ code: ProblemCode; detail: string }> {
+  const out: Array<{ code: ProblemCode; detail: string }> = [];
+  const trimmed = name.trim();
+  const words = trimmed.split(/\s+/);
+
+  // Binomial or trinomial. A subspecies is legitimate ("Melanotaenia
+  // splendida inornata"); four words is a sentence.
+  if (words.length < 2 || words.length > 3) {
+    out.push({
+      code: 'not-a-binomial',
+      detail: `${words.length} word${words.length === 1 ? '' : 's'}, expected two or three`,
+    });
+    return out;
+  }
+
+  // Genus capitalised, epithets lower case. This is not a style preference;
+  // it is the botanical and zoological codes, and vendors who write a real
+  // binomial follow it because they copied it from somewhere that did.
+  if (!/^[A-Z][a-z]+$/.test(words[0]!)) {
+    out.push({ code: 'not-a-binomial', detail: `"${words[0]}" is not a genus-shaped word` });
+  }
+  for (const epithet of words.slice(1)) {
+    // OPEN NOMENCLATURE IS VALID TAXONOMY, not a defect. "Geophagus sp." means
+    // an undescribed or unidentified species of that genus, "cf." means
+    // "compare with", "aff." means "has affinity to". The catalog holds two
+    // legitimate examples (Geophagus sp., Heros sp.) and the first draft of
+    // this rule rejected both, which would have deleted two real fish while
+    // hunting two phantoms.
+    if (OPEN_NOMENCLATURE.has(epithet)) continue;
+    if (!/^[a-z-]+$/.test(epithet)) {
+      out.push({ code: 'not-a-binomial', detail: `"${epithet}" is not an epithet-shaped word` });
+    }
+  }
+
+  const low = trimmed.toLowerCase();
+  const bad = NON_TAXONOMIC.find((w) => new RegExp(`(^|[^a-z])${w}($|[^a-z])`, 'i').test(low));
+  if (bad) {
+    out.push({ code: 'not-a-binomial', detail: `contains non-taxonomic word "${bad}"` });
+  }
+
+  return out;
 }
 
 /** The context-free problems with a single name. */
@@ -167,6 +268,15 @@ export function findProblems(entries: readonly NameCheckable[]): Problem[] {
         value: e.commonName,
         detail: `"${e.commonName}" is shared by ${sharers.length} species`,
       });
+    }
+
+    // A scientific name that is not one is worse than none: it looks like
+    // authority. It also mints a phantom species, because the binomial is
+    // what the id is derived from.
+    if (e.scientificName) {
+      for (const p of binomialProblems(e.scientificName)) {
+        problems.push({ speciesId: e.speciesId, value: e.scientificName, ...p });
+      }
     }
 
     // A species with no binomial AND no real common name cannot be identified
