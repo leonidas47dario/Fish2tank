@@ -117,8 +117,26 @@ export interface MarketIndex {
   unmatchedScientificNames: Array<{ scientificName: string; listings: number }>;
 }
 
+/**
+ * Tracked vendors.
+ *
+ * Every one is a Shopify storefront whose robots.txt states that public
+ * product data is crawlable, and none disallow /products.json - checked per
+ * host, not assumed from the platform.
+ *
+ * Breadth matters for more than volume. With only three stores, "carried by
+ * one store" was worth 30 scarcity points on very thin evidence, which is why
+ * largemouth bass - a fish you would buy from a pond supplier, not an exotics
+ * importer - rated as rarely listed. More independent vendors make that signal
+ * mean something.
+ */
 export const STORES: StoreConfig[] = [
   { id: 'global-exoticquatics', name: 'Global Exoticquatics', host: 'globalexoticquatics.com', currency: 'USD' },
   { id: 'j4-flowerhorns', name: 'J4 Flowerhorns', host: 'www.j4flowerhorns.com', currency: 'USD' },
   { id: 'predatory-fins', name: 'Predatory Fins', host: 'www.predatoryfins.com', currency: 'USD' },
+  { id: 'imperial-tropicals', name: 'Imperial Tropicals', host: 'imperialtropicals.com', currency: 'USD' },
+  { id: 'aquatic-arts', name: 'Aquatic Arts', host: 'aquaticarts.com', currency: 'USD' },
+  { id: 'aquarium-coop', name: 'Aquarium Co-Op', host: 'www.aquariumcoop.com', currency: 'USD' },
+  { id: 'flip-aquatics', name: 'Flip Aquatics', host: 'flipaquatics.com', currency: 'USD' },
+  { id: 'aquahuna', name: 'AquaHuna', host: 'www.aquahuna.com', currency: 'USD' },
 ];

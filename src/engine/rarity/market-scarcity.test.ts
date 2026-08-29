@@ -9,15 +9,20 @@ function stats(over: Partial<MarketSpeciesStats> = {}): MarketSpeciesStats {
     speciesId: 'sp_x', comparableCount: 10, totalListings: 10, inStock: 5, soldOut: 5,
     price: { median: 50, min: 10, max: 100, currency: 'USD' },
     priceBySize: [],
-    stores: [
-      { storeId: 'a', listings: 4, inStock: 2, medianPrice: 50 },
-      { storeId: 'b', listings: 3, inStock: 2, medianPrice: 50 },
-      { storeId: 'c', listings: 3, inStock: 1, medianPrice: 50 },
-    ],
+    // Built from the configured store count, so adding a vendor does not
+    // silently invalidate every expectation in this file.
+    stores: allStores(),
     ...over,
   };
 }
 const rate = (o: Partial<MarketSpeciesStats> = {}) => computeMarketScarcity(stats(o)) as MarketScarcityResult;
+
+/** One entry per tracked store: the "carried everywhere" case. */
+function allStores(n = DEFAULT_SCARCITY_CONFIG.trackedStores) {
+  return Array.from({ length: n }, (_, i) => ({
+    storeId: `s${i}`, listings: 2, inStock: 1, medianPrice: 50,
+  }));
+}
 
 describe('absence is never evidence of scarcity', () => {
   it('returns not-enough-data for a species with no index entry', () => {
@@ -52,12 +57,21 @@ describe('store breadth', () => {
     expect(r.components.storeBreadth).toBe(DEFAULT_SCARCITY_CONFIG.points.storeBreadthMax);
   });
 
-  it('scores in between for two stores', () => {
-    const r = rate({ stores: [
-      { storeId: 'a', listings: 5, inStock: 3, medianPrice: 50 },
-      { storeId: 'b', listings: 5, inStock: 2, medianPrice: 50 },
-    ] });
-    expect(r.components.storeBreadth).toBe(15);
+  it('falls between the extremes for a partially-carried species', () => {
+    const max = DEFAULT_SCARCITY_CONFIG.points.storeBreadthMax;
+    const half = Math.ceil(DEFAULT_SCARCITY_CONFIG.trackedStores / 2);
+    const r = rate({ stores: allStores(half) });
+    expect(r.components.storeBreadth).toBeGreaterThan(0);
+    expect(r.components.storeBreadth).toBeLessThan(max);
+  });
+
+  it('scores monotonically: more stores carrying it is never scarcer', () => {
+    let previous = Infinity;
+    for (let n = 1; n <= DEFAULT_SCARCITY_CONFIG.trackedStores; n += 1) {
+      const points = rate({ stores: allStores(n) }).components.storeBreadth;
+      expect(points).toBeLessThanOrEqual(previous);
+      previous = points;
+    }
   });
 });
 
@@ -117,8 +131,11 @@ describe('bands', () => {
     expect(bandForScore(score, DEFAULT_SCARCITY_CONFIG)).toBe(band);
   });
 
-  it('rates a common, always-stocked, cheap fish as widely available', () => {
-    const r = rate({ totalListings: 40, inStock: 38, price: { median: 15, min: 5, max: 30, currency: 'USD' } });
+  it('rates a common, always-stocked, cheap fish carried everywhere as widely available', () => {
+    const r = rate({
+      totalListings: 40, inStock: 38, stores: allStores(),
+      price: { median: 15, min: 5, max: 30, currency: 'USD' },
+    });
     expect(r.band).toBe('widely-available');
   });
 
@@ -140,7 +157,7 @@ describe('transparency and determinism', () => {
   });
 
   it('reports the basis the rating rests on', () => {
-    const r = rate({ totalListings: 9, inStock: 0 });
+    const r = rate({ totalListings: 9, inStock: 0, stores: allStores(3) });
     expect(r.basis).toMatchObject({ storesCarrying: 3, totalListings: 9, inStock: 0 });
   });
 

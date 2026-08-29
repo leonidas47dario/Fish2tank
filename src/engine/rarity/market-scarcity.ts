@@ -50,7 +50,11 @@ export interface MarketScarcityConfig {
     stockPressureMax: number;
     priceLevelMax: number;
   };
-  /** Total stores tracked by the ETL. */
+  /**
+   * Total stores tracked by the ETL. Must follow etl/types.ts STORES: the
+   * breadth signal is a fraction of this, so a stale value silently mis-rates
+   * every species.
+   */
   trackedStores: number;
   /** Listings at or above which a species counts as freely offered. */
   depthSaturation: number;
@@ -64,7 +68,7 @@ export interface MarketScarcityConfig {
 export const DEFAULT_SCARCITY_CONFIG: MarketScarcityConfig = {
   formulaVersion: 'market-scarcity-v0.1.0',
   points: { storeBreadthMax: 30, listingDepthMax: 30, stockPressureMax: 25, priceLevelMax: 15 },
-  trackedStores: 3,
+  trackedStores: 8,
   depthSaturation: 20,
   priceCeiling: 200,
   minimumListings: 3,
