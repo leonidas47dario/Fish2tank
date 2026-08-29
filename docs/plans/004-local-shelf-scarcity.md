@@ -93,14 +93,23 @@ asked for, one rung short of its ceiling until a fourth witness exists.
 
 ## The blocker
 
-`npm run etl` cannot republish the index: **Predatory Fins, Aquatic Arts and
-Flip Aquatics all return HTTP 503**, UA-independent, still failing after a
-90-second retry. All three are specialists, so they do not affect the witness
-set - but they hold roughly a thousand species and most of the price data, and
+`npm run etl` cannot republish the index from this machine. **Predatory Fins,
+Aquatic Arts and Flip Aquatics all return HTTP 503**, and the body is a Palo
+Alto / Menlo Security interstitial (`paloCategory = "society"`, redirecting to
+`safe.menlosecurity.com`) - this is DRW's corporate egress filter, not the
+vendors' servers. It is not transient, retrying does not help, and it must not
+be routed around: it is an employer network control.
+
+All three are specialists, so they do not affect the witness set - but they
+hold roughly a thousand species and most of the price data, and
 `--allow-partial` correctly refuses to reprice the catalog against seven
 stores. Not overridden.
 
-**To finish:** re-run `npm run etl` when those three answer, confirm the
+The other seven vendors fetch normally from here, including Nu Aqua and
+LiveAquaria, which had never been scraped before this session.
+
+**To finish:** re-run `npm run etl` from a network outside the DRW filter,
+confirm the
 witness count reaches 3, then update the calibration expectations in
 `src/data/market.test.ts` - the test that currently asserts "rates nothing"
 flips to asserting the real distribution, deliberately and visibly.
