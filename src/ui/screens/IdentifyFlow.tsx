@@ -25,9 +25,9 @@ import { blobFor, db } from '@/data/db';
 import { CATALOG } from '@/data/catalog';
 import { canShareFiles, identifyFromText, isConfident, shareForLens, type Candidate } from '@/data/identify';
 import { assertIdentity, revealSpecimen } from '@/data/repositories';
-import type { RaritySnapshot } from '@/domain/types';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useSpecimenMedia } from '../hooks';
+import { useCatalogCard, useIsFirstOfSpecies, useSpecimenMedia } from '../hooks';
+import type { RevealOutcome } from '@/data/repositories';
 import { RevealCeremony } from '../components/RevealCeremony';
 
 type Step = 'identify' | 'reveal';
@@ -50,12 +50,14 @@ export default function IdentifyFlow() {
   );
   const specimen = found?.specimen;
   const media = useSpecimenMedia(specimenId);
+  const card = useCatalogCard(specimen?.speciesId) ?? undefined;
+  const isFirst = useIsFirstOfSpecies(specimenId, specimen?.speciesId);
 
   const [step, setStep] = useState<Step>('identify');
   const [query, setQuery] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | undefined>();
-  const [snapshot, setSnapshot] = useState<RaritySnapshot | undefined>();
+  const [outcome, setOutcome] = useState<RevealOutcome | undefined>();
   const [shareFile, setShareFile] = useState<File | undefined>();
 
   const photo = media?.[0];
@@ -102,8 +104,7 @@ export default function IdentifyFlow() {
       // Supersedes any earlier assertion rather than overwriting it (FR-I06),
       // and is recorded as user-confirmed, never as an AI percentage (FR-I04).
       await assertIdentity({ specimenId, speciesId, source: 'user', status: 'user-confirmed' });
-      const snap = await revealSpecimen(specimenId);
-      setSnapshot(snap);
+      setOutcome(await revealSpecimen(specimenId));
       setStep('reveal');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not save that identification.');
@@ -125,20 +126,28 @@ export default function IdentifyFlow() {
   }
 
   if (step === 'reveal') {
+    /* Four outcomes, and each says a different true thing. The old code had
+       two and collapsed a refusal into "already revealed", which told the user
+       something false about their own record. */
+    const rated = outcome?.status === 'revealed' || outcome?.status === 'already-revealed';
     return (
       <div className="stack identify">
-        {snapshot ? (
-          <RevealCeremony
-            snapshot={snapshot}
-            commonName={CATALOG.species.find((s) => s.speciesId === specimen.speciesId)?.commonName ?? 'Unknown'}
-            scientificName={CATALOG.species.find((s) => s.speciesId === specimen.speciesId)?.scientificName}
-            golden={Boolean(specimen.golden)}
-          />
+        {card && outcome ? (
+          rated || outcome.status === 'no-market-evidence' ? (
+            <RevealCeremony
+              card={card}
+              isFirstOfSpecies={Boolean(isFirst)}
+              snapshot={rated ? outcome.snapshot : undefined}
+              unrated={outcome.status === 'no-market-evidence'
+                ? { reason: outcome.reason, explanation: outcome.explanation }
+                : undefined}
+              golden={Boolean(specimen.golden)}
+            />
+          ) : (
+            <p className="empty">Identity saved.</p>
+          )
         ) : (
-          /* revealSpecimen returns nothing if a snapshot already existed. The
-             identification still saved, so say that plainly rather than
-             showing an empty stage. */
-          <p className="empty">Identity saved. This one was already revealed.</p>
+          <p className="empty">Identity saved.</p>
         )}
         <button type="button" className="btn--primary btn--big" onClick={done}>
           See the full record

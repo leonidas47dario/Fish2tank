@@ -467,32 +467,38 @@ describe('End-to-end acceptance: the Panther (PRD 10)', () => {
     expect(byFactor.get('adult-size')!.inputsUsed.length).toBeGreaterThan(0);
     expect(assessment!.rulesVersion).toBeTruthy();
 
-    // Step 6 - Reveal. First jaguar cichlid in the collection.
-    const snapshot = await revealSpecimen(draft.specimen.id, db);
-    expect(snapshot!.components.firstConfirmedSpecies).toBe(35);
-    expect(snapshot!.components.dreamListHit).toBe(0);
-    // Cold start: no history yet, so personal scarcity honestly scores nothing.
-    expect(snapshot!.components.personalEncounterScarcity).toBe(0);
-    // Formula v0.2.0: market scarcity contributes when it is available.
+    // Step 6 - Reveal. Formula v0.3.0: the score is market scarcity alone.
+    const outcome = await revealSpecimen(draft.specimen.id, db);
+    expect(outcome.status).toBe('revealed');
+    const snapshot = (outcome as Extract<typeof outcome, { status: 'revealed' }>).snapshot;
+
+    // Only one component now. Asserted as an exact key set rather than a
+    // presence check, because the failure this guards against is a retired
+    // component quietly coming back and inflating the total.
+    expect(Object.keys(snapshot.components)).toEqual(['marketScarcity']);
+    expect(snapshot.totalScore).toBe(snapshot.components.marketScarcity);
+
     // Asserted against the live index rather than a hardcoded number, because
     // the score moves whenever a vendor is added - expected, not a regression.
-    //
-    const expectedMarket = snapshot!.components.marketScarcity;
-    expect(expectedMarket).toBeGreaterThan(0);
-    expect(expectedMarket).toBeLessThanOrEqual(15);
-    expect(snapshot!.totalScore).toBe(35 + expectedMarket);
-    // The acceptance criterion itself. Asserting only "total == 35 + whatever
-    // the snapshot says" is circular and would survive the market component
-    // silently going to zero, which is exactly what happened while the
-    // scarcity rewrite was mid-flight.
-    expect(snapshot!.tier).toBe('rare');
-    expect(snapshot!.formulaVersion).toBe('discovery-tier-v0.2.0');
+    expect(snapshot.totalScore).toBeGreaterThan(0);
+
+    // The acceptance criterion itself. Asserting only "total == whatever the
+    // snapshot says" is circular and would survive the market score silently
+    // going to zero, which is exactly what happened while the scarcity rewrite
+    // was mid-flight. Jaguar Cichlid is carried by 1 of 3 witness stores, so
+    // it scores 61 and lands in epic.
+    expect(snapshot.tier).toBe('epic');
+    expect(snapshot.formulaVersion).toBe('discovery-tier-v0.3.0');
+
+    // Revealing again returns the SAME snapshot, distinguishably.
+    const again = await revealSpecimen(draft.specimen.id, db);
+    expect(again.status).toBe('already-revealed');
 
     await awardGolden(draft.specimen.id, 'The way he tracked me across the glass.', db);
     const golden = await db.specimens.get(draft.specimen.id);
     expect(golden!.golden!.reason).toBeTruthy();
     // FR-R06: Golden changes nothing objective.
-    expect((await db.raritySnapshots.get(snapshot!.id))!.totalScore).toBe(snapshot!.totalScore);
+    expect((await db.raritySnapshots.get(snapshot.id))!.totalScore).toBe(snapshot.totalScore);
 
     // Step 7 - Leave responsibly. No holding, no ownership, no purchase.
     expect(await db.holdings.where('specimenId').equals(draft.specimen.id).count()).toBe(0);
