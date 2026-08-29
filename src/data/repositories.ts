@@ -346,6 +346,88 @@ export async function recordStoreLabel(
   console.info('[identify] recorded store label', { specimenId, label: text, status: 'provisional' });
 }
 
+/**
+ * Log a species the catalog does not have, as its own record.
+ *
+ * WHY THIS IS A SPECIES AND NOT JUST A LABEL. recordStoreLabel() writes the
+ * keeper's wording onto the specimen and stops there, which keeps the catch but
+ * loses the fish: two Congo tetras logged a week apart stay two unrelated
+ * strings, they never appear in the catalog, and nobody downstream can tell a
+ * species the catalog is missing from a typo. Giving the submission a real
+ * Species row is what makes it countable, correctable, and reviewable.
+ *
+ * WHAT IT IS NOT. It is not a catalog entry. `origin` says `user-submitted`,
+ * the identity assertion stays `provisional`, and no care profile is invented -
+ * one person's reading of a store tag is not a source. The review CLI
+ * (`npm run species:review`) is the only path from here into the shipped
+ * catalog, and a human decides there.
+ *
+ * IDEMPOTENT ON THE LABEL. Submitting the same wording twice reuses the
+ * existing row rather than making a second one, so a keeper who logs three of
+ * the same unlisted fish gets one species with three specimens - which is the
+ * thing that makes it worth reviewing.
+ */
+export async function submitUserSpecies(
+  input: { specimenId: Id; label: string; scientificName?: string; note?: string },
+  database: DB = db,
+): Promise<Species> {
+  const label = input.label.trim();
+  if (!label) throw new Error('A species needs a name.');
+  const scientificName = input.scientificName?.trim() || undefined;
+  const note = input.note?.trim() || undefined;
+
+  const at = nowIso();
+  const key = label.toLowerCase();
+
+  const existing = (await database.species.toArray()).find(
+    (sp) => sp.origin === 'user-submitted' && sp.commonName.trim().toLowerCase() === key,
+  );
+
+  const species: Species = existing ?? {
+    id: newId('sp_user'),
+    commonName: label,
+    scientificName,
+    aliases: [],
+    createdAt: at,
+    origin: 'user-submitted',
+    submission: { label, specimenId: input.specimenId, submittedAt: at, note },
+  };
+
+  await database.transaction(
+    'rw',
+    [database.species, database.specimens, database.identifications],
+    async () => {
+      if (!existing) await database.species.add(species);
+
+      // Provisional, never user-confirmed: confirming means "this is that
+      // catalog species", and there is no catalog species to mean.
+      await assertIdentity(
+        {
+          specimenId: input.specimenId,
+          speciesId: species.id,
+          rawText: label,
+          source: 'user',
+          status: 'provisional',
+          note: note ?? 'Not in the catalog. Logged as the keeper named it.',
+        },
+        database,
+      );
+      await database.specimens.update(input.specimenId, { rawLabel: label, updatedAt: at });
+    },
+  );
+
+  console.info('[identify] logged a species the catalog lacks', {
+    speciesId: species.id, label, reusedExisting: Boolean(existing),
+  });
+  return species;
+}
+
+/** Every species this keeper added themselves, newest first. */
+export async function userSubmittedSpecies(database: DB = db): Promise<Species[]> {
+  const all = await database.species.filter((s) => s.origin === 'user-submitted').toArray();
+  return all.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
 /** Full identification history for a specimen, newest first (FR-I06, NFR-09). */
 export async function identityHistory(specimenId: Id, database: DB = db): Promise<IdentificationAssertion[]> {
   const all = await database.identifications.where('specimenId').equals(specimenId).toArray();

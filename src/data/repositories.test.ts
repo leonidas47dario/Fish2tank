@@ -32,7 +32,9 @@ import {
   recordStoreLabel,
   revealSpecimen,
   searchSpecies,
+  submitUserSpecies,
   upsertAquarium,
+  userSubmittedSpecies,
   upsertSpecies,
 } from './repositories';
 import { SPECIES_CATALOG, CATALOG_BY_ID } from './seed/species-catalog';
@@ -1199,5 +1201,93 @@ describe('adding, retiring and deleting tanks', () => {
     await clearTankPhoto(tank.id, db);
     expect((await db.aquariums.get(tank.id))!.photoMediaId).toBeUndefined();
     expect(await db.deletedRecords.get(mediaId)).toMatchObject({ kind: 'media' });
+  });
+});
+
+describe('logging a species the catalog does not have', () => {
+  async function draft() {
+    return createCatchDraft({ files: [photo()], clientKey: `k_${crypto.randomUUID()}` }, db);
+  }
+
+  it('creates a species of its own, marked as the keeper\'s and not the catalog\'s', async () => {
+    const d = await draft();
+    const species = await submitUserSpecies({ specimenId: d.specimen.id, label: '  Sailfin Pleco L083  ' }, db);
+
+    expect(species.commonName).toBe('Sailfin Pleco L083');   // trimmed
+    expect(species.origin).toBe('user-submitted');
+    expect(species.submission).toMatchObject({
+      label: 'Sailfin Pleco L083',
+      specimenId: d.specimen.id,
+    });
+    expect(await db.species.get(species.id)).toBeDefined();
+  });
+
+  it('links the specimen to it, provisionally rather than confirmed', async () => {
+    const d = await draft();
+    const species = await submitUserSpecies({ specimenId: d.specimen.id, label: 'Sailfin Pleco L083' }, db);
+
+    const after = await db.specimens.get(d.specimen.id);
+    expect(after!.speciesId).toBe(species.id);
+    // Confirming would mean "this is that catalog species", and there is none.
+    expect(after!.identityStatus).toBe('provisional');
+    expect(after!.rawLabel).toBe('Sailfin Pleco L083');
+  });
+
+  it('records the assertion so the identity trail explains itself', async () => {
+    const d = await draft();
+    await submitUserSpecies({ specimenId: d.specimen.id, label: 'Sailfin Pleco L083' }, db);
+
+    const [latest] = await identityHistory(d.specimen.id, db);
+    expect(latest!.candidateRawText).toBe('Sailfin Pleco L083');
+    expect(latest!.source).toBe('user');
+    expect(latest!.note).toMatch(/not in the catalog/i);
+  });
+
+  /**
+   * The point of reusing: two of the same unlisted fish should become one
+   * species with two specimens, which is what makes it worth reviewing.
+   */
+  it('reuses the species when the same name is logged again', async () => {
+    const a = await draft();
+    const b = await draft();
+    const first = await submitUserSpecies({ specimenId: a.specimen.id, label: 'Sailfin Pleco L083' }, db);
+    const second = await submitUserSpecies({ specimenId: b.specimen.id, label: '  sailfin pleco l083 ' }, db);
+
+    expect(second.id).toBe(first.id);
+    expect(await db.species.filter((s) => s.origin === 'user-submitted').count()).toBe(1);
+    expect((await db.specimens.where('speciesId').equals(first.id).toArray()).length).toBe(2);
+  });
+
+  it('never touches a catalog species with the same name', async () => {
+    const d = await draft();
+    const catalogNeon = await db.species.get('sp_neon_tetra');
+    expect(catalogNeon).toBeDefined();
+
+    await submitUserSpecies({ specimenId: d.specimen.id, label: catalogNeon!.commonName }, db);
+
+    // A new user-submitted row, and the catalog's own row left exactly as it was.
+    expect(await db.species.get('sp_neon_tetra')).toEqual(catalogNeon);
+    const mine = await userSubmittedSpecies(db);
+    expect(mine).toHaveLength(1);
+    expect(mine[0]!.id).not.toBe('sp_neon_tetra');
+  });
+
+  it('refuses a blank name', async () => {
+    const d = await draft();
+    await expect(submitUserSpecies({ specimenId: d.specimen.id, label: '   ' }, db))
+      .rejects.toThrow(/needs a name/i);
+  });
+
+  it('lists only the keeper\'s own species, newest first', async () => {
+    const a = await draft();
+    const b = await draft();
+    await submitUserSpecies({ specimenId: a.specimen.id, label: 'Older Fish' }, db);
+    await new Promise((r) => setTimeout(r, 5));
+    await submitUserSpecies({ specimenId: b.specimen.id, label: 'Newer Fish' }, db);
+
+    const mine = await userSubmittedSpecies(db);
+    expect(mine.map((s) => s.commonName)).toEqual(['Newer Fish', 'Older Fish']);
+    // The 2,000-odd seeded catalog species are not in this list.
+    expect(mine.every((s) => s.origin === 'user-submitted')).toBe(true);
   });
 });

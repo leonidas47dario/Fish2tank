@@ -597,6 +597,41 @@ re-asked. The cached prose is gitignored (it regenerates, and it is several
 megabytes that churn on every Wikipedia edit); the derived records beside it
 are committed, because those are the audit trail.
 
+### Species the keepers found first
+
+The catalog is incomplete by construction — it is derived from what a set of
+vendors happened to be listing, and a shop will sell a fish none of them
+carried. When a keeper searches the catalog and nothing fits, they log the name
+as-is; that becomes a `user-submitted` species on their device, provisional,
+with their exact wording kept as the evidence.
+
+Those never reach the shared catalog on their own. A maintainer reviews them:
+
+```bash
+npm run species:review -- --export ~/fish2tank-export.json
+npm run species:review -- --export ~/fish2tank-export.json --accept sp_user_abc
+npm run marts          # fold the accepted ones into the catalog
+```
+
+Listing is the default and writing takes an explicit decision. The gate rejects
+blanks and placeholders outright, and flags anything that looks like it is
+already in the catalog — naming the entries it might be — so the common failure
+(re-adding "Congo Tetra" under a second id) has to be overridden deliberately
+rather than slipped past. `--accept-all` means "everything the gate cleared",
+never "override the gate".
+
+A promoted species carries a name and nothing else: no adult size, no
+temperament, no portrait. One person's reading of a store tag is a name, not a
+care profile, and the backfill above can source the rest later the same way it
+does for anything else. The one quality rule they are exempt from is the ban on
+digits in a name, because L-numbers (L083, L046) are the standing designation
+for the undescribed Loricariids that have no binomial at all — the exact fish a
+vendor-derived catalog is most likely to be missing. Everything else the gate
+checks still applies to them.
+
+Keepers reach the tool through the JSON export on the Settings screen (NFR-08);
+there is no backend, and this pipeline does not add one.
+
 **What this machine cannot reach.** FishBase, SeriouslyFish and Wikidata all
 return 503 through DRW's Menlo Security proxy, as do two of the eight vendor
 hosts — 233 Predatory Fins listings and 10 Aquatic Arts ones are unreachable

@@ -2,7 +2,8 @@ import { useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { blobFor, db } from '@/data/db';
 import {
-  buildCatalogCard, CATALOG_BY_SPECIES, cardPrice, portraitAsset, type CatalogCard,
+  buildCatalogCard, CATALOG_BY_SPECIES, cardPrice, catalogShapeForLocal, portraitAsset,
+  type CatalogCard,
 } from '@/data/catalog';
 import { marketFor } from '@/data/market';
 import { deriveBadge, deriveQuantity } from '@/domain/holdings';
@@ -29,7 +30,13 @@ export function useSpecies(id?: Id) {
 export function useCatalogCard(speciesId?: Id): CatalogCard | null | undefined {
   return useLiveQuery(async () => {
     if (!speciesId) return null;
-    const species = CATALOG_BY_SPECIES.get(speciesId);
+    // A species the keeper submitted is not in catalog.json, so fall back to
+    // the local row rather than reporting the record has no identity.
+    const local = CATALOG_BY_SPECIES.get(speciesId)
+      ? undefined
+      : await db.species.get(speciesId);
+    const species = CATALOG_BY_SPECIES.get(speciesId)
+      ?? (local ? catalogShapeForLocal(local) : undefined);
     if (!species) return null;
 
     const [specimens, snapshots, holdings, lifeEvents, residencies, media, dream] = await Promise.all([
