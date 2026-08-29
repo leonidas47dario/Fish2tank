@@ -21,7 +21,7 @@
  */
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { db } from '@/data/db';
+import { blobFor, db } from '@/data/db';
 import { CATALOG } from '@/data/catalog';
 import { canShareFiles, identifyFromText, isConfident, type Candidate } from '@/data/identify';
 import { assertIdentity, revealSpecimen } from '@/data/repositories';
@@ -70,10 +70,10 @@ export default function IdentifyFlow() {
     let cancelled = false;
     (async () => {
       if (!photo || photo.media.kind !== 'photo') return;
-      const stored = await db.blobs.get(photo.media.originalBlobKey);
-      if (!stored || cancelled) return;
-      const ext = stored.blob.type.includes('png') ? 'png' : 'jpg';
-      setShareFile(new File([stored.blob], `catch.${ext}`, { type: stored.blob.type || 'image/jpeg' }));
+      const blob = blobFor(await db.blobs.get(photo.media.originalBlobKey));
+      if (!blob || cancelled) return;
+      const ext = blob.type.includes('png') ? 'png' : 'jpg';
+      setShareFile(new File([blob], `catch.${ext}`, { type: blob.type || 'image/jpeg' }));
     })();
     return () => { cancelled = true; };
   }, [photo]);

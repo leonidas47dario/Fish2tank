@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { Fish2TankDB, newId } from './db';
+import { blobFor, Fish2TankDB, newId } from './db';
 import {
   acquireSpecimen,
   addEncounterChapter,
@@ -141,6 +141,48 @@ describe('catch drafts (FR-C02, FR-C07)', () => {
     const stored = await db.blobs.get(draft.media[0]!.originalBlobKey);
     expect(stored!.bytes).toBe(4);
     expect(stored!.mimeType).toBe('image/jpeg');
+    // Byte-for-byte, not merely the right length.
+    expect(new Uint8Array(stored!.data!)).toEqual(new Uint8Array([1, 2, 3, 4]));
+  });
+
+  /**
+   * WebKit stores a Blob in IndexedDB by reference to a file it manages, and
+   * reclaims that file independently of the record. A photo written today can
+   * therefore read back empty tomorrow - which for this app means losing the
+   * thing the record exists for.
+   */
+  it('holds media as bytes, never as a Blob reference', async () => {
+    const draft = await createCatchDraft({ files: [photo()], clientKey: 'k1' }, db);
+    const stored = await db.blobs.get(draft.media[0]!.originalBlobKey);
+    expect(stored!.data).toBeInstanceOf(ArrayBuffer);
+    expect(stored!.blob).toBeUndefined();
+  });
+
+  it('round-trips a capture back to a readable Blob', async () => {
+    const draft = await createCatchDraft({ files: [photo()], clientKey: 'k1' }, db);
+    const back = blobFor(await db.blobs.get(draft.media[0]!.originalBlobKey));
+    expect(back).toBeInstanceOf(Blob);
+    expect(back!.type).toBe('image/jpeg');
+    expect(new Uint8Array(await back!.arrayBuffer())).toEqual(new Uint8Array([1, 2, 3, 4]));
+  });
+
+  it('still reads a photo saved by the previous version', async () => {
+    // Anyone who caught a fish before this change has Blob-shaped records on
+    // their device. Dropping them would delete their photos.
+    await db.blobs.add({
+      key: 'blob_legacy',
+      blob: new Blob([new Uint8Array([9, 9])], { type: 'image/png' }),
+      bytes: 2,
+      mimeType: 'image/png',
+      storedAt: new Date().toISOString(),
+    });
+    const back = blobFor(await db.blobs.get('blob_legacy'));
+    expect(new Uint8Array(await back!.arrayBuffer())).toEqual(new Uint8Array([9, 9]));
+  });
+
+  it('returns nothing, rather than throwing, for a record with neither', () => {
+    expect(blobFor(undefined)).toBeUndefined();
+    expect(blobFor({ key: 'k', bytes: 0, mimeType: 'image/jpeg', storedAt: 'now' })).toBeUndefined();
   });
 
   it('creates no duplicate catch when the same capture is retried', async () => {

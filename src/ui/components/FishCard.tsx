@@ -12,7 +12,7 @@
  * per-species so you can fall back when your photo is a blur through algae.
  */
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '@/data/db';
+import { blobFor, db } from '@/data/db';
 import { resolveCardArt, type CatalogCard } from '@/data/catalog';
 import { formatVolume } from '@/domain/units';
 
@@ -48,8 +48,8 @@ export function FishCard({ card, onOpen }: Props) {
     if (art.kind !== 'own') return undefined;
     const media = await db.media.get(art.mediaId);
     if (!media) return undefined;
-    const stored = await db.blobs.get(media.originalBlobKey);
-    return stored ? URL.createObjectURL(stored.blob) : undefined;
+    const blob = blobFor(await db.blobs.get(media.originalBlobKey));
+    return blob ? URL.createObjectURL(blob) : undefined;
   }, [art.kind === 'own' ? art.mediaId : undefined]);
 
   // Greyed only when you have never had this species - neither met nor kept.

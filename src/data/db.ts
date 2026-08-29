@@ -36,12 +36,47 @@ import type {
 } from '@/domain/types';
 
 /** The untouched original bytes. Never rewritten in place. */
+/**
+ * Original media bytes, held as an ArrayBuffer rather than a Blob.
+ *
+ * WHY NOT A BLOB. WebKit's IndexedDB stores a Blob by reference to a file it
+ * manages, not as bytes inside the record. That indirection is where iOS loses
+ * photos: the write can fail outright when the source File's backing has gone
+ * stale, and a record written successfully can still come back unreadable
+ * after the browser reclaims the backing file. Either way the failure is
+ * silent-ish and late, and the photo is gone - which for this app is the worst
+ * outcome there is, because the media IS the record (principle P3).
+ *
+ * An ArrayBuffer is stored inline in the record, so it cannot be reclaimed
+ * out from under us and cannot depend on a file handle the page does not own.
+ * The Blob is reconstructed on read, where it is cheap.
+ *
+ * `blob` is kept optional purely to read records written before this change.
+ * Nothing writes it any more; `blobFor()` is the only thing that should look
+ * at it.
+ */
 export interface StoredBlob {
   key: string;
-  blob: Blob;
+  /** The bytes themselves. Absent only on records written before the switch. */
+  data?: ArrayBuffer;
+  /** Legacy: a Blob written by an earlier version. Read, never written. */
+  blob?: Blob;
   bytes: number;
   mimeType: string;
   storedAt: string;
+}
+
+/**
+ * The media as a Blob, whichever way it was stored.
+ *
+ * Returns undefined rather than throwing for a record that has neither - a
+ * missing photo should degrade to the placeholder the card already has, not
+ * take the screen down.
+ */
+export function blobFor(stored: StoredBlob | undefined): Blob | undefined {
+  if (!stored) return undefined;
+  if (stored.data) return new Blob([stored.data], { type: stored.mimeType });
+  return stored.blob;
 }
 
 /**

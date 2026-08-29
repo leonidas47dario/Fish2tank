@@ -66,12 +66,11 @@ export interface CaptureFile {
  *
  * NFR-03 still holds - the bytes are copied, never re-encoded.
  */
-async function detachFiles(files: CaptureFile[]): Promise<CaptureFile[]> {
+async function detachFiles(files: CaptureFile[]): Promise<Array<CaptureFile & { data: ArrayBuffer }>> {
   return Promise.all(
     files.map(async (f, i) => {
       try {
-        const bytes = await f.blob.arrayBuffer();
-        return { ...f, blob: new Blob([bytes], { type: f.mimeType || f.blob.type }) };
+        return { ...f, data: await f.blob.arrayBuffer() };
       } catch (cause) {
         throw new Error(
           `Could not read capture ${i + 1} of ${files.length} ` +
@@ -181,14 +180,14 @@ export async function createCatchDraft(input: CreateCatchDraftInput, database: D
       specimenIds: [specimen.id],
       encounterId: encounter.id,
       originalBlobKey: key,
-      originalBytes: f.blob.size,
+      originalBytes: f.data.byteLength,
       mimeType: f.mimeType,
       durationSeconds: f.durationSeconds,
       capturedAt: at,
       syncState: 'local-draft',
     };
     media.push(m);
-    return { key, blob: f.blob, bytes: f.blob.size, mimeType: f.mimeType, storedAt: at };
+    return { key, data: f.data, bytes: f.data.byteLength, mimeType: f.mimeType, storedAt: at };
   });
 
   try {
@@ -630,13 +629,13 @@ export async function addPhotos(
       kind: f.kind,
       specimenIds: [input.specimenId],
       originalBlobKey: key,
-      originalBytes: f.blob.size,
+      originalBytes: f.data.byteLength,
       mimeType: f.mimeType,
       durationSeconds: f.durationSeconds,
       capturedAt: at,
       syncState: 'local-draft',
     });
-    return { key, blob: f.blob, bytes: f.blob.size, mimeType: f.mimeType, storedAt: at };
+    return { key, data: f.data, bytes: f.data.byteLength, mimeType: f.mimeType, storedAt: at };
   });
 
   try {

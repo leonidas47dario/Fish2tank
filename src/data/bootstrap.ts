@@ -91,10 +91,14 @@ async function seedPanther(): Promise<void> {
   // The photo ships as a bundled asset; fetch it back into a blob so it lives
   // in the same store as any real capture.
   try {
-    const blob = await (await fetch(pantherPhotoUrl)).blob();
+    const res = await fetch(pantherPhotoUrl);
+    const mimeType = res.headers.get('content-type') || 'image/jpeg';
+    // Stored as bytes, same as any real capture — see StoredBlob in db.ts for
+    // why a Blob in IndexedDB is not safe on WebKit.
+    const data = await res.arrayBuffer();
     const blobKey = 'blob_the_panther';
     await db.blobs.add({
-      key: blobKey, blob, bytes: blob.size, mimeType: blob.type || 'image/jpeg', storedAt: observedAt,
+      key: blobKey, data, bytes: data.byteLength, mimeType, storedAt: observedAt,
     });
     await db.media.add({
       id: 'media_the_panther',
@@ -102,8 +106,8 @@ async function seedPanther(): Promise<void> {
       specimenIds: [PANTHER_ID],
       encounterId: PANTHER_ENCOUNTER_ID,
       originalBlobKey: blobKey,
-      originalBytes: blob.size,
-      mimeType: blob.type || 'image/jpeg',
+      originalBytes: data.byteLength,
+      mimeType,
       capturedAt: observedAt,
       syncState: 'local-draft',
     });
