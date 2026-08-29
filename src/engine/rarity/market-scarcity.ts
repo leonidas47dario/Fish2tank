@@ -51,9 +51,11 @@ export interface MarketScarcityConfig {
     priceLevelMax: number;
   };
   /**
-   * Total stores tracked by the ETL. Must follow etl/types.ts STORES: the
-   * breadth signal is a fraction of this, so a stale value silently mis-rates
-   * every species.
+   * Total vendors behind the index.
+   *
+   * Do not rely on the default: callers should pass the real count, which
+   * `scarcityFor()` in data/market.ts reads from the index itself. The default
+   * exists only so the engine is usable standalone in tests.
    */
   trackedStores: number;
   /** Listings at or above which a species counts as freely offered. */

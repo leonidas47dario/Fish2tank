@@ -10,10 +10,9 @@ import type { LengthMeasurement } from '@/domain/types';
 import { formatLength } from '@/domain/units';
 import {
   bandForSize, isStale, marketAgeDays, marketFor, MARKET_INDEX, STORE_NAMES,
+  scarcityFor,
 } from '@/data/market';
-import {
-  computeMarketScarcity, SCARCITY_COMPONENT_LABELS,
-} from '@/engine/rarity/market-scarcity';
+import { SCARCITY_COMPONENT_LABELS } from '@/engine/rarity/market-scarcity';
 import { ScarcityBadge } from './Badges';
 
 interface Props {
@@ -43,7 +42,7 @@ export function MarketPanel({ speciesId, observedSize, yourPrice }: Props) {
   }
 
   const band = bandForSize(stats, observedSize);
-  const scarcity = computeMarketScarcity(stats);
+  const scarcity = scarcityFor(speciesId);
   const stale = isStale(stats);
   const ageDays = marketAgeDays(stats);
   const maxPrice = Math.max(...stats.priceBySize.map((b) => b.medianPrice), 1);

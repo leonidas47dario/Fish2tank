@@ -189,3 +189,30 @@ describe('separation from the Discovery Tier (FR-P05)', () => {
     expect(json).not.toMatch(/discoveryTier|personalEncounterScarcity|dreamList|firstConfirmed/i);
   });
 });
+
+describe('the store count cannot drift from the vendor list', () => {
+  it('scarcityFor() uses the count the index was actually built from', async () => {
+    const { MARKET_INDEX, TRACKED_STORES, scarcityFor } = await import('@/data/market');
+    // Read from the data, never hardcoded: adding a vendor updates both at once.
+    expect(TRACKED_STORES).toBe(MARKET_INDEX.sources.length);
+
+    const speciesId = Object.keys(MARKET_INDEX.species)[0]!;
+    const viaEntryPoint = scarcityFor(speciesId);
+    const viaStaleDefault = computeMarketScarcity(MARKET_INDEX.species[speciesId], {
+      ...DEFAULT_SCARCITY_CONFIG,
+      trackedStores: 3, // what the config said before vendors were added
+    });
+    expect(viaEntryPoint.available).toBe(true);
+    if (viaEntryPoint.available && viaStaleDefault.available) {
+      // Demonstrates the bug this guards against: a stale count changes the score.
+      expect(viaEntryPoint.components.storeBreadth)
+        .not.toBe(viaStaleDefault.components.storeBreadth);
+    }
+  });
+
+  it('returns not-enough-data for an unknown species through the entry point too', async () => {
+    const { scarcityFor } = await import('@/data/market');
+    expect(scarcityFor('sp_does_not_exist').available).toBe(false);
+    expect(scarcityFor(undefined).available).toBe(false);
+  });
+});

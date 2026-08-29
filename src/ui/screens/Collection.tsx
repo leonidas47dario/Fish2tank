@@ -10,8 +10,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/data/db';
 import { addToDreamList } from '@/data/repositories';
 import { ScarcityBadge, TierBadge } from '../components/Badges';
-import { marketFor } from '@/data/market';
-import { computeMarketScarcity } from '@/engine/rarity/market-scarcity';
+import { scarcityFor } from '@/data/market';
 
 export default function Collection() {
   const data = useLiveQuery(async () => {
@@ -56,7 +55,7 @@ export default function Collection() {
               {species.scientificName && <span className="xs muted sci">{species.scientificName}</span>}
               {/* Auto-populated from the shipped market index. */}
               {(() => {
-                const scarcity = computeMarketScarcity(marketFor(species.id));
+                const scarcity = scarcityFor(species.id);
                 return scarcity.available
                   ? <div style={{ marginTop: 'var(--space-2)' }}><ScarcityBadge band={scarcity.band} /></div>
                   : null;

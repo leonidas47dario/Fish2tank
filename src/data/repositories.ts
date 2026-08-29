@@ -32,8 +32,7 @@ import type {
 import { deriveQuantity, planMove } from '@/domain/holdings';
 import { evaluateAllTanks, type CandidateInput, type ResidentInput, type TankInput } from '@/engine/compatibility/engine';
 import { computeDiscoveryTier } from '@/engine/rarity/discovery-tier';
-import { computeMarketScarcity } from '@/engine/rarity/market-scarcity';
-import { marketFor } from './market';
+import { scarcityFor } from './market';
 import { db, newId, nowIso, today, type Fish2TankDB } from './db';
 
 type DB = Fish2TankDB;
@@ -379,7 +378,7 @@ export async function revealSpecimen(specimenId: Id, database: DB = db): Promise
     .sort((a, b) => a.observedAt.localeCompare(b.observedAt))[0];
 
   // Market scarcity is a scored component as of formula v0.2.0.
-  const market = computeMarketScarcity(marketFor(specimen.speciesId));
+  const market = scarcityFor(specimen.speciesId);
 
   const snapshot = computeDiscoveryTier({
     specimenId,

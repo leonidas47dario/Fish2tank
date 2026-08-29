@@ -8,6 +8,14 @@ import { fileURLToPath, URL } from 'node:url';
 // (Netlify, Cloudflare Pages, Vercel).
 const base = process.env.VITE_BASE ?? '/';
 
+// Staging lives under the production base (/Fish2tank/uat/), which means a
+// service worker registered for production has a scope that CONTAINS staging.
+// Left alone, a user who visits production first would then get production's
+// cached shell served for every /uat/ navigation, and staging would silently
+// show the wrong build. Production therefore disowns the /uat/ subtree.
+const isStaging = base.endsWith('/uat/');
+const navigateFallbackDenylist = [/^\/api\//, ...(isStaging ? [] : [/\/uat(\/|$)/])];
+
 export default defineConfig({
   base,
   resolve: {
@@ -20,8 +28,10 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
       manifest: {
-        name: 'Fish2Tank',
-        short_name: 'Fish2Tank',
+        // Distinguishable on the home screen, so an installed staging build
+        // is never mistaken for production.
+        name: isStaging ? 'Fish2Tank (UAT)' : 'Fish2Tank',
+        short_name: isStaging ? 'F2T UAT' : 'Fish2Tank',
         description: 'Catch the encounter. Keep every story.',
         theme_color: '#0b1d2a',
         background_color: '#0b1d2a',
@@ -39,7 +49,8 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         // Media originals live in IndexedDB, never in the SW cache (NFR-03).
-        navigateFallbackDenylist: [/^\/api\//],
+        // /uat/ is excluded from production's scope; see the note above.
+        navigateFallbackDenylist,
       },
     }),
   ],

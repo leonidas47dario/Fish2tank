@@ -177,6 +177,19 @@ constant.
 
 ---
 
+## Environments
+
+| | URL | Branch |
+|---|---|---|
+| Production | https://leonidas47dario.github.io/Fish2tank/ | `main` |
+| Staging | https://leonidas47dario.github.io/Fish2tank/uat/ | `uat` |
+
+Branch flow is `feature → uat → main`; nothing reaches production without
+having been live on staging first. Both environments are published from one
+Pages site by a single workflow, so a push to either branch rebuilds both — see
+[`docs/RELEASING.md`](docs/RELEASING.md) for why, and for how to refresh the
+vendor data.
+
 ## Running it as a live web app
 
 A deploy workflow is committed at `.github/workflows/deploy.yml`. Push to
