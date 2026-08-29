@@ -1,0 +1,101 @@
+# Backlog
+
+One file, three tables: bugs, unbuilt requirements, and post-PRD requirements
+given an ID retroactively. See `docs/specs/001-requirements-discipline.md`
+for why this file exists and what it deliberately isn't (not GitHub Issues,
+not a requirements index).
+
+The agent maintains this file. When a row's work ships, move it to "Resolved"
+with the PR that closed it rather than deleting it — the record of what broke
+and how it was found is worth keeping.
+
+Every number below was checked against the actual repo at commit `1fe5134`
+(current `main`) while writing this, not carried over from memory.
+
+---
+
+## Bugs
+
+| ID | Summary | Repro | Where |
+|---|---|---|---|
+| BUG-01 | Identification search doesn't see the catalog | Catch screen → Identity → search "Rainbow Wolf Fish" (`sp_erythrinus_erythrinus`, real catalog entry with real listings) → no match. `searchSpecies` queries `db.species` (47 curated care profiles, seeded once from `SPECIES_CATALOG`), while the Catalog screen and everything else reads the 1,080-species mart (`src/data/seed/marts/catalog.json`). Two different libraries: only fish with a hand-written care profile are identifiable at all. Found from a user screenshot mid-session. | `src/data/repositories.ts:830` (`searchSpecies`), `src/ui/screens/SpecimenDetail.tsx:79` |
+| BUG-02 | 21 species pairs are the same fish under two names | Compare `Neocaridina davidi` / `Danio rerio` cards against `Brachydanio rerio`, or `Corydoras adolfoi` against `Hoplisoma adolfoi` — same portrait file, same trade listings, two catalog rows. Each half of a pair gets its own (smaller) sample of listings, so its median price and market scarcity are computed on roughly half the real evidence. Detected by finding species whose bundled portrait is byte-identical after Commons redirect resolution — a strong synonym signal, not a coincidence. Was ~29 pairs before the naming rewrite in the PR that shipped 3:2 tiles; still 21 today. | `etl/normalize/derive-species.ts` — no synonym-merge step exists yet |
+| BUG-03 | 47 catalog rows are plants or invertebrates, not fish | 17 plant genera (Anubias, Cryptocoryne, Echinodorus, Zephyranthes…) and 30 invertebrate genera (Neocaridina, Pomacea, Cherax…) are in the species dimension because they're real vendor listings that `discoverSpecies` has no reason to exclude. They count toward "1,080 species" and appear in the fish 图鉴 with no facet to filter them out. Needs a product decision first — see FR-D07 below — this row is the bug-tracking half of that decision. | `etl/normalize/derive-species.ts` (`discoverSpecies`) |
+
+### Resolved this session
+
+| ID | Summary | Fixed by |
+|---|---|---|
+| — | Service worker served a stale build on the first load after every deploy; a new UAT build was indistinguishable from the old one without a private window | PR #6 |
+| — | Portrait budget capped at 320 species on a wrong ~27MB estimate (measured: 9.6MB for all 695); catalog looked mostly empty | PR #7 |
+| — | A kept-but-never-caught fish (61 of them, from the inventory import) rendered permanently greyed out and had no way to attach a photo, because the card's "owned" state and photo attachment both required a confirmed specimen, and an opening-balance holding has none | PR #8 |
+| — | 151 of 1,080 derived common names were vendor packaging text ("- Tank Bred", "A-S Grade Tank-Bred") because the old name-deriver took the shared *suffix* of listing titles, and vendors put provenance last | fixed on `main`; a fuller rewrite (cut at the binomial, resolve name collisions across species) was in progress this session on `claude/real-fish-names` and is stashed, not landed — see FR-D08 |
+| — | Fish-card art was cropped through the subject because cards were a portrait aspect ratio and most vendor/Commons photos are landscape | shipped as 3:2 tiles per PR #12 |
+
+---
+
+## Unbuilt (from the PRD)
+
+Requirements with a number in `docs/PRD.md` that no code implements yet.
+Moved here from README prose per spec 001 — this table is now the one place
+this list can live, so it can't diverge from a second copy.
+
+*(Populate this table on the next pass through `docs/PRD.md` against the
+current `src/` tree — not done in this session; flagged so the gap itself
+isn't silently lost. FR-J03 audio transcription and memo recording is at
+least one item known to still be unbuilt from earlier README prose.)*
+
+---
+
+## Post-PRD requirements
+
+Everything built since the 75-requirement PRD, given an ID so it's
+traceable like the original set. `FR-R##` continues the PRD's existing
+"collection" letter (through R09); `FR-D##` is new — data pipeline and
+warehouse, which nothing in the PRD anticipated.
+
+| ID | Requirement | Status |
+|---|---|---|
+| FR-D01 | Scrape vendor storefronts (Shopify `/products.json`) for live and sold-out listings, polite crawling (User-Agent, pacing, `Retry-After`, backoff, page caps) | Built — 10 vendors, `etl/sources/shopify.ts` |
+| FR-D02 | Normalize listing size and price into comparable units regardless of vendor phrasing | Built — `etl/normalize/size.ts`, `price-fit.ts` |
+| FR-D03 | Match listings to a species by scientific name in the title, rejecting non-binomial noise (`sp.`, `cf.`, `aff.`) | Built — `etl/normalize/species.ts` |
+| FR-D04 | Derive the species dimension from what vendors actually list, rather than only the curated 47 | Built — `etl/normalize/derive-species.ts` (`discoverSpecies`) |
+| FR-D05 | Auto-populate market price estimate and a market-scarcity component merged into one discovery/rarity score | Built — `src/engine/rarity/market-scarcity.ts`, `discovery-tier.ts` |
+| FR-D06 | Star-schema analytical warehouse (dimension + fact tables) in Parquet, portable to a hosted warehouse later, refreshable without a schedule | Built — `warehouse/`, `etl/build-warehouse.ts`, see `docs/DATA_WAREHOUSE.md` |
+| FR-D07 | Decide and implement whether plants/invertebrates belong in the fish catalog, and if so, a kingdom/class facet to filter them | **Not built.** BUG-03 is the tracking bug; this row is the design decision it's blocked on. Needs a product call, not just code. |
+| FR-D08 | Distinctive common names: no vendor packaging text, no name claimed by more than one species | **Partially built.** Packaging-text stripping shipped on `main` (151 bad names → non-zero-but-much-smaller; exact current count not re-measured against `main` in this session). The stronger version — cut the name at the binomial rather than guess from suffix position, then resolve same-name collisions across species by giving the name to whichever species has no better alternative — was built and measured this session (0 vendor-boilerplate names, 0 duplicate names, 97%+ real-name coverage against local listings data) but is **stashed, uncommitted**, on branch `claude/real-fish-names`. Needs to be reconciled against whatever shipped on `main` in the meantime and landed as its own PR. |
+| FR-R10 | Hearthstone-style card catalog: search, filter chips (all/caught/not yet/kept), profile picture per species | Built — `src/ui/screens/Catalog.tsx`, `FishCard.tsx` |
+| FR-R11 | Licensed portrait sourcing (Wikimedia Commons) with attribution, bundled and precached for offline use | Built — `etl/build-images.ts`, `build-portraits.ts`; 700/1,076 species have one |
+| FR-R12 | A caught fish's card can show either the reference portrait or the keeper's own photo | Built — `src/data/catalog.ts` (`resolveCardArt`), species-detail art toggle |
+| FR-R13 | A kept-but-never-caught fish counts as "in your collection" (card in colour) and can receive a photo directly, without a store encounter | Built this session — PR #8. `ownership()` in `src/data/catalog.ts`, `ensureSpecimenForHolding` / `addPhotos` in `repositories.ts`. |
+| FR-R14 | UAT branch/environment as a review gate before promoting to the production site | Built — `.github/workflows/deploy.yml`, PR #12 promotion flow |
+
+---
+
+## Enhancement requests (not yet specced)
+
+Raw feedback, kept here rather than turned into a spec under time pressure —
+per the gate in `CLAUDE.md`, a spec gets written before any of these become
+code, not as part of capturing the ask.
+
+| ID | Ask, as given | Notes |
+|---|---|---|
+| ENH-01 | Source additional vendor catalogs from Petco and PetSmart — "the definition and baseline of common fish" | Neither is a Shopify storefront like the current 10 vendors, so `etl/sources/shopify.ts` won't reach them as-is; needs its own source adapter (or an API/feed if either exposes one) before it's an ETL change rather than a new scraper. |
+| ENH-02 | Catalog performance: marts are inlined into the JS bundle (974 KB raw / 210 KB gzip at last measurement) rather than fetched as a separate asset; grows linearly with the catalog | Predates this session, still open. |
+| ENH-03 | Catalog performance: all 1,080+ cards render at once (images lazy-load, DOM nodes do not) | Predates this session, still open. Windowing or pagination is the likely fix; not designed. |
+| ENH-04 | `navigator.storage.persist()` not implemented — Safari can evict IndexedDB after ~7 days on a non-installed site | Flagged twice previously, still open. |
+| ENH-05 | `fact_price_observation` (the user's own recorded prices) is an empty warehouse table — recorded prices don't flow into it | Predates this session, still open. |
+| ENH-06 | Photo sourcing: fish-store vendor listing photos are generally good and should be usable as a portrait source alongside Wikimedia Commons | Would need its own licensing story — vendor photos aren't CC-licensed the way Commons requires; likely lands as the "labelled honestly, non-free" path spec 002 already designed for photos with no free-licensed alternative. |
+| ENH-07 | Add `nuaquashop.com` as a vendor | **Done** — `nu-aqua` is in `STORES` (`etl/types.ts`), a Chicagoland freshwater source. |
+
+---
+
+## Spec debt (from `docs/specs/001-requirements-discipline.md`)
+
+Spec 001 itself proposed five deliverables. This backlog file is one of
+them. The rest are still open and are backlog items in their own right:
+
+| ID | Item | Status |
+|---|---|---|
+| FR-D09 | `src/docs.test.ts` — a drift guard that asserts documented figures (species count, vendor count, listing count, portrait count) against the real data files, wired into CI | Not built |
+| FR-D10 | Fix `docs/MARKET_ETL.md` (still describes 3 vendors) and `docs/RELEASING.md` (points at a deleted path, refresh sequence missing `portraits`/`marts` steps) | Not built |
