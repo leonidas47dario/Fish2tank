@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "builtAt": "2026-08-29T02:30:04.100Z",
+  "builtAt": "2026-08-29T08:05:40.471Z",
   "minimumSampleCount": 3,
   "sources": [
     {
@@ -9,7 +9,7 @@
       "host": "globalexoticquatics.com",
       "currency": "USD",
       "listingsFetched": 331,
-      "retrievedAt": "2026-08-29T02:30:03.003Z"
+      "retrievedAt": "2026-08-29T08:05:38.669Z"
     },
     {
       "id": "j4-flowerhorns",
@@ -17,7 +17,7 @@
       "host": "www.j4flowerhorns.com",
       "currency": "USD",
       "listingsFetched": 634,
-      "retrievedAt": "2026-08-29T02:30:03.038Z"
+      "retrievedAt": "2026-08-29T08:05:38.705Z"
     },
     {
       "id": "predatory-fins",
@@ -25,7 +25,7 @@
       "host": "www.predatoryfins.com",
       "currency": "USD",
       "listingsFetched": 2429,
-      "retrievedAt": "2026-08-29T02:30:03.104Z"
+      "retrievedAt": "2026-08-29T08:05:38.767Z"
     },
     {
       "id": "imperial-tropicals",
@@ -33,7 +33,7 @@
       "host": "imperialtropicals.com",
       "currency": "USD",
       "listingsFetched": 4133,
-      "retrievedAt": "2026-08-29T02:30:03.201Z"
+      "retrievedAt": "2026-08-29T08:05:38.875Z"
     },
     {
       "id": "aquatic-arts",
@@ -41,7 +41,7 @@
       "host": "aquaticarts.com",
       "currency": "USD",
       "listingsFetched": 5127,
-      "retrievedAt": "2026-08-29T02:30:03.367Z"
+      "retrievedAt": "2026-08-29T08:05:39.035Z"
     },
     {
       "id": "aquarium-coop",
@@ -49,7 +49,7 @@
       "host": "www.aquariumcoop.com",
       "currency": "USD",
       "listingsFetched": 375,
-      "retrievedAt": "2026-08-29T02:30:03.676Z"
+      "retrievedAt": "2026-08-29T08:05:39.324Z"
     },
     {
       "id": "flip-aquatics",
@@ -57,7 +57,7 @@
       "host": "flipaquatics.com",
       "currency": "USD",
       "listingsFetched": 1701,
-      "retrievedAt": "2026-08-29T02:30:03.719Z"
+      "retrievedAt": "2026-08-29T08:05:39.370Z"
     },
     {
       "id": "aquahuna",
@@ -65,7 +65,48 @@
       "host": "www.aquahuna.com",
       "currency": "USD",
       "listingsFetched": 704,
-      "retrievedAt": "2026-08-29T02:30:03.837Z"
+      "retrievedAt": "2026-08-29T08:05:39.489Z"
+    },
+    {
+      "id": "nu-aqua",
+      "name": "Nu Aqua",
+      "host": "nuaquashop.com",
+      "region": "Chicagoland",
+      "currency": "USD",
+      "waterType": "freshwater",
+      "listingsFetched": 1222,
+      "retrievedAt": "2026-08-29T08:05:39.549Z"
+    },
+    {
+      "id": "liveaquaria",
+      "name": "LiveAquaria",
+      "host": "www.liveaquaria.com",
+      "currency": "USD",
+      "waterType": "marine",
+      "listingsFetched": 7714,
+      "retrievedAt": "2026-08-29T08:05:39.664Z"
+    },
+    {
+      "id": "petsmart",
+      "name": "PetSmart",
+      "host": "www.petsmart.com",
+      "currency": "USD",
+      "platform": "petsmart",
+      "dataScope": "listings",
+      "waterType": "freshwater",
+      "listingsFetched": 254,
+      "retrievedAt": "2026-08-29T07:54:56.604Z"
+    },
+    {
+      "id": "petco",
+      "name": "Petco",
+      "host": "stores.petco.com",
+      "currency": "USD",
+      "platform": "petco",
+      "dataScope": "store-locations",
+      "waterType": "mixed",
+      "listingsFetched": 0,
+      "retrievedAt": "2026-08-29T08:03:15.398Z"
     }
   ],
   "species": {
@@ -192,9 +233,9 @@
     "sp_delhezi_bichir": {
       "speciesId": "sp_delhezi_bichir",
       "comparableCount": 7,
-      "totalListings": 9,
+      "totalListings": 10,
       "inStock": 1,
-      "soldOut": 8,
+      "soldOut": 9,
       "price": {
         "median": 48,
         "min": 20,
@@ -266,6 +307,14 @@
           "inStock": 0,
           "medianPrice": 0,
           "productUrl": "https://aquaticarts.com/products/barred-bichir",
+          "productInStock": false
+        },
+        {
+          "storeId": "petsmart",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 0,
+          "productUrl": "https://www.petsmart.com/fish/live-fish/goldfish-betta-and-more/delhezi-bichir-5382009.html",
           "productInStock": false
         }
       ],
@@ -357,7 +406,7 @@
           "listings": 3,
           "inStock": 2,
           "medianPrice": 0,
-          "productUrl": "https://www.j4flowerhorns.com/products/geophagus-sveni-3-4",
+          "productUrl": "https://www.j4flowerhorns.com/products/geophagus-sveni-3-5",
           "productInStock": true
         },
         {
@@ -385,9 +434,9 @@
     "sp_geophagus_tapajos": {
       "speciesId": "sp_geophagus_tapajos",
       "comparableCount": 11,
-      "totalListings": 12,
+      "totalListings": 14,
       "inStock": 1,
-      "soldOut": 11,
+      "soldOut": 13,
       "price": {
         "median": 65,
         "min": 15,
@@ -449,6 +498,22 @@
           "medianPrice": 0,
           "productUrl": "https://www.j4flowerhorns.com/products/red-head-tapajos-geophagus-1",
           "productInStock": false
+        },
+        {
+          "storeId": "nu-aqua",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 0,
+          "productUrl": "https://nuaquashop.com/products/red-head-tapajos-geophagus-3-4",
+          "productInStock": false
+        },
+        {
+          "storeId": "petsmart",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 0,
+          "productUrl": "https://www.petsmart.com/fish/live-fish/goldfish-betta-and-more/red-head-tapajos-south-american-cichlid-5382011.html",
+          "productInStock": false
         }
       ],
       "listedBetween": {
@@ -505,7 +570,7 @@
           "listings": 8,
           "inStock": 0,
           "medianPrice": 31.5,
-          "productUrl": "https://www.predatoryfins.com/products/electric-blue-jack-dempsey-cichlid-rocio-octofasciata",
+          "productUrl": "https://www.predatoryfins.com/products/pink-jack-dempsey-cichlid-rocio-octofasciata",
           "productInStock": false
         },
         {
@@ -557,9 +622,9 @@
     "sp_electric_blue_acara": {
       "speciesId": "sp_electric_blue_acara",
       "comparableCount": 10,
-      "totalListings": 19,
+      "totalListings": 21,
       "inStock": 7,
-      "soldOut": 12,
+      "soldOut": 14,
       "price": {
         "median": 22.49,
         "min": 10,
@@ -632,6 +697,22 @@
           "medianPrice": 0,
           "productUrl": "https://www.aquahuna.com/products/electric-blue-acara",
           "productInStock": true
+        },
+        {
+          "storeId": "nu-aqua",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 0,
+          "productUrl": "https://nuaquashop.com/products/electric-blue-acara-m",
+          "productInStock": false
+        },
+        {
+          "storeId": "petsmart",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 0,
+          "productUrl": "https://www.petsmart.com/fish/live-fish/goldfish-betta-and-more/electric-blue-acara-cichlid-fish-5224045.html",
+          "productInStock": false
         }
       ],
       "listedBetween": {
@@ -642,9 +723,9 @@
     "sp_peckoltia_sabaji": {
       "speciesId": "sp_peckoltia_sabaji",
       "comparableCount": 5,
-      "totalListings": 6,
+      "totalListings": 7,
       "inStock": 0,
-      "soldOut": 6,
+      "soldOut": 7,
       "price": {
         "median": 55,
         "min": 35,
@@ -698,6 +779,14 @@
           "medianPrice": 0,
           "productUrl": "https://www.j4flowerhorns.com/products/l075-para-pleco-peckoltia-sabaji-3-3-5",
           "productInStock": false
+        },
+        {
+          "storeId": "liveaquaria",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/para-plecostomus-l075",
+          "productInStock": false
         }
       ],
       "listedBetween": {
@@ -708,9 +797,9 @@
     "sp_vampire_shrimp": {
       "speciesId": "sp_vampire_shrimp",
       "comparableCount": 3,
-      "totalListings": 13,
-      "inStock": 3,
-      "soldOut": 10,
+      "totalListings": 14,
+      "inStock": 2,
+      "soldOut": 12,
       "price": {
         "median": 35,
         "min": 28,
@@ -742,7 +831,7 @@
         {
           "storeId": "aquatic-arts",
           "listings": 9,
-          "inStock": 3,
+          "inStock": 2,
           "medianPrice": 0,
           "productUrl": "https://aquaticarts.com/products/vampire-shrimp",
           "productInStock": true
@@ -761,6 +850,14 @@
           "inStock": 0,
           "medianPrice": 0,
           "productUrl": "https://www.j4flowerhorns.com/products/vampire-shrimp-2-3-atya-gabonensis",
+          "productInStock": false
+        },
+        {
+          "storeId": "nu-aqua",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 0,
+          "productUrl": "https://nuaquashop.com/products/vampire-shrimp",
           "productInStock": false
         }
       ],
@@ -826,7 +923,7 @@
           "listings": 3,
           "inStock": 0,
           "medianPrice": 0,
-          "productUrl": "https://www.j4flowerhorns.com/products/gold-wolf-fish-10",
+          "productUrl": "https://www.j4flowerhorns.com/products/red-rainbow-wolf-fish-5-6",
           "productInStock": false
         }
       ],
@@ -838,9 +935,9 @@
     "sp_mikrogeophagus_ramirezi": {
       "speciesId": "sp_mikrogeophagus_ramirezi",
       "comparableCount": 8,
-      "totalListings": 27,
-      "inStock": 7,
-      "soldOut": 20,
+      "totalListings": 39,
+      "inStock": 14,
+      "soldOut": 25,
       "price": {
         "median": 17.49,
         "min": 12.99,
@@ -870,6 +967,14 @@
           "inStock": 3,
           "medianPrice": 0,
           "productUrl": "https://aquaticarts.com/products/german-blue-ram-cichlids",
+          "productInStock": true
+        },
+        {
+          "storeId": "liveaquaria",
+          "listings": 12,
+          "inStock": 7,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/german-gold-ram-expert-only-1",
           "productInStock": true
         },
         {
@@ -1429,13 +1534,13 @@
     },
     "sp_bristlenose_pleco": {
       "speciesId": "sp_bristlenose_pleco",
-      "comparableCount": 9,
-      "totalListings": 144,
-      "inStock": 11,
-      "soldOut": 133,
+      "comparableCount": 10,
+      "totalListings": 155,
+      "inStock": 12,
+      "soldOut": 143,
       "price": {
-        "median": 44.99,
-        "min": 25,
+        "median": 40,
+        "min": 11.89,
         "max": 64.99,
         "currency": "USD"
       },
@@ -1451,8 +1556,8 @@
         },
         {
           "sizeIn": 2,
-          "medianPrice": 45,
-          "listings": 4
+          "medianPrice": 44.99,
+          "listings": 5
         },
         {
           "sizeIn": 3,
@@ -1471,7 +1576,15 @@
           "listings": 122,
           "inStock": 7,
           "medianPrice": 0,
-          "productUrl": "https://aquaticarts.com/products/l157-red-spot-bristlenose-pleco-ancistrus-sp-l157-tank-bred",
+          "productUrl": "https://aquaticarts.com/products/snow-white-bristlenose-pleco-l144-ancistrus-sp-tank-bred",
+          "productInStock": true
+        },
+        {
+          "storeId": "nu-aqua",
+          "listings": 10,
+          "inStock": 1,
+          "medianPrice": 11.89,
+          "productUrl": "https://nuaquashop.com/products/lemon-drop-bristlenose-pleco",
           "productInStock": true
         },
         {
@@ -1479,7 +1592,7 @@
           "listings": 6,
           "inStock": 0,
           "medianPrice": 0,
-          "productUrl": "https://flipaquatics.com/products/blue-eyed-lemon-pleco",
+          "productUrl": "https://flipaquatics.com/products/honeycomb-bristlenose-pleco",
           "productInStock": false
         },
         {
@@ -1495,7 +1608,7 @@
           "listings": 5,
           "inStock": 3,
           "medianPrice": 0,
-          "productUrl": "https://www.aquahuna.com/products/calico-bushynose-pleco",
+          "productUrl": "https://www.aquahuna.com/products/honeycomb-bristlenose-pleco",
           "productInStock": true
         },
         {
@@ -1513,6 +1626,14 @@
           "medianPrice": 0,
           "productUrl": "https://www.j4flowerhorns.com/products/longfin-snow-white-bristlenose-pleco-1-2",
           "productInStock": false
+        },
+        {
+          "storeId": "petsmart",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 0,
+          "productUrl": "https://www.petsmart.com/fish/live-fish/goldfish-betta-and-more/bristlenose-pleco-4033613.html",
+          "productInStock": false
         }
       ],
       "listedBetween": {
@@ -1523,9 +1644,9 @@
     "sp_ornate_bichir": {
       "speciesId": "sp_ornate_bichir",
       "comparableCount": 8,
-      "totalListings": 13,
-      "inStock": 2,
-      "soldOut": 11,
+      "totalListings": 19,
+      "inStock": 6,
+      "soldOut": 13,
       "price": {
         "median": 105,
         "min": 38,
@@ -1588,6 +1709,14 @@
           "productInStock": false
         },
         {
+          "storeId": "liveaquaria",
+          "listings": 5,
+          "inStock": 4,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/lapradei-bichir",
+          "productInStock": true
+        },
+        {
           "storeId": "j4-flowerhorns",
           "listings": 3,
           "inStock": 2,
@@ -1610,11 +1739,19 @@
           "medianPrice": 0,
           "productUrl": "https://aquaticarts.com/products/ornate-bichir",
           "productInStock": false
+        },
+        {
+          "storeId": "nu-aqua",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 0,
+          "productUrl": "https://nuaquashop.com/products/ornate-bichir-s",
+          "productInStock": false
         }
       ],
       "listedBetween": {
         "earliest": "2019-07-26",
-        "latest": "2025-04-01"
+        "latest": "2025-12-31"
       }
     },
     "sp_toxotes_blythii": {
@@ -1684,9 +1821,9 @@
     "sp_betta": {
       "speciesId": "sp_betta",
       "comparableCount": 4,
-      "totalListings": 128,
-      "inStock": 32,
-      "soldOut": 96,
+      "totalListings": 153,
+      "inStock": 50,
+      "soldOut": 103,
       "price": {
         "median": 14.99,
         "min": 6,
@@ -1715,7 +1852,7 @@
           "listings": 72,
           "inStock": 9,
           "medianPrice": 0,
-          "productUrl": "https://aquaticarts.com/products/premium-select-betta-fish-betta-splendens-wysiwyg-gallery-3",
+          "productUrl": "https://aquaticarts.com/products/premium-select-betta-fish-betta-splendens-wysiwyg-gallery-4",
           "productInStock": true
         },
         {
@@ -1724,6 +1861,14 @@
           "inStock": 23,
           "medianPrice": 14.99,
           "productUrl": "https://imperialtropicals.com/products/wysiwyg-koi-plakat-betta-betta-splendens",
+          "productInStock": true
+        },
+        {
+          "storeId": "liveaquaria",
+          "listings": 25,
+          "inStock": 18,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/samurai-betta-male",
           "productInStock": true
         },
         {
@@ -1751,9 +1896,9 @@
     "sp_senegal_bichir": {
       "speciesId": "sp_senegal_bichir",
       "comparableCount": 11,
-      "totalListings": 17,
-      "inStock": 2,
-      "soldOut": 15,
+      "totalListings": 22,
+      "inStock": 5,
+      "soldOut": 17,
       "price": {
         "median": 55,
         "min": 12,
@@ -1804,6 +1949,14 @@
           "productInStock": false
         },
         {
+          "storeId": "liveaquaria",
+          "listings": 3,
+          "inStock": 3,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/cuvier-bichir-captive-bred-4-75-wysiwyg",
+          "productInStock": true
+        },
+        {
           "storeId": "imperial-tropicals",
           "listings": 2,
           "inStock": 1,
@@ -1826,19 +1979,35 @@
           "medianPrice": 0,
           "productUrl": "https://www.aquahuna.com/products/senegal-bichir",
           "productInStock": true
+        },
+        {
+          "storeId": "nu-aqua",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 0,
+          "productUrl": "https://nuaquashop.com/products/senegal-bichir-3-4",
+          "productInStock": false
+        },
+        {
+          "storeId": "petsmart",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 0,
+          "productUrl": "https://www.petsmart.com/fish/live-fish/goldfish-betta-and-more/dinosaur-bichir-5059107.html",
+          "productInStock": false
         }
       ],
       "listedBetween": {
         "earliest": "2021-03-09",
-        "latest": "2026-07-03"
+        "latest": "2026-08-09"
       }
     },
     "sp_congo_puffer": {
       "speciesId": "sp_congo_puffer",
       "comparableCount": 11,
-      "totalListings": 13,
+      "totalListings": 14,
       "inStock": 0,
-      "soldOut": 13,
+      "soldOut": 14,
       "price": {
         "median": 95,
         "min": 45,
@@ -1872,7 +2041,7 @@
           "listings": 8,
           "inStock": 0,
           "medianPrice": 102.5,
-          "productUrl": "https://www.predatoryfins.com/products/congo-puffer-fish-tetraodon-miurus",
+          "productUrl": "https://www.predatoryfins.com/products/red-congo-puffer-fish-tetraodon-miurus",
           "productInStock": false
         },
         {
@@ -1880,7 +2049,7 @@
           "listings": 4,
           "inStock": 0,
           "medianPrice": 94.99,
-          "productUrl": "https://imperialtropicals.com/products/spotted-congo-puffer-tetraodon-schoutedeni",
+          "productUrl": "https://imperialtropicals.com/products/tetraodon-miurus-potato-pufferfish",
           "productInStock": false
         },
         {
@@ -1890,11 +2059,19 @@
           "medianPrice": 0,
           "productUrl": "https://www.j4flowerhorns.com/products/spotted-congo-puffer",
           "productInStock": false
+        },
+        {
+          "storeId": "nu-aqua",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 0,
+          "productUrl": "https://nuaquashop.com/products/spotted-congo-puffer-3-3-5",
+          "productInStock": false
         }
       ],
       "listedBetween": {
         "earliest": "2021-08-02",
-        "latest": "2025-08-07"
+        "latest": "2025-11-15"
       }
     },
     "sp_symphysodon_aequifaciatus": {
@@ -2004,9 +2181,9 @@
     "sp_poecilia_sphenops": {
       "speciesId": "sp_poecilia_sphenops",
       "comparableCount": 13,
-      "totalListings": 22,
+      "totalListings": 26,
       "inStock": 10,
-      "soldOut": 12,
+      "soldOut": 16,
       "price": {
         "median": 28,
         "min": 3.99,
@@ -2043,8 +2220,16 @@
           "listings": 9,
           "inStock": 4,
           "medianPrice": 30,
-          "productUrl": "https://www.predatoryfins.com/products/platinum-ballon-molly-poecilia-sphenops",
+          "productUrl": "https://www.predatoryfins.com/products/golden-ballon-molly-poecilia-sphenops",
           "productInStock": true
+        },
+        {
+          "storeId": "liveaquaria",
+          "listings": 4,
+          "inStock": 0,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/gold-dust-molly",
+          "productInStock": false
         },
         {
           "storeId": "aquatic-arts",
@@ -2450,8 +2635,8 @@
     "sp_osteoglossum_bicirrhosum": {
       "speciesId": "sp_osteoglossum_bicirrhosum",
       "comparableCount": 19,
-      "totalListings": 20,
-      "inStock": 3,
+      "totalListings": 21,
+      "inStock": 4,
       "soldOut": 17,
       "price": {
         "median": 135,
@@ -2533,6 +2718,14 @@
           "medianPrice": 135,
           "productUrl": "https://www.predatoryfins.com/products/silver-arowana-osteoglossum-bicirrhosum",
           "productInStock": true
+        },
+        {
+          "storeId": "liveaquaria",
+          "listings": 1,
+          "inStock": 1,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/silver-arowana",
+          "productInStock": true
         }
       ],
       "listedBetween": {
@@ -2543,9 +2736,9 @@
     "sp_pterophyllum_scalare": {
       "speciesId": "sp_pterophyllum_scalare",
       "comparableCount": 75,
-      "totalListings": 197,
-      "inStock": 10,
-      "soldOut": 187,
+      "totalListings": 202,
+      "inStock": 13,
+      "soldOut": 189,
       "price": {
         "median": 29.99,
         "min": 9.99,
@@ -2589,7 +2782,7 @@
           "listings": 114,
           "inStock": 0,
           "medianPrice": 0,
-          "productUrl": "https://aquaticarts.com/products/blue-diamond-angelfish",
+          "productUrl": "https://aquaticarts.com/products/gold-angelfish-pterophyllum-scalare-u-s-a-bred",
           "productInStock": false
         },
         {
@@ -2597,7 +2790,7 @@
           "listings": 60,
           "inStock": 3,
           "medianPrice": 35,
-          "productUrl": "https://www.predatoryfins.com/products/pinoy-clown-angelfish-pterophyllum-scalare-sp",
+          "productUrl": "https://www.predatoryfins.com/products/red-devil-angelfish-pterophyllum-scalare",
           "productInStock": true
         },
         {
@@ -2605,7 +2798,15 @@
           "listings": 23,
           "inStock": 7,
           "medianPrice": 22.49,
-          "productUrl": "https://imperialtropicals.com/products/assorted-angelfish-pterophyllum-scalare",
+          "productUrl": "https://imperialtropicals.com/products/gold-angelfish-pterophyllum-scalare",
+          "productInStock": true
+        },
+        {
+          "storeId": "liveaquaria",
+          "listings": 5,
+          "inStock": 3,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/assorted-veil-angelfish-group",
           "productInStock": true
         }
       ],
@@ -2673,9 +2874,9 @@
     "sp_cyphotilapia_frontosa": {
       "speciesId": "sp_cyphotilapia_frontosa",
       "comparableCount": 19,
-      "totalListings": 26,
-      "inStock": 1,
-      "soldOut": 25,
+      "totalListings": 28,
+      "inStock": 2,
+      "soldOut": 26,
       "price": {
         "median": 85,
         "min": 18,
@@ -2742,6 +2943,14 @@
           "medianPrice": 0,
           "productUrl": "https://aquaticarts.com/products/black-widow-frontosa-cichlid",
           "productInStock": false
+        },
+        {
+          "storeId": "liveaquaria",
+          "listings": 2,
+          "inStock": 1,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/frontosa-cichlid-captive-bred",
+          "productInStock": true
         }
       ],
       "listedBetween": {
@@ -2810,9 +3019,9 @@
     "sp_cyprinus_carpio": {
       "speciesId": "sp_cyprinus_carpio",
       "comparableCount": 12,
-      "totalListings": 14,
+      "totalListings": 68,
       "inStock": 0,
-      "soldOut": 14,
+      "soldOut": 68,
       "price": {
         "median": 35,
         "min": 12,
@@ -2842,6 +3051,14 @@
       ],
       "stores": [
         {
+          "storeId": "liveaquaria",
+          "listings": 54,
+          "inStock": 0,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/showa-high-quality-koi-japan-strain",
+          "productInStock": false
+        },
+        {
           "storeId": "predatory-fins",
           "listings": 12,
           "inStock": 0,
@@ -2860,15 +3077,15 @@
       ],
       "listedBetween": {
         "earliest": "2021-09-06",
-        "latest": "2026-01-09"
+        "latest": "2026-01-12"
       }
     },
     "sp_amatitlania_nigrofasciata": {
       "speciesId": "sp_amatitlania_nigrofasciata",
       "comparableCount": 9,
-      "totalListings": 9,
+      "totalListings": 10,
       "inStock": 2,
-      "soldOut": 7,
+      "soldOut": 8,
       "price": {
         "median": 15,
         "min": 4.99,
@@ -2912,11 +3129,19 @@
           "medianPrice": 7.49,
           "productUrl": "https://imperialtropicals.com/products/black-convict-archocentrus-nigrofasciatus",
           "productInStock": true
+        },
+        {
+          "storeId": "liveaquaria",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/black-convict-cichlid",
+          "productInStock": false
         }
       ],
       "listedBetween": {
         "earliest": "2019-09-12",
-        "latest": "2025-12-19"
+        "latest": "2026-01-02"
       }
     },
     "sp_myxocyprinus_asiaticus": {
@@ -2993,7 +3218,7 @@
           "listings": 13,
           "inStock": 4,
           "medianPrice": 135,
-          "productUrl": "https://www.predatoryfins.com/products/chinese-high-fin-loach-myxocyprinus-asiaticus",
+          "productUrl": "https://www.predatoryfins.com/products/shortbody-chinese-high-fin-loach-myxocyprinus-asiaticus",
           "productInStock": true
         },
         {
@@ -3059,7 +3284,7 @@
           "listings": 6,
           "inStock": 0,
           "medianPrice": 185,
-          "productUrl": "https://www.predatoryfins.com/products/firewood-catfish-sorubimichthys-planiceps",
+          "productUrl": "https://www.predatoryfins.com/products/tiger-firewood-catfish-sorubimichthys-planiceps-sp",
           "productInStock": false
         }
       ],
@@ -3071,9 +3296,9 @@
     "sp_synodontis_decorus": {
       "speciesId": "sp_synodontis_decorus",
       "comparableCount": 7,
-      "totalListings": 7,
+      "totalListings": 8,
       "inStock": 0,
-      "soldOut": 7,
+      "soldOut": 8,
       "price": {
         "median": 45,
         "min": 25,
@@ -3122,20 +3347,28 @@
           "listings": 7,
           "inStock": 0,
           "medianPrice": 45,
-          "productUrl": "https://www.predatoryfins.com/products/clown-squeaker-catfish-synodontis-decorus",
+          "productUrl": "https://www.predatoryfins.com/products/decorus-angelicus-hybrid-synodontis-catfish-synodontis-decorus",
+          "productInStock": false
+        },
+        {
+          "storeId": "liveaquaria",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/synodontis-decorus-catfish",
           "productInStock": false
         }
       ],
       "listedBetween": {
         "earliest": "2023-04-29",
-        "latest": "2025-05-29"
+        "latest": "2026-01-07"
       }
     },
     "sp_flowerhorn": {
       "speciesId": "sp_flowerhorn",
       "comparableCount": 9,
-      "totalListings": 20,
-      "inStock": 1,
+      "totalListings": 21,
+      "inStock": 2,
       "soldOut": 19,
       "price": {
         "median": 110,
@@ -3190,11 +3423,19 @@
           "medianPrice": 21.99,
           "productUrl": "https://imperialtropicals.com/products/red-dragon-flowerhorn-cichlid",
           "productInStock": false
+        },
+        {
+          "storeId": "liveaquaria",
+          "listings": 1,
+          "inStock": 1,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/flowerhorn-cichlid-6-5-wysiwyg-2",
+          "productInStock": true
         }
       ],
       "listedBetween": {
         "earliest": "2017-07-05",
-        "latest": "2025-05-28"
+        "latest": "2026-03-13"
       }
     },
     "sp_vieja_coatzacoalcos": {
@@ -3248,9 +3489,9 @@
     "sp_synodontis_eupterus": {
       "speciesId": "sp_synodontis_eupterus",
       "comparableCount": 4,
-      "totalListings": 4,
+      "totalListings": 5,
       "inStock": 0,
-      "soldOut": 4,
+      "soldOut": 5,
       "price": {
         "median": 105,
         "min": 75,
@@ -3284,13 +3525,21 @@
           "listings": 4,
           "inStock": 0,
           "medianPrice": 105,
-          "productUrl": "https://www.predatoryfins.com/products/short-body-featherfin-catfish-synodontis-eupterus",
+          "productUrl": "https://www.predatoryfins.com/products/albino-featherfin-synodontis-catfish-synodontis-eupterus",
+          "productInStock": false
+        },
+        {
+          "storeId": "liveaquaria",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/synodontis-eupterus-catfish",
           "productInStock": false
         }
       ],
       "listedBetween": {
         "earliest": "2021-09-03",
-        "latest": "2025-04-25"
+        "latest": "2026-01-07"
       }
     },
     "sp_geophagus_argyrostictus": {
@@ -3493,8 +3742,8 @@
     "sp_pterophyllum_altum": {
       "speciesId": "sp_pterophyllum_altum",
       "comparableCount": 9,
-      "totalListings": 9,
-      "inStock": 0,
+      "totalListings": 10,
+      "inStock": 1,
       "soldOut": 9,
       "price": {
         "median": 75,
@@ -3539,13 +3788,21 @@
           "listings": 9,
           "inStock": 0,
           "medianPrice": 75,
-          "productUrl": "https://www.predatoryfins.com/products/altum-angelfish-pterophyllum-altum",
+          "productUrl": "https://www.predatoryfins.com/products/albino-dantum-angelfish-pterophyllum-altum-sp",
           "productInStock": false
+        },
+        {
+          "storeId": "liveaquaria",
+          "listings": 1,
+          "inStock": 1,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/altum-angel",
+          "productInStock": true
         }
       ],
       "listedBetween": {
         "earliest": "2021-09-03",
-        "latest": "2025-03-17"
+        "latest": "2026-06-02"
       }
     },
     "sp_xenomystus_nigri": {
@@ -3720,9 +3977,9 @@
     "sp_astronotus_ocellatus": {
       "speciesId": "sp_astronotus_ocellatus",
       "comparableCount": 52,
-      "totalListings": 72,
-      "inStock": 2,
-      "soldOut": 70,
+      "totalListings": 79,
+      "inStock": 4,
+      "soldOut": 75,
       "price": {
         "median": 44.99,
         "min": 18,
@@ -3802,8 +4059,16 @@
           "listings": 13,
           "inStock": 0,
           "medianPrice": 0,
-          "productUrl": "https://aquaticarts.com/products/red-oscar",
+          "productUrl": "https://aquaticarts.com/products/tiger-oscar",
           "productInStock": false
+        },
+        {
+          "storeId": "liveaquaria",
+          "listings": 7,
+          "inStock": 2,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/tiger-oscar",
+          "productInStock": true
         }
       ],
       "listedBetween": {
@@ -3814,9 +4079,9 @@
     "sp_hypancistrus_zebra": {
       "speciesId": "sp_hypancistrus_zebra",
       "comparableCount": 4,
-      "totalListings": 4,
+      "totalListings": 5,
       "inStock": 1,
-      "soldOut": 3,
+      "soldOut": 4,
       "price": {
         "median": 175,
         "min": 125,
@@ -3847,11 +4112,19 @@
           "medianPrice": 175,
           "productUrl": "https://www.predatoryfins.com/products/l046-zebra-pleco-hypancistrus-zebra",
           "productInStock": true
+        },
+        {
+          "storeId": "liveaquaria",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/zebra-altimira-l46-plecostomus-captive-bred",
+          "productInStock": false
         }
       ],
       "listedBetween": {
         "earliest": "2024-12-29",
-        "latest": "2024-12-29"
+        "latest": "2026-01-08"
       }
     },
     "sp_esox_reichertii": {
@@ -3948,9 +4221,9 @@
     "sp_green_severum": {
       "speciesId": "sp_green_severum",
       "comparableCount": 20,
-      "totalListings": 23,
+      "totalListings": 25,
       "inStock": 1,
-      "soldOut": 22,
+      "soldOut": 24,
       "price": {
         "median": 66.5,
         "min": 12,
@@ -4014,11 +4287,19 @@
           "medianPrice": 0,
           "productUrl": "https://aquaticarts.com/products/gold-severum",
           "productInStock": false
+        },
+        {
+          "storeId": "liveaquaria",
+          "listings": 2,
+          "inStock": 0,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/gold-severum",
+          "productInStock": false
         }
       ],
       "listedBetween": {
         "earliest": "2021-07-14",
-        "latest": "2024-12-09"
+        "latest": "2026-01-02"
       }
     },
     "sp_datnioides_microlepis": {
@@ -4497,7 +4778,7 @@
           "listings": 23,
           "inStock": 3,
           "medianPrice": 375,
-          "productUrl": "https://www.predatoryfins.com/products/platinum-florida-gar-lepisosteus-platyrhincus",
+          "productUrl": "https://www.predatoryfins.com/products/albino-golden-marble-florida-gar-lepisosteus-platyrhincus-1",
           "productInStock": true
         }
       ],
@@ -4540,7 +4821,7 @@
           "listings": 18,
           "inStock": 0,
           "medianPrice": 450,
-          "productUrl": "https://www.predatoryfins.com/products/leucistic-american-bullfrog-lithobates-catesbeiana",
+          "productUrl": "https://www.predatoryfins.com/products/turquoise-yellow-american-bullfrog-lithobates-catesbeiana",
           "productInStock": false
         }
       ],
@@ -4681,7 +4962,7 @@
           "listings": 18,
           "inStock": 4,
           "medianPrice": 285,
-          "productUrl": "https://www.predatoryfins.com/products/albino-alligator-gar-atractosteus-spatula",
+          "productUrl": "https://www.predatoryfins.com/products/golden-marble-alligator-gar-atractosteus-spatula",
           "productInStock": true
         }
       ],
@@ -4797,7 +5078,7 @@
           "listings": 48,
           "inStock": 11,
           "medianPrice": 972.5,
-          "productUrl": "https://www.predatoryfins.com/products/big-spot-black-diamond-stingray-potamotrygon-leopoldi",
+          "productUrl": "https://www.predatoryfins.com/products/albino-black-diamond-stingray-potamotrygon-leopoldi",
           "productInStock": true
         }
       ],
@@ -4910,9 +5191,9 @@
     "sp_sahyadria_denisonii": {
       "speciesId": "sp_sahyadria_denisonii",
       "comparableCount": 8,
-      "totalListings": 12,
-      "inStock": 2,
-      "soldOut": 10,
+      "totalListings": 15,
+      "inStock": 4,
+      "soldOut": 11,
       "price": {
         "median": 50,
         "min": 25,
@@ -4961,11 +5242,19 @@
           "medianPrice": 0,
           "productUrl": "https://aquaticarts.com/products/denisons-barb",
           "productInStock": false
+        },
+        {
+          "storeId": "liveaquaria",
+          "listings": 3,
+          "inStock": 2,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/denison-barb-1",
+          "productInStock": true
         }
       ],
       "listedBetween": {
         "earliest": "2021-07-14",
-        "latest": "2024-06-21"
+        "latest": "2026-02-13"
       }
     },
     "sp_monopterus_albus": {
@@ -5225,8 +5514,8 @@
     "sp_phractocephalus_hemioliopterus": {
       "speciesId": "sp_phractocephalus_hemioliopterus",
       "comparableCount": 37,
-      "totalListings": 37,
-      "inStock": 2,
+      "totalListings": 38,
+      "inStock": 3,
       "soldOut": 35,
       "price": {
         "median": 165,
@@ -5303,11 +5592,19 @@
           "medianPrice": 165,
           "productUrl": "https://www.predatoryfins.com/products/phantom-redtail-catfish-phractocephalus-hemioliopterus",
           "productInStock": true
+        },
+        {
+          "storeId": "liveaquaria",
+          "listings": 1,
+          "inStock": 1,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/redtail-catfish",
+          "productInStock": true
         }
       ],
       "listedBetween": {
         "earliest": "2021-05-04",
-        "latest": "2024-05-03"
+        "latest": "2026-01-06"
       }
     },
     "sp_herichthys_cyanoguttatus": {
@@ -5354,7 +5651,7 @@
           "listings": 6,
           "inStock": 0,
           "medianPrice": 107.5,
-          "productUrl": "https://www.predatoryfins.com/products/red-pearl-texas-cichlid-herichthys-cyanoguttatus-sp",
+          "productUrl": "https://www.predatoryfins.com/products/red-texas-cichlid-herichthys-cyanoguttatus-sp",
           "productInStock": false
         }
       ],
@@ -5809,7 +6106,7 @@
           "listings": 8,
           "inStock": 2,
           "medianPrice": 245,
-          "productUrl": "https://www.predatoryfins.com/products/yarrelli-goonch-catfish-bagarius",
+          "productUrl": "https://www.predatoryfins.com/products/golden-goonch-catfish-bagarius-yarrelli",
           "productInStock": true
         }
       ],
@@ -5821,9 +6118,9 @@
     "sp_carassius_auratus": {
       "speciesId": "sp_carassius_auratus",
       "comparableCount": 23,
-      "totalListings": 27,
-      "inStock": 0,
-      "soldOut": 27,
+      "totalListings": 78,
+      "inStock": 13,
+      "soldOut": 65,
       "price": {
         "median": 12,
         "min": 7,
@@ -5868,11 +6165,19 @@
       ],
       "stores": [
         {
+          "storeId": "liveaquaria",
+          "listings": 51,
+          "inStock": 13,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/common-goldfish-1",
+          "productInStock": true
+        },
+        {
           "storeId": "predatory-fins",
           "listings": 24,
           "inStock": 0,
           "medianPrice": 12,
-          "productUrl": "https://www.predatoryfins.com/products/panda-oranda-goldfish-carassius-auratus",
+          "productUrl": "https://www.predatoryfins.com/products/moor-butterfly-telescope-goldfish-carassius-auratus",
           "productInStock": false
         },
         {
@@ -5880,13 +6185,13 @@
           "listings": 3,
           "inStock": 0,
           "medianPrice": 0,
-          "productUrl": "https://aquaticarts.com/products/red-cap-oranda-goldfish-carassius-auratus-tank-bred-aquatic-arts",
+          "productUrl": "https://aquaticarts.com/products/butterfly-tail-black-moor-goldfish-carassius-auratus-tank-bred",
           "productInStock": false
         }
       ],
       "listedBetween": {
         "earliest": "2021-05-04",
-        "latest": "2026-01-01"
+        "latest": "2026-02-13"
       }
     },
     "sp_cardisoma_armatum": {
@@ -5998,9 +6303,9 @@
     "sp_guppy": {
       "speciesId": "sp_guppy",
       "comparableCount": 57,
-      "totalListings": 410,
-      "inStock": 31,
-      "soldOut": 379,
+      "totalListings": 534,
+      "inStock": 49,
+      "soldOut": 485,
       "price": {
         "median": 29.99,
         "min": 3.99,
@@ -6029,7 +6334,15 @@
           "listings": 349,
           "inStock": 19,
           "medianPrice": 0,
-          "productUrl": "https://aquaticarts.com/products/black-saddle-guppy-poecilia-reticulata-bredby-aquatic-arts",
+          "productUrl": "https://aquaticarts.com/products/german-tuxedo-guppy-poecilia-reticulata-tank-bred",
+          "productInStock": true
+        },
+        {
+          "storeId": "liveaquaria",
+          "listings": 121,
+          "inStock": 18,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/albino-koi-guppy-male-1",
           "productInStock": true
         },
         {
@@ -6037,7 +6350,7 @@
           "listings": 48,
           "inStock": 11,
           "medianPrice": 14.99,
-          "productUrl": "https://imperialtropicals.com/products/tequila-sunrise-guppy-poecilia-reticulata",
+          "productUrl": "https://imperialtropicals.com/products/red-flamingo-guppy-poecilia-reticulata",
           "productInStock": true
         },
         {
@@ -6049,12 +6362,28 @@
           "productInStock": false
         },
         {
+          "storeId": "petsmart",
+          "listings": 2,
+          "inStock": 0,
+          "medianPrice": 0,
+          "productUrl": "https://www.petsmart.com/fish/live-fish/goldfish-betta-and-more/fancy-guppy-male-4032795.html",
+          "productInStock": false
+        },
+        {
           "storeId": "aquarium-coop",
           "listings": 1,
           "inStock": 1,
           "medianPrice": 0,
           "productUrl": "https://www.aquariumcoop.com/products/hikari-fancy-guppy",
           "productInStock": true
+        },
+        {
+          "storeId": "nu-aqua",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 0,
+          "productUrl": "https://nuaquashop.com/products/hikari-fancy-guppy-0-77oz",
+          "productInStock": false
         }
       ],
       "listedBetween": {
@@ -6111,7 +6440,7 @@
           "listings": 6,
           "inStock": 0,
           "medianPrice": 162.5,
-          "productUrl": "https://www.predatoryfins.com/products/giant-spotted-shovelnose-catfish-pseudoplatystoma-corruscans",
+          "productUrl": "https://www.predatoryfins.com/products/spotted-tiger-shovelnose-x-achara-catfish-pseudoplatystoma-corruscans-sp",
           "productInStock": false
         }
       ],
@@ -6123,8 +6452,8 @@
     "sp_pseudoplatystoma_fasciatum": {
       "speciesId": "sp_pseudoplatystoma_fasciatum",
       "comparableCount": 14,
-      "totalListings": 14,
-      "inStock": 1,
+      "totalListings": 15,
+      "inStock": 2,
       "soldOut": 13,
       "price": {
         "median": 287.5,
@@ -6191,11 +6520,19 @@
           "medianPrice": 287.5,
           "productUrl": "https://www.predatoryfins.com/products/albino-golden-marble-tiger-shovelnose-catfish-pseudoplatystoma-fasciatum",
           "productInStock": true
+        },
+        {
+          "storeId": "liveaquaria",
+          "listings": 1,
+          "inStock": 1,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/tiger-shovelnose-catfish",
+          "productInStock": true
         }
       ],
       "listedBetween": {
         "earliest": "2021-09-03",
-        "latest": "2023-11-17"
+        "latest": "2026-01-07"
       }
     },
     "sp_potamotrygon_xingu": {
@@ -6401,7 +6738,7 @@
           "listings": 8,
           "inStock": 0,
           "medianPrice": 40,
-          "productUrl": "https://www.predatoryfins.com/products/golden-giant-gourami-osphronemus-goramy",
+          "productUrl": "https://www.predatoryfins.com/products/panda-pearlscale-giant-gourami-osphronemus-goramy",
           "productInStock": false
         }
       ],
@@ -6640,9 +6977,9 @@
     "sp_ambystoma_mexicanum": {
       "speciesId": "sp_ambystoma_mexicanum",
       "comparableCount": 20,
-      "totalListings": 35,
+      "totalListings": 42,
       "inStock": 0,
-      "soldOut": 35,
+      "soldOut": 42,
       "price": {
         "median": 120,
         "min": 60,
@@ -6691,7 +7028,7 @@
           "listings": 20,
           "inStock": 0,
           "medianPrice": 120,
-          "productUrl": "https://www.predatoryfins.com/products/wild-gfp-axolotl-ambystoma-mexicanum",
+          "productUrl": "https://www.predatoryfins.com/products/melanistic-gfp-axolotl-ambystoma-mexicanum",
           "productInStock": false
         },
         {
@@ -6699,13 +7036,21 @@
           "listings": 15,
           "inStock": 0,
           "medianPrice": 0,
-          "productUrl": "https://aquaticarts.com/products/copper-axanthic-axolotl-ambystoma-mexicanum-locally-bred",
+          "productUrl": "https://aquaticarts.com/products/axanthic-melanoid-axolotl-ambystoma-mexicanum-locally-bred",
+          "productInStock": false
+        },
+        {
+          "storeId": "liveaquaria",
+          "listings": 7,
+          "inStock": 0,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/melanoid-axolotl-gfp",
           "productInStock": false
         }
       ],
       "listedBetween": {
         "earliest": "2021-07-14",
-        "latest": "2025-02-04"
+        "latest": "2026-01-13"
       }
     },
     "sp_pelodiscus_sinensis": {
@@ -6802,9 +7147,9 @@
     "sp_myleus_schomburgkii": {
       "speciesId": "sp_myleus_schomburgkii",
       "comparableCount": 9,
-      "totalListings": 9,
+      "totalListings": 10,
       "inStock": 1,
-      "soldOut": 8,
+      "soldOut": 9,
       "price": {
         "median": 45,
         "min": 25,
@@ -6850,11 +7195,19 @@
           "medianPrice": 45,
           "productUrl": "https://www.predatoryfins.com/products/blackberry-silver-dollar-myleus-schomburgkii-sp",
           "productInStock": true
+        },
+        {
+          "storeId": "liveaquaria",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/black-bar-silver-dollar",
+          "productInStock": false
         }
       ],
       "listedBetween": {
         "earliest": "2021-05-04",
-        "latest": "2023-05-07"
+        "latest": "2026-01-09"
       }
     },
     "sp_phenacogrammus_aurantiacus": {
@@ -7146,7 +7499,7 @@
           "listings": 3,
           "inStock": 0,
           "medianPrice": 25,
-          "productUrl": "https://www.predatoryfins.com/products/red-belly-kribensis-cichlid-pelvicachromis-pulcher",
+          "productUrl": "https://www.predatoryfins.com/products/yellow-belly-kribensis-cichlid-pelvicachromis-pulcher",
           "productInStock": false
         }
       ],
@@ -7474,7 +7827,7 @@
           "listings": 13,
           "inStock": 0,
           "medianPrice": 55,
-          "productUrl": "https://www.predatoryfins.com/products/l177-iriri-yellow-seam-pleco-baryancistrus-xanthellus",
+          "productUrl": "https://www.predatoryfins.com/products/l081-fine-spot-gold-nugget-pleco-baryancistrus-xanthellus",
           "productInStock": false
         },
         {
@@ -7714,7 +8067,7 @@
           "listings": 12,
           "inStock": 0,
           "medianPrice": 195,
-          "productUrl": "https://www.predatoryfins.com/products/l027-xingu-royal-pleco-panaque-armbrusteri",
+          "productUrl": "https://www.predatoryfins.com/products/l027-araguaia-gold-line-royal-pleco-panaque-armbrusteri",
           "productInStock": false
         },
         {
@@ -7722,7 +8075,7 @@
           "listings": 2,
           "inStock": 2,
           "medianPrice": 119.99,
-          "productUrl": "https://imperialtropicals.com/products/l027d-thunder-royal-pleco-panaque-armbrusteri",
+          "productUrl": "https://imperialtropicals.com/products/l027b-platinum-royal-pleco-panaque-armbrusteri",
           "productInStock": true
         }
       ],
@@ -7838,7 +8191,7 @@
           "listings": 8,
           "inStock": 0,
           "medianPrice": 85,
-          "productUrl": "https://www.predatoryfins.com/products/orinoco-peacock-bass-cichla-orinocensis",
+          "productUrl": "https://www.predatoryfins.com/products/wild-orinoco-peacock-bass-cichla-orinocensis",
           "productInStock": false
         }
       ],
@@ -7906,7 +8259,7 @@
           "listings": 12,
           "inStock": 0,
           "medianPrice": 85,
-          "productUrl": "https://www.predatoryfins.com/products/red-tail-barracuda-acestrorhynchus-falcatus",
+          "productUrl": "https://www.predatoryfins.com/products/yellow-tail-barracuda-acestrorhynchus-falcatus",
           "productInStock": false
         }
       ],
@@ -7981,8 +8334,8 @@
     "sp_paracheirodon_axelrodi": {
       "speciesId": "sp_paracheirodon_axelrodi",
       "comparableCount": 4,
-      "totalListings": 17,
-      "inStock": 5,
+      "totalListings": 19,
+      "inStock": 7,
       "soldOut": 12,
       "price": {
         "median": 48,
@@ -8025,11 +8378,19 @@
           "medianPrice": 48,
           "productUrl": "https://www.predatoryfins.com/products/cardinal-tetra-paracheirodon-axelrodi",
           "productInStock": true
+        },
+        {
+          "storeId": "liveaquaria",
+          "listings": 2,
+          "inStock": 2,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/cardinal-tetra",
+          "productInStock": true
         }
       ],
       "listedBetween": {
         "earliest": "2015-12-09",
-        "latest": "2022-09-12"
+        "latest": "2026-01-09"
       }
     },
     "sp_hoplias_aimara": {
@@ -8144,7 +8505,7 @@
           "listings": 6,
           "inStock": 0,
           "medianPrice": 60,
-          "productUrl": "https://www.predatoryfins.com/products/albino-iridescent-shark-pangasius-hypophthalmus",
+          "productUrl": "https://www.predatoryfins.com/products/short-body-albino-iridescent-shark-pangasius-hypophthalmus",
           "productInStock": false
         }
       ],
@@ -8483,7 +8844,7 @@
           "listings": 14,
           "inStock": 0,
           "medianPrice": 59.99,
-          "productUrl": "https://imperialtropicals.com/products/assorted-discus-symphysodon-aequifasciata",
+          "productUrl": "https://imperialtropicals.com/products/blue-diamond-discus-symphysodon-aequifasciata",
           "productInStock": false
         },
         {
@@ -8491,7 +8852,7 @@
           "listings": 4,
           "inStock": 0,
           "medianPrice": 135,
-          "productUrl": "https://www.predatoryfins.com/products/wild-semi-royal-oriximina-discus-symphysodon-aequifasciata",
+          "productUrl": "https://www.predatoryfins.com/products/wild-alenquer-red-discus-symphysodon-aequifasciata",
           "productInStock": false
         }
       ],
@@ -8779,7 +9140,7 @@
           "listings": 5,
           "inStock": 0,
           "medianPrice": 600,
-          "productUrl": "https://www.predatoryfins.com/products/l025-red-scarlet-cactus-pleco-pseudacanthicus-pirarara",
+          "productUrl": "https://www.predatoryfins.com/products/l025-black-scarlet-cactus-pleco-pseudacanthicus-pirarara",
           "productInStock": false
         }
       ],
@@ -9145,7 +9506,7 @@
           "listings": 3,
           "inStock": 0,
           "medianPrice": 45,
-          "productUrl": "https://www.predatoryfins.com/products/black-ear-pangasius-catfish-pangasius-larnaudii",
+          "productUrl": "https://www.predatoryfins.com/products/albino-metallic-pangasius-shark-pangasius-larnaudii-sp",
           "productInStock": false
         }
       ],
@@ -9352,7 +9713,7 @@
           "listings": 8,
           "inStock": 0,
           "medianPrice": 41.5,
-          "productUrl": "https://www.predatoryfins.com/products/l191-broken-line-royal-pleco-panaque-nigrolineatus",
+          "productUrl": "https://www.predatoryfins.com/products/l190-royal-pleco-panaque-nigrolineatus",
           "productInStock": false
         },
         {
@@ -9420,8 +9781,8 @@
     "sp_puntius_tetrazona": {
       "speciesId": "sp_puntius_tetrazona",
       "comparableCount": 3,
-      "totalListings": 3,
-      "inStock": 0,
+      "totalListings": 17,
+      "inStock": 14,
       "soldOut": 3,
       "price": {
         "median": 18,
@@ -9442,17 +9803,25 @@
       ],
       "stores": [
         {
+          "storeId": "liveaquaria",
+          "listings": 14,
+          "inStock": 14,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/tiger-barb-copy",
+          "productInStock": true
+        },
+        {
           "storeId": "predatory-fins",
           "listings": 3,
           "inStock": 0,
           "medianPrice": 18,
-          "productUrl": "https://www.predatoryfins.com/products/green-balloon-tiger-barb-puntius-tetrazona",
+          "productUrl": "https://www.predatoryfins.com/products/platinum-longfin-tiger-barb-puntius-tetrazona",
           "productInStock": false
         }
       ],
       "listedBetween": {
         "earliest": "2021-11-25",
-        "latest": "2021-11-25"
+        "latest": "2026-07-29"
       }
     },
     "sp_vieja_argentea": {
@@ -9762,7 +10131,7 @@
           "listings": 11,
           "inStock": 0,
           "medianPrice": 1500,
-          "productUrl": "https://www.predatoryfins.com/products/leopard-mandarin-perch-siniperca-scherzeri",
+          "productUrl": "https://www.predatoryfins.com/products/golden-white-mandarin-perch-siniperca-scherzeri",
           "productInStock": false
         }
       ],
@@ -9774,9 +10143,9 @@
     "sp_semaprochilodus_taeniurus": {
       "speciesId": "sp_semaprochilodus_taeniurus",
       "comparableCount": 8,
-      "totalListings": 8,
-      "inStock": 0,
-      "soldOut": 8,
+      "totalListings": 11,
+      "inStock": 1,
+      "soldOut": 10,
       "price": {
         "median": 80,
         "min": 28,
@@ -9827,11 +10196,19 @@
           "medianPrice": 80,
           "productUrl": "https://www.predatoryfins.com/products/redfin-flagtail-prochilodus-semaprochilodus-taeniurus",
           "productInStock": false
+        },
+        {
+          "storeId": "liveaquaria",
+          "listings": 3,
+          "inStock": 1,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/redfin-prochilodus-3-lot-3-wysiwyg",
+          "productInStock": true
         }
       ],
       "listedBetween": {
         "earliest": "2021-05-04",
-        "latest": "2021-09-24"
+        "latest": "2026-06-26"
       }
     },
     "sp_tetraodon_pustulatus": {
@@ -9905,9 +10282,9 @@
     "sp_pinktail_chalceus": {
       "speciesId": "sp_pinktail_chalceus",
       "comparableCount": 4,
-      "totalListings": 4,
+      "totalListings": 6,
       "inStock": 0,
-      "soldOut": 4,
+      "soldOut": 6,
       "price": {
         "median": 17.99,
         "min": 10,
@@ -9951,11 +10328,27 @@
           "medianPrice": 19.99,
           "productUrl": "https://imperialtropicals.com/products/pink-tail-chalceus-chalceus-macrolepidotus",
           "productInStock": false
+        },
+        {
+          "storeId": "nu-aqua",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 0,
+          "productUrl": "https://nuaquashop.com/products/pink-tail-chalceus-xl",
+          "productInStock": false
+        },
+        {
+          "storeId": "liveaquaria",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/pinktail-chalceus",
+          "productInStock": false
         }
       ],
       "listedBetween": {
         "earliest": "2021-09-06",
-        "latest": "2023-05-18"
+        "latest": "2026-01-06"
       }
     },
     "sp_distichodus_sexfasciatus": {
@@ -10903,7 +11296,7 @@
           "listings": 11,
           "inStock": 0,
           "medianPrice": 395,
-          "productUrl": "https://www.predatoryfins.com/products/marbled-motoro-stingray-potamotrygon-motoro",
+          "productUrl": "https://www.predatoryfins.com/products/motoro-stingray-potamotrygon-motoro",
           "productInStock": false
         }
       ],
@@ -11024,7 +11417,7 @@
           "listings": 10,
           "inStock": 0,
           "medianPrice": 100,
-          "productUrl": "https://www.predatoryfins.com/products/axanthic-mono-peacock-bass-cichla-monoculus",
+          "productUrl": "https://www.predatoryfins.com/products/short-body-mono-peacock-bass-cichla-monoculus",
           "productInStock": false
         }
       ],
@@ -11508,9 +11901,9 @@
     "sp_mastacembelus_erythrotaenia": {
       "speciesId": "sp_mastacembelus_erythrotaenia",
       "comparableCount": 12,
-      "totalListings": 12,
+      "totalListings": 15,
       "inStock": 1,
-      "soldOut": 11,
+      "soldOut": 14,
       "price": {
         "median": 140,
         "min": 36,
@@ -11591,11 +11984,19 @@
           "medianPrice": 140,
           "productUrl": "https://www.predatoryfins.com/products/fire-eel-mastacembelus-erythrotaenia",
           "productInStock": true
+        },
+        {
+          "storeId": "liveaquaria",
+          "listings": 3,
+          "inStock": 0,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/fire-eel",
+          "productInStock": false
         }
       ],
       "listedBetween": {
         "earliest": "2021-09-04",
-        "latest": "2021-09-04"
+        "latest": "2026-01-09"
       }
     },
     "sp_megalops_cyprinoides": {
@@ -12261,7 +12662,7 @@
           "listings": 3,
           "inStock": 0,
           "medianPrice": 225,
-          "productUrl": "https://www.predatoryfins.com/products/l056-yellow-and-black-rubber-pleco-parancistrus-aurantiacus",
+          "productUrl": "https://www.predatoryfins.com/products/l056-yellow-rubber-pleco-parancistrus-aurantiacus",
           "productInStock": false
         }
       ],
@@ -12362,7 +12763,7 @@
           "listings": 4,
           "inStock": 0,
           "medianPrice": 150,
-          "productUrl": "https://www.predatoryfins.com/products/black-melanistic-tropical-gar-atractosteus-tropicus",
+          "productUrl": "https://www.predatoryfins.com/products/tropical-gar-atractosteus-tropicus",
           "productInStock": false
         }
       ],
@@ -12745,8 +13146,8 @@
     "sp_synodontis_nigriventris": {
       "speciesId": "sp_synodontis_nigriventris",
       "comparableCount": 3,
-      "totalListings": 6,
-      "inStock": 1,
+      "totalListings": 7,
+      "inStock": 2,
       "soldOut": 5,
       "price": {
         "median": 14.99,
@@ -12799,11 +13200,19 @@
           "medianPrice": 40,
           "productUrl": "https://www.predatoryfins.com/products/melanistic-upside-down-catfish-synodontis-nigriventris",
           "productInStock": false
+        },
+        {
+          "storeId": "liveaquaria",
+          "listings": 1,
+          "inStock": 1,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/upside-down-catfish",
+          "productInStock": true
         }
       ],
       "listedBetween": {
         "earliest": "2015-12-08",
-        "latest": "2021-09-03"
+        "latest": "2026-01-07"
       }
     },
     "sp_platynematichthys_notatus": {
@@ -12956,7 +13365,7 @@
           "listings": 4,
           "inStock": 0,
           "medianPrice": 47.5,
-          "productUrl": "https://www.predatoryfins.com/products/translucent-short-body-iridescent-shark-pangasianodon-hypophthalmus",
+          "productUrl": "https://www.predatoryfins.com/products/iridescent-shark-pangasianodon-hypophthalmus",
           "productInStock": false
         }
       ],
@@ -13369,8 +13778,8 @@
     "sp_apteronotus_albifrons": {
       "speciesId": "sp_apteronotus_albifrons",
       "comparableCount": 3,
-      "totalListings": 5,
-      "inStock": 0,
+      "totalListings": 11,
+      "inStock": 6,
       "soldOut": 5,
       "price": {
         "median": 20,
@@ -13401,6 +13810,14 @@
       ],
       "stores": [
         {
+          "storeId": "liveaquaria",
+          "listings": 6,
+          "inStock": 6,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/black-ghost-knifefish",
+          "productInStock": true
+        },
+        {
           "storeId": "predatory-fins",
           "listings": 3,
           "inStock": 0,
@@ -13427,7 +13844,7 @@
       ],
       "listedBetween": {
         "earliest": "2021-03-19",
-        "latest": "2021-09-03"
+        "latest": "2026-01-09"
       }
     },
     "sp_pseudacanthicus_pitanga": {
@@ -13848,8 +14265,8 @@
     "sp_hypancistrus_inspector": {
       "speciesId": "sp_hypancistrus_inspector",
       "comparableCount": 3,
-      "totalListings": 3,
-      "inStock": 0,
+      "totalListings": 5,
+      "inStock": 2,
       "soldOut": 3,
       "price": {
         "median": 35,
@@ -13886,11 +14303,19 @@
           "medianPrice": 35,
           "productUrl": "https://www.predatoryfins.com/products/l201-snowball-pleco-hypancistrus-inspector",
           "productInStock": false
+        },
+        {
+          "storeId": "liveaquaria",
+          "listings": 2,
+          "inStock": 2,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/snowball-plecostomus-l201",
+          "productInStock": true
         }
       ],
       "listedBetween": {
         "earliest": "2021-09-03",
-        "latest": "2021-09-03"
+        "latest": "2026-01-08"
       }
     },
     "sp_dekeyseria_brachyura": {
@@ -14233,7 +14658,7 @@
           "listings": 4,
           "inStock": 0,
           "medianPrice": 330,
-          "productUrl": "https://www.predatoryfins.com/products/short-body-butterfly-peacock-bass-cichla-ocellaris",
+          "productUrl": "https://www.predatoryfins.com/products/butterfly-peacock-bass-cichla-ocellaris",
           "productInStock": false
         }
       ],
@@ -14601,9 +15026,9 @@
     "sp_acarichthys_heckelii": {
       "speciesId": "sp_acarichthys_heckelii",
       "comparableCount": 10,
-      "totalListings": 20,
+      "totalListings": 22,
       "inStock": 2,
-      "soldOut": 18,
+      "soldOut": 20,
       "price": {
         "median": 94.99,
         "min": 28,
@@ -14670,11 +15095,19 @@
           "medianPrice": 104.99,
           "productUrl": "https://imperialtropicals.com/products/albino-threadfin-acara-acarichthys-heckelii",
           "productInStock": true
+        },
+        {
+          "storeId": "liveaquaria",
+          "listings": 2,
+          "inStock": 0,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/threadfin-geophagus-1",
+          "productInStock": false
         }
       ],
       "listedBetween": {
         "earliest": "2021-04-08",
-        "latest": "2024-05-22"
+        "latest": "2026-02-13"
       }
     },
     "sp_dimidiochromis_compressiceps": {
@@ -15340,7 +15773,7 @@
           "listings": 9,
           "inStock": 0,
           "medianPrice": 75,
-          "productUrl": "https://www.predatoryfins.com/products/l241-galaxy-vampire-pleco-leporacanthicus-galaxias",
+          "productUrl": "https://www.predatoryfins.com/products/l007-l240-vampire-pleco-leporacanthicus-galaxias",
           "productInStock": false
         }
       ],
@@ -16069,8 +16502,8 @@
     "sp_tetraodon_lineatus": {
       "speciesId": "sp_tetraodon_lineatus",
       "comparableCount": 8,
-      "totalListings": 8,
-      "inStock": 1,
+      "totalListings": 9,
+      "inStock": 2,
       "soldOut": 7,
       "price": {
         "median": 197.5,
@@ -16127,11 +16560,19 @@
           "medianPrice": 197.5,
           "productUrl": "https://www.predatoryfins.com/products/fahaka-puffer-fish-tetraodon-lineatus",
           "productInStock": true
+        },
+        {
+          "storeId": "liveaquaria",
+          "listings": 1,
+          "inStock": 1,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/fahaka-puffer",
+          "productInStock": true
         }
       ],
       "listedBetween": {
         "earliest": "2021-05-04",
-        "latest": "2021-05-04"
+        "latest": "2026-01-09"
       }
     },
     "sp_papyrocranus_afer": {
@@ -16331,8 +16772,8 @@
     "sp_leporacanthicus_triactis": {
       "speciesId": "sp_leporacanthicus_triactis",
       "comparableCount": 6,
-      "totalListings": 6,
-      "inStock": 1,
+      "totalListings": 8,
+      "inStock": 3,
       "soldOut": 5,
       "price": {
         "median": 65,
@@ -16384,11 +16825,19 @@
           "medianPrice": 65,
           "productUrl": "https://www.predatoryfins.com/products/l091-three-beacon-pleco-leporacanthicus-triactis-1",
           "productInStock": true
+        },
+        {
+          "storeId": "liveaquaria",
+          "listings": 2,
+          "inStock": 2,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/redfin-blackspot-l-091-plecostomus-2-75-wysiwyg",
+          "productInStock": true
         }
       ],
       "listedBetween": {
         "earliest": "2021-05-04",
-        "latest": "2021-05-04"
+        "latest": "2026-03-13"
       }
     },
     "sp_asterophysus_batrachus": {
@@ -16507,6 +16956,54 @@
         "latest": "2021-05-04"
       }
     },
+    "sp_aquatic_plants": {
+      "speciesId": "sp_aquatic_plants",
+      "comparableCount": 6,
+      "totalListings": 96,
+      "inStock": 37,
+      "soldOut": 59,
+      "price": {
+        "median": 17.99,
+        "min": 14.99,
+        "max": 34.99,
+        "currency": "USD"
+      },
+      "sizeRangeIn": {
+        "min": 1,
+        "max": 3
+      },
+      "priceBySize": [
+        {
+          "sizeIn": 1,
+          "medianPrice": 14.99,
+          "listings": 1
+        },
+        {
+          "sizeIn": 2,
+          "medianPrice": 29.99,
+          "listings": 2
+        },
+        {
+          "sizeIn": 3,
+          "medianPrice": 17.99,
+          "listings": 3
+        }
+      ],
+      "stores": [
+        {
+          "storeId": "imperial-tropicals",
+          "listings": 96,
+          "inStock": 37,
+          "medianPrice": 17.99,
+          "productUrl": "https://imperialtropicals.com/products/bucephalandra-sp-velvet",
+          "productInStock": true
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2015-12-15",
+        "latest": "2026-08-27"
+      }
+    },
     "sp_symphysodon_discus": {
       "speciesId": "sp_symphysodon_discus",
       "comparableCount": 3,
@@ -16548,6 +17045,59 @@
       "listedBetween": {
         "earliest": "2024-11-27",
         "latest": "2026-08-13"
+      }
+    },
+    "sp_dwarf_cichlids": {
+      "speciesId": "sp_dwarf_cichlids",
+      "comparableCount": 64,
+      "totalListings": 85,
+      "inStock": 4,
+      "soldOut": 81,
+      "price": {
+        "median": 24.99,
+        "min": 9.99,
+        "max": 54.99,
+        "currency": "USD"
+      },
+      "sizeRangeIn": {
+        "min": 0.75,
+        "max": 3.5
+      },
+      "priceBySize": [
+        {
+          "sizeIn": 0,
+          "medianPrice": 21.99,
+          "listings": 8
+        },
+        {
+          "sizeIn": 1,
+          "medianPrice": 24.99,
+          "listings": 49
+        },
+        {
+          "sizeIn": 2,
+          "medianPrice": 32.49,
+          "listings": 6
+        },
+        {
+          "sizeIn": 3,
+          "medianPrice": 29.99,
+          "listings": 1
+        }
+      ],
+      "stores": [
+        {
+          "storeId": "imperial-tropicals",
+          "listings": 85,
+          "inStock": 4,
+          "medianPrice": 24.99,
+          "productUrl": "https://imperialtropicals.com/products/electric-blue-ram-mikrogeophagus-ramirezi",
+          "productInStock": true
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2015-12-08",
+        "latest": "2026-04-16"
       }
     },
     "sp_biotodoma_wavrini": {
@@ -16715,13 +17265,61 @@
           "listings": 18,
           "inStock": 0,
           "medianPrice": 62.49,
-          "productUrl": "https://imperialtropicals.com/products/mbenji-blue-regal-aulonocara-koningsi",
+          "productUrl": "https://imperialtropicals.com/products/true-blue-regal-peacock-aulonocara-koningsi",
           "productInStock": false
         }
       ],
       "listedBetween": {
         "earliest": "2019-04-04",
         "latest": "2025-11-21"
+      }
+    },
+    "sp_african_characins": {
+      "speciesId": "sp_african_characins",
+      "comparableCount": 9,
+      "totalListings": 9,
+      "inStock": 1,
+      "soldOut": 8,
+      "price": {
+        "median": 24.99,
+        "min": 11.99,
+        "max": 34.99,
+        "currency": "USD"
+      },
+      "sizeRangeIn": {
+        "min": 1.5,
+        "max": 3.5
+      },
+      "priceBySize": [
+        {
+          "sizeIn": 1,
+          "medianPrice": 13.49,
+          "listings": 2
+        },
+        {
+          "sizeIn": 2,
+          "medianPrice": 24.99,
+          "listings": 6
+        },
+        {
+          "sizeIn": 3,
+          "medianPrice": 34.99,
+          "listings": 1
+        }
+      ],
+      "stores": [
+        {
+          "storeId": "imperial-tropicals",
+          "listings": 9,
+          "inStock": 1,
+          "medianPrice": 24.99,
+          "productUrl": "https://imperialtropicals.com/products/congo-tetra-phenacogrammus-interruptus",
+          "productInStock": true
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2017-08-24",
+        "latest": "2025-09-17"
       }
     },
     "sp_cyprinus_rubrofuscus": {
@@ -16813,9 +17411,9 @@
     "sp_pterygoplichthys_gibbiceps": {
       "speciesId": "sp_pterygoplichthys_gibbiceps",
       "comparableCount": 4,
-      "totalListings": 7,
+      "totalListings": 8,
       "inStock": 2,
-      "soldOut": 5,
+      "soldOut": 6,
       "price": {
         "median": 29.99,
         "min": 14.99,
@@ -16864,19 +17462,85 @@
           "medianPrice": 0,
           "productUrl": "https://aquaticarts.com/products/l083-l165-albino-sailfin-pleco",
           "productInStock": false
+        },
+        {
+          "storeId": "liveaquaria",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/sailfin-plecostomus",
+          "productInStock": false
         }
       ],
       "listedBetween": {
         "earliest": "2024-12-09",
-        "latest": "2025-07-11"
+        "latest": "2026-01-08"
+      }
+    },
+    "sp_madagascan_cichlids": {
+      "speciesId": "sp_madagascan_cichlids",
+      "comparableCount": 10,
+      "totalListings": 20,
+      "inStock": 3,
+      "soldOut": 17,
+      "price": {
+        "median": 44.99,
+        "min": 19.99,
+        "max": 89.99,
+        "currency": "USD"
+      },
+      "sizeRangeIn": {
+        "min": 1.5,
+        "max": 5.5
+      },
+      "priceBySize": [
+        {
+          "sizeIn": 1,
+          "medianPrice": 19.99,
+          "listings": 1
+        },
+        {
+          "sizeIn": 2,
+          "medianPrice": 29.99,
+          "listings": 1
+        },
+        {
+          "sizeIn": 3,
+          "medianPrice": 34.99,
+          "listings": 3
+        },
+        {
+          "sizeIn": 4,
+          "medianPrice": 49.99,
+          "listings": 2
+        },
+        {
+          "sizeIn": 5,
+          "medianPrice": 64.99,
+          "listings": 3
+        }
+      ],
+      "stores": [
+        {
+          "storeId": "imperial-tropicals",
+          "listings": 20,
+          "inStock": 3,
+          "medianPrice": 44.99,
+          "productUrl": "https://imperialtropicals.com/products/green-spot-bleekeri",
+          "productInStock": true
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2015-11-30",
+        "latest": "2024-08-22"
       }
     },
     "sp_macropodus_opercularis": {
       "speciesId": "sp_macropodus_opercularis",
       "comparableCount": 7,
-      "totalListings": 13,
-      "inStock": 1,
-      "soldOut": 12,
+      "totalListings": 15,
+      "inStock": 2,
+      "soldOut": 13,
       "price": {
         "median": 11.99,
         "min": 7.99,
@@ -16920,11 +17584,19 @@
           "medianPrice": 0,
           "productUrl": "https://aquaticarts.com/products/blue-paradise-fish",
           "productInStock": false
+        },
+        {
+          "storeId": "liveaquaria",
+          "listings": 2,
+          "inStock": 1,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/blue-paradise",
+          "productInStock": true
         }
       ],
       "listedBetween": {
         "earliest": "2021-07-14",
-        "latest": "2024-03-15"
+        "latest": "2026-01-06"
       }
     },
     "sp_rohanella_titteya": {
@@ -16968,6 +17640,49 @@
       "listedBetween": {
         "earliest": "2015-12-09",
         "latest": "2023-09-26"
+      }
+    },
+    "sp_native_cyprinids": {
+      "speciesId": "sp_native_cyprinids",
+      "comparableCount": 4,
+      "totalListings": 10,
+      "inStock": 3,
+      "soldOut": 7,
+      "price": {
+        "median": 7.99,
+        "min": 5.99,
+        "max": 9.99,
+        "currency": "USD"
+      },
+      "sizeRangeIn": {
+        "min": 1,
+        "max": 2.5
+      },
+      "priceBySize": [
+        {
+          "sizeIn": 1,
+          "medianPrice": 7.99,
+          "listings": 3
+        },
+        {
+          "sizeIn": 2,
+          "medianPrice": 9.99,
+          "listings": 1
+        }
+      ],
+      "stores": [
+        {
+          "storeId": "imperial-tropicals",
+          "listings": 10,
+          "inStock": 3,
+          "medianPrice": 7.99,
+          "productUrl": "https://imperialtropicals.com/products/florida-flagfish-jordanella-floridae",
+          "productInStock": true
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2016-05-02",
+        "latest": "2023-09-15"
       }
     },
     "sp_laetacara_araguaiae": {
@@ -17112,9 +17827,9 @@
     "sp_cyrtocara_moorii": {
       "speciesId": "sp_cyrtocara_moorii",
       "comparableCount": 9,
-      "totalListings": 14,
+      "totalListings": 15,
       "inStock": 5,
-      "soldOut": 9,
+      "soldOut": 10,
       "price": {
         "median": 54.99,
         "min": 9.99,
@@ -17150,11 +17865,19 @@
           "medianPrice": 54.99,
           "productUrl": "https://imperialtropicals.com/products/cyrtocara-moorii",
           "productInStock": true
+        },
+        {
+          "storeId": "liveaquaria",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/moorei-cichlid",
+          "productInStock": false
         }
       ],
       "listedBetween": {
         "earliest": "2015-11-30",
-        "latest": "2021-03-29"
+        "latest": "2025-12-31"
       }
     },
     "sp_panaque_cochliodon": {
@@ -17246,6 +17969,69 @@
       "listedBetween": {
         "earliest": "2020-11-20",
         "latest": "2020-11-20"
+      }
+    },
+    "sp_peacock_bass": {
+      "speciesId": "sp_peacock_bass",
+      "comparableCount": 7,
+      "totalListings": 8,
+      "inStock": 0,
+      "soldOut": 8,
+      "price": {
+        "median": 39.99,
+        "min": 19.99,
+        "max": 89.99,
+        "currency": "USD"
+      },
+      "sizeRangeIn": {
+        "min": 1.5,
+        "max": 6.5
+      },
+      "priceBySize": [
+        {
+          "sizeIn": 1,
+          "medianPrice": 19.99,
+          "listings": 1
+        },
+        {
+          "sizeIn": 2,
+          "medianPrice": 29.99,
+          "listings": 1
+        },
+        {
+          "sizeIn": 3,
+          "medianPrice": 32.49,
+          "listings": 2
+        },
+        {
+          "sizeIn": 4,
+          "medianPrice": 59.99,
+          "listings": 1
+        },
+        {
+          "sizeIn": 5,
+          "medianPrice": 79.99,
+          "listings": 1
+        },
+        {
+          "sizeIn": 6,
+          "medianPrice": 89.99,
+          "listings": 1
+        }
+      ],
+      "stores": [
+        {
+          "storeId": "imperial-tropicals",
+          "listings": 8,
+          "inStock": 0,
+          "medianPrice": 39.99,
+          "productUrl": "https://imperialtropicals.com/products/royal-peacock-bass-cichla-intermedia",
+          "productInStock": false
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2019-07-26",
+        "latest": "2020-11-10"
       }
     },
     "sp_protomelas_taeniolatus": {
@@ -17342,6 +18128,59 @@
       "listedBetween": {
         "earliest": "2018-11-23",
         "latest": "2018-11-23"
+      }
+    },
+    "sp_indian_cichlids": {
+      "speciesId": "sp_indian_cichlids",
+      "comparableCount": 4,
+      "totalListings": 6,
+      "inStock": 0,
+      "soldOut": 6,
+      "price": {
+        "median": 39.99,
+        "min": 24.99,
+        "max": 54.99,
+        "currency": "USD"
+      },
+      "sizeRangeIn": {
+        "min": 1.5,
+        "max": 4.5
+      },
+      "priceBySize": [
+        {
+          "sizeIn": 1,
+          "medianPrice": 24.99,
+          "listings": 1
+        },
+        {
+          "sizeIn": 2,
+          "medianPrice": 34.99,
+          "listings": 1
+        },
+        {
+          "sizeIn": 3,
+          "medianPrice": 44.99,
+          "listings": 1
+        },
+        {
+          "sizeIn": 4,
+          "medianPrice": 54.99,
+          "listings": 1
+        }
+      ],
+      "stores": [
+        {
+          "storeId": "imperial-tropicals",
+          "listings": 6,
+          "inStock": 0,
+          "medianPrice": 39.99,
+          "productUrl": "https://imperialtropicals.com/products/green-chromide-cichlid-etroplus-suratensis",
+          "productInStock": false
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2017-09-01",
+        "latest": "2017-09-01"
       }
     },
     "sp_glossolepis_pseudoincisus": {
@@ -17469,7 +18308,7 @@
           "listings": 66,
           "inStock": 28,
           "medianPrice": 0,
-          "productUrl": "https://aquaticarts.com/products/blue-mystery-snails",
+          "productUrl": "https://aquaticarts.com/products/b-grade-mystery-snails",
           "productInStock": true
         },
         {
@@ -17477,7 +18316,7 @@
           "listings": 15,
           "inStock": 12,
           "medianPrice": 3.99,
-          "productUrl": "https://imperialtropicals.com/products/black-mystery-snail",
+          "productUrl": "https://imperialtropicals.com/products/albino-mystery-snail-pomacea-sp",
           "productInStock": true
         }
       ],
@@ -17527,8 +18366,8 @@
     "sp_synodontis_lucipinnis": {
       "speciesId": "sp_synodontis_lucipinnis",
       "comparableCount": 3,
-      "totalListings": 3,
-      "inStock": 1,
+      "totalListings": 4,
+      "inStock": 2,
       "soldOut": 2,
       "price": {
         "median": 24.99,
@@ -17565,11 +18404,19 @@
           "medianPrice": 24.99,
           "productUrl": "https://imperialtropicals.com/products/synodontis-petricola",
           "productInStock": true
+        },
+        {
+          "storeId": "liveaquaria",
+          "listings": 1,
+          "inStock": 1,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/dwarf-petricola-synodontis-catfish",
+          "productInStock": true
         }
       ],
       "listedBetween": {
         "earliest": "2015-12-08",
-        "latest": "2015-12-08"
+        "latest": "2026-01-07"
       }
     },
     "sp_nimbochromis_venustus": {
@@ -17623,6 +18470,188 @@
       "listedBetween": {
         "earliest": "2015-11-30",
         "latest": "2015-11-30"
+      }
+    },
+    "sp_epicystis_crucifer": {
+      "speciesId": "sp_epicystis_crucifer",
+      "comparableCount": 3,
+      "totalListings": 12,
+      "inStock": 11,
+      "soldOut": 1,
+      "price": {
+        "median": 55.99,
+        "min": 55.99,
+        "max": 55.99,
+        "currency": "USD"
+      },
+      "sizeRangeIn": {
+        "min": 2,
+        "max": 2
+      },
+      "priceBySize": [
+        {
+          "sizeIn": 2,
+          "medianPrice": 55.99,
+          "listings": 3
+        }
+      ],
+      "stores": [
+        {
+          "storeId": "liveaquaria",
+          "listings": 12,
+          "inStock": 11,
+          "medianPrice": 55.99,
+          "productUrl": "https://www.liveaquaria.com/products/rock-flower-anemone-premium-2-to-3-wysiwyg-17",
+          "productInStock": true
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2025-12-22",
+        "latest": "2026-08-04"
+      }
+    },
+    "sp_pomacanthus_asfur": {
+      "speciesId": "sp_pomacanthus_asfur",
+      "comparableCount": 3,
+      "totalListings": 14,
+      "inStock": 5,
+      "soldOut": 9,
+      "price": {
+        "median": 288.99,
+        "min": 258.99,
+        "max": 497.99,
+        "currency": "USD"
+      },
+      "sizeRangeIn": {
+        "min": 1,
+        "max": 5
+      },
+      "priceBySize": [
+        {
+          "sizeIn": 1,
+          "medianPrice": 258.99,
+          "listings": 1
+        },
+        {
+          "sizeIn": 3,
+          "medianPrice": 288.99,
+          "listings": 1
+        },
+        {
+          "sizeIn": 5,
+          "medianPrice": 497.99,
+          "listings": 1
+        }
+      ],
+      "stores": [
+        {
+          "storeId": "liveaquaria",
+          "listings": 14,
+          "inStock": 5,
+          "medianPrice": 288.99,
+          "productUrl": "https://www.liveaquaria.com/products/asfur-angelfish",
+          "productInStock": true
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2026-01-14",
+        "latest": "2026-06-10"
+      }
+    },
+    "sp_tridacna_maxima": {
+      "speciesId": "sp_tridacna_maxima",
+      "comparableCount": 4,
+      "totalListings": 40,
+      "inStock": 0,
+      "soldOut": 40,
+      "price": {
+        "median": 182.99,
+        "min": 79.99,
+        "max": 206.99,
+        "currency": "USD"
+      },
+      "sizeRangeIn": {
+        "min": 1,
+        "max": 5
+      },
+      "priceBySize": [
+        {
+          "sizeIn": 1,
+          "medianPrice": 131.49,
+          "listings": 2
+        },
+        {
+          "sizeIn": 4,
+          "medianPrice": 182.99,
+          "listings": 1
+        },
+        {
+          "sizeIn": 5,
+          "medianPrice": 206.99,
+          "listings": 1
+        }
+      ],
+      "stores": [
+        {
+          "storeId": "liveaquaria",
+          "listings": 40,
+          "inStock": 0,
+          "medianPrice": 182.99,
+          "productUrl": "https://www.liveaquaria.com/products/ultra-grade-maxima-clams",
+          "productInStock": false
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2026-01-07",
+        "latest": "2026-01-09"
+      }
+    },
+    "sp_tridacna_squamosa": {
+      "speciesId": "sp_tridacna_squamosa",
+      "comparableCount": 4,
+      "totalListings": 5,
+      "inStock": 0,
+      "soldOut": 5,
+      "price": {
+        "median": 238.99,
+        "min": 95.99,
+        "max": 246.99,
+        "currency": "USD"
+      },
+      "sizeRangeIn": {
+        "min": 1,
+        "max": 3
+      },
+      "priceBySize": [
+        {
+          "sizeIn": 1,
+          "medianPrice": 238.99,
+          "listings": 1
+        },
+        {
+          "sizeIn": 2,
+          "medianPrice": 246.99,
+          "listings": 1
+        },
+        {
+          "sizeIn": 3,
+          "medianPrice": 167.49,
+          "listings": 2
+        }
+      ],
+      "stores": [
+        {
+          "storeId": "liveaquaria",
+          "listings": 5,
+          "inStock": 0,
+          "medianPrice": 238.99,
+          "productUrl": "https://www.liveaquaria.com/products/squamosa-clam-aquacultured",
+          "productInStock": false
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2026-01-09",
+        "latest": "2026-01-09"
       }
     }
   },

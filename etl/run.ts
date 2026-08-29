@@ -13,9 +13,15 @@
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { fetchAllProducts, type ShopifyProduct } from './sources/shopify';
+import * as petsmart from './sources/petsmart';
+import * as petco from './sources/petco';
 import { normalizeStore, isLivestock } from './normalize/listing';
+import { normalizeRetailStore } from './normalize/retail';
 import { buildMarketIndex } from './index-builder';
-import { STORES, type MarketListing } from './types';
+import {
+  SAMPLED_CITY, STORES,
+  type LocalStore, type MarketListing, type RetailProduct, type StoreInventory,
+} from './types';
 import { SPECIES_CATALOG } from '@/data/seed/species-catalog';
 
 const RAW_DIR = 'etl/raw';
@@ -31,43 +37,160 @@ async function main() {
   mkdirSync('src/data/seed/marts', { recursive: true });
 
   const allListings: MarketListing[] = [];
+  const localStores: LocalStore[] = [];
+  const storeInventory: StoreInventory[] = [];
   const sources: Array<(typeof STORES)[number] & { listingsFetched: number; retrievedAt: string }> = [];
+
+  /** Read a cached snapshot, or the file that says why there is none. */
+  const readCache = <T,>(path: string): T | undefined =>
+    existsSync(path) ? (JSON.parse(readFileSync(path, 'utf8')) as T) : undefined;
 
   for (const store of STORES) {
     const rawPath = join(RAW_DIR, `${store.id}.json`);
     const retrievedAt = new Date().toISOString();
-    let products: ShopifyProduct[];
+    const platform = store.platform ?? 'shopify';
 
-    if (offline) {
-      if (!existsSync(rawPath)) {
-        console.error(`  ${store.id}: no cached snapshot at ${rawPath}, skipping`);
-        continue;
+    // ---- Shopify -------------------------------------------------------
+    if (platform === 'shopify') {
+      let products: ShopifyProduct[];
+      if (offline) {
+        const cached = readCache<{ retrievedAt: string; products: ShopifyProduct[] }>(rawPath);
+        if (!cached) {
+          console.error(`  ${store.id}: no cached snapshot at ${rawPath}, skipping`);
+          continue;
+        }
+        products = cached.products;
+        console.log(`  ${store.name}: ${products.length} products from cache (${cached.retrievedAt})`);
+      } else {
+        process.stdout.write(`  ${store.name}: fetching`);
+        products = await fetchAllProducts(store.host, {
+          onPage: (page, count) => process.stdout.write(` p${page}:${count}`),
+        });
+        process.stdout.write(`  -> ${products.length} products\n`);
+        writeFileSync(rawPath, JSON.stringify({ store: store.id, retrievedAt, products }, null, 2));
       }
-      const cached = JSON.parse(readFileSync(rawPath, 'utf8')) as { retrievedAt: string; products: ShopifyProduct[] };
-      products = cached.products;
-      console.log(`  ${store.name}: ${products.length} products from cache (${cached.retrievedAt})`);
-    } else {
-      process.stdout.write(`  ${store.name}: fetching`);
-      products = await fetchAllProducts(store.host, {
-        onPage: (page, count) => process.stdout.write(` p${page}:${count}`),
-      });
-      process.stdout.write(`  -> ${products.length} products\n`);
-      writeFileSync(rawPath, JSON.stringify({ store: store.id, retrievedAt, products }, null, 2));
+
+      const normalized = normalizeStore(store, products, catalog, retrievedAt).filter(isLivestock);
+      allListings.push(...normalized);
+      sources.push({ ...store, listingsFetched: normalized.length, retrievedAt });
+      continue;
     }
 
-    const normalized = normalizeStore(store, products, catalog, retrievedAt).filter(isLivestock);
-    allListings.push(...normalized);
-    sources.push({ ...store, listingsFetched: normalized.length, retrievedAt });
+    // ---- PetSmart ------------------------------------------------------
+    //
+    // Three separate reads, because they are three separate facts: the
+    // national catalogue, the branches, and today's count in each branch.
+    if (platform === 'petsmart') {
+      type Snapshot = {
+        retrievedAt: string;
+        products: RetailProduct[];
+        stores: LocalStore[];
+        inventory: StoreInventory[];
+      };
+      let snap: Snapshot;
+
+      if (offline) {
+        const cached = readCache<Snapshot>(rawPath);
+        if (!cached) {
+          console.error(`  ${store.id}: no cached snapshot at ${rawPath}, skipping`);
+          continue;
+        }
+        snap = cached;
+        console.log(
+          `  ${store.name}: ${snap.products.length} products, ${snap.stores.length} ${SAMPLED_CITY.label} stores from cache (${snap.retrievedAt})`,
+        );
+      } else {
+        process.stdout.write(`  ${store.name}: sitemap`);
+        const urls = await petsmart.fetchSitemapUrls();
+        const productUrls = petsmart.liveProductUrls(urls);
+        const storeUrls = petsmart.storeUrlsForCity(urls, SAMPLED_CITY.state, SAMPLED_CITY.citySlug);
+        process.stdout.write(
+          ` -> ${productUrls.length} live products, ${storeUrls.length} ${SAMPLED_CITY.label} stores\n`,
+        );
+
+        process.stdout.write(`    stores`);
+        const stores = await petsmart.fetchStores(storeUrls);
+        process.stdout.write(` -> ${stores.length}\n`);
+
+        process.stdout.write(`    products`);
+        const products = await petsmart.fetchProducts(productUrls, {
+          onProgress: (done, total) => {
+            if (done % 25 === 0 || done === total) process.stdout.write(` ${done}/${total}`);
+          },
+        });
+        process.stdout.write(`\n`);
+
+        process.stdout.write(`    on-hand counts`);
+        const inventory = await petsmart.fetchStoreInventory(products.map((p) => p.sku), stores);
+        process.stdout.write(` -> ${inventory.length} store/sku rows\n`);
+
+        snap = { retrievedAt, products, stores, inventory };
+        writeFileSync(rawPath, JSON.stringify({ store: store.id, ...snap }, null, 2));
+      }
+
+      const normalized = normalizeRetailStore(store, snap.products, catalog, snap.retrievedAt).filter(isLivestock);
+      allListings.push(...normalized);
+      localStores.push(...snap.stores);
+      storeInventory.push(...snap.inventory);
+      sources.push({ ...store, listingsFetched: normalized.length, retrievedAt: snap.retrievedAt });
+      continue;
+    }
+
+    // ---- Petco ---------------------------------------------------------
+    //
+    // Locations only, and by design. www.petco.com answers 403 to every
+    // automated request including robots.txt, so there is no permitted route
+    // to its catalogue - see sources/petco.ts. The vendor still earns its row
+    // because its branch pages state which Chicago stores run an aquatics
+    // department, and that is a fact about where fish are, not a guess.
+    if (platform === 'petco') {
+      type Snapshot = { retrievedAt: string; stores: LocalStore[] };
+      let snap: Snapshot;
+
+      if (offline) {
+        const cached = readCache<Snapshot>(rawPath);
+        if (!cached) {
+          console.error(`  ${store.id}: no cached snapshot at ${rawPath}, skipping`);
+          continue;
+        }
+        snap = cached;
+        console.log(`  ${store.name}: ${snap.stores.length} ${SAMPLED_CITY.label} stores from cache (${snap.retrievedAt})`);
+      } else {
+        process.stdout.write(`  ${store.name}: store directory`);
+        const urls = await petco.fetchStoreDirectoryUrls();
+        const storeUrls = petco.storeUrlsForCity(urls, SAMPLED_CITY.state, SAMPLED_CITY.citySlug);
+        process.stdout.write(` -> ${storeUrls.length} ${SAMPLED_CITY.label} branches\n`);
+        const stores = await petco.fetchStores(storeUrls);
+        const aquatics = stores.filter(petco.hasAquatics).length;
+        process.stdout.write(`    read ${stores.length}, ${aquatics} run an aquatics department\n`);
+        snap = { retrievedAt, stores };
+        writeFileSync(rawPath, JSON.stringify({ store: store.id, ...snap }, null, 2));
+      }
+
+      localStores.push(...snap.stores);
+      sources.push({ ...store, listingsFetched: 0, retrievedAt: snap.retrievedAt });
+    }
   }
 
   // --- Outputs ------------------------------------------------------------
   writeFileSync(join(OUT_DIR, 'listings.jsonl'), allListings.map((l) => JSON.stringify(l)).join('\n') + '\n');
   writeFileSync(join(OUT_DIR, 'listings.csv'), toCsv(allListings));
 
+  // Branches and their on-hand counts are separate outputs, because they are
+  // separate grains. Both are small and both are committed, unlike listings.
+  writeFileSync(
+    join(OUT_DIR, 'local-stores.jsonl'),
+    localStores.map((s) => JSON.stringify(s)).join('\n') + (localStores.length ? '\n' : ''),
+  );
+  writeFileSync(
+    join(OUT_DIR, 'store-inventory.jsonl'),
+    storeInventory.map((s) => JSON.stringify(s)).join('\n') + (storeInventory.length ? '\n' : ''),
+  );
+
   const index = buildMarketIndex(allListings, { sources });
   writeFileSync(APP_INDEX, JSON.stringify(index, null, 2));
 
-  report(allListings, index);
+  report(allListings, index, localStores, storeInventory);
 }
 
 function toCsv(listings: MarketListing[]): string {
@@ -88,7 +211,12 @@ function toCsv(listings: MarketListing[]): string {
   return [cols.join(','), ...rows].join('\n') + '\n';
 }
 
-function report(listings: MarketListing[], index: ReturnType<typeof buildMarketIndex>) {
+function report(
+  listings: MarketListing[],
+  index: ReturnType<typeof buildMarketIndex>,
+  localStores: LocalStore[],
+  storeInventory: StoreInventory[],
+) {
   const matched = listings.filter((l) => l.speciesId).length;
   const sized = listings.filter((l) => l.size).length;
   const soldOut = listings.filter((l) => !l.available).length;
@@ -100,7 +228,23 @@ function report(listings: MarketListing[], index: ReturnType<typeof buildMarketI
   console.log(`  matched to catalog ${matched}  (${pct(matched, listings.length)})`);
   console.log(`  species indexed    ${Object.keys(index.species).length}  (>= ${index.minimumSampleCount} sized listings)`);
   console.log(`  unmatched binomials ${index.unmatchedScientificNames.length}`);
-  console.log(`\n  wrote ${OUT_DIR}/listings.jsonl, ${OUT_DIR}/listings.csv, ${APP_INDEX}`);
+
+  if (localStores.length) {
+    console.log(`\n─── ${SAMPLED_CITY.label} branches ───`);
+    for (const vendorId of [...new Set(localStores.map((s) => s.vendorId))]) {
+      const mine = localStores.filter((s) => s.vendorId === vendorId);
+      const withAquatics = mine.filter((s) => s.departments.some((d) => /aquatic/i.test(d))).length;
+      const rows = storeInventory.filter((i) => i.vendorId === vendorId);
+      const carried = rows.filter((i) => i.carried).length;
+      const inStock = rows.filter((i) => (i.onHand ?? 0) > 0).length;
+      console.log(`  ${vendorId.padEnd(10)} ${String(mine.length).padStart(2)} branches` +
+        (withAquatics ? `, ${withAquatics} with an aquatics department` : '') +
+        (rows.length ? `, ${rows.length} store/sku rows (${carried} carried, ${inStock} with stock on hand)` : ', no listing data - locations only'));
+    }
+  }
+
+  console.log(`\n  wrote ${OUT_DIR}/listings.jsonl, ${OUT_DIR}/listings.csv, ` +
+    `${OUT_DIR}/local-stores.jsonl, ${OUT_DIR}/store-inventory.jsonl, ${APP_INDEX}`);
 }
 
 const pct = (n: number, d: number) => (d ? `${Math.round((n / d) * 100)}%` : '0%');

@@ -175,3 +175,24 @@ describe('binomial from product_type', () => {
     expect(m.scientificNameInTitle).toBe('Caulastrea furcata');
   });
 });
+
+describe('vendor catch-all buckets are not genera', () => {
+  // Imperial Tropicals files its odds and ends under product_type "Other
+  // catfish" and "Other loricariids". Both have the shape of a binomial, and
+  // before the NOT_A_GENUS guard they minted two species that 246 listings
+  // pooled into - one of them holding eight unrelated fish under the name
+  // "Catfish", which is exactly the ambiguous-generic failure the catalog
+  // quality gate exists to catch.
+  it('refuses "Other catfish" as a product_type binomial', () => {
+    expect(extractProductTypeBinomial('Other catfish')).toBeUndefined();
+    expect(extractProductTypeBinomial('Other loricariids')).toBeUndefined();
+  });
+
+  it('refuses the same construction in a title', () => {
+    expect(extractScientificName('Mystery Fish (Assorted cichlids)')).toBeUndefined();
+  });
+
+  it('still accepts a real binomial that merely starts with O', () => {
+    expect(extractProductTypeBinomial('Osteoglossum bicirrhosum')).toBe('Osteoglossum bicirrhosum');
+  });
+});

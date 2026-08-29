@@ -151,6 +151,48 @@ export const SPECIES_OVERRIDES: SpeciesOverride[] = [
   { speciesId: 'sp_xiphophorus_hellerii', commonName: 'Green Swordtail', source: `${WIKI}Xiphophorus_hellerii`, note: 'Canonical record; the single-i spelling is an orthographic error - see SPECIES_SYNONYMS.' },
   { speciesId: 'sp_xiphophorus_maculatus', commonName: 'Southern Platyfish', source: `${WIKI}Xiphophorus_maculatus` },
   { speciesId: 'sp_zungaro_zungaro', commonName: 'Jau Catfish', source: `${WIKI}Zungaro_zungaro`, note: 'One vendor title is an explicit hybrid.' },
+
+  // ── Added 2026-08-29, second refresh ──────────────────────────────────
+  //
+  // The vendor pull that added PetSmart and Petco also re-read every existing
+  // vendor, and their catalogues had grown: dim_species went from 1,076 to
+  // 2,153. Twenty-eight of the new species derived down to a bare family word
+  // - six different fish called "Cichlid", three called "Gourami" - which the
+  // ambiguous-generic rule caught and the build gate refused to ship.
+  //
+  // Each was resolved by looking the binomial up. Where English Wikipedia has
+  // a species article that states a vernacular name, that is the source; where
+  // it has none, the vendor's own title is cited and the entry is marked
+  // viaVendor; where the only names on offer are contradictory colour strains,
+  // the entry is null and the card shows the binomial.
+  { speciesId: 'sp_puntius_tetrazona', commonName: 'Tiger Barb', source: `${WIKI}Tiger_barb`, note: 'Puntius tetrazona redirects to Tiger barb; the accepted genus is now Puntigrus.' },
+  { speciesId: 'sp_puntius_sachsii', commonName: 'Gold Barb', source: `${WIKI}Gold_barb`, note: 'P. sachsii is a synonym of Barbodes semifasciolatus; the article names the captive gold form the gold barb.' },
+  { speciesId: 'sp_synodontis_brichardi', commonName: "Brichard's Synodontis", source: `${WIKI}Synodontis_brichardi` },
+  { speciesId: 'sp_corydoras_julii', commonName: 'Julii Cory', source: `${WIKI}Hoplisoma_julii`, note: 'Article states "the julii cory or leopard catfish"; the genus has moved to Hoplisoma.' },
+  { speciesId: 'sp_apistogramma_cacatuoides', commonName: 'Cockatoo Dwarf Cichlid', source: `${WIKI}Apistogramma_cacatuoides` },
+  { speciesId: 'sp_cryptoheros_cutteri', commonName: "Cutter's Cichlid", source: 'Vendor title: "Cutter\u2019s Cichlid" / "Blue Eye Cichlid (Cryptoheros cutteri)" - Aquatic Arts', viaVendor: true, note: 'English Wikipedia has no article for this species, only the genus Cryptoheros.' },
+  { speciesId: 'sp_copadichromis_borleyi', commonName: 'Redfin Hap', source: `${WIKI}Copadichromis_borleyi`, note: 'Article: "numerous common names, including redfin and goldfin hap". Vendors sell it as Kadango / Red Fin Borleyi.' },
+  { speciesId: 'sp_hypsophrys_nicaraguensis', commonName: 'Nicaragua Cichlid', source: 'Vendor title: "Nicaragua Cichlid (Hypsophrys nicaraguensis)" - Aquatic Arts', viaVendor: true, note: 'English Wikipedia has no species article; the genus page attributes "Nicaragua cichlid" to H. unimaculatus, so the taxonomic source is not clean enough to cite for this binomial.' },
+  { speciesId: 'sp_neolamprologus_leleupi', commonName: 'Lemon Cichlid', source: `${WIKI}Neolamprologus_leleupi` },
+  { speciesId: 'sp_apistogramma_agassizi', commonName: "Agassiz's Dwarf Cichlid", source: `${WIKI}Apistogramma_agassizii`, note: 'The vendor titles spell the epithet agassizi; the accepted spelling is agassizii, after Louis Agassiz.' },
+  { speciesId: 'sp_sicyopterus_lagocephalus', commonName: 'Red-Tailed Goby', source: `${WIKI}Sicyopterus_lagocephalus` },
+  { speciesId: 'sp_sicyopus_zosterophorus', commonName: 'Red Belted Goby', source: 'Vendor title: "Red Belted Goby (Sicyopus zosterophorus)" - Aquatic Arts', viaVendor: true, note: 'The Wikipedia article gives no vernacular name at all.' },
+  { speciesId: 'sp_trichogaster_trichopterus', commonName: 'Three Spot Gourami', source: `${WIKI}Three_spot_gourami`, note: 'Blue, gold and opaline gourami are colour forms of this one species, which is why three vendor names collapsed onto it.' },
+  { speciesId: 'sp_trichopsis_pumila', commonName: 'Pygmy Gourami', source: `${WIKI}Pygmy_gourami`, note: 'Article: "also known as the sparkling gourami".' },
+  { speciesId: 'sp_trichogaster_chuna', commonName: 'Honey Gourami', source: `${WIKI}Honey_gourami` },
+  { speciesId: 'sp_nothobranchius_guentheri', commonName: 'Redtail Notho', source: `${WIKI}Redtail_notho` },
+  { speciesId: 'sp_simpsonichthys_magnificus', commonName: 'Magnificent Killifish', source: 'Vendor title: "Magnificent Killifish (Simpsonichthys magnificus)" - Aquatic Arts', viaVendor: true, note: 'Now Hypsolebias magnificus; that article gives no vernacular name.' },
+  { speciesId: 'sp_botia_kubotai', commonName: 'Burmese Border Loach', source: `${WIKI}Burmese_border_loach`, note: 'Article: "Burmese Border loach, angelicus loach or polka dot loach".' },
+  { speciesId: 'sp_myxocyprinus_asiaticus', commonName: 'Chinese High-Fin Banded Shark', source: 'Vendor title: "Chinese Hi Fin Banded Shark (Myxocyprinus asiaticus)" - Aquatic Arts', viaVendor: true, note: 'Wikipedia covers this fish only on the genus page Myxocyprinus, which gives no vernacular name. It is a sucker, not a shark, and not a loach either - the vendor titles calling it a loach are what derived the generic name.' },
+  { speciesId: 'sp_botia_striata', commonName: 'Zebra Loach', source: `${WIKI}Zebra_loach` },
+  { speciesId: 'sp_neocaridina_denticulata', commonName: null, source: `${WIKI}Neocaridina`, note: 'No species-level common name. The only names the vendors give are contradictory colour strains - Pumpkin, Carbon Rili, Blue Jelly - so the card shows the binomial, as for Cherax boesemani.' },
+  { speciesId: 'sp_caridina_serrata', commonName: null, source: `${WIKI}Caridina`, note: 'Same as above: Tangerine Tiger and Blue Panda are strain names, not a species name, and English Wikipedia has no article for the species.' },
+  { speciesId: 'sp_neocaridina_heteropoda', commonName: 'Cherry Shrimp', source: `${WIKI}Neocaridina_davidi`, note: 'N. heteropoda is a synonym of N. davidi, which the article names the cherry shrimp. Blackberry Bee and Black Rili are colour strains of it.' },
+  { speciesId: 'sp_faunus_ater', commonName: 'Black Devil Spike Snail', source: 'Vendor title: "Black Devil Spike Snail (Faunus ater)" - Aquatic Arts', viaVendor: true, note: 'The Wikipedia article gives no vernacular name.' },
+  { speciesId: 'sp_neritina_variegata', commonName: 'Batik Nerite Snail', source: 'Vendor title: "Batik Nerite Snail (Neritina variegata)" - Aquatic Arts', viaVendor: true, note: 'English Wikipedia has no article for the species, only the genus Neritina.' },
+  { speciesId: 'sp_hyphessobrycon_columbianus', commonName: 'Colombian Tetra', source: `${WIKI}Hyphessobrycon_columbianus`, note: 'Article: "the Colombian tetra or blue-red Colombian tetra".' },
+  { speciesId: 'sp_brycinus_longipinnis', commonName: 'Longfin Tetra', source: `${WIKI}Bryconalestes_longipinnis`, note: 'Now Bryconalestes longipinnis; article states "the longfin tetra, African long-finned tetra or longfin characin".' },
+  { speciesId: 'sp_pristella_maxillaris', commonName: 'X-Ray Tetra', source: `${WIKI}Pristella_maxillaris` },
 ];
 
 /**
