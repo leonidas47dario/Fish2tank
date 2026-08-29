@@ -3,7 +3,11 @@
  * there are no literal colours, radii or durations below, which is the
  * mechanical guarantee behind PRD 7.3.
  */
+@import './theme/fonts.css';
 @import './theme/tokens.css';
+/* Generated: one --plate-l/-c/-h triple per bundled portrait. See
+   scripts/derive-plates.mjs. */
+@import './theme/plates.css';
 
 *, *::before, *::after { box-sizing: border-box; }
 
@@ -13,11 +17,31 @@ body {
   margin: 0;
   font-family: var(--font-body);
   font-size: var(--size-md);
+  line-height: 1.5;
   color: var(--color-text);
   background-color: var(--color-canvas);
-  background-image: var(--texture-canvas);
-  background-repeat: no-repeat;
   -webkit-font-smoothing: antialiased;
+}
+
+/*
+ * The depth ramp, painted once behind everything and anchored to the VIEWPORT.
+ *
+ * Previously this was background-image on <body>, which means the gradient is
+ * sized to the SCROLL height. Over a catalog 583,302px tall the shift within
+ * any single screen was under 0.04 L - present in the stylesheet, invisible on
+ * the device. A fixed layer makes it the surface-to-substrate ramp it claims
+ * to be: light at the waterline, dark at the bottom of every screen.
+ *
+ * A fixed element rather than background-attachment: fixed, which iOS Safari
+ * repaints on every scroll frame.
+ */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: var(--texture-canvas);
+  pointer-events: none;
 }
 
 /* NFR-07: iPhone portrait first, usable on desktop. */
@@ -25,27 +49,64 @@ body {
   max-width: var(--content-max);
   margin: 0 auto;
   min-height: 100%;
-  padding: var(--space-4) var(--space-4) calc(var(--nav-height) + var(--space-6));
+  /* No horizontal padding here. Screens that run edge to edge (the catalog
+     grid, the sticky control bar, a full-bleed plate) need the gutter to be
+     theirs to spend, so it is applied per screen instead. */
   padding-bottom: calc(var(--nav-height) + var(--space-6) + env(safe-area-inset-bottom));
 }
+/* Screens still on the original stacked layout keep the gutter they were
+   written against. `.screen` opts out and manages its own. */
+.app > .stack { padding: var(--space-4) var(--space-4) 0; }
 
-h1, h2, h3 { font-family: var(--font-display); margin: 0 0 var(--space-3); line-height: 1.2; }
-h1 { font-size: var(--size-2xl); }
-h2 { font-size: var(--size-xl); }
-h3 { font-size: var(--size-lg); }
+/*
+ * One focus rule, on everything focusable.
+ *
+ * The forced-colors fallback is not optional: `outline: none` plus a
+ * box-shadow ring means NO focus indicator at all in Windows High Contrast,
+ * where box-shadow is not painted. Suppressing the outline without replacing
+ * it in that mode is 2.4.7 failed silently.
+ */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+@media (forced-colors: active) {
+  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 2px solid CanvasText;
+    outline-offset: 2px;
+  }
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  letter-spacing: var(--tracking-tight);
+  margin: 0 0 var(--space-3);
+  line-height: 1.2;
+}
+h1 { font-size: var(--size-2xl); font-weight: var(--weight-bold); }
+h2 { font-size: var(--size-xl); font-weight: var(--weight-semibold); }
+h3 { font-size: var(--size-lg); font-weight: var(--weight-semibold); }
 p { line-height: 1.55; margin: 0 0 var(--space-3); }
 
 a { color: var(--color-primary); }
 
 .muted { color: var(--color-muted); }
+.faint { color: var(--color-faint); }
 .small { font-size: var(--size-sm); }
 .xs { font-size: var(--size-xs); }
-.data { font-family: var(--font-data); font-variant-numeric: tabular-nums; }
-.sci { font-style: var(--font-scientific-style); font-weight: var(--font-scientific-weight); }
+.data, .mono { font-family: var(--font-data); font-variant-numeric: tabular-nums; }
+/* Real italic letterforms, not a synthesised slant of a neutral grotesk. This
+   is the one place in the system where italic carries meaning. */
+.sci {
+  font-family: var(--font-scientific);
+  font-style: var(--font-scientific-style);
+  font-weight: var(--font-scientific-weight);
+}
 .stack { display: flex; flex-direction: column; gap: var(--space-3); }
 .row { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
 .spread { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
-.grow { flex: 1; }
+.grow { flex: 1; min-width: 0; }
+.pad { padding: 0 var(--space-4); }
 
 /* --- Surfaces ---------------------------------------------------------- */
 .card {
@@ -59,33 +120,74 @@ a { color: var(--color-primary); }
 
 hr { border: 0; border-top: var(--border-width) var(--divider-style) var(--color-border); margin: var(--space-4) 0; }
 
-/* --- Controls ---------------------------------------------------------- */
+/*
+ * Section heads: quieter and smaller than the content they label.
+ *
+ * Not tracked-out uppercase. At 13px with 0.08em tracking above 11px fish
+ * names, "STORIES YOU HAVE NOT WRITTEN" was the loudest thing on Home - a
+ * label out-shouting its own contents, and the exact eyebrow pattern this
+ * redesign claims not to use.
+ */
+.sec-head {
+  font-family: var(--font-display);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--color-faint);
+  margin: 0 0 var(--space-3);
+}
+
+/* --- Controls ----------------------------------------------------------
+ * Every pressable thing clears --tap-min (WCAG 2.5.8) and carries a 3:1
+ * boundary (1.4.11).
+ */
 button, .btn {
   font: inherit;
   font-weight: var(--weight-medium);
   color: var(--color-text);
   background: var(--color-surface-raised);
-  border: var(--border-width) solid var(--color-border);
+  border: var(--border-width) solid var(--color-border-control);
   border-radius: var(--radius-control);
-  padding: var(--space-3) var(--space-4);
+  min-height: var(--tap-min);
+  padding: var(--space-2) var(--space-4);
   cursor: pointer;
   transition: transform var(--duration-fast) var(--ease-standard),
               background var(--duration-fast) var(--ease-standard);
 }
-button:hover:not(:disabled) { background: var(--color-surface); }
+/*
+ * Wrapped in :where() so it contributes NO specificity.
+ *
+ * As `button:hover:not(:disabled)` this scored (0,2,1) and beat every variant
+ * class beneath it, so hovering the Capture button - the app's primary action -
+ * repainted it --color-surface while keeping --color-on-primary text: dark ink
+ * on a dark fill at 1.05:1, on the one control the whole screen exists for.
+ * A pressed filter chip lost its fill the same way.
+ */
+:where(button:hover:not(:disabled)) { background: var(--color-surface); }
 button:active:not(:disabled) { transform: scale(0.98); }
 button:disabled { opacity: 0.5; cursor: not-allowed; }
-button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
-}
 .btn--primary {
   background: var(--color-primary);
   border-color: var(--color-primary);
-  color: var(--color-canvas);
+  /* Not --color-canvas: on the fieldbook theme dark ink over that brown is
+     3.19:1 and fails. The foreground for a primary fill is its own token. */
+  color: var(--color-on-primary);
+}
+/* Variants state their own hover, rather than inheriting one that erases them. */
+.btn--primary:hover:not(:disabled),
+.cta:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-primary) 86%, var(--color-text));
+}
+.cta--quiet:hover:not(:disabled) { background: var(--color-surface); }
+.chip:hover:not(:disabled) { color: var(--color-text); border-color: var(--color-border-control); }
+.chip[aria-pressed='true']:hover:not(:disabled) {
+  background: var(--color-accent-quiet);
+  color: var(--color-primary);
+  border-color: var(--color-primary);
 }
 .btn--big { width: 100%; padding: var(--space-4); font-size: var(--size-lg); }
-.btn--ghost { background: transparent; }
+.btn--ghost { background: transparent; border-color: transparent; }
+.btn--ghost:hover:not(:disabled) { background: var(--color-surface); }
+
 /*
  * Irreversible actions. The token is defined by all three territories, so this
  * reads correctly in every theme without src/ui naming a colour.
@@ -96,56 +198,83 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .btn--danger {
   background: var(--color-danger);
   border-color: var(--color-danger);
-  color: var(--color-canvas);
+  color: var(--color-on-danger);
+}
+.btn--danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-danger) 86%, var(--color-text));
+}
+
+/* An icon-only control is still a control, and still needs the target. */
+.iconbtn {
+  flex: 0 0 auto;
+  display: grid; place-items: center;
+  width: var(--tap-min); height: var(--tap-min);
+  padding: 0; min-height: 0;
+  background: none; border: 0;
+  color: var(--color-text); cursor: pointer;
 }
 
 input, select, textarea {
   font: inherit;
   width: 100%;
   color: var(--color-text);
-  background: var(--color-canvas);
-  border: var(--border-width) solid var(--color-border);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border-control);
   border-radius: var(--radius-control);
-  padding: var(--space-3);
+  min-height: var(--tap-min);
+  padding: var(--space-2) var(--space-3);
+  /* The shipped search field clipped its own placeholder to "…or trade nam". */
+  text-overflow: ellipsis;
 }
+textarea { min-height: 0; }
+input::placeholder, textarea::placeholder { color: var(--color-faint); }
 label { display: block; font-size: var(--size-sm); color: var(--color-muted); margin-bottom: var(--space-1); }
 fieldset { border: 0; padding: 0; margin: 0 0 var(--space-3); }
 
-/* --- Verdict badges ---------------------------------------------------- */
-/*
- * NFR-06 requires non-colour rarity and status cues. Every badge therefore
- * carries a glyph and a word as well as a hue, and the border style differs
- * per severity so the distinction survives greyscale.
+/* --- Verdict badges ----------------------------------------------------
+ * NFR-06 requires non-colour rarity and status cues. Every badge carries a
+ * glyph AND a word as well as a hue, and the border style differs per
+ * severity, because positive and caution are 1.08:1 apart in greyscale -
+ * hue alone would say nothing at all in a monochrome screenshot.
  */
-.badge {
+.badge, .status {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-1) var(--space-3);
+  gap: var(--space-1);
+  flex: 0 0 auto;
+  padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-pill);
-  font-size: var(--size-sm);
-  font-weight: var(--weight-medium);
+  font-size: var(--size-xs);
+  font-weight: var(--weight-semibold);
   border: var(--border-width) solid currentColor;
+  white-space: nowrap;
 }
-.badge__glyph { font-family: var(--font-data); font-weight: var(--weight-bold); }
-.badge--suitable { color: var(--color-positive); }
-.badge--conditional { color: var(--color-caution); border-style: dashed; }
-.badge--high-risk { color: var(--color-danger); border-style: double; border-width: 3px; }
-.badge--extreme-risk { color: var(--color-danger); background: color-mix(in srgb, var(--color-danger) 16%, transparent); border-width: 2px; }
-.badge--insufficient-data { color: var(--color-muted); border-style: dotted; }
+.badge__glyph, .status__glyph { font-family: var(--font-data); font-weight: var(--weight-bold); }
+.badge--suitable, .status--suitable { color: var(--color-positive); }
+.badge--conditional, .status--conditional { color: var(--color-caution); border-style: dashed; }
+.badge--high-risk, .status--high-risk { color: var(--color-danger-bright); border-style: double; border-width: 3px; }
+/* The only status that gets a solid fill. Extreme risk is the one verdict that
+   must not be scannable as "another amber pill". */
+.badge--extreme-risk, .status--extreme-risk {
+  color: var(--color-on-danger);
+  background: var(--color-danger);
+  border-color: var(--color-danger);
+  border-width: 3px;
+}
+.badge--insufficient-data, .status--unknown { color: var(--color-faint); border-style: dotted; }
 
 /* --- Rarity ------------------------------------------------------------ */
 .tier {
-  display: inline-flex; align-items: center; gap: var(--space-2);
-  padding: var(--space-1) var(--space-3);
+  display: inline-flex; align-items: center; gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-pill);
   border: var(--border-width) solid currentColor;
-  font-size: var(--size-sm); font-weight: var(--weight-bold);
-  letter-spacing: 0.04em; text-transform: uppercase;
+  font-size: var(--size-xs); font-weight: var(--weight-bold);
+  white-space: nowrap;
 }
-.tier--familiar { color: var(--color-muted); }
+.tier--familiar { color: var(--color-faint); }
 .tier--uncommon { color: var(--color-primary); }
-.tier--rare { color: var(--color-accent); }
+.tier--rare { color: var(--color-rare); }
 .tier--epic { color: var(--color-caution); border-style: double; border-width: 3px; }
 .tier--legendary { color: var(--color-legendary); border-width: 2px; }
 
@@ -161,37 +290,762 @@ fieldset { border: 0; padding: 0; margin: 0 0 var(--space-3); }
   border-radius: var(--image-mask);
   display: block;
   background: var(--color-canvas);
-  box-shadow: var(--media-glow);
 }
 .media--scene { padding: var(--space-4); border-radius: var(--radius-card); }
-[data-scene='moon-sand'] .media--scene {
-  background: linear-gradient(180deg, var(--color-canvas) 60%, color-mix(in srgb, var(--color-muted) 35%, var(--color-canvas)) 100%);
+
+/* ═══════════════════════════════════════════════════════════════════════
+   The plate
+   ═══════════════════════════════════════════════════════════════════════
+   A portrait never sits directly on the canvas.
+
+   object-fit: contain, never cover. 1,011 photographs at every aspect ratio,
+   and a fish is a long horizontal animal that a crop beheads: the old 3:4 card
+   kept about 37% of a 3:2 photograph's width and the crop ran straight through
+   the middle of the animal.
+
+   The letterbox that contain leaves is filled with a colour derived from that
+   photograph's own border ring (plates.css), so on the 70% of the library that
+   is full-bleed it is invisible, and on the cut-outs it becomes a deliberate
+   mat rather than a blown-out white rectangle.
+*/
+.plate {
+  position: relative;
+  display: block;
+  min-width: 0;
+  background: var(--plate);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  box-shadow: var(--elevation-plate);
 }
-[data-scene='planted'] .media--scene {
-  background: linear-gradient(180deg, var(--color-canvas) 55%, color-mix(in srgb, var(--color-positive) 28%, var(--color-canvas)) 100%);
+/* A hairline in the TEXT colour at low alpha, so it flips with the theme
+   rather than being a white line that disappears on a light canvas. */
+.plate::after {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 var(--border-width) color-mix(in srgb, var(--color-text) 10%, transparent);
+  pointer-events: none;
+}
+.plate__img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  object-fit: contain;
+  background: var(--plate);
+}
+/* 1,167 of 2,178 species have no portrait, so this is a surface the user meets
+   constantly rather than an edge case. It is designed, not an emoji. */
+.plate__img--none,
+.plate__img--failed {
+  display: grid; place-items: center; gap: var(--space-1);
+  aspect-ratio: 3 / 2;
+  color: var(--color-muted);
+  text-align: center;
+  padding: var(--space-2);
+}
+.plate__img--none {
+  background: repeating-linear-gradient(135deg,
+    var(--plate) 0 7px,
+    color-mix(in srgb, var(--color-text) 5%, var(--plate)) 7px 14px);
+}
+.plate__img--failed { background: var(--plate); }
+/*
+ * The label sits on its own solid chip rather than directly on the plate.
+ *
+ * --plate is a per-image derived colour clamped to a themed lightness band, so
+ * the surface under this text is genuinely unknown at authoring time - and on
+ * a hatched version of it, unknown twice over. Measured on the rendered app it
+ * came out at 4.0:1 on the dark theme and 1.35:1 on the fieldbook, i.e. the
+ * one piece of text 1,167 species in this library actually show was the only
+ * thing in the app failing 1.4.3. A known background is the fix.
+ */
+.plate__none-text {
+  font-size: var(--size-xs);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-muted);
+}
+/* Not caught yet. Mild, because the catalog is also how you shop - the fish
+   stays identifiable. Caught fish keep their colour, which is the whole
+   collection conceit. */
+.plate--locked .plate__img { filter: grayscale(1) contrast(0.92); opacity: 0.62; }
+
+/* The only mark ever painted on a photograph, and only when the answer is
+   yes. A solid fill reads at every plate lightness in the clamped band. */
+.plate__owned {
+  position: absolute; z-index: 1;
+  top: var(--space-2); left: var(--space-2);
+  display: inline-flex; align-items: center; gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-family: var(--font-data);
+  font-size: var(--size-xs);
+  font-weight: var(--weight-bold);
+  line-height: 1;
 }
 
-/* --- Nav --------------------------------------------------------------- */
+/* ═══════════════════════════════════════════════════════════════════════
+   Screen shell
+   ═══════════════════════════════════════════════════════════════════════ */
+.screen { display: block; }
+
+/* The pinned region holds the CONTROLS, not the title. Pinning a bar that
+   contains only "Catalog · 43 / 2,178" while search, filters and sort scroll
+   away within one flick is a header that costs height and answers nothing. */
+.sticky {
+  position: sticky; top: 0; z-index: 5;
+  background: color-mix(in srgb, var(--color-canvas) 88%, transparent);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  border-bottom: var(--border-width) solid var(--color-border);
+  padding-top: var(--space-2);
+}
+/* The blur is an enhancement. Under an engine without backdrop-filter, and for
+   anyone who has asked for less transparency, the bar is simply opaque. */
+@supports not (backdrop-filter: blur(1px)) {
+  .sticky, .nav { background: var(--color-canvas); }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .sticky, .nav {
+    background: var(--color-canvas);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+.topbar {
+  display: flex; align-items: center; gap: var(--space-3);
+  min-height: var(--tap-min);
+  padding: var(--space-2) var(--space-4);
+}
+.topbar__title {
+  font-family: var(--font-display);
+  font-size: var(--size-xl);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-tight);
+  margin: 0; flex: 1; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.topbar__count {
+  font-family: var(--font-data);
+  font-size: var(--size-xs);
+  color: var(--color-faint);
+  flex: 0 0 auto;
+}
+
+/* Stock is the most perishable field in the app and it now orders the whole
+   library, so it states its own age. A present-tense green pill sourced from
+   an unscheduled scrape is an invented number in a nicer hat. */
+.asof {
+  margin: 0;
+  padding: 0 var(--space-4) var(--space-3);
+  font-size: var(--size-xs);
+  color: var(--color-faint);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Catalog
+   ═══════════════════════════════════════════════════════════════════════ */
+/* Two up. One up made the library 583,302px tall, about 700 phone screens.
+   A container query rather than a viewport media query, so the grid answers
+   to the column it is in and not to the device. */
+.catalog-scroll { container-type: inline-size; }
+.catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-5) var(--space-3);
+  padding: var(--space-4);
+}
+/* minmax(0, 1fr), not 1fr. `1fr` is `minmax(auto, 1fr)`, so a nowrap stat line
+   sets the track's min-content width and the two columns come out 313px and
+   373px on a 390px phone. */
+@container (min-width: 620px) {
+  .catalog-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+.tile {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: var(--space-2);
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+  align-content: start;
+  /*
+   * Windowing, in two declarations and no dependency.
+   *
+   * 2,178 species is 1,089 rows two-up. content-visibility lets the browser
+   * skip layout, paint and style for every tile outside the viewport, and
+   * contain-intrinsic-size gives it a placeholder height so the scrollbar
+   * stays honest. `auto` on the size means the real height is remembered once
+   * a tile has been rendered, so scrolling back up does not jump.
+   */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 190px;
+}
+/* Fixed text block height, so plates line up across a row whatever the name
+   length. Ragged rows are what made the first pass read as a dump. */
+.tile__text { min-height: 40px; }
+.tile__name {
+  display: -webkit-box;
+  font-family: var(--font-display);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-tight);
+  line-height: 1.25;
+  margin: 0;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.tile__textrow { display: flex; align-items: baseline; gap: var(--space-2); }
+.tile__sci {
+  display: block; flex: 1 1 auto; min-width: 0;
+  font-family: var(--font-scientific);
+  font-size: var(--size-sm);
+  font-style: italic;
+  color: var(--color-muted);
+  margin: 1px 0 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* Rarity is a word, and only above Uncommon: most of the library is common,
+   and a badge on all 2,178 says nothing. It rides the sci-name line, not the
+   photograph - on the plate it landed on the fish - and not the stat line,
+   where it displaced the tank figure. */
+.tile__rarity {
+  flex: 0 0 auto; margin-left: auto;
+  font-family: var(--font-data);
+  font-size: var(--size-xs);
+  font-weight: var(--weight-bold);
+  line-height: 1;
+}
+.tile__rarity--rare { color: var(--color-rare); }
+.tile__rarity--epic { color: var(--color-caution); }
+.tile__rarity--legendary { color: var(--color-legendary); }
+
+/* The numbers a keeper decides on, in one line under the name rather than as
+   three coloured discs over the photograph. Units are spelled out: an earlier
+   pass rendered `3" 5g 32 in`, where `in` meant "in stock" two glyphs from `"`
+   meaning inches. */
+/* Flex, not a fixed grid. With `grid-template-columns: auto auto auto 1fr` the
+   water column lands in whichever track is free, so a tile with no price put
+   "all" hard against the tank figure while its neighbour with a price pushed
+   it to the edge - the same field in two places down one row. */
+.tile__stats {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--size-xs);
+  color: var(--color-muted);
+  white-space: nowrap;
+  min-width: 0;
+  overflow: hidden;
+}
+.tile__stats b { color: var(--color-text); font-weight: var(--weight-medium); }
+/* The water column, as three legible letters, always in the same place on
+   every tile. A 7px three-segment pip said the same thing and could not be
+   read at tile scale. */
+.tile__col { margin-left: auto; padding-left: var(--space-2); color: var(--color-faint); }
+
+/* --- Search and filters ------------------------------------------------ */
+.searchbar { padding: 0 var(--space-4) var(--space-2); }
+.search {
+  display: flex; align-items: center; gap: var(--space-2);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border-control);
+  border-radius: var(--radius-control);
+  padding: 0 var(--space-3);
+  height: var(--tap-min);
+  color: var(--color-faint);
+}
+.search input {
+  flex: 1; min-width: 0;
+  font: inherit; font-size: var(--size-sm);
+  background: none; border: 0; min-height: 0; padding: 0;
+  color: var(--color-text);
+}
+.search input:focus-visible { box-shadow: none; }
+.search:focus-within { border-color: var(--color-primary); box-shadow: var(--focus-ring); }
+
+.chips {
+  display: flex; gap: var(--space-2);
+  padding: var(--space-1) var(--space-4) var(--space-2);
+  overflow-x: auto;
+  scrollbar-width: none;
+  /* The row clipped its last chip mid-word with nothing to say it kept going. */
+  -webkit-mask-image: linear-gradient(90deg, #000 0, #000 92%, transparent 100%);
+  mask-image: linear-gradient(90deg, #000 0, #000 92%, transparent 100%);
+}
+.chips::-webkit-scrollbar { display: none; }
+.filters { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+.chip {
+  flex: 0 0 auto;
+  font: inherit; font-size: var(--size-sm);
+  min-height: var(--tap-min);
+  padding: 0 var(--space-3);
+  display: inline-flex; align-items: center; gap: var(--space-1);
+  border-radius: var(--radius-pill);
+  border: var(--border-width) solid var(--color-border-control);
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.chip[aria-pressed='true'] {
+  background: var(--color-accent-quiet);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  font-weight: var(--weight-medium);
+}
+.chip__n, .chip__glyph { font-family: var(--font-data); }
+
+/* Not pinned, and one row rather than two. These are controls you touch once a
+   session; inside the sticky block they cost about 180px of an 844px viewport
+   permanently, and on two rows they cost 70px of the first screen for a filter
+   button sitting alone. */
+.sortline {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--space-2);
+  padding: 0 var(--space-4) var(--space-2);
+  font-size: var(--size-xs);
+  color: var(--color-faint);
+  font-family: var(--font-data);
+}
+.sortline button {
+  font: inherit;
+  background: none; border: 0;
+  color: var(--color-primary);
+  cursor: pointer;
+  min-height: var(--tap-min);
+  padding: 0 var(--space-1);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Home
+   ═══════════════════════════════════════════════════════════════════════ */
+/* No wordmark. The app's own name is the one fact the person holding the
+   phone already has. */
+.home-hero { padding: var(--space-5) var(--space-4); }
+.home-hero__line {
+  font-family: var(--font-display);
+  font-size: var(--size-xl);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-tight);
+  line-height: 1.2;
+  margin: 0 0 var(--space-1);
+}
+.home-hero__sub { color: var(--color-muted); font-size: var(--size-sm); margin: 0; }
+
+.cta {
+  display: flex; align-items: center; justify-content: center; gap: var(--space-2);
+  width: 100%;
+  font: inherit; font-family: var(--font-display);
+  font-size: var(--size-md); font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-tight);
+  min-height: var(--tap-min);
+  padding: var(--space-3);
+  border: 0; border-radius: var(--radius-pill);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  cursor: pointer; text-decoration: none;
+  transition: transform var(--duration-fast) var(--ease-standard);
+}
+.cta:active { transform: scale(0.985); }
+.cta--quiet {
+  background: transparent;
+  border: var(--border-width) solid var(--color-border-control);
+  color: var(--color-text);
+}
+
+/* A shelf, not a list. This is a collecting app whose home screen showed no
+   fish at all - a front door made entirely of text rows. */
+.shelf {
+  display: flex; gap: var(--space-3);
+  overflow-x: auto;
+  padding: 0 var(--space-4) var(--space-2);
+  scrollbar-width: none;
+  /* The rail used to clip its third card with nothing to say it kept going. */
+  -webkit-mask-image: linear-gradient(90deg, #000 0, #000 88%, transparent 100%);
+  mask-image: linear-gradient(90deg, #000 0, #000 88%, transparent 100%);
+}
+.shelf::-webkit-scrollbar { display: none; }
+.shelf-item { flex: 0 0 132px; text-decoration: none; color: inherit; }
+.shelf-item .plate { margin-bottom: var(--space-2); }
+.shelf-item__name {
+  display: -webkit-box;
+  font-size: var(--size-sm); font-weight: var(--weight-medium);
+  line-height: 1.3; margin: 0;
+  -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.shelf-item__when {
+  font-family: var(--font-data);
+  font-size: var(--size-xs);
+  color: var(--color-faint);
+}
+
+/* One row per tank. */
+.tankrow {
+  display: flex; align-items: center; gap: var(--space-3);
+  width: 100%; text-align: left; font: inherit;
+  min-height: var(--tap-min);
+  padding: var(--space-3) var(--space-4);
+  background: none; border: 0; border-radius: 0;
+  border-top: var(--border-width) var(--divider-style) var(--color-border);
+  /* The row is the target, so it does not also want a link underline running
+     under every word of its own metadata. */
+  color: inherit; text-decoration: none; cursor: pointer;
+}
+.tankrow:last-of-type { border-bottom: var(--border-width) var(--divider-style) var(--color-border); }
+.tankrow:hover:not(:disabled) { background: var(--color-surface); }
+.tankrow__name { font-weight: var(--weight-medium); font-size: var(--size-sm); }
+.tankrow__meta { font-size: var(--size-xs); color: var(--color-faint); }
+.tankrow__meta .num { font-family: var(--font-data); font-variant-numeric: tabular-nums; }
+/* The reason the pill says what it says, on the COLLAPSED row. Nobody expands
+   a row to be talked out of amber, so a summary is never allowed to be calmer
+   than its own contents. */
+.tankrow__why {
+  display: block;
+  font-size: var(--size-xs);
+  margin-top: 2px;
+  color: var(--color-danger-bright);
+}
+.tankrow__why--warn { color: var(--color-caution); }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Species and specimen
+   ═══════════════════════════════════════════════════════════════════════ */
+.hero-plate { margin: 0 var(--space-4) var(--space-4); }
+.hero-plate .plate__img { aspect-ratio: 4 / 3; }
+
+.specimen-name {
+  font-family: var(--font-display);
+  font-size: var(--size-2xl);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-tight);
+  line-height: 1.1;
+  margin: 0 0 var(--space-1);
+}
+/* Set like a specimen label, because that is what it is. */
+.specimen-sci {
+  font-family: var(--font-scientific);
+  font-size: var(--size-xl);
+  font-style: italic;
+  font-weight: var(--weight-regular);
+  color: var(--color-text);
+  letter-spacing: var(--tracking-tight);
+  margin: 0 0 var(--space-2);
+}
+.specimen-common { color: var(--color-muted); font-size: var(--size-sm); margin: 0 0 var(--space-3); }
+
+/* The rest of the label: when, and from where. */
+.label-line {
+  display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
+  gap: var(--space-3);
+  font-size: var(--size-xs);
+  color: var(--color-faint);
+  padding-top: var(--space-3);
+  margin: var(--space-3) 0 0;
+  border-top: var(--border-width) var(--divider-style) var(--color-border);
+}
+.label-line dt { color: var(--color-faint); margin-bottom: 2px; }
+.label-line dd { margin: 0; color: var(--color-muted); font-family: var(--font-data); }
+.tagrow { display: flex; gap: var(--space-2); flex-wrap: wrap; align-items: center; }
+
+.panel {
+  border-top: var(--border-width) var(--divider-style) var(--color-border);
+  padding: var(--space-5) var(--space-4) var(--space-4);
+}
+.panel--flush { padding-left: 0; padding-right: 0; }
+.panel--flush > .sec-head,
+.panel--flush > .panel__note,
+.panel--flush > .verdict-lede { padding-left: var(--space-4); padding-right: var(--space-4); }
+.panel__note { color: var(--color-muted); font-size: var(--size-sm); margin: var(--space-3) 0 0; }
+.panel__note--tight { font-size: var(--size-xs); }
+
+/* The answer first, then the tanks. */
+.verdict-lede {
+  font-family: var(--font-display);
+  font-size: var(--size-lg);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-tight);
+  margin: 0 0 var(--space-3);
+}
+
+/* Factors live behind the row that owns them, indented under it and headed
+   with that row's name, so it is never ambiguous which tank they describe. */
+.factors {
+  background: var(--color-surface);
+  border-left: 3px solid var(--color-caution);
+  margin-left: var(--space-4);
+  padding: var(--space-3) var(--space-4) var(--space-4);
+}
+.factors--severe { border-left-color: var(--color-danger); }
+.factors__head { font-size: var(--size-sm); font-weight: var(--weight-semibold); margin: 0 0 var(--space-2); }
+.factor {
+  display: grid; grid-template-columns: 1fr auto;
+  align-items: baseline; gap: var(--space-3);
+  padding: var(--space-2) 0;
+  font-size: var(--size-sm);
+}
+.factor + .factor { border-top: var(--border-width) solid color-mix(in srgb, var(--color-border) 60%, transparent); }
+.factor__name { color: var(--color-muted); }
+/* Set in Geist, not mono: these are phrases. Each carries a glyph, because the
+   hues are indistinguishable in greyscale. */
+.factor__val { font-size: var(--size-sm); text-align: right; }
+.factor__val::before {
+  font-family: var(--font-data);
+  font-weight: var(--weight-bold);
+  margin-right: var(--space-1);
+}
+/*
+ * Alt text on generated content, via the `content: value / alt` syntax.
+ *
+ * An earlier pass reached for `speak: never`, which is a no-op - CSS Speech
+ * was never implemented in any shipping engine - so every factor value was
+ * still being announced as "black square, eats four residents".
+ */
+.factor__val--ok::before      { content: '\2713' / ''; }
+.factor__val--warn::before    { content: '!' / ''; }
+.factor__val--bad::before     { content: '\25A0' / ''; }
+.factor__val--unknown::before { content: '?' / ''; }
+.factor__val--ok      { color: var(--color-positive); }
+.factor__val--warn    { color: var(--color-caution); }
+.factor__val--bad     { color: var(--color-danger-bright); }
+.factor__val--unknown { color: var(--color-faint); }
+/* The exact numbers a factor used stay monospaced, because they are counted. */
+.factor__val--num { font-family: var(--font-data); font-variant-numeric: tabular-nums; }
+/* The stored values behind one factor, one tap in. FR-E04 asks for every
+   input to be inspectable; it does not ask for all forty-two of them to be on
+   screen at once. */
+.factor-item + .factor-item,
+.factor + .factor-item,
+.factor-item + .factor { border-top: var(--border-width) solid color-mix(in srgb, var(--color-border) 60%, transparent); }
+summary.factor { cursor: pointer; list-style: none; }
+summary.factor::-webkit-details-marker { display: none; }
+.factor-item[open] summary.factor .factor__name { color: var(--color-text); }
+.factor__detail {
+  margin: 0 0 var(--space-2);
+  padding-left: var(--space-3);
+  font-size: var(--size-xs);
+  color: var(--color-faint);
+  border-left: var(--border-width) solid var(--color-border);
+}
+.factor__detail dt { color: var(--color-faint); }
+
+/* Two fields side by side, on the screen where you are holding the tag. */
+.capture { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+.capture--wide { grid-column: 1 / -1; }
+
+/* Three prices, kept apart. Ask, member and paid are three different facts and
+   the data model keeps them separate on purpose; collapsing them to "you paid"
+   throws away the distinction PRD 5.4 exists to preserve. */
+.prices { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); }
+.prices dt { font-size: var(--size-xs); color: var(--color-faint); margin-bottom: 2px; }
+.prices dd {
+  margin: 0;
+  font-family: var(--font-data); font-variant-numeric: tabular-nums;
+  font-size: var(--size-lg); color: var(--color-text);
+}
+.prices dd.is-blank { color: var(--color-faint); font-size: var(--size-sm); }
+
+/* --- Price by size -----------------------------------------------------
+ * No filled background tracks, and n on every band. Eight smooth bars drawn
+ * from ten listings assert a comparison the engine itself declines to make
+ * below its minimum sample count.
+ */
+.pbs {
+  display: grid;
+  grid-template-columns: 40px 1fr 46px 34px;
+  gap: var(--space-2) var(--space-3);
+  align-items: center;
+}
+.pbs__label { font-family: var(--font-data); font-size: var(--size-xs); color: var(--color-faint); text-align: right; }
+.pbs__bar { height: 3px; border-radius: var(--radius-hair); background: var(--color-border-control); }
+.pbs__bar--you { background: var(--color-primary); height: 5px; }
+.pbs__bar--thin { background: color-mix(in srgb, var(--color-border-control) 55%, transparent); }
+.pbs__val { font-family: var(--font-data); font-size: var(--size-xs); color: var(--color-muted); }
+.pbs__val--you { color: var(--color-primary); font-weight: var(--weight-semibold); }
+.pbs__n { font-family: var(--font-data); font-size: var(--size-xs); color: var(--color-faint); }
+
+.figure {
+  display: flex; align-items: baseline; gap: var(--space-2);
+  font-family: var(--font-data);
+  font-size: var(--size-2xl);
+  letter-spacing: var(--tracking-tight);
+}
+.figure small { font-size: var(--size-xs); color: var(--color-muted); font-family: var(--font-body); }
+
+/* --- Stores ------------------------------------------------------------ */
+.store { display: flex; align-items: center; gap: var(--space-3); min-height: var(--tap-min); font-size: var(--size-sm); }
+.store + .store { border-top: var(--border-width) solid color-mix(in srgb, var(--color-border) 60%, transparent); }
+.store__name { color: var(--color-text); text-decoration: none; border-bottom: var(--border-width) solid var(--color-primary); }
+.store__price { font-family: var(--font-data); margin-left: auto; white-space: nowrap; }
+.store__flag { font-size: var(--size-xs); color: var(--color-positive); }
+.store__flag--out { color: var(--color-faint); }
+.store__flag--stale { color: var(--color-muted); }
+.store-link {
+  color: var(--color-primary);
+  text-decoration: none;
+  border-bottom: var(--border-width) solid color-mix(in srgb, var(--color-primary) 40%, transparent);
+}
+.store-link:hover { border-bottom-color: var(--color-primary); }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Prompts, empty, loading and error states
+   ═══════════════════════════════════════════════════════════════════════
+   An offline-first app used on one bar in a shop basement meets these
+   constantly, so they are designed rather than left to the defaults. */
+.prompt, .state {
+  display: grid; gap: var(--space-2); justify-items: start;
+  padding: var(--space-4);
+  margin: 0 var(--space-4);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-card);
+}
+/* A solid surface, not a dashed box: dashed already means "conditional" in the
+   status system, and a third dash pattern within 400px is noise. */
+.prompt__title, .state__head {
+  display: flex; align-items: center; gap: var(--space-2);
+  font-weight: var(--weight-semibold); font-size: var(--size-sm); margin: 0;
+}
+.state__head svg { color: var(--color-muted); flex: 0 0 auto; }
+.prompt__body, .state__body { color: var(--color-muted); font-size: var(--size-sm); margin: 0; }
+.prompt__act, .state__act {
+  font: inherit; font-size: var(--size-sm); font-weight: var(--weight-medium);
+  color: var(--color-primary);
+  background: none; border: 0; padding: 0;
+  min-height: var(--tap-min);
+  display: inline-flex; align-items: center;
+  cursor: pointer; text-decoration: none;
+}
+/* Stale is not broken. It is a real answer with a date on it, so it reads calm
+   rather than red. */
+.state--stale { border-color: var(--color-border-control); }
+.state--error { border-color: color-mix(in srgb, var(--color-danger) 45%, transparent); }
+.state--error .state__head svg { color: var(--color-danger-bright); }
+
+/* Shaped like the content it stands in for, and it stops when the user asks
+   for stillness. The duration is a token: a literal here survives the in-app
+   toggle and leaves an infinite shimmer running on every tile in the grid. */
+.skel { border-radius: var(--radius-card); background: var(--color-surface); position: relative; overflow: hidden; }
+.skel--plate { aspect-ratio: 3 / 2; }
+.skel--line { height: 11px; border-radius: var(--radius-hair); }
+.skel::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent,
+    color-mix(in srgb, var(--color-surface-raised) 90%, transparent), transparent);
+  animation: shimmer var(--duration-shimmer) var(--ease-standard) infinite;
+}
+@keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+
+/* A screening in flight. Determinate, because the engine knows how many tanks
+   it has to walk. */
+.progress { display: flex; align-items: center; gap: var(--space-3); width: 100%; }
+.progress__track {
+  flex: 1; height: 3px;
+  border-radius: var(--radius-hair);
+  background: var(--color-border-control);
+  overflow: hidden;
+}
+.progress__fill { display: block; height: 100%; background: var(--color-primary); border-radius: var(--radius-hair); }
+.progress__n { font-family: var(--font-data); font-size: var(--size-xs); color: var(--color-muted); }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Nav
+   ═══════════════════════════════════════════════════════════════════════ */
 .nav {
   position: fixed; inset: auto 0 0 0;
+  max-width: var(--content-max);
+  margin: 0 auto;
   height: calc(var(--nav-height) + env(safe-area-inset-bottom));
   padding-bottom: env(safe-area-inset-bottom);
   display: grid; grid-template-columns: repeat(5, 1fr);
-  background: var(--color-surface);
+  background: color-mix(in srgb, var(--color-canvas) 88%, transparent);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
   border-top: var(--border-width) solid var(--color-border);
   z-index: 10;
 }
 .nav a {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 2px; text-decoration: none; color: var(--color-muted);
-  font-size: var(--size-xs); font-weight: var(--weight-medium);
+  gap: var(--space-1);
+  text-decoration: none;
+  color: var(--color-faint);
+  font-size: var(--size-xs);
+  font-weight: var(--weight-medium);
 }
 .nav a[aria-current='page'] { color: var(--color-primary); }
-.nav__glyph { font-size: var(--size-lg); line-height: 1; }
-.nav a.nav__catch .nav__glyph { color: var(--color-accent); }
+.nav__glyph { display: grid; place-items: center; line-height: 1; }
 
-/* --- Reveal ceremony (PRD 7.5) ----------------------------------------- */
-/* Short, skippable, and flattened to nothing when motion is reduced. */
+/* Catch is the product's one verb, so it is a control rather than a fifth
+   label. No glow: --media-glow is off and nothing may reintroduce one. */
+.nav a.nav__catch { color: var(--color-text); }
+.nav__catch .nav__glyph {
+  width: var(--tap-min); height: var(--tap-min);
+  margin-top: calc(var(--space-4) * -1);
+  border-radius: var(--radius-pill);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  border: 3px solid var(--color-canvas);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Filter sheet
+   ═══════════════════════════════════════════════════════════════════════
+   Zone, kind and temperament were the shipped catalog's way of making item
+   215 of 2,178 reachable. Collapsed by default, because laid out flat the
+   three chip rows filled an entire phone screen and pushed every fish below
+   the fold - a catalog whose first screen contains no catalog. */
+.filters-more { padding: 0 var(--space-4) var(--space-3); }
+/* A count, not a dot: "2" says how much is narrowing the list. */
+.filters-more__count {
+  min-width: 18px; height: 18px;
+  padding: 0 5px;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-family: var(--font-data);
+  font-size: 11px;
+  display: grid; place-items: center;
+}
+
+.sheet {
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+.sheet__group { padding: var(--space-4) var(--space-4) 0; }
+.sheet__group:last-of-type { padding-bottom: var(--space-4); }
+.sheet__legend {
+  font-size: var(--size-sm); font-weight: var(--weight-semibold);
+  color: var(--color-text); margin: 0 0 var(--space-1); padding: 0;
+}
+/* Why a filter exists, in one line. */
+.sheet__why { font-size: var(--size-xs); color: var(--color-faint); margin: 0 0 var(--space-3); }
+.sheet__chips { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.sheet__foot {
+  display: flex; gap: var(--space-3); align-items: center;
+  padding: var(--space-3) var(--space-4);
+  border-top: var(--border-width) solid var(--color-border);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Reveal ceremony (PRD 7.5)
+   ═══════════════════════════════════════════════════════════════════════
+   Four beats: card rise, bubble burst, name, tier stamp. Under three seconds
+   and skippable at any frame — `data-beat` is what the JS timeline drives, and
+   every step below keys off it, so skipping is just jumping to the last value.
+
+   Reduced motion is handled by `.reveal--still`, which turns every animation
+   off rather than shortening it. A fast animation is still animation. */
 @keyframes card-rise {
   from { opacity: 0; transform: translateY(calc(24px * var(--reveal-intensity))) scale(0.96); }
   to { opacity: 1; transform: none; }
@@ -213,300 +1067,6 @@ fieldset { border: 0; padding: 0; margin: 0 0 var(--space-3); }
              foil-sweep var(--duration-reveal) var(--ease-standard) both;
 }
 
-/* --- Utility ----------------------------------------------------------- */
-.list { list-style: none; padding: 0; margin: 0; }
-.list > li + li { margin-top: var(--space-3); }
-.kv { display: grid; grid-template-columns: 1fr auto; gap: var(--space-2); font-size: var(--size-sm); }
-.kv dt { color: var(--color-muted); }
-.kv dd { margin: 0; font-family: var(--font-data); }
-.empty { text-align: center; color: var(--color-muted); padding: var(--space-6) var(--space-4); }
-.visually-hidden {
-  position: absolute; width: 1px; height: 1px; overflow: hidden;
-  clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
-}
-.warn {
-  border-left: 3px solid var(--color-caution);
-  padding-left: var(--space-3);
-  color: var(--color-muted);
-  font-size: var(--size-sm);
-}
-
-/* ═══════════════════════════════════════════════════════════════════════
-   Catalog cards
-   ═══════════════════════════════════════════════════════════════════════
-   A collectible-card treatment for the species library. The gem positions
-   are borrowed deliberately: a card game trains the eye to find cost at the
-   top-left and the creature's two stats at the bottom corners, so putting
-   price, adult size and minimum tank volume there means the three numbers a
-   keeper decides on are already where they look.
-
-   Everything reads tokens, so all three visual territories still apply.
-*/
-
-/*
-  Landscape tiles, because the photographs are landscape.
-
-  88% of the 695 bundled portraits (612 of them) are wider than they are tall,
-  at a median aspect ratio of 1.50. The card used to be 3:4 with object-fit:
-  cover, so a 3:2 photograph kept about 37% of its width and the crop went
-  straight through the fish - head and tail outside the frame, a belly in the
-  middle. Matching the tile to the source is what fixes it; no amount of
-  object-position tuning saves a portrait box fed landscape images.
-
-  A fish is a long horizontal animal, so this is also just the right shape for
-  the subject.
-*/
-.catalog-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: var(--space-4);
-}
-
-.fish-card {
-  position: relative;
-  aspect-ratio: 3 / 2;
-  border-radius: var(--rarity-frame-radius);
-  overflow: hidden;
-  border: 2px solid var(--color-border);
-  background: var(--color-surface);
-  box-shadow: var(--elevation-surface);
-  cursor: pointer;
-  padding: 0;
-  display: block;
-  width: 100%;
-  text-align: left;
-  transition: transform var(--duration-base) var(--ease-rise),
-              box-shadow var(--duration-base) var(--ease-standard);
-}
-.fish-card:hover { transform: translateY(-4px); box-shadow: var(--elevation-raised); }
-.fish-card:active { transform: translateY(-1px); }
-
-.fish-card__art {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-/* No portrait and no photo of your own: a plain silhouette rather than a
-   broken image or a stand-in fish that is not this species. */
-.fish-card__art--none {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 2.5rem;
-  color: var(--color-muted);
-  background: var(--color-surface-raised);
-}
-
-/* Uncaught species are legible but clearly not yours yet. Greyscale plus a
-   drop in brightness, which survives every theme and reads in monochrome. */
-.fish-card--locked .fish-card__art { filter: grayscale(1) brightness(0.42) contrast(0.9); }
-.fish-card--locked { border-color: color-mix(in srgb, var(--color-border) 70%, transparent); }
-
-.fish-card__lock {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  font-size: 1.5rem;
-  color: var(--color-muted);
-  pointer-events: none;
-}
-
-/* Scrim so the name stays readable over any photograph.
-   On a landscape tile the stats sit BESIDE the name rather than under it, so
-   this reserves width on the right instead of height at the bottom. Stacking
-   them vertically on a short, wide card left the name squeezed into a strip
-   two thirds of the way down. */
-.fish-card__scrim {
-  position: absolute;
-  inset: auto 0 0 0;
-  padding: var(--space-5) 96px var(--space-3) var(--space-3);
-  background: linear-gradient(to top,
-    color-mix(in srgb, var(--color-canvas) 92%, transparent) 0%,
-    color-mix(in srgb, var(--color-canvas) 78%, transparent) 45%,
-    transparent 100%);
-}
-
-.fish-card__name {
-  font-family: var(--font-display);
-  font-size: var(--size-md);
-  font-weight: var(--weight-bold);
-  line-height: 1.15;
-  color: var(--color-text);
-  margin: 0;
-  /* Two lines maximum: a long common name must not push the gems off. */
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-.fish-card__sci {
-  font-size: 10px;
-  font-style: var(--font-scientific-style);
-  color: var(--color-muted);
-  display: block;
-  margin-top: 2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* --- Gems ------------------------------------------------------------- */
-.gem {
-  position: absolute;
-  min-width: 30px;
-  height: 30px;
-  padding: 0 6px;
-  border-radius: var(--radius-pill);
-  display: grid;
-  place-items: center;
-  font-family: var(--font-data);
-  font-size: 11px;
-  font-weight: var(--weight-bold);
-  color: var(--color-canvas);
-  border: 2px solid color-mix(in srgb, var(--color-canvas) 55%, transparent);
-  box-shadow: 0 2px 6px rgb(0 0 0 / 0.35);
-  line-height: 1;
-  /* Above the scrim, which is painted over the art. */
-  z-index: 2;
-}
-/* Cost keeps the top-left corner a card game trains the eye to check first.
-   The two creature stats move to the bottom-RIGHT and sit side by side, since
-   a landscape tile has width to spare and no height to waste - the name takes
-   the bottom-left, which is where reading starts. */
-.gem--cost   { top: var(--space-2); left: var(--space-2);     background: var(--color-primary); }
-.gem--size   { bottom: var(--space-2); right: 44px;           background: var(--color-accent); }
-.gem--volume { bottom: var(--space-2); right: var(--space-2); background: var(--color-caution); }
-
-/* Rarity ribbon, top-right. Text + shape, never colour alone (NFR-06). */
-.fish-card__tier {
-  position: absolute;
-  z-index: 2;
-  top: var(--space-2);
-  right: var(--space-2);
-  padding: 2px var(--space-2);
-  border-radius: var(--radius-pill);
-  font-size: 9px;
-  font-weight: var(--weight-bold);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  background: color-mix(in srgb, var(--color-canvas) 80%, transparent);
-  border: 1px solid currentColor;
-}
-
-/* Your own photo, rather than the reference portrait. */
-.fish-card__own {
-  position: absolute;
-  z-index: 2;
-  top: calc(var(--space-2) + 34px);
-  right: var(--space-2);
-  font-size: 9px;
-  padding: 1px var(--space-2);
-  border-radius: var(--radius-pill);
-  background: color-mix(in srgb, var(--color-canvas) 80%, transparent);
-  color: var(--color-accent);
-  border: 1px solid currentColor;
-  font-weight: var(--weight-medium);
-}
-
-/* Golden reuses the existing foil treatment rather than inventing a second. */
-.fish-card--golden {
-  border-color: var(--color-legendary);
-  box-shadow: 0 0 0 1px var(--color-legendary),
-              0 0 18px color-mix(in srgb, var(--color-legendary) calc(var(--foil-strength) * 60%), transparent);
-}
-
-/* --- Filter bar ------------------------------------------------------- */
-.filters { display: flex; gap: var(--space-2); flex-wrap: wrap; }
-.chip {
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-pill);
-  border: var(--border-width) solid var(--color-border);
-  background: transparent;
-  color: var(--color-muted);
-  font-size: var(--size-sm);
-  cursor: pointer;
-}
-.chip[aria-pressed='true'] {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
-  color: var(--color-canvas);
-  font-weight: var(--weight-medium);
-}
-
-/* --- Your own photos of a species ------------------------------------- */
-.photo-strip {
-  display: flex;
-  gap: var(--space-2);
-  /* Scrolls itself rather than widening the page: a keeper with twenty photos
-     of one fish must not give the whole screen a horizontal scrollbar. */
-  overflow-x: auto;
-  padding-bottom: var(--space-1);
-}
-.photo-strip__item {
-  flex: 0 0 auto;
-  width: 64px;
-  height: 64px;
-  padding: 0;
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-control);
-  background: transparent;
-  overflow: hidden;
-  cursor: pointer;
-}
-.photo-strip__item img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.photo-strip__item--on {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 45%, transparent);
-}
-
-/* --- Store links ------------------------------------------------------- */
-.store-link {
-  color: var(--color-primary);
-  text-decoration: none;
-  border-bottom: var(--border-width) solid color-mix(in srgb, var(--color-primary) 40%, transparent);
-}
-.store-link:hover { border-bottom-color: var(--color-primary); }
-
-/* --- Habitat pip -------------------------------------------------------- */
-/* Sits under the cost gem in the top-left run. Glyph, not colour alone. */
-.zone-pip {
-  position: absolute;
-  z-index: 2;
-  top: calc(var(--space-2) + 34px);
-  left: var(--space-2);
-  min-width: 24px;
-  height: 24px;
-  padding: 0 var(--space-2);
-  display: grid;
-  place-items: center;
-  border-radius: var(--radius-pill);
-  font-family: var(--font-data);
-  font-size: 12px;
-  line-height: 1;
-  background: color-mix(in srgb, var(--color-canvas) 80%, transparent);
-  border: var(--border-width) solid currentColor;
-  color: var(--color-muted);
-}
-.zone-pip--top { color: var(--color-accent); }
-.zone-pip--mid { color: var(--color-primary); }
-.zone-pip--bottom { color: var(--color-caution); }
-
-.chip__glyph { font-family: var(--font-data); }
-
-/* --- Reveal ceremony (PRD 7.5) ------------------------------------------ */
-/*
- * Four beats: card rise, bubble burst, name, tier stamp. Under three seconds
- * and skippable at any frame — `data-beat` is what the JS timeline drives, and
- * every step below keys off it, so skipping is just jumping to the last value.
- *
- * Reduced motion is handled by `.reveal--still`, which turns every animation
- * off rather than shortening it. A fast animation is still animation.
- */
 .reveal {
   position: relative;
   overflow: hidden;
@@ -523,21 +1083,16 @@ fieldset { border: 0; padding: 0; margin: 0 0 var(--space-3); }
 .reveal[data-beat='done'] { cursor: default; }
 .reveal:focus-visible { box-shadow: var(--focus-ring); outline: none; }
 
-.reveal__card {
-  animation: card-rise var(--duration-base) var(--ease-rise) both;
-  position: relative;
-  z-index: 1;
-}
+.reveal__card { animation: card-rise var(--duration-base) var(--ease-rise) both; position: relative; z-index: 1; }
 .reveal__eyebrow {
   font-size: var(--size-xs);
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--color-muted);
+  color: var(--color-faint);
   margin-bottom: var(--space-3);
 }
 .reveal__card h2 { margin-bottom: var(--space-1); }
 
-/* Name and tier each fade up as their beat lands. */
 .reveal__name, .reveal__tier {
   opacity: 0;
   transform: translateY(calc(10px * var(--reveal-intensity)));
@@ -548,10 +1103,7 @@ fieldset { border: 0; padding: 0; margin: 0 0 var(--space-3); }
 
 .reveal__tier {
   margin-top: var(--space-4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-3);
+  display: flex; align-items: center; justify-content: center; gap: var(--space-3);
 }
 /* The stamp lands rather than fades: overshoot down onto the card. */
 .reveal__tier.is-in .tier { animation: tier-stamp var(--duration-base) var(--ease-standard) both; }
@@ -586,8 +1138,7 @@ fieldset { border: 0; padding: 0; margin: 0 0 var(--space-3); }
 }
 .reveal--golden .reveal__card::after {
   content: '';
-  position: absolute;
-  inset: 0;
+  position: absolute; inset: 0;
   pointer-events: none;
   background: linear-gradient(115deg, transparent 35%,
     color-mix(in srgb, var(--color-legendary) calc(var(--foil-strength) * 100%), transparent) 50%,
@@ -598,10 +1149,10 @@ fieldset { border: 0; padding: 0; margin: 0 0 var(--space-3); }
 
 .reveal__skip {
   position: absolute;
-  top: var(--space-2);
-  right: var(--space-2);
+  top: var(--space-2); right: var(--space-2);
   z-index: 2;
   padding: var(--space-1) var(--space-3);
+  min-height: var(--tap-min);
   color: var(--color-muted);
 }
 
@@ -618,52 +1169,54 @@ fieldset { border: 0; padding: 0; margin: 0 0 var(--space-3); }
 }
 
 /* --- Identify flow ------------------------------------------------------ */
-.identify__shot {
-  aspect-ratio: 3 / 2;
-  object-fit: cover;
-  max-height: 40vh;
-}
+.identify__shot { aspect-ratio: 3 / 2; object-fit: cover; max-height: 40vh; }
 .identify__hit { width: 100%; text-align: left; }
-/* The lead candidate is only emphasised when the match is clearly ahead;
-   the component decides, so a near-tie shows a flat list of equals. */
+/* The lead candidate is only emphasised when the match is clearly ahead; the
+   component decides, so a near-tie shows a flat list of equals. */
 .identify__hit--lead { border-color: var(--color-primary); }
 .identify__hits { gap: var(--space-2); }
 
-/* --- Collapsible secondary filters -------------------------------------- */
-/* Flat, the zone/kind/temperament rows filled a whole phone screen and left no
-   room for a single fish. Collapsed, the catalog leads with the catalog. */
-.filters-more > summary {
-  cursor: pointer;
-  list-style: none;
-  display: inline-flex;
-  align-items: center;
+/* --- Your own photos of a species --------------------------------------- */
+.photo-strip {
+  display: flex;
   gap: var(--space-2);
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-pill);
-  border: var(--border-width) solid var(--color-border);
+  /* Scrolls itself rather than widening the page: a keeper with twenty photos
+     of one fish must not give the whole screen a horizontal scrollbar. */
+  overflow-x: auto;
+  padding-bottom: var(--space-1);
+}
+.photo-strip__item {
+  flex: 0 0 auto;
+  width: 64px; height: 64px;
+  padding: 0; min-height: 0;
+  border: var(--border-width) solid var(--color-border-control);
+  border-radius: var(--radius-control);
+  background: transparent;
+  overflow: hidden;
+  cursor: pointer;
+}
+.photo-strip__item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.photo-strip__item--on {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 45%, transparent);
+}
+
+/* --- Utility ------------------------------------------------------------ */
+.list { list-style: none; padding: 0; margin: 0; }
+.list > li + li { margin-top: var(--space-3); }
+.kv { display: grid; grid-template-columns: 1fr auto; gap: var(--space-2); font-size: var(--size-sm); }
+.kv dt { color: var(--color-muted); }
+.kv dd { margin: 0; font-family: var(--font-data); }
+.empty { text-align: center; color: var(--color-muted); padding: var(--space-6) var(--space-4); }
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+}
+.warn {
+  border-left: 3px solid var(--color-caution);
+  padding-left: var(--space-3);
   color: var(--color-muted);
   font-size: var(--size-sm);
-  font-weight: var(--weight-medium);
-}
-.filters-more > summary::-webkit-details-marker { display: none; }
-.filters-more > summary::after { content: '▾'; font-family: var(--font-data); }
-.filters-more[open] > summary::after { content: '▴'; }
-.filters-more > summary:focus-visible { box-shadow: var(--focus-ring); outline: none; }
-.filters-more[open] > summary { color: var(--color-text); border-color: var(--color-primary); }
-.filters-more > *:not(summary) { margin-top: var(--space-3); }
-
-/* A count, not just a dot: "2" says how much is narrowing the list. */
-.filters-more__count {
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
-  border-radius: var(--radius-pill);
-  background: var(--color-primary);
-  color: var(--color-canvas);
-  font-family: var(--font-data);
-  font-size: 11px;
-  display: grid;
-  place-items: center;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
