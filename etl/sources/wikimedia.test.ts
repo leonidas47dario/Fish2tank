@@ -112,6 +112,18 @@ describe('commonsSearchUrl', () => {
   it('searches the File namespace only', () => {
     expect(commonsSearchUrl('Pangio anguillaris')).toContain('gsrnamespace=6');
   });
+
+  it('asks for size, or every hit comes back with no dimensions', () => {
+    // The stub in searchCommonsPortrait's tests fabricates width and height, so
+    // it cannot catch this: with iiprop=url|extmetadata the real API returns
+    // neither, and build-marts.ts orders candidates by width DESC to pick one
+    // portrait per species. Null widths turn that rule into arbitrary choice.
+    //
+    // The pipes here are literal, not percent-encoded: only gsrsearch is run
+    // through encodeURIComponent, so this parameter is built as a plain
+    // template string and reaches the API as `iiprop=url|size|extmetadata`.
+    expect(commonsSearchUrl('Pangio anguillaris')).toContain('iiprop=url|size|extmetadata');
+  });
 });
 
 describe('searchCommonsPortrait', () => {

@@ -186,7 +186,7 @@ const PHOTO_EXT = /\.(jpe?g|png)$/i;
 export function commonsSearchUrl(scientificName: string): string {
   const q = encodeURIComponent(`"${scientificName}"`);
   return `${COMMONS}?action=query&format=json&formatversion=2&generator=search` +
-    `&gsrnamespace=6&gsrlimit=8&gsrsearch=${q}&prop=imageinfo&iiprop=url|extmetadata`;
+    `&gsrnamespace=6&gsrlimit=8&gsrsearch=${q}&prop=imageinfo&iiprop=url|size|extmetadata`;
 }
 
 /**
