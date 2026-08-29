@@ -35,6 +35,12 @@ export interface CatalogEntry {
   tempMinC?: number;
   tempMaxC?: number;
   predationTags: string[];
+  /**
+   * Fresh or salt, as declared by the vendors that list it - never inferred
+   * from the fish. Absent for most of the catalog, which is not a claim that
+   * the fish is freshwater. See DiscoveredSpecies.waterType.
+   */
+  waterType?: 'freshwater' | 'marine';
   sourceLabel?: string;
   sourceUrl?: string;
   /**
@@ -150,6 +156,7 @@ async function main() {
     )
     SELECT s.species_id, s.common_name, s.scientific_name, s.aliases,
            s.adult_size_in, s.min_volume_gal, s.aggression,
+           s.temp_min_c, s.temp_max_c, s.predation_tags, s.water_type,
            s.temp_min_c, s.temp_max_c, s.predation_tags,
            s.source_label, s.source_url,
            i.url AS img_url, i.provenance AS img_provenance, i.license AS img_license,
@@ -194,6 +201,7 @@ async function main() {
       tempMinC: num(r.temp_min_c),
       tempMaxC: num(r.temp_max_c),
       predationTags: split(r.predation_tags),
+      ...(nn(r.water_type) ? { waterType: nn(r.water_type) as 'freshwater' | 'marine' } : {}),
       sourceLabel: nn(r.source_label),
       sourceUrl: nn(r.source_url),
       // Only ship a picture we can account for. The test used to be a licence
@@ -229,6 +237,16 @@ async function main() {
   console.log(`  without          ${species.length - withArt}`);
 
   const zoned = species.filter((s) => s.waterZone).length;
+  // Reported split, because the pooled number hides which half is missing.
+  // The taxonomy map is a freshwater map; the marine wing arrived with
+  // LiveAquaria's 3,256 products and has no family coverage yet.
+  const marine = species.filter((s) => s.waterType === 'marine');
+  const rest = species.filter((s) => s.waterType !== 'marine');
+  const zonedRest = rest.filter((s) => s.waterZone).length;
+  console.log('\n  habitat (derived from family)');
+  console.log(`    with a water zone         ${zoned}  (${Math.round((zoned / species.length) * 100)}%)`);
+  console.log(`      freshwater / undeclared ${zonedRest} of ${rest.length}  (${Math.round((zonedRest / rest.length) * 100)}%)`);
+  console.log(`      marine-only vendors     ${marine.filter((s) => s.waterZone).length} of ${marine.length}  <- the taxonomy map is freshwater`);
   console.log('\n  habitat (derived from family)');
   console.log(`    with a water zone         ${zoned}  (${Math.round((zoned / species.length) * 100)}%)`);
   console.log(`    family unmapped           ${species.filter((s) => !s.family).length}`);

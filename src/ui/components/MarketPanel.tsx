@@ -9,8 +9,8 @@
 import type { LengthMeasurement } from '@/domain/types';
 import { formatLength } from '@/domain/units';
 import {
-  bandForSize, isStale, marketAgeDays, marketFor, MARKET_INDEX, STORE_NAMES,
-  scarcityFor,
+  bandForSize, hasPriceEstimate, isStale, marketAgeDays, marketFor, MARKET_INDEX,
+  STORE_NAMES, scarcityFor,
 } from '@/data/market';
 import { SCARCITY_COMPONENT_LABELS } from '@/engine/rarity/market-scarcity';
 import { ScarcityBadge } from './Badges';
@@ -30,8 +30,7 @@ export function MarketPanel({ speciesId, observedSize, yourPrice }: Props) {
       <section className="card stack">
         <h2>Market reference</h2>
         <p className="muted small">
-          No listings for this species across the {MARKET_INDEX.sources.length} tracked stores, or too few
-          to compare ({MARKET_INDEX.minimumSampleCount} needed). Nothing is estimated from an empty sample.
+          No listing for this species matched across the {MARKET_INDEX.sources.length} tracked stores.
         </p>
         <p className="xs muted" style={{ marginBottom: 0 }}>
           That is not a scarcity signal. Most listing titles do not resolve to a known species, so absence
@@ -46,12 +45,22 @@ export function MarketPanel({ speciesId, observedSize, yourPrice }: Props) {
   const stale = isStale(stats);
   const ageDays = marketAgeDays(stats);
   const maxPrice = Math.max(...stats.priceBySize.map((b) => b.medianPrice), 1);
+  /**
+   * Whether we can say what it is worth, which is a separate question from
+   * whether anyone sells it. Below the sample floor the references below are
+   * still real - they are the whole reason the species is here - so the panel
+   * renders them and simply declines to put a number at the top.
+   */
+  const estimated = hasPriceEstimate(stats);
 
   return (
     <section className="card stack">
       <div className="spread">
         <h2 style={{ marginBottom: 0 }}>Market reference</h2>
-        <span className="xs muted data">{stats.comparableCount} listings</span>
+        <span className="xs muted data">
+          {stats.totalListings} listing{stats.totalListings === 1 ? '' : 's'} · {stats.stores.length} store
+          {stats.stores.length === 1 ? '' : 's'}
+        </span>
       </div>
 
       {/* Auto-populated scarcity. Deliberately its own rating, not folded into
@@ -81,8 +90,25 @@ export function MarketPanel({ speciesId, observedSize, yourPrice }: Props) {
         </details>
       )}
 
+      {/* Below the sample floor there is no headline number, and the panel
+          says why in the same breath rather than leaving a blank where a
+          price should be. The stores are listed regardless. */}
+      {!estimated && (
+        <div className="card card--raised">
+          <p className="small" style={{ marginBottom: 'var(--space-1)' }}>
+            No price estimate for this one.
+          </p>
+          <p className="xs muted" style={{ marginBottom: 0 }}>
+            {stats.comparableCount === 0
+              ? `None of the ${stats.totalListings} listing${stats.totalListings === 1 ? '' : 's'} below states a size, and a price without a size compares a juvenile against an adult.`
+              : `Only ${stats.comparableCount} of the ${stats.totalListings} listings state a size, below the ${MARKET_INDEX.minimumSampleCount} needed to estimate from.`}
+            {' '}What the stores are asking is shown below, unaveraged.
+          </p>
+        </div>
+      )}
+
       {/* The size-matched comparison is the headline, not the pooled median. */}
-      {band ? (
+      {!estimated ? null : band ? (
         <div className="card card--raised">
           <p className="xs muted" style={{ marginBottom: 'var(--space-1)' }}>
             At {formatLength(observedSize)}, these stores listed it around
@@ -112,6 +138,7 @@ export function MarketPanel({ speciesId, observedSize, yourPrice }: Props) {
       )}
 
       {/* The ladder. This is the part that is actually worth reading. */}
+      {estimated && (
       <div>
         <p className="xs muted" style={{ marginBottom: 'var(--space-2)' }}>Price by size</p>
         <ul className="list">
@@ -133,6 +160,7 @@ export function MarketPanel({ speciesId, observedSize, yourPrice }: Props) {
           ))}
         </ul>
       </div>
+      )}
 
       <dl className="kv">
         <dt>Currently in stock</dt>
@@ -143,7 +171,9 @@ export function MarketPanel({ speciesId, observedSize, yourPrice }: Props) {
       </dl>
 
       <div>
-        <p className="xs muted" style={{ marginBottom: 'var(--space-2)' }}>Stores</p>
+        <p className="xs muted" style={{ marginBottom: 'var(--space-2)' }}>
+          {estimated ? 'Stores' : 'Stores carrying it'}
+        </p>
         <ul className="list">
           {stats.stores.map((s) => {
             const name = STORE_NAMES[s.storeId] ?? s.storeId;
@@ -169,8 +199,16 @@ export function MarketPanel({ speciesId, observedSize, yourPrice }: Props) {
                 ) : (
                   <span>{name}</span>
                 )}
+                {/* A median where one is earned, otherwise the asking price of
+                    the exact listing linked above, with the option it buys.
+                    "3 Fish · $41.99" must never be read as $41.99 a fish. */}
                 <span className="data">
-                  {s.listings} listing{s.listings === 1 ? '' : 's'} · median ${s.medianPrice.toFixed(0)}
+                  {s.listings} listing{s.listings === 1 ? '' : 's'}
+                  {estimated && s.medianPrice > 0
+                    ? ` · median $${s.medianPrice.toFixed(0)}`
+                    : s.productPrice !== undefined
+                      ? ` · $${s.productPrice.toFixed(2)}${s.productSizeLabel ? ` (${s.productSizeLabel})` : ''}`
+                      : ''}
                   {s.inStock > 0 && ` · ${s.inStock} in stock`}
                 </span>
               </li>

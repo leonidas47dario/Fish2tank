@@ -159,9 +159,15 @@ export function resolveCardArt(
   return { kind: 'none' };
 }
 
-/** Price to show on the card's cost gem. */
+/**
+ * Price to show on the card's cost gem.
+ *
+ * Undefined when the index has listings but too few sized ones to estimate
+ * from. The gem stays empty and the species page shows the vendors instead - a
+ * card is a glance, and a glance has no room to say "one listing, unsized".
+ */
 export function cardPrice(market: MarketSpeciesStats | undefined, sizeIn?: number): number | undefined {
-  if (!market) return undefined;
+  if (!market?.price) return undefined;
   if (sizeIn !== undefined) {
     const band = bandForSize(market, { value: sizeIn, unit: 'in' });
     if (band) return band.medianPrice;

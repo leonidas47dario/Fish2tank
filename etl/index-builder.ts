@@ -30,6 +30,8 @@ export interface BuildOptions {
   minimumSampleCount?: number;
   builtAt?: string;
   sources?: Array<StoreConfig & { listingsFetched: number; retrievedAt: string }>;
+  /** Stores that were configured but did not contribute. See MarketIndex.partial. */
+  partial?: Array<{ storeId: string; reason: string }>;
 }
 
 export function buildMarketIndex(listings: MarketListing[], options: BuildOptions = {}): MarketIndex {
@@ -54,7 +56,24 @@ export function buildMarketIndex(listings: MarketListing[], options: BuildOption
     // Only size-bearing listings can be honestly price-compared: a $20 juvenile
     // and a $200 adult of the same species are not the same product.
     const comparable = all.filter((l) => l.size !== undefined && l.price > 0);
-    if (comparable.length < minimumSampleCount) continue;
+
+    /**
+     * The threshold gates the ESTIMATE, not the OBSERVATIONS.
+     *
+     * It used to skip the species outright, which conflated two different
+     * statements: "we cannot say what this is worth" and "nobody sells this".
+     * The first was true; the second was a fabrication, and it applied to 779
+     * of 1,076 species. Butterfly Fish had six listings across three stores,
+     * one of them J4's at $25, and the app showed no market data at all
+     * because only two of the six carried a parseable size.
+     *
+     * So a species with any listing at all is published with its stores, their
+     * asking prices and their links. `price`, `sizeRangeIn` and `priceBySize`
+     * stay absent until there are enough size-bearing samples to mean
+     * something - the app renders the references and says plainly that it
+     * cannot estimate, which is FR-P06 satisfied rather than dodged.
+     */
+    const estimable = comparable.length >= minimumSampleCount;
 
     const prices = comparable.map((l) => l.price);
     const sizes = comparable.map(inches).filter((n): n is number => n !== undefined);
@@ -75,7 +94,17 @@ export function buildMarketIndex(listings: MarketListing[], options: BuildOption
         listings: mine.length,
         inStock: mine.filter((l) => l.available).length,
         medianPrice: minePriced.length ? round2(median(minePriced)) : 0,
-        ...(best ? { productUrl: best.url, productInStock: best.available } : {}),
+        // The linked listing's own price and option text. A fact about one
+        // listing rather than an aggregate, so it stays true where a median
+        // would not: "3 Fish - $41.99" must never read as $41.99 a fish.
+        ...(best
+          ? {
+              productUrl: best.url,
+              productInStock: best.available,
+              ...(best.price > 0 ? { productPrice: round2(best.price) } : {}),
+              ...(best.sizeLabel ? { productSizeLabel: best.sizeLabel } : {}),
+            }
+          : {}),
       };
     });
 
@@ -102,18 +131,22 @@ export function buildMarketIndex(listings: MarketListing[], options: BuildOption
       totalListings: all.length,
       inStock: all.filter((l) => l.available).length,
       soldOut: all.filter((l) => !l.available).length,
-      price: {
-        median: round2(median(prices)),
-        min: round2(Math.min(...prices)),
-        max: round2(Math.max(...prices)),
-        // Pooling is only valid because every tracked store lists in the same
-        // currency; StoreConfig.currency is what guarantees that.
-        currency: comparable[0]!.currency,
-      },
-      sizeRangeIn: sizes.length
-        ? { min: round2(Math.min(...sizes)), max: round2(Math.max(...sizes)) }
-        : undefined,
-      priceBySize,
+      ...(estimable
+        ? {
+            price: {
+              median: round2(median(prices)),
+              min: round2(Math.min(...prices)),
+              max: round2(Math.max(...prices)),
+              // Pooling is only valid because every tracked store lists in the
+              // same currency; StoreConfig.currency is what guarantees that.
+              currency: comparable[0]!.currency,
+            },
+            ...(sizes.length
+              ? { sizeRangeIn: { min: round2(Math.min(...sizes)), max: round2(Math.max(...sizes)) } }
+              : {}),
+          }
+        : {}),
+      priceBySize: estimable ? priceBySize : [],
       stores: stores.sort((a, b) => b.listings - a.listings),
       listedBetween: published.length
         ? { earliest: published[0]!.slice(0, 10), latest: published[published.length - 1]!.slice(0, 10) }
@@ -126,6 +159,7 @@ export function buildMarketIndex(listings: MarketListing[], options: BuildOption
     builtAt: options.builtAt ?? new Date().toISOString(),
     minimumSampleCount,
     sources: options.sources ?? [],
+    ...(options.partial?.length ? { partial: options.partial } : {}),
     species,
     unmatchedScientificNames: [...unmatched.entries()]
       .map(([scientificName, listings]) => ({ scientificName, listings }))

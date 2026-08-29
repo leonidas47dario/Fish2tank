@@ -140,6 +140,28 @@ export function computeMarketScarcity(
       explanation: `Only ${stats.totalListings} listing${stats.totalListings === 1 ? '' : 's'} found, below the ${cfg.minimumListings} needed to say anything useful.`,
     };
   }
+  /**
+   * The index now publishes species it cannot price, so that their vendors and
+   * links are visible. Those entries reach here for the first time, and they
+   * have no median for the price component.
+   *
+   * Declining to rate is deliberate rather than lazy. Scoring the missing
+   * price as zero would quietly award every unpriced species the "cheap" end
+   * of a 15-point component and drift it toward "widely available" - a rating
+   * made worse by the data we lack, which is the exact inversion this engine
+   * exists to avoid. Rescaling over the three computable components is the
+   * better answer and changes the formula, so it waits for a version bump.
+   *
+   * Until then these return what they returned before they were published at
+   * all, so no existing rating or Discovery Tier moves on this change.
+   */
+  if (!stats.price) {
+    return {
+      available: false,
+      reason: 'Not enough data',
+      explanation: `Found ${stats.totalListings} listing${stats.totalListings === 1 ? '' : 's'}, but too few state a size to compare prices, so this cannot be rated. The stores carrying it are still listed.`,
+    };
+  }
 
   const storesCarrying = stats.stores.length;
   const { points } = cfg;
