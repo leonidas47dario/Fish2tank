@@ -9,6 +9,7 @@ import {
   setDisplayName,
   updateSettings,
 } from './profile';
+import { recordPrice } from './repositories';
 
 let db: Fish2TankDB;
 
@@ -94,5 +95,22 @@ describe('setDisplayName', () => {
     const profile = await loadProfile(db);
     expect(profile.displayName).toBe('Ryan');
     expect(profile.settings.currency).toBe('CAD');
+  });
+});
+
+describe('recordPrice currency', () => {
+  it('defaults to the profile currency rather than USD', async () => {
+    await updateSettings({ currency: 'EUR' }, db);
+    const observation = await recordPrice({ speciesId: 'sp_x', askingPrice: 10 }, db);
+    expect(observation.currency).toBe('EUR');
+  });
+
+  it('still lets an explicit currency win, for a price seen abroad', async () => {
+    await updateSettings({ currency: 'EUR' }, db);
+    const observation = await recordPrice(
+      { speciesId: 'sp_x', askingPrice: 10, currency: 'JPY' },
+      db,
+    );
+    expect(observation.currency).toBe('JPY');
   });
 });

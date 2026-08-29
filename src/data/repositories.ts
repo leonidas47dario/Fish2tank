@@ -38,6 +38,7 @@ import { evaluateAllTanks, type CandidateInput, type ResidentInput, type TankInp
 import { computeDiscoveryTier } from '@/engine/rarity/discovery-tier';
 import { scarcityFor } from './market';
 import { db, newId, nowIso, today, type Fish2TankDB } from './db';
+import { loadProfile } from './profile';
 
 type DB = Fish2TankDB;
 
@@ -331,6 +332,11 @@ export interface RecordPriceInput {
  * Repeat sightings therefore accumulate rather than overwrite.
  */
 export async function recordPrice(input: RecordPriceInput, database: DB = db): Promise<PriceObservation> {
+  // FR-P01 / spec 005 FR-A04: an unstated currency is the keeper's own, not USD.
+  // price-fit.ts excludes observations on currency mismatch, so a wrong default
+  // silently discards evidence instead of failing visibly.
+  const currency = input.currency ?? (await loadProfile(database)).settings.currency;
+
   const observation: PriceObservation = {
     id: newId('price'),
     specimenId: input.specimenId,
@@ -340,7 +346,7 @@ export async function recordPrice(input: RecordPriceInput, database: DB = db): P
     askingPrice: input.askingPrice,
     memberPrice: input.memberPrice,
     paidPrice: input.paidPrice,
-    currency: input.currency ?? 'USD',
+    currency,
     basis: input.basis ?? 'each',
     packageQuantity: input.packageQuantity ?? 1,
     observedSize: input.observedSize,
