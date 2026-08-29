@@ -9,6 +9,7 @@ import {
   assessmentHistory,
   awardGolden,
   createCatchDraft,
+  storageError,
   createKeeperPrinciple,
   createOpeningBalanceHolding,
   ensureSpecimenForHolding,
@@ -77,6 +78,55 @@ describe('catch drafts (FR-C02, FR-C07)', () => {
     expect(draft.encounter.syncState).toBe('local-draft');
     expect(draft.encounter.observedAt).toBeTruthy();
     expect(draft.media).toHaveLength(1);
+  });
+
+  /**
+   * Regression: a capture failed in the field with the message
+   * "blobs.bulkAdd()." and nothing else - which names the table and says
+   * nothing about what went wrong or what to do about it.
+   */
+  describe('when the device will not store the capture', () => {
+    /** A File whose backing has gone stale, as WebKit can do between the change event and the commit. */
+    const unreadable = () => ({
+      kind: 'photo' as const,
+      mimeType: 'image/jpeg',
+      blob: {
+        size: 2_400_000,
+        type: 'image/jpeg',
+        arrayBuffer: () => Promise.reject(Object.assign(new Error('The operation is insecure.'), { name: 'NotReadableError' })),
+      } as unknown as Blob,
+    });
+
+    it('names the file and the underlying reason when the bytes cannot be read', async () => {
+      await expect(createCatchDraft({ files: [unreadable()], clientKey: 'k1' }, db))
+        .rejects.toThrow(/capture 1 of 1.*image\/jpeg.*2400000 bytes.*NotReadableError/s);
+    });
+
+    it('writes nothing at all when a capture cannot be read', async () => {
+      await expect(createCatchDraft({ files: [unreadable()], clientKey: 'k1' }, db)).rejects.toThrow();
+      // Detaching happens before the transaction opens, so there is no
+      // orphaned specimen for a fish that was never saved.
+      expect(await db.specimens.count()).toBe(0);
+      expect(await db.blobs.count()).toBe(0);
+    });
+
+    it.each([
+      ['QuotaExceededError', /out of storage/i],
+      ['DataCloneError', /taking the photo again/i],
+      ['InvalidStateError', /private browsing/i],
+    ])('turns a %s into advice rather than a table name', (name, expected) => {
+      // Dexie wraps the real cause in `.inner` and reports only the table in
+      // its own message, which is what made the field report unactionable.
+      const dexie = Object.assign(new Error('blobs.bulkAdd()'), {
+        name: 'BulkError',
+        inner: Object.assign(new Error('the store is full'), { name }),
+      });
+      const mapped = storageError(dexie, 2_400_000, 1);
+      expect(mapped.message).toMatch(expected);
+      expect(mapped.message).toContain(name);
+      expect(mapped.message).toContain('2.3 MB');
+      expect(mapped.cause).toBe(dexie);
+    });
   });
 
   it('saves a Mystery Catch with no identity at all (FR-I01, principle P6)', async () => {
