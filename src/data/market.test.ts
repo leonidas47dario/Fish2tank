@@ -4,6 +4,14 @@ import {
 } from './market';
 import { STORE_CHANNELS } from './store-channels';
 import { DEFAULT_SCARCITY_CONFIG } from '@/engine/rarity/market-scarcity';
+import catalogJson from './seed/marts/catalog.json';
+
+const byCommonName = new Map<string, string>();
+for (const e of (catalogJson as unknown as {
+  species: Array<{ speciesId: string; commonName: string }>;
+}).species) {
+  if (!byCommonName.has(e.commonName)) byCommonName.set(e.commonName, e.speciesId);
+}
 
 describe('resolve rates are derived from the index, never hardcoded', () => {
   it('is published listings over livestock listings, per store', () => {
@@ -90,17 +98,41 @@ describe('calibration against the shipped index', () => {
     expect(biggest / rated).toBeLessThan(0.8);
   });
 
-  it('rates nothing at all while the index has too few witnesses', () => {
-    // Honest state of the shipped index, and the reason this feature is inert
-    // until the ETL republishes with Nu Aqua and the two-pass matcher. When
-    // that lands this expectation flips, deliberately and visibly.
-    if (WITNESS_STORES.length >= DEFAULT_SCARCITY_CONFIG.minimumWitnesses) return;
-    expect(counts['not-rated']).toBe(ids.length);
-  });
-
-  it('shows its working: the witness set is auditable from the data', () => {
+  it('has a real local-shelf sample', () => {
+    // Imperial Tropicals, AquaHuna, Nu Aqua. Nu Aqua is the one shop Ryan can
+    // walk into, and it only became readable once the matcher stopped needing
+    // a Latin binomial. If this drops below the minimum the whole rating goes
+    // dark, so it is worth failing loudly rather than silently refusing.
+    expect(WITNESS_STORES.length).toBeGreaterThanOrEqual(DEFAULT_SCARCITY_CONFIG.minimumWitnesses);
+    expect(WITNESS_STORES.map((w) => w.storeId)).toContain('nu-aqua');
     for (const w of WITNESS_STORES) {
       expect(MARKET_INDEX.sources.some((s) => s.id === w.storeId)).toBe(true);
     }
+  });
+
+  it('rates a meaningful share of the catalog', () => {
+    const rated = ids.length - counts['not-rated']!;
+    expect(rated).toBeGreaterThan(250);
+  });
+
+  it('calls the commonest fish in the hobby widely available', () => {
+    // Every one of these was "scarce" or "uncommon" under v0.1.0. This is the
+    // assertion that would have caught the original bug.
+    for (const name of ['Neon Tetra', 'Cardinal Tetra', 'Bristlenose Pleco', 'Harlequin Rasbora']) {
+      const id = byCommonName.get(name);
+      expect(id, `${name} missing from the catalog`).toBeDefined();
+      const r = scarcityFor(id!);
+      expect(r.available, `${name} not rated`).toBe(true);
+      if (r.available) expect(r.band, `${name} read as ${r.band}`).toBe('widely-available');
+    }
+  });
+
+  it('spreads across bands instead of piling into one', () => {
+    // Four of five bands populated. "rarely-listed" stays empty on purpose:
+    // it needs five witnesses, and there are three.
+    const populated = ['widely-available', 'available', 'uncommon', 'scarce']
+      .filter((b) => (counts[b] ?? 0) > 0);
+    expect(populated).toHaveLength(4);
+    expect(counts['rarely-listed'] ?? 0).toBe(0);
   });
 });
