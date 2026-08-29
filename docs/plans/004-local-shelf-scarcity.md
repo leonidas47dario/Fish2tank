@@ -1,6 +1,6 @@
 # Local-shelf scarcity (spec 004) - implementation record
 
-**Status:** complete and live. Index rebuilt with all 10 vendors.
+**Status:** complete and live, on a branch merged up to `uat`.
 **Date:** 2026-08-29
 
 This replaces the original TDD plan. That plan was written against an index of
@@ -71,64 +71,56 @@ Co-Op toward zero, not toward useful.
 
 ## Live result
 
-`npm run reindex` now publishes an index covering **10 of 10 vendors**, 19,450
-listings, 1,074 species. Nu Aqua is in it for the first time.
+`npm run reindex` publishes an index over **11 of 12 vendors** (Petco declared
+but contributing nothing yet), 24,624 listings, 2,176 species.
 
 ```
-witnesses: imperial-tropicals 31.0%, aquahuna 28.6%, nu-aqua 24.1%   N=3
+witnesses: imperial-tropicals 36.3%/16.2%, aquahuna 30.1%/7.0%, nu-aqua 29.2%/9.9%
+           (resolve / coverage)                                          N = 3
 
-species 1074, rated 372
-   widely-available      44   4.1%
-   available             90   8.4%
-   uncommon              37   3.4%
-   scarce               201  18.7%
-   rarely-listed          0   0.0%
-   not-rated            702  65.4%
+species 2176, rated 475
+   widely-available      64  13.5% of rated
+   available            118  24.8%
+   scarce               293  61.7%
 ```
-
-Spot-checked against fish anyone in the hobby can place:
 
 | Fish | Band | Witnesses carrying |
 |---|---|---|
 | Neon Tetra | Widely available | all three |
 | Cardinal Tetra | Widely available | all three |
 | Bristlenose Pleco | Widely available | all three |
-| Harlequin Rasbora | Widely available | all three |
-| Electric Blue Acara | Widely available | all three |
+| Fancy Guppy | Available | Imperial Tropicals, Nu Aqua |
 | Oscar | Available | Imperial Tropicals, Nu Aqua |
 | Jack Dempsey | Available | Imperial Tropicals, AquaHuna |
-| Fancy Guppy | Available | Imperial Tropicals, Nu Aqua |
-| Betta | Uncommon | Imperial Tropicals only |
+| Zebra Danio | Available | AquaHuna, Nu Aqua |
+| Jaguar Cichlid | Scarce | Imperial Tropicals |
+| **Betta** | **Scarce** | Imperial Tropicals |
 
-Four of five bands populated, largest holds 54% of the rated set. Nothing
-reads "rarely listed" - that needs five witnesses and there are three, which
-is the ceiling rule doing its job rather than a gap.
+`uncommon` and `rarely-listed` are empty, and that is arithmetic rather than a
+gap: breadth is `100 * (1 - carrying/N)`, so three witnesses give exactly three
+rateable values (0, 33, 67) which land in three bands. Four witnesses would
+give 0/25/50/75 and five would give one per band. A test pins this mapping, so
+growing the sample fails loudly and the expectations get looked at.
 
-**Betta at "uncommon" is the one visibly soft call**, and it is a matching
-gap, not a rating bug: Nu Aqua stocks bettas but lists them as "Halfmoon Betta
-- Male" and "Betta Crowntail Male", which the conservative single-word rule in
-`etl/normalize/species.ts` will not match to the catalog name "Betta". That
-rule exists to stop "Bass" swallowing "Peacock Bass" and should not be
-loosened casually.
+**Betta at "scarce" is wrong, and it is a matching gap rather than a rating
+bug.** Nu Aqua stocks bettas and lists them as "Halfmoon Betta - Male" and
+"Betta Crowntail Male"; the single-word rule in `etl/normalize/species.ts` will
+not match those to the catalog name "Betta". That rule stops "Bass" swallowing
+"Peacock Bass" and should not be loosened casually - the fix is a size/sex
+suffix stripper, not a looser matcher.
 
 ## How the blocker was cleared
 
 Three vendors - Predatory Fins, Aquatic Arts, Flip Aquatics - return HTTP 503
-from this machine. The body is a Palo Alto / Menlo Security interstitial
-(`paloCategory = "society"`), so it is DRW's corporate egress filter, not the
-vendors. It is not transient and was not routed around.
+from this machine, and the body is a Palo Alto / Menlo Security interstitial
+(`paloCategory = "society"`). That is DRW's corporate egress filter, not the
+vendors. It was not routed around.
 
-`npm run etl` therefore cannot complete, and `--allow-partial` correctly
-refuses to reprice the catalog against seven stores. But the *warehouse*
-already holds all three vendors' listings, and the two stores the warehouse
-never saw (Nu Aqua, LiveAquaria) fetch fine. So `etl/rebuild-index.ts` gained
-the ability to fold a raw snapshot in for any declared vendor absent from the
-warehouse. Warehouse supplies the blocked three; snapshots supply the other
-two; no network needed for the blocked hosts.
-
-A full `npm run refresh` from an unfiltered network still reproduces this and
-would additionally discover the 4,920 listings whose binomials are not yet in
-`dim_species`.
+`npm run etl` therefore cannot complete here. But the warehouse already holds
+all three vendors' listings, so `etl/rebuild-index.ts` does the work instead,
+with two changes: it now matches against the full catalog mart rather than the
+47 curated species, and it can fold in a raw snapshot for any declared vendor
+the warehouse never held. That is what put Nu Aqua in the index.
 
 ## Still open
 
