@@ -170,7 +170,8 @@ score  = clamp(base - nudge, 0, 100)
 ```
 
 Config: `depthNudgeMax: 12`, `depthNudgeScale: 4`, `witnessMinResolveRate: 0.10`.
-Bands keep their current cut points. `formulaVersion` becomes
+Band cut points are unchanged except `rarely-listed`, which moves from 80 to
+75 for the reason given below. `formulaVersion` becomes
 `market-scarcity-v1.0.0` - a breaking change, and every stored rating carries
 the version that produced it.
 
@@ -190,13 +191,19 @@ they are diagnostically different, but the arithmetic is one branch.
 point.** A species carried by exactly one witness - Ryan's own rarity test -
 scores `100 × (1 − 1/N)`:
 
-| Witnesses `N` | Sole-witness score | Band |
-|---:|---:|---|
-| 2 (today) | 50 | Uncommon |
-| 3 | 67 | Scarce |
-| 4 | 75 | Scarce |
-| 5 | 80 | **Rarely listed** |
-| 6 | 83 | **Rarely listed** |
+| Witnesses `N` | Base | Score after depth nudge | Band |
+|---:|---:|---:|---|
+| 2 (today) | 50 | 46 | Uncommon |
+| 3 | 67 | 63 | Scarce |
+| 4 | 75 | 71 | Scarce |
+| 5 | 80 | 76 | **Rarely listed** |
+| 6 | 83 | 79 | **Rarely listed** |
+
+The depth nudge is why the `rarely-listed` band cut moves from **80 to 75**.
+At 80, a sole-source fish never reaches the top band even at six witnesses -
+the nudge subtracts it back into "scarce" - which would quietly defeat the
+whole metric. The cut changes nothing about today's index, where the highest
+achievable score is 47.
 
 With two witnesses the app *cannot* call anything rarely listed, and it should
 not be able to: on evidence from two shops, "rare" is not a claim you can
@@ -285,11 +292,23 @@ Phase A is a pure function over a fixed index, so it tests directly.
 
 ## Files
 
-- `etl/types.ts` - `channel` on `StoreConfig`; assign all 10 stores.
-- `etl/index-builder.ts` - emit per-store `resolveRate` and `matchedListings`
-  into `MarketIndex.sources`.
+- `src/data/store-channels.ts` **(new)** - the vendor-to-channel map, imported
+  by both the app and the ETL so the classification cannot drift.
 - `src/engine/rarity/market-scarcity.ts` - the formula.
-- `src/data/market.ts` - `scarcityFor` derives witnesses from the index rather
-  than passing a raw `trackedStores` count.
-- `src/ui/components/MarketPanel.tsx`, `Badges.tsx` - component labels change;
-  "usually sold out" and "priced above typical" disappear.
+- `src/data/market.ts` - derives each store's resolve rate from the index and
+  hands the qualifying community stores to the engine, replacing the raw
+  `trackedStores` count.
+- `src/ui/components/MarketPanel.tsx` - component labels change; "usually sold
+  out" and "priced above typical" disappear.
+
+**Phase A needs no ETL change and no re-run.** Resolve rate is published
+listings over livestock listings, and both numbers are already in the shipped
+`market-index.json`. Emitting the ETL-side *true* match rate - which is
+slightly higher, since the runtime figure excludes species dropped for thin
+sampling - belongs to Phase B, alongside the store `channel` field on
+`StoreConfig`.
+
+`src/ui/components/Badges.tsx` does **not** change: `SCARCITY_LABELS` and
+`MarketScarcityBand` are untouched.
+
+Implementation plan: [docs/plans/003-local-shelf-scarcity.md](../plans/003-local-shelf-scarcity.md).
