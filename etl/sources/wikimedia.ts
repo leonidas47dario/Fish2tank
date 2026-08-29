@@ -172,3 +172,68 @@ export async function fetchSpeciesPortrait(
 export function isPublishable(image: SpeciesImage | undefined): image is SpeciesImage {
   return Boolean(image?.url && image.provenance && image.attributionUrl);
 }
+
+/**
+ * Files whose extension means "photograph of the animal".
+ *
+ * A binomial search on Commons returns range maps (.svg), scanned type
+ * descriptions (.pdf, .tif) and the occasional .ogv alongside real photos. A
+ * distribution map on a catalog card is worse than an empty frame.
+ */
+const PHOTO_EXT = /\.(jpe?g|png)$/i;
+
+/** Built separately so the quoting rule can be asserted without a network. */
+export function commonsSearchUrl(scientificName: string): string {
+  const q = encodeURIComponent(`"${scientificName}"`);
+  return `${COMMONS}?action=query&format=json&formatversion=2&generator=search` +
+    `&gsrnamespace=6&gsrlimit=8&gsrsearch=${q}&prop=imageinfo&iiprop=url|extmetadata`;
+}
+
+/**
+ * A portrait from a Commons FILE SEARCH, for species with no Wikipedia article.
+ *
+ * WHY THIS EXISTS. `fetchSpeciesPortrait` needs an en.wikipedia article, and
+ * measured across the 382 species with no bundled portrait, only 8 have one.
+ * 138 more have a Commons file that names the binomial in its page text but no
+ * article to hang it off. That is 36% of the gap recoverable with one extra
+ * query against the same rights-clean source.
+ *
+ * The quoting is load-bearing. Unquoted, the search fuzzy-matches and
+ * "Pangio anguillaris" came back suggesting "panagia angularis" with no hits.
+ */
+export async function searchCommonsPortrait(
+  speciesId: string,
+  scientificName: string,
+  options: FetchOptions = {},
+): Promise<SpeciesImage | undefined> {
+  const fetchImpl = options.fetchImpl ?? fetch;
+  const retrievedAt = new Date().toISOString();
+
+  let pages: any[];
+  try {
+    const res = await getJson(commonsSearchUrl(scientificName), fetchImpl);
+    pages = res?.query?.pages ?? [];
+  } catch {
+    // Search failed. The caller logs it as "no image" and moves on; a single
+    // unreachable query must not take the whole run down.
+    return undefined;
+  }
+
+  const hit = pages.find((p) => PHOTO_EXT.test(String(p?.title ?? '')) && p?.imageinfo?.[0]?.url);
+  if (!hit) return undefined;
+
+  const info = hit.imageinfo[0];
+  return {
+    speciesId,
+    role: 'portrait',
+    source: 'wikimedia-commons-search',
+    provenance: 'wikimedia',
+    url: stripTracking(String(info.url)),
+    license: info?.extmetadata?.LicenseShortName?.value,
+    artist: plainText(info?.extmetadata?.Artist?.value),
+    attributionUrl: info?.descriptionurl,
+    width: info.width,
+    height: info.height,
+    retrievedAt,
+  };
+}

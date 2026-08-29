@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { fileNameFromUrl, isPublishable, plainText, stripTracking } from './wikimedia';
+import {
+  commonsSearchUrl, fileNameFromUrl, isPublishable, plainText,
+  searchCommonsPortrait, stripTracking,
+} from './wikimedia';
 
 describe('stripTracking', () => {
   it('removes the analytics parameters the API appends', () => {
@@ -96,5 +99,71 @@ describe('isPublishable', () => {
       ...base, source: 'web', provenance: 'web', url: '',
       attributionUrl: 'https://example.com/page',
     })).toBe(false);
+  });
+});
+
+describe('commonsSearchUrl', () => {
+  it('quotes the binomial', () => {
+    // Unquoted, the search fuzzy-matches: "Pangio anguillaris" came back
+    // suggesting "panagia angularis" and zero files.
+    expect(commonsSearchUrl('Pangio anguillaris')).toContain('%22Pangio%20anguillaris%22');
+  });
+
+  it('searches the File namespace only', () => {
+    expect(commonsSearchUrl('Pangio anguillaris')).toContain('gsrnamespace=6');
+  });
+});
+
+describe('searchCommonsPortrait', () => {
+  const page = (title: string) => ({
+    title,
+    imageinfo: [{
+      url: `https://upload.wikimedia.org/wikipedia/commons/a/b/${title.replace('File:', '')}`,
+      descriptionurl: `https://commons.wikimedia.org/wiki/${title}`,
+      width: 1200,
+      height: 800,
+      extmetadata: {
+        LicenseShortName: { value: 'CC BY-SA 4.0' },
+        Artist: { value: '<a href="/x">H. Zell</a>' },
+      },
+    }],
+  });
+
+  const stub = (pages: unknown[]) =>
+    (async () => new Response(JSON.stringify({ query: { pages } }), {
+      status: 200, headers: { 'content-type': 'application/json' },
+    })) as unknown as typeof fetch;
+
+  it('returns the first photographic file with its licence', async () => {
+    const got = await searchCommonsPortrait('sp_x', 'Piabina argentea', {
+      fetchImpl: stub([page('File:Piabina argentea.jpg')]),
+    });
+    expect(got?.provenance).toBe('wikimedia');
+    expect(got?.license).toBe('CC BY-SA 4.0');
+    expect(got?.artist).toBe('H. Zell');
+    expect(got?.attributionUrl).toBe('https://commons.wikimedia.org/wiki/File:Piabina argentea.jpg');
+  });
+
+  it('skips non-photographic file types', async () => {
+    // Commons returns range maps and PDFs against a binomial search. An SVG
+    // distribution map is not a portrait of the fish.
+    const got = await searchCommonsPortrait('sp_x', 'Piabina argentea', {
+      fetchImpl: stub([page('File:Piabina argentea range.svg'), page('File:Piabina argentea.jpg')]),
+    });
+    expect(got?.url).toContain('.jpg');
+  });
+
+  it('returns undefined when the search finds nothing', async () => {
+    const got = await searchCommonsPortrait('sp_x', 'Nonexistent binomial', {
+      fetchImpl: (async () => new Response(JSON.stringify({}), { status: 200 })) as unknown as typeof fetch,
+    });
+    expect(got).toBeUndefined();
+  });
+
+  it('returns undefined rather than throwing when the API errors', async () => {
+    const got = await searchCommonsPortrait('sp_x', 'Piabina argentea', {
+      fetchImpl: (async () => new Response('nope', { status: 500 })) as unknown as typeof fetch,
+    });
+    expect(got).toBeUndefined();
   });
 });
