@@ -12,7 +12,7 @@
 import type { LengthMeasurement } from '@/domain/types';
 import { toCm } from '@/domain/units';
 import { computeMarketScarcity, DEFAULT_SCARCITY_CONFIG } from '@/engine/rarity/market-scarcity';
-import indexJson from './seed/market/market-index.json';
+import indexJson from './seed/marts/market-index.json';
 
 export interface MarketSizeBand {
   sizeIn: number;

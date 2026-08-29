@@ -20,7 +20,7 @@ import { SPECIES_CATALOG } from '@/data/seed/species-catalog';
 
 const RAW_DIR = 'etl/raw';
 const OUT_DIR = 'data/market';
-const APP_INDEX = 'src/data/seed/market/market-index.json';
+const APP_INDEX = 'src/data/seed/marts/market-index.json';
 
 const offline = process.argv.includes('--offline');
 const catalog = SPECIES_CATALOG.map((e) => e.species);
@@ -28,7 +28,7 @@ const catalog = SPECIES_CATALOG.map((e) => e.species);
 async function main() {
   mkdirSync(RAW_DIR, { recursive: true });
   mkdirSync(OUT_DIR, { recursive: true });
-  mkdirSync('src/data/seed/market', { recursive: true });
+  mkdirSync('src/data/seed/marts', { recursive: true });
 
   const allListings: MarketListing[] = [];
   const sources: Array<(typeof STORES)[number] & { listingsFetched: number; retrievedAt: string }> = [];

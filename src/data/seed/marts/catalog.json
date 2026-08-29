@@ -1,0 +1,1192 @@
+{
+  "schemaVersion": 1,
+  "builtAt": "2026-08-29T02:12:46.399Z",
+  "species": [
+    {
+      "speciesId": "sp_albino_clawed_frog",
+      "commonName": "African Clawed Frog",
+      "scientificName": "Xenopus laevis",
+      "aliases": [
+        "Albino clawed frog",
+        "Clawed Frog"
+      ],
+      "adultSizeIn": 5,
+      "minVolumeGal": 20,
+      "aggression": "semi-aggressive",
+      "tempMinC": 18,
+      "tempMaxC": 26,
+      "predationTags": [
+        "opportunistic",
+        "invert-predator"
+      ],
+      "sourceLabel": "Wikipedia: African clawed frog — PLACEHOLDER source",
+      "sourceUrl": "https://en.wikipedia.org/wiki/African_clawed_frog",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/b/b4/Xenopus_laevis_02.jpg",
+        "license": "CC BY 2.0",
+        "artist": "Brian Gratwicke",
+        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Xenopus_laevis_02.jpg",
+        "width": 3000,
+        "height": 2000
+      }
+    },
+    {
+      "speciesId": "sp_bamboo_shrimp",
+      "commonName": "Bamboo Shrimp",
+      "scientificName": "Atyopsis moluccensis",
+      "aliases": [
+        "Wood Shrimp",
+        "Filter Shrimp"
+      ],
+      "adultSizeIn": 3,
+      "minVolumeGal": 20,
+      "aggression": "peaceful",
+      "tempMinC": 23,
+      "tempMaxC": 28,
+      "predationTags": [],
+      "sourceLabel": "Wikipedia: Atyopsis moluccensis — PLACEHOLDER source",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Atyopsis_moluccensis"
+    },
+    {
+      "speciesId": "sp_banjo_catfish",
+      "commonName": "Banjo Catfish",
+      "scientificName": "Bunocephalus coracoideus",
+      "aliases": [
+        "Guitarrita"
+      ],
+      "adultSizeIn": 5,
+      "minVolumeGal": 20,
+      "aggression": "peaceful",
+      "tempMinC": 21,
+      "tempMaxC": 28,
+      "predationTags": [],
+      "sourceLabel": "Wikipedia: Bunocephalus coracoideus — PLACEHOLDER source",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Bunocephalus_coracoideus",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/9/95/Banjo_cat.jpg",
+        "license": "CC BY-SA 4.0",
+        "artist": "Kacper Aleksander",
+        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Banjo_cat.jpg",
+        "width": 5184,
+        "height": 3456
+      }
+    },
+    {
+      "speciesId": "sp_betta",
+      "commonName": "Betta",
+      "scientificName": "Betta splendens",
+      "aliases": [
+        "Siamese Fighting Fish"
+      ],
+      "adultSizeIn": 3,
+      "minVolumeGal": 5,
+      "aggression": "semi-aggressive",
+      "tempMinC": 24,
+      "tempMaxC": 30,
+      "predationTags": [
+        "fin-nipper"
+      ],
+      "sourceLabel": "Wikipedia: Siamese fighting fish — PLACEHOLDER source",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Siamese_fighting_fish",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/1/10/HM_Orange_M_Sarawut.jpg",
+        "license": "CC BY 2.0",
+        "artist": "Daniella Vereeken",
+        "attributionUrl": "https://commons.wikimedia.org/wiki/File:HM_Orange_M_Sarawut.jpg",
+        "width": 3008,
+        "height": 2000
+      }
+    },
+    {
+      "speciesId": "sp_bristlenose_pleco",
+      "commonName": "Bristlenose Pleco",
+      "scientificName": "Ancistrus cirrhosus",
+      "aliases": [
+        "Bushynose Pleco",
+        "Lemon eye bristlenose pleco",
+        "Zebra bristlenose pleco",
+        "Albino bristlenose pleco (giant)"
+      ],
+      "adultSizeIn": 5,
+      "minVolumeGal": 30,
+      "aggression": "peaceful",
+      "tempMinC": 22,
+      "tempMaxC": 28,
+      "predationTags": [],
+      "sourceLabel": "Wikipedia: Ancistrus — PLACEHOLDER source",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Ancistrus",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/c/c5/Ancistrus_cirrhosus.jpg",
+        "license": "CC BY-SA 3.0 de",
+        "artist": "The Last 99",
+        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Ancistrus_cirrhosus.jpg",
+        "width": 1024,
+        "height": 682
+      }
+    },
+    {
+      "speciesId": "sp_bumblebee_goby",
+      "commonName": "Bumblebee Goby",
+      "scientificName": "Brachygobius doriae",
+      "aliases": [
+        "Bumble Bee Goby"
+      ],
+      "adultSizeIn": 1.5,
+      "minVolumeGal": 10,
+      "aggression": "peaceful",
+      "tempMinC": 24,
+      "tempMaxC": 30,
+      "predationTags": [],
+      "sourceLabel": "Wikipedia: Brachygobius — PLACEHOLDER source",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Brachygobius",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/a/ac/Brachygobius_doriae.jpg",
+        "license": "CC BY-SA 3.0",
+        "artist": "Dirk Godlinski",
+        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Brachygobius_doriae.jpg",
+        "width": 1000,
+        "height": 667
+      }
+    },
+    {
+      "speciesId": "sp_freshwater_butterflyfish",
+      "commonName": "Butterfly Fish",
+      "scientificName": "Pantodon buchholzi",
+      "aliases": [
+        "Butterfly fish",
+        "Freshwater Butterflyfish"
+      ],
+      "adultSizeIn": 4,
+      "minVolumeGal": 30,
+      "aggression": "semi-aggressive",
+      "tempMinC": 23,
+      "tempMaxC": 30,
+      "predationTags": [
+        "opportunistic"
+      ],
+      "sourceLabel": "Wikipedia: Pantodon — PLACEHOLDER source",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Pantodon",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/3/36/Pantodon_buchholzi.jpg",
+        "license": "CC BY-SA 3.0",
+        "artist": "Toniher",
+        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Pantodon_buchholzi.jpg",
+        "width": 1001,
+        "height": 685
+      }
+    },
+    {
+      "speciesId": "sp_common_pleco",
+      "commonName": "Common Pleco",
+      "scientificName": "Pterygoplichthys pardalis",
+      "aliases": [
+        "Sailfin Pleco",
+        "Janitor Fish",
+        "Plec"
+      ],
+      "adultSizeIn": 18,
+      "minVolumeGal": 125,
+      "aggression": "peaceful",
+      "tempMinC": 23,
+      "tempMaxC": 28,
+      "predationTags": [],
+      "sourceLabel": "Wikipedia: Pterygoplichthys pardalis — PLACEHOLDER source",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Pterygoplichthys_pardalis",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/3/37/2004-02-02_Pterygoplichthys_pardalis_on_blue_gravel.jpg",
+        "license": "CC BY-SA 4.0",
+        "artist": "Ildar Sagdejev (Specious)",
+        "attributionUrl": "https://commons.wikimedia.org/wiki/File:2004-02-02_Pterygoplichthys_pardalis_on_blue_gravel.jpg",
+        "width": 2560,
+        "height": 1920
+      }
+    },
+    {
+      "speciesId": "sp_congo_puffer",
+      "commonName": "Congo Puffer",
+      "scientificName": "Tetraodon miurus",
+      "aliases": [
+        "Potato Puffer"
+      ],
+      "adultSizeIn": 6,
+      "minVolumeGal": 30,
+      "aggression": "aggressive",
+      "tempMinC": 24,
+      "tempMaxC": 28,
+      "predationTags": [
+        "ambush-predator",
+        "fin-nipper",
+        "invert-predator"
+      ],
+      "sourceLabel": "Wikipedia: Tetraodon miurus — PLACEHOLDER source",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Tetraodon_miurus",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/3/3a/Tetraodon_miurus.jpg",
+        "license": "Public domain",
+        "artist": "Jamie C at English Wikipedia",
+        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Tetraodon_miurus.jpg",
+        "width": 320,
+        "height": 240
+      }
+    },
+    {
+      "speciesId": "sp_cuckoo_catfish",
+      "commonName": "Cuckoo Catfish",
+      "scientificName": "Synodontis multipunctatus",
+      "aliases": [
+        "Multipunctatus",
+        "Cuckoo Synodontis"
+      ],
+      "adultSizeIn": 5,
+      "minVolumeGal": 55,
+      "aggression": "semi-aggressive",
+      "tempMinC": 24,
+      "tempMaxC": 28,
+      "predationTags": [],
+      "sourceLabel": "Wikipedia: Synodontis multipunctatus — PLACEHOLDER source",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Synodontis_multipunctatus",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/d/de/Synodontis-multipunctatus.jpg",
+        "license": "CC BY 2.0",
+        "artist": "Mario Rubio García",
+        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Synodontis-multipunctatus.jpg",
+        "width": 2790,
+        "height": 1048
+      }
+    },
+    {
+      "speciesId": "sp_delhezi_bichir",
+      "commonName": "Delhezi Bichir",
+      "scientificName": "Polypterus delhezi",
+      "aliases": [
+        "Barred Bichir",
+        "Delhezi bichir"
+      ],
+      "adultSizeIn": 14,
+      "minVolumeGal": 90,
+      "aggression": "semi-aggressive",
+      "tempMinC": 24,
+      "tempMaxC": 29,
+      "predationTags": [
+        "piscivore",
+        "ambush-predator",
+        "invert-predator"
+      ],
+      "sourceLabel": "Wikipedia: Polypterus delhezi — PLACEHOLDER source",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Polypterus_delhezi",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/1/11/Ornate_bichir%2C_Boston_Aquarium.JPG",
+        "license": "CC BY-SA 3.0",
+        "artist": "Steven G. Johnson",
+        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Ornate_bichir,_Boston_Aquarium.JPG",
+        "width": 3008,
+        "height": 2000
+      }
+    },
+    {
+      "speciesId": "sp_electric_blue_acara",
+      "commonName": "Electric Blue Acara",
+      "scientificName": "Andinoacara pulcher",
+      "aliases": [
+        "Blue Acara",
+        "EBA"
+      ],
+      "adultSizeIn": 6,
+      "minVolumeGal": 40,
+      "aggression": "semi-aggressive",
+      "tempMinC": 22,
+      "tempMaxC": 28,
+      "predationTags": [],
+      "sourceLabel": "Wikipedia: Andinoacara pulcher — PLACEHOLDER source",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Andinoacara_pulcher",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/7/7d/Aequidens_pulcher.jpg",
+        "license": "CC BY-SA 3.0",
+        "artist": "Loïc Tremblay",
+        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Aequidens_pulcher.jpg",
+        "width": 1728,
+        "height": 1296
+      }
+    },
+    {
+      "speciesId": "sp_empire_gudgeon",
+      "commonName": "Empire Gudgeon",
+      "scientificName": "Hypseleotris compressa",
+      "aliases": [
+        "Empire gudgeon"
+      ],
+      "adultSizeIn": 4,
+      "minVolumeGal": 20,
+      "aggression": "peaceful",
+      "tempMinC": 20,
+      "tempMaxC": 28,
+      "predationTags": [],
+      "sourceLabel": "Wikipedia: Hypseleotris compressa — PLACEHOLDER source",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Hypseleotris_compressa",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/7/72/Hypseleotris_compressa.jpg",
+        "license": "CC BY 3.0",
+        "artist": "Frank M. Greco",
+        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Hypseleotris_compressa.jpg",
+        "width": 500,
+        "height": 299
+      }
+    },
+    {
+      "speciesId": "sp_guppy",
+      "commonName": "Fancy Guppy",
+      "scientificName": "Poecilia reticulata",
+      "aliases": [
+        "Guppy",
+        "Feeder guppy",
+        "Millionfish"
+      ],
+      "adultSizeIn": 2,
+      "minVolumeGal": 10,
+      "aggression": "peaceful",
+      "tempMinC": 22,
+      "tempMaxC": 28,
+      "predationTags": [],
+      "sourceLabel": "Wikipedia: Guppy — PLACEHOLDER source",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Guppy",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/a/a2/Guppy_pho_0048.jpg",
+        "license": "CC BY 3.0",
+        "artist": "Per Harald Olsen",
+        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Guppy_pho_0048.jpg",
+        "width": 1024,
+        "height": 526
+      }
+    },
+    {
+      "speciesId": "sp_flowerhorn",
+      "commonName": "Flowerhorn",
+      "aliases": [
+        "Flowerhorn (juvenile)",
+        "Flowerhorn Cichlid"
+      ],
+      "adultSizeIn": 12,
+      "minVolumeGal": 75,
+      "aggression": "highly-aggressive",
+      "tempMinC": 26,
+      "tempMaxC": 30,
+      "predationTags": [
+        "opportunistic"
+      ],
+      "sourceLabel": "Hobby-trade hybrid with no species article — hobbyist consensus only"
+    },
+    {
+      "speciesId": "sp_geophagus_tapajos",
+      "commonName": "Geophagus (Tapajos type)",
+      "scientificName": "Geophagus sp.",
+      "aliases": [
+        "Red Head Tapajos"
+      ],
+      "adultSizeIn": 8,
+      "minVolumeGal": 75,
+      "aggression": "peaceful",
+      "tempMinC": 26,
+      "tempMaxC": 30,
+      "predationTags": [],
+      "sourceLabel": "Wikipedia: Geophagus — PLACEHOLDER source",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Geophagus"
+    },
+    {
+      "speciesId": "sp_geophagus_sveni",
+      "commonName": "Geophagus sveni",
+      "scientificName": "Geophagus sveni",
+      "aliases": [
+        "Sveni Eartheater"
+      ],
+      "adultSizeIn": 10,
+      "minVolumeGal": 75,
+      "aggression": "peaceful",
+      "tempMinC": 26,
+      "tempMaxC": 30,
+      "predationTags": [],
+      "sourceLabel": "Wikipedia: Geophagus — PLACEHOLDER source",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Geophagus",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/5/57/Geophagus_sveni.jpg",
+        "license": "CC BY-SA 4.0",
+        "artist": "Klaus Rudloff",
+        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Geophagus_sveni.jpg",
+        "width": 1600,
+        "height": 1002
+      }
+    },
+    {
+      "speciesId": "sp_freshwater_needlefish",
+      "commonName": "Giant Needlefish",
+      "scientificName": "Xenentodon cancila",
+      "aliases": [
+        "Freshwater Garfish",
+        "Needlefish",
+        "Asian Needlefish"
+      ],
+      "adultSizeIn": 12,
+      "minVolumeGal": 75,
+      "aggression": "semi-aggressive",
+      "tempMinC": 22,
+      "tempMaxC": 28,
+      "predationTags": [
+        "piscivore",
+        "ambush-predator"
+      ],
+      "sourceLabel": "Wikipedia: Xenentodon cancila — PLACEHOLDER source",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Xenentodon_cancila",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/5/5c/Xenentodon_cancila_%28Wroclaw_zoo%29-1.JPG",
+        "license": "CC BY-SA 3.0",
+        "artist": "Guérin Nicolas (messages)",
+        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Xenentodon_cancila_(Wroclaw_zoo)-1.JPG",
+        "width": 2592,
+        "height": 1944
+      }
+    },
+    {
+      "speciesId": "sp_golden_wonder_killifish",
+      "commonName": "Golden Wonder Killifish",
+      "scientificName": "Aplocheilus lineatus",
+      "aliases": [
+        "Striped Panchax",
+        "Golden wonder killifish"
+      ],
+      "adultSizeIn": 4,
+      "minVolumeGal": 20,
+      "aggression": "semi-aggressive",
+      "tempMinC": 22,
+      "tempMaxC": 28,
+      "predationTags": [
+        "opportunistic"
+      ],
+      "sourceLabel": "Wikipedia: Aplocheilus lineatus — PLACEHOLDER source",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Aplocheilus_lineatus",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/c/c7/Aplo_male.jpg",
+        "license": "CC BY-SA 3.0",
+        "artist": "Marrabbio2",
+        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Aplo_male.jpg",
+        "width": 2332,
+        "height": 1144
+      }
+    },
+    {
+      "speciesId": "sp_green_severum",
+      "commonName": "Green Severum",
+      "scientificName": "Heros severus",
+      "aliases": [
+        "Severum",
+        "Banded Cichlid"
+      ],
+      "adultSizeIn": 8,
+      "minVolumeGal": 55,
+      "aggression": "semi-aggressive",
+      "tempMinC": 24,
+      "tempMaxC": 29,
+      "predationTags": [],
+      "sourceLabel": "Wikipedia: Heros severus — PLACEHOLDER source",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Heros_severus",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/8/8a/Heros_severus.JPG",
+        "license": "CC BY 2.5",
+        "artist": "moi même",
+        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Heros_severus.JPG",
+        "width": 1600,
+        "height": 1200
+      }
+    },
+    {
+      "speciesId": "sp_hillstream_loach",
+      "commonName": "Hillstream Loach",
+      "scientificName": "Sewellia lineolata",
+      "aliases": [
+        "Reticulated Hillstream Loach",
+        "Hillstream loach"
+      ],
+      "adultSizeIn": 3,
+      "minVolumeGal": 20,
+      "aggression": "peaceful",
+      "tempMinC": 20,
+      "tempMaxC": 24,
+      "predationTags": [],
+      "sourceLabel": "Wikipedia: Sewellia lineolata — PLACEHOLDER source",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Sewellia_lineolata",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/2/2e/Hillstream_Loach.JPG",
+        "license": "CC BY-SA 3.0",
+        "artist": "Spiketooth",
+        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Hillstream_Loach.JPG",
+        "width": 2709,
+        "height": 1806
+      }
+    },
+    {
+      "speciesId": "sp_indian_sun_catfish",
+      "commonName": "Indian Sun Catfish",
+      "scientificName": "Horabagrus brachysoma",
+      "aliases": [
+        "Sun Catfish",
+        "Günther’s Catfish"
+      ],
+      "adultSizeIn": 12,
+      "minVolumeGal": 90,
+      "aggression": "semi-aggressive",
+      "tempMinC": 22,
+      "tempMaxC": 28,
+      "predationTags": [
+        "piscivore",
+        "opportunistic"
+      ],
+      "sourceLabel": "Wikipedia: Horabagrus brachysoma — PLACEHOLDER source",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Horabagrus_brachysoma",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/8/84/The_Manjakoori_%28Sun_Catfish%29_from_the_Chalakudy_River%2C_Kerala.jpg",
+        "license": "CC BY-SA 4.0",
+        "artist": "Jan Joseph George",
+        "attributionUrl": "https://commons.wikimedia.org/wiki/File:The_Manjakoori_(Sun_Catfish)_from_the_Chalakudy_River,_Kerala.jpg",
+        "width": 5696,
+        "height": 3797
+      }
+    },
+    {
+      "speciesId": "sp_jack_dempsey",
+      "commonName": "Jack Dempsey",
+      "scientificName": "Rocio octofasciata",
+      "aliases": [
+        "Dempsey"
+      ],
+      "adultSizeIn": 8,
+      "minVolumeGal": 55,
+      "aggression": "aggressive",
+      "tempMinC": 22,
+      "tempMaxC": 30,
+      "predationTags": [
+        "opportunistic"
+      ],
+      "sourceLabel": "Wikipedia: Jack Dempsey (fish) — PLACEHOLDER source",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Jack_Dempsey_(fish)",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/a/af/Cichlasoma_octofasciata2.jpg",
+        "license": "Copyrighted free use",
+        "artist": "Adam Buschbacher",
+        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Cichlasoma_octofasciata2.jpg",
+        "width": 800,
+        "height": 382
+      }
+    },
+    {
+      "speciesId": "sp_jaguar_cichlid",
+      "commonName": "Jaguar Cichlid",
+      "scientificName": "Parachromis managuensis",
+      "aliases": [
+        "Managuense",
+        "Managuense Cichlid",
+        "Jaguar",
+        "Aztec Cichlid",
+        "Guapote Tigre"
+      ],
+      "adultSizeIn": 14,
+      "minVolumeGal": 125,
+      "aggression": "highly-aggressive",
+      "tempMinC": 25,
+      "tempMaxC": 30,
+      "predationTags": [
+        "piscivore",
+        "opportunistic"
+      ],
+      "sourceLabel": "Wikipedia: Parachromis managuensis — PLACEHOLDER source",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Parachromis_managuensis",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/c/c4/Parachromis_managuensis_2012_G1.jpg",
+        "license": "Public domain",
+        "artist": "George Chernilevsky",
+        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Parachromis_managuensis_2012_G1.jpg",
+        "width": 4400,
+        "height": 2700
+      }
+    },
+    {
+      "speciesId": "sp_king_kong_parrot",
+      "commonName": "King Kong Parrot",
+      "aliases": [
+        "King Kong parrot",
+        "Blood Parrot"
+      ],
+      "adultSizeIn": 8,
+      "minVolumeGal": 55,
+      "aggression": "semi-aggressive",
+      "tempMinC": 24,
+      "tempMaxC": 30,
+      "predationTags": [],
+      "sourceLabel": "Hobby-trade hybrid with no species article — hobbyist consensus only"
+    },
+    {
+      "speciesId": "sp_kissing_gourami",
+      "commonName": "Kissing Gourami",
+      "scientificName": "Helostoma temminckii",
+      "aliases": [
+        "Kisser Fish"
+      ],
+      "adultSizeIn": 12,
+      "minVolumeGal": 75,
+      "aggression": "semi-aggressive",
+      "tempMinC": 22,
+      "tempMaxC": 28,
+      "predationTags": [],
+      "sourceLabel": "Wikipedia: Kissing gourami — PLACEHOLDER source",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Kissing_gourami",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/d/da/Helostoma_temminkii_02.jpg",
+        "license": "CC BY-SA 4.0",
+        "artist": "5snake5",
+        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Helostoma_temminkii_02.jpg",
+        "width": 3488,
+        "height": 2188
+      }
+    },
+    {
+      "speciesId": "sp_knight_goby",
+      "commonName": "Knight Goby",
+      "scientificName": "Stigmatogobius sadanundio",
+      "aliases": [
+        "Knight goby"
+      ],
+      "adultSizeIn": 3,
+      "minVolumeGal": 20,
+      "aggression": "semi-aggressive",
+      "tempMinC": 22,
+      "tempMaxC": 28,
+      "predationTags": [],
+      "sourceLabel": "Wikipedia: Stigmatogobius sadanundio — PLACEHOLDER source",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Stigmatogobius_sadanundio",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/f/f9/Stigmagobius_sadanundio.jpg",
+        "license": "CC BY 3.0",
+        "artist": "Sahat Ratmuangkhwang",
+        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Stigmagobius_sadanundio.jpg",
+        "width": 640,
+        "height": 480
+      }
+    },
+    {
+      "speciesId": "sp_largemouth_bass",
+      "commonName": "Largemouth Bass",
+      "scientificName": "Micropterus salmoides",
+      "aliases": [
+        "Bass",
+        "LMB"
+      ],
+      "adultSizeIn": 20,
+      "minVolumeGal": 300,
+      "aggression": "aggressive",
+      "tempMinC": 10,
+      "tempMaxC": 27,
+      "predationTags": [
+        "piscivore",
+        "ambush-predator",
+        "invert-predator"
+      ],
+      "sourceLabel": "Wikipedia: Largemouth bass — PLACEHOLDER source",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Largemouth_bass",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/f/fb/Largemouth_Bass_%28Micropterus_salmoides%29_June_2023_%28cropped%29.jpg",
+        "license": "Public domain",
+        "artist": "USFWS Mountain Prairie",
+        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Largemouth_Bass_(Micropterus_salmoides)_June_2023_(cropped).jpg",
+        "width": 5754,
+        "height": 3238
+      }
+    },
+    {
+      "speciesId": "sp_malaysian_trumpet_snail",
+      "commonName": "Malaysian Trumpet Snail",
+      "scientificName": "Melanoides tuberculata",
+      "aliases": [
+        "MTS",
+        "Malaysian trumpet snail"
+      ],
+      "adultSizeIn": 1,
+      "minVolumeGal": 5,
+      "aggression": "peaceful",
+      "tempMinC": 20,
+      "tempMaxC": 30,
+      "predationTags": [],
+      "sourceLabel": "Wikipedia: Melanoides tuberculata — PLACEHOLDER source",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Melanoides_tuberculata",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/e/e8/Melanoides_tuberculatus_2.png",
+        "license": "CC BY 2.0",
+        "artist": "Dennis L.",
+        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Melanoides_tuberculatus_2.png",
+        "width": 1024,
+        "height": 768
+      }
+    },
+    {
+      "speciesId": "sp_neon_tetra",
+      "commonName": "Neon Tetra",
+      "scientificName": "Paracheirodon innesi",
+      "aliases": [
+        "Neon"
+      ],
+      "adultSizeIn": 1.5,
+      "minVolumeGal": 10,
+      "aggression": "peaceful",
+      "tempMinC": 20,
+      "tempMaxC": 26,
+      "predationTags": [],
+      "sourceLabel": "Wikipedia: Neon tetra — PLACEHOLDER source",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Neon_tetra",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/9/97/Neonsalmler_Paracheirodon_innesi.jpg",
+        "license": "CC BY 3.0",
+        "artist": "Holger Krisp",
+        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Neonsalmler_Paracheirodon_innesi.jpg",
+        "width": 3000,
+        "height": 1987
+      }
+    },
+    {
+      "speciesId": "sp_ornate_bichir",
+      "commonName": "Ornate Bichir",
+      "scientificName": "Polypterus ornatipinnis",
+      "aliases": [
+        "Ornate bichir"
+      ],
+      "adultSizeIn": 15,
+      "minVolumeGal": 125,
+      "aggression": "semi-aggressive",
+      "tempMinC": 24,
+      "tempMaxC": 29,
+      "predationTags": [
+        "piscivore",
+        "ambush-predator",
+        "invert-predator"
+      ],
+      "sourceLabel": "Wikipedia: Polypterus ornatipinnis — PLACEHOLDER source",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Polypterus_ornatipinnis",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/f/ff/Polypterus_ornatipinnis_VA_01.jpg",
+        "license": "CC BY-SA 4.0",
+        "artist": "Bloopityboop",
+        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Polypterus_ornatipinnis_VA_01.jpg",
+        "width": 4032,
+        "height": 2410
+      }
+    },
+    {
+      "speciesId": "sp_panda_cory",
+      "commonName": "Panda Cory",
+      "scientificName": "Corydoras panda",
+      "aliases": [
+        "Panda Corydoras"
+      ],
+      "adultSizeIn": 2,
+      "minVolumeGal": 20,
+      "aggression": "peaceful",
+      "tempMinC": 20,
+      "tempMaxC": 26,
+      "predationTags": [],
+      "sourceLabel": "Wikipedia: Corydoras panda — PLACEHOLDER source",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Corydoras_panda",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/d/d4/Panda_Corydoras.jpg",
+        "license": "CC BY-SA 3.0",
+        "artist": "Chronotopian",
+        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Panda_Corydoras.jpg",
+        "width": 3213,
+        "height": 2142
+      }
+    },
+    {
+      "speciesId": "sp_peacock_gudgeon",
+      "commonName": "Peacock Gudgeon",
+      "scientificName": "Tateurndina ocellicauda",
+      "aliases": [
+        "Peacock Goby"
+      ],
+      "adultSizeIn": 3,
+      "minVolumeGal": 15,
+      "aggression": "peaceful",
+      "tempMinC": 22,
+      "tempMaxC": 28,
+      "predationTags": [],
+      "sourceLabel": "Wikipedia: Tateurndina — PLACEHOLDER source",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Tateurndina",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/1/19/Tateurndina_ocellicauda_male_DG.jpg",
+        "license": "CC BY-SA 3.0",
+        "artist": "Dirk Godlinski",
+        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Tateurndina_ocellicauda_male_DG.jpg",
+        "width": 1000,
+        "height": 667
+      }
+    },
+    {
+      "speciesId": "sp_pinktail_chalceus",
+      "commonName": "Pinktail Chalceus",
+      "scientificName": "Chalceus macrolepidotus",
+      "aliases": [
+        "Pink Tail Chalceus"
+      ],
+      "adultSizeIn": 10,
+      "minVolumeGal": 125,
+      "aggression": "semi-aggressive",
+      "tempMinC": 23,
+      "tempMaxC": 28,
+      "predationTags": [
+        "opportunistic"
+      ],
+      "sourceLabel": "Wikipedia: Chalceus macrolepidotus — PLACEHOLDER source",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Chalceus_macrolepidotus",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/e/e8/Bueng_chawag_Aquarium_-_panoramio.jpg",
+        "license": "CC BY 3.0",
+        "artist": "Boonchai C",
+        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Bueng_chawag_Aquarium_-_panoramio.jpg",
+        "width": 3872,
+        "height": 2592
+      }
+    },
+    {
+      "speciesId": "sp_raphael_catfish",
+      "commonName": "Raphael Catfish",
+      "scientificName": "Platydoras armatulus",
+      "aliases": [
+        "Striped Raphael",
+        "Talking Catfish",
+        "Raphael catfish (large)"
+      ],
+      "adultSizeIn": 9,
+      "minVolumeGal": 55,
+      "aggression": "peaceful",
+      "tempMinC": 24,
+      "tempMaxC": 30,
+      "predationTags": [
+        "opportunistic"
+      ],
+      "sourceLabel": "Wikipedia: Platydoras armatulus — PLACEHOLDER source",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Platydoras_armatulus",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/8/8d/Platydoras_costatus_2_%28Piotr_Kuczynski%29.jpg",
+        "license": "CC BY-SA 3.0",
+        "artist": "Piotr Kuczynski",
+        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Platydoras_costatus_2_(Piotr_Kuczynski).jpg",
+        "width": 2272,
+        "height": 1704
+      }
+    },
+    {
+      "speciesId": "sp_rocket_gar",
+      "commonName": "Rocket Gar",
+      "scientificName": "Ctenolucius hujeta",
+      "aliases": [
+        "Hujeta Gar",
+        "Freshwater Barracuda",
+        "Gar Characin"
+      ],
+      "adultSizeIn": 10,
+      "minVolumeGal": 75,
+      "aggression": "semi-aggressive",
+      "tempMinC": 23,
+      "tempMaxC": 28,
+      "predationTags": [
+        "piscivore",
+        "ambush-predator"
+      ],
+      "sourceLabel": "Wikipedia: Ctenolucius hujeta — PLACEHOLDER source",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Ctenolucius_hujeta",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/e/ef/Freshwater_Barracuda_-_Ctenolucius_hujeta.png",
+        "license": "CC BY-SA 3.0",
+        "artist": "T.Voekler",
+        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Freshwater_Barracuda_-_Ctenolucius_hujeta.png",
+        "width": 1024,
+        "height": 656
+      }
+    },
+    {
+      "speciesId": "sp_ropefish",
+      "commonName": "Ropefish",
+      "scientificName": "Erpetoichthys calabaricus",
+      "aliases": [
+        "Reedfish",
+        "Snakefish"
+      ],
+      "adultSizeIn": 15,
+      "minVolumeGal": 50,
+      "aggression": "peaceful",
+      "tempMinC": 22,
+      "tempMaxC": 28,
+      "predationTags": [
+        "invert-predator",
+        "opportunistic"
+      ],
+      "sourceLabel": "Wikipedia: Reedfish — PLACEHOLDER source",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Reedfish",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/6/62/Akwa19_reedfish.jpg",
+        "license": "CC BY-SA 3.0",
+        "artist": "Michał Zalewski",
+        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Akwa19_reedfish.jpg",
+        "width": 800,
+        "height": 521
+      }
+    },
+    {
+      "speciesId": "sp_senegal_bichir",
+      "commonName": "Senegal Bichir",
+      "scientificName": "Polypterus senegalus",
+      "aliases": [
+        "Dinosaur Eel",
+        "Dinosaur Bichir",
+        "Cuvier Bichir"
+      ],
+      "adultSizeIn": 12,
+      "minVolumeGal": 90,
+      "aggression": "semi-aggressive",
+      "tempMinC": 24,
+      "tempMaxC": 29,
+      "predationTags": [
+        "piscivore",
+        "ambush-predator",
+        "invert-predator"
+      ],
+      "sourceLabel": "Wikipedia: Polypterus senegalus — PLACEHOLDER source",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Polypterus_senegalus",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/a/a1/Polypterus_senegalus_Natural_History_Museum_University_of_Pisa.jpg",
+        "license": "CC BY-SA 4.0",
+        "artist": "Mattia Nocciola",
+        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Polypterus_senegalus_Natural_History_Museum_University_of_Pisa.jpg",
+        "width": 5582,
+        "height": 3557
+      }
+    },
+    {
+      "speciesId": "sp_snakehead_gudgeon",
+      "commonName": "Snakehead Gudgeon",
+      "scientificName": "Giuris margaritacea",
+      "aliases": [
+        "Snakehead gudgeon",
+        "Spangled Gudgeon"
+      ],
+      "adultSizeIn": 12,
+      "minVolumeGal": 75,
+      "aggression": "aggressive",
+      "tempMinC": 22,
+      "tempMaxC": 28,
+      "predationTags": [
+        "piscivore",
+        "ambush-predator"
+      ],
+      "sourceLabel": "Wikipedia: Giuris margaritacea — PLACEHOLDER source",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Giuris_margaritacea",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/e/ee/Bugwan%2C_Hypseleotris_agilis_Herre_1927_by_P._Bravo.jpg",
+        "license": "Public domain",
+        "artist": "Albert William Herre",
+        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Bugwan,_Hypseleotris_agilis_Herre_1927_by_P._Bravo.jpg",
+        "width": 603,
+        "height": 290
+      }
+    },
+    {
+      "speciesId": "sp_super_red_severum",
+      "commonName": "Super Red Severum",
+      "scientificName": "Heros sp.",
+      "aliases": [
+        "Red Severum"
+      ],
+      "adultSizeIn": 8,
+      "minVolumeGal": 55,
+      "aggression": "semi-aggressive",
+      "tempMinC": 24,
+      "tempMaxC": 29,
+      "predationTags": [],
+      "sourceLabel": "Wikipedia: Heros (genus) — PLACEHOLDER source",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Heros_(genus)"
+    },
+    {
+      "speciesId": "sp_teugelsi_bichir",
+      "commonName": "Teugelsi Bichir",
+      "scientificName": "Polypterus teugelsi",
+      "aliases": [
+        "Teugelsi bichir"
+      ],
+      "adultSizeIn": 16,
+      "minVolumeGal": 125,
+      "aggression": "semi-aggressive",
+      "tempMinC": 24,
+      "tempMaxC": 29,
+      "predationTags": [
+        "piscivore",
+        "ambush-predator",
+        "invert-predator"
+      ],
+      "sourceLabel": "Wikipedia: Polypterus teugelsi — PLACEHOLDER source",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Polypterus_teugelsi",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/c/c1/Teugelsi_bichir.jpg",
+        "license": "CC BY-SA 4.0",
+        "artist": "RatioTile",
+        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Teugelsi_bichir.jpg",
+        "width": 4538,
+        "height": 2784
+      }
+    },
+    {
+      "speciesId": "sp_tire_track_eel",
+      "commonName": "Tire Track Eel",
+      "scientificName": "Mastacembelus favus",
+      "aliases": [
+        "Tyre Track Eel",
+        "Zig-Zag Eel"
+      ],
+      "adultSizeIn": 20,
+      "minVolumeGal": 125,
+      "aggression": "semi-aggressive",
+      "tempMinC": 24,
+      "tempMaxC": 28,
+      "predationTags": [
+        "invert-predator",
+        "opportunistic"
+      ],
+      "sourceLabel": "Wikipedia: Mastacembelus favus — PLACEHOLDER source",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Mastacembelus_favus"
+    },
+    {
+      "speciesId": "sp_true_parrot_cichlid",
+      "commonName": "True Parrot Cichlid",
+      "scientificName": "Hoplarchus psittacus",
+      "aliases": [
+        "Psittacus"
+      ],
+      "adultSizeIn": 14,
+      "minVolumeGal": 125,
+      "aggression": "semi-aggressive",
+      "tempMinC": 26,
+      "tempMaxC": 30,
+      "predationTags": [
+        "opportunistic"
+      ],
+      "sourceLabel": "Wikipedia: Hoplarchus psittacus — PLACEHOLDER source",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Hoplarchus_psittacus",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/7/7f/Hoplarchus_psittacus-2.jpg",
+        "license": "CC BY-SA 3.0",
+        "artist": "Редько Юрій (Користувач:Mazapura)",
+        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Hoplarchus_psittacus-2.jpg",
+        "width": 800,
+        "height": 600
+      }
+    },
+    {
+      "speciesId": "sp_vampire_crab",
+      "commonName": "Vampire Crab",
+      "scientificName": "Geosesarma dennerle",
+      "aliases": [
+        "Vampire crab"
+      ],
+      "adultSizeIn": 1,
+      "minVolumeGal": 10,
+      "aggression": "peaceful",
+      "tempMinC": 23,
+      "tempMaxC": 28,
+      "predationTags": [],
+      "sourceLabel": "Wikipedia: Geosesarma — PLACEHOLDER source",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Geosesarma",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/3/32/Geosesarma_dennerle.png",
+        "license": "CC BY-SA 4.0",
+        "artist": "AverageWalrus",
+        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Geosesarma_dennerle.png",
+        "width": 1354,
+        "height": 1351
+      }
+    },
+    {
+      "speciesId": "sp_vampire_shrimp",
+      "commonName": "Vampire Shrimp",
+      "scientificName": "Atya gabonensis",
+      "aliases": [
+        "African Filter Shrimp",
+        "Viper Shrimp"
+      ],
+      "adultSizeIn": 6,
+      "minVolumeGal": 30,
+      "aggression": "peaceful",
+      "tempMinC": 23,
+      "tempMaxC": 29,
+      "predationTags": [],
+      "sourceLabel": "Wikipedia: Atya gabonensis — PLACEHOLDER source",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Atya_gabonensis",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/0/03/Atya_gabonensis.JPG",
+        "license": "CC BY-SA 3.0",
+        "artist": "Citron",
+        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Atya_gabonensis.JPG",
+        "width": 3456,
+        "height": 2592
+      }
+    },
+    {
+      "speciesId": "sp_wolf_cichlid",
+      "commonName": "Wolf Cichlid",
+      "scientificName": "Parachromis dovii",
+      "aliases": [
+        "Dovii",
+        "Guapote",
+        "Rainbow Bass"
+      ],
+      "adultSizeIn": 24,
+      "minVolumeGal": 240,
+      "aggression": "highly-aggressive",
+      "tempMinC": 24,
+      "tempMaxC": 29,
+      "predationTags": [
+        "piscivore",
+        "ambush-predator"
+      ],
+      "sourceLabel": "Wikipedia: Parachromis dovii — PLACEHOLDER source",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Parachromis_dovii",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/3/30/Parachromis_dovii_guapote.JPG",
+        "license": "CC BY-SA 3.0",
+        "artist": "Sesamehoneytart",
+        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Parachromis_dovii_guapote.JPG",
+        "width": 4608,
+        "height": 3072
+      }
+    },
+    {
+      "speciesId": "sp_wolf_fish",
+      "commonName": "Wolf Fish",
+      "scientificName": "Hoplias malabaricus",
+      "aliases": [
+        "Trahira",
+        "Tiger Wolf Fish"
+      ],
+      "adultSizeIn": 20,
+      "minVolumeGal": 125,
+      "aggression": "highly-aggressive",
+      "tempMinC": 22,
+      "tempMaxC": 28,
+      "predationTags": [
+        "piscivore",
+        "ambush-predator"
+      ],
+      "sourceLabel": "Wikipedia: Hoplias malabaricus — PLACEHOLDER source",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Hoplias_malabaricus",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/9/9a/Hoplias_malabaricus2.jpg",
+        "license": "Public domain",
+        "artist": "J. F. Hennig",
+        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Hoplias_malabaricus2.jpg",
+        "width": 1245,
+        "height": 490
+      }
+    }
+  ]
+}
