@@ -18,6 +18,13 @@ etl/raw/
 data/market/listings.jsonl
 data/market/listings.csv
 
+# Cached Wikipedia and vendor prose for the care backfill. Regenerates from
+# `npm run care:fetch`, and it is the article text itself - several megabytes
+# that churn on every Wikipedia edit. The derived records beside it
+# (fetch-log.json, care-proposals.jsonl, care-review.jsonl) ARE committed,
+# because those are the audit trail.
+data/care/text/
+
 # Emitted by a stray "tsc --noEmit false"; these shadow the .ts sources at runtime.
 src/**/*.js
 etl/**/*.js

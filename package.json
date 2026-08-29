@@ -19,7 +19,9 @@
     "marts": "tsx etl/build-marts.ts",
     "refresh": "npm run etl && npm run images && npm run portraits && npm run warehouse && npm run marts",
     "portraits": "tsx etl/build-portraits.ts",
-    "backfill:urls": "tsx etl/backfill-product-urls.ts"
+    "backfill:urls": "tsx etl/backfill-product-urls.ts",
+    "care:fetch": "tsx etl/fetch-care-text.ts",
+    "care:ingest": "tsx etl/ingest-care-proposals.ts"
   },
   "dependencies": {
     "dexie": "^4.0.10",
