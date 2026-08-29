@@ -29,7 +29,16 @@ export interface MarketSpeciesStats {
   price: { median: number; min: number; max: number; currency: string };
   sizeRangeIn?: { min: number; max: number };
   priceBySize: MarketSizeBand[];
-  stores: Array<{ storeId: string; listings: number; inStock: number; medianPrice: number }>;
+  stores: Array<{
+    storeId: string;
+    listings: number;
+    inStock: number;
+    medianPrice: number;
+    /** Deep link to the store's product page, so a price can be checked at source. */
+    productUrl?: string;
+    /** Whether that link points at something in stock. Never inferred. */
+    productInStock?: boolean;
+  }>;
   listedBetween?: { earliest: string; latest: string };
 }
 

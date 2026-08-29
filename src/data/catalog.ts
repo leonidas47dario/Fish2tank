@@ -7,6 +7,7 @@
  *   - IndexedDB      what YOU have caught, kept and photographed
  */
 import type { Id } from '@/domain/types';
+import type { OrganismKind, WaterZone } from './seed/taxonomy';
 import catalogJson from './seed/marts/catalog.json';
 import { marketFor, scarcityFor, bandForSize } from './market';
 import type { MarketSpeciesStats } from './market';
@@ -34,6 +35,11 @@ export interface CatalogSpecies {
   sourceLabel?: string;
   sourceUrl?: string;
   portrait?: CatalogPortrait;
+  /** Taxonomic family, and what it implies. Derived — see seed/taxonomy.ts. */
+  family?: string;
+  waterZone?: WaterZone;
+  organismKind?: OrganismKind;
+  habitatNote?: string;
 }
 
 interface CatalogMart {

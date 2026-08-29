@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '@/data/db';
+import { blobFor, db } from '@/data/db';
 import { deriveBadge, deriveQuantity } from '@/domain/holdings';
 import type { Id } from '@/domain/types';
 
@@ -45,8 +45,8 @@ export function useSpecimenMedia(specimenId?: Id) {
     const media = await db.media.where('specimenIds').equals(specimenId).toArray();
     const withUrls = await Promise.all(
       media.map(async (m) => {
-        const stored = await db.blobs.get(m.originalBlobKey);
-        return { media: m, url: stored ? URL.createObjectURL(stored.blob) : undefined };
+        const blob = blobFor(await db.blobs.get(m.originalBlobKey));
+        return { media: m, url: blob ? URL.createObjectURL(blob) : undefined };
       }),
     );
     return withUrls.sort((a, b) => b.media.capturedAt.localeCompare(a.media.capturedAt));

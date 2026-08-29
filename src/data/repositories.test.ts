@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { Fish2TankDB, newId } from './db';
+import { blobFor, Fish2TankDB, newId } from './db';
 import {
   acquireSpecimen,
   addEncounterChapter,
@@ -9,6 +9,7 @@ import {
   assessmentHistory,
   awardGolden,
   createCatchDraft,
+  storageError,
   createKeeperPrinciple,
   createOpeningBalanceHolding,
   ensureSpecimenForHolding,
@@ -79,6 +80,55 @@ describe('catch drafts (FR-C02, FR-C07)', () => {
     expect(draft.media).toHaveLength(1);
   });
 
+  /**
+   * Regression: a capture failed in the field with the message
+   * "blobs.bulkAdd()." and nothing else - which names the table and says
+   * nothing about what went wrong or what to do about it.
+   */
+  describe('when the device will not store the capture', () => {
+    /** A File whose backing has gone stale, as WebKit can do between the change event and the commit. */
+    const unreadable = () => ({
+      kind: 'photo' as const,
+      mimeType: 'image/jpeg',
+      blob: {
+        size: 2_400_000,
+        type: 'image/jpeg',
+        arrayBuffer: () => Promise.reject(Object.assign(new Error('The operation is insecure.'), { name: 'NotReadableError' })),
+      } as unknown as Blob,
+    });
+
+    it('names the file and the underlying reason when the bytes cannot be read', async () => {
+      await expect(createCatchDraft({ files: [unreadable()], clientKey: 'k1' }, db))
+        .rejects.toThrow(/capture 1 of 1.*image\/jpeg.*2400000 bytes.*NotReadableError/s);
+    });
+
+    it('writes nothing at all when a capture cannot be read', async () => {
+      await expect(createCatchDraft({ files: [unreadable()], clientKey: 'k1' }, db)).rejects.toThrow();
+      // Detaching happens before the transaction opens, so there is no
+      // orphaned specimen for a fish that was never saved.
+      expect(await db.specimens.count()).toBe(0);
+      expect(await db.blobs.count()).toBe(0);
+    });
+
+    it.each([
+      ['QuotaExceededError', /out of storage/i],
+      ['DataCloneError', /taking the photo again/i],
+      ['InvalidStateError', /private browsing/i],
+    ])('turns a %s into advice rather than a table name', (name, expected) => {
+      // Dexie wraps the real cause in `.inner` and reports only the table in
+      // its own message, which is what made the field report unactionable.
+      const dexie = Object.assign(new Error('blobs.bulkAdd()'), {
+        name: 'BulkError',
+        inner: Object.assign(new Error('the store is full'), { name }),
+      });
+      const mapped = storageError(dexie, 2_400_000, 1);
+      expect(mapped.message).toMatch(expected);
+      expect(mapped.message).toContain(name);
+      expect(mapped.message).toContain('2.3 MB');
+      expect(mapped.cause).toBe(dexie);
+    });
+  });
+
   it('saves a Mystery Catch with no identity at all (FR-I01, principle P6)', async () => {
     const draft = await createCatchDraft({ files: [photo()], clientKey: 'k1' }, db);
     expect(draft.specimen.identityStatus).toBe('unknown');
@@ -91,6 +141,48 @@ describe('catch drafts (FR-C02, FR-C07)', () => {
     const stored = await db.blobs.get(draft.media[0]!.originalBlobKey);
     expect(stored!.bytes).toBe(4);
     expect(stored!.mimeType).toBe('image/jpeg');
+    // Byte-for-byte, not merely the right length.
+    expect(new Uint8Array(stored!.data!)).toEqual(new Uint8Array([1, 2, 3, 4]));
+  });
+
+  /**
+   * WebKit stores a Blob in IndexedDB by reference to a file it manages, and
+   * reclaims that file independently of the record. A photo written today can
+   * therefore read back empty tomorrow - which for this app means losing the
+   * thing the record exists for.
+   */
+  it('holds media as bytes, never as a Blob reference', async () => {
+    const draft = await createCatchDraft({ files: [photo()], clientKey: 'k1' }, db);
+    const stored = await db.blobs.get(draft.media[0]!.originalBlobKey);
+    expect(stored!.data).toBeInstanceOf(ArrayBuffer);
+    expect(stored!.blob).toBeUndefined();
+  });
+
+  it('round-trips a capture back to a readable Blob', async () => {
+    const draft = await createCatchDraft({ files: [photo()], clientKey: 'k1' }, db);
+    const back = blobFor(await db.blobs.get(draft.media[0]!.originalBlobKey));
+    expect(back).toBeInstanceOf(Blob);
+    expect(back!.type).toBe('image/jpeg');
+    expect(new Uint8Array(await back!.arrayBuffer())).toEqual(new Uint8Array([1, 2, 3, 4]));
+  });
+
+  it('still reads a photo saved by the previous version', async () => {
+    // Anyone who caught a fish before this change has Blob-shaped records on
+    // their device. Dropping them would delete their photos.
+    await db.blobs.add({
+      key: 'blob_legacy',
+      blob: new Blob([new Uint8Array([9, 9])], { type: 'image/png' }),
+      bytes: 2,
+      mimeType: 'image/png',
+      storedAt: new Date().toISOString(),
+    });
+    const back = blobFor(await db.blobs.get('blob_legacy'));
+    expect(new Uint8Array(await back!.arrayBuffer())).toEqual(new Uint8Array([9, 9]));
+  });
+
+  it('returns nothing, rather than throwing, for a record with neither', () => {
+    expect(blobFor(undefined)).toBeUndefined();
+    expect(blobFor({ key: 'k', bytes: 0, mimeType: 'image/jpeg', storedAt: 'now' })).toBeUndefined();
   });
 
   it('creates no duplicate catch when the same capture is retried', async () => {

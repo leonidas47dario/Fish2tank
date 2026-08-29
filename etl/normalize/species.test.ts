@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildMatcher, extractScientificName } from './species';
+import { buildMatcher, extractProductTypeBinomial, extractScientificName } from './species';
 import { SPECIES_CATALOG } from '@/data/seed/species-catalog';
 
 const catalog = SPECIES_CATALOG.map((e) => e.species);
@@ -121,5 +121,57 @@ describe('open-nomenclature qualifiers are not species names', () => {
   it('still accepts a genuine trinomial', () => {
     expect(extractScientificName('Pleco (Panaque nigrolineatus laurafabianae)'))
       .toBe('Panaque nigrolineatus laurafabianae');
+  });
+});
+
+/**
+ * LiveAquaria (added 2026-08-29) does not put binomials in titles at all -
+ * zero of 250 sampled products - and carries the scientific name in Shopify's
+ * product_type field instead. Without this path the store resolves nothing.
+ */
+describe('binomial from product_type', () => {
+  it('lifts a bare binomial out of the field', () => {
+    expect(extractProductTypeBinomial('Caulastrea furcata')).toBe('Caulastrea furcata');
+    expect(extractProductTypeBinomial('  Symphysodon discus  ')).toBe('Symphysodon discus');
+  });
+
+  it('refuses a genus-only designation, as the title path does', () => {
+    // Real LiveAquaria values. "Sarcophyton sp." is "some Sarcophyton", not a
+    // species, and minting one would pool unrelated corals into it.
+    expect(extractProductTypeBinomial('Sarcophyton sp.')).toBeUndefined();
+    expect(extractProductTypeBinomial('Goniopora sp')).toBeUndefined();
+    expect(extractProductTypeBinomial('Symphysodon spp.')).toBeUndefined();
+  });
+
+  it('ignores a product_type that is a category rather than a binomial', () => {
+    expect(extractProductTypeBinomial('Aquatic Plant')).toBeUndefined();
+    expect(extractProductTypeBinomial('Accessories')).toBeUndefined();
+    expect(extractProductTypeBinomial('')).toBeUndefined();
+    expect(extractProductTypeBinomial(undefined)).toBeUndefined();
+  });
+
+  it('accepts a trinomial', () => {
+    expect(extractProductTypeBinomial('Panaque nigrolineatus laurafabianae'))
+      .toBe('Panaque nigrolineatus laurafabianae');
+  });
+
+  it('resolves a catalog species through the matcher', () => {
+    // The title alone says nothing useful; the field is what identifies it.
+    const m = match('Almost WYSIWYG Frag', 'Betta splendens');
+    expect(m.scientificNameInTitle).toBe('Betta splendens');
+    expect(m.method).toBe('product-type');
+  });
+
+  it('does not let product_type override a binomial already in the title', () => {
+    const m = match('Betta (Betta splendens)', 'Symphysodon discus');
+    expect(m.scientificNameInTitle).toBe('Betta splendens');
+  });
+
+  it('does not fall through to a loose common-name match', () => {
+    // Same discipline as the title path: the vendor has stated precisely what
+    // this is. If we do not stock it, that is the answer.
+    const m = match('Some Coral Frag', 'Caulastrea furcata');
+    expect(m.speciesId).toBeUndefined();
+    expect(m.scientificNameInTitle).toBe('Caulastrea furcata');
   });
 });

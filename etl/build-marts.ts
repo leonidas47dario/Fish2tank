@@ -15,6 +15,10 @@
  */
 import { DuckDBInstance } from '@duckdb/node-api';
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { deriveCommonName } from './normalize/derive-species';
+import { findProblems, isUsableName, summarise } from '@/data/seed/catalog-quality';
+import { OVERRIDE_BY_ID, SPECIES_SYNONYMS, SYNONYM_IDS } from '@/data/seed/species-overrides';
+import { traitsFor, type OrganismKind, type WaterZone } from '@/data/seed/taxonomy';
 
 const WAREHOUSE = 'warehouse';
 const OUT_DIR = 'src/data/seed/marts';
@@ -46,6 +50,18 @@ export interface CatalogEntry {
     width?: number;
     height?: number;
   };
+  /**
+   * Taxonomic family, and what it implies about where the animal lives.
+   *
+   * Derived from the binomial via src/data/seed/taxonomy.ts, NOT from any
+   * per-species source. Absent when the genus or family is unmapped, which the
+   * catalog surfaces as "not recorded" rather than defaulting into a bucket.
+   */
+  family?: string;
+  waterZone?: WaterZone;
+  organismKind?: OrganismKind;
+  /** Why this zone. Shown on the species page so the claim is answerable. */
+  habitatNote?: string;
 }
 
 export interface CatalogMart {
@@ -60,6 +76,53 @@ const num = (v: unknown): number | undefined =>
   v === null || v === undefined ? undefined : Number(v);
 const split = (v: unknown): string[] =>
   !v ? [] : String(v).split('|').filter(Boolean);
+
+/**
+ * The species display name, in three layers of decreasing machine confidence.
+ *
+ *   1. A human override, if one exists. Always wins, always cited.
+ *   2. The name re-derived from the vendor titles by the hardened parser.
+ *   3. The scientific name.
+ *
+ * WHY RE-DERIVE HERE rather than trust the warehouse. `dim_species.common_name`
+ * was written by an older, broken derivation that named 234 species after
+ * vendor boilerplate ("- Tank Bred", "BredBy Aquatic Arts"). Rebuilding the
+ * warehouse would fix it, but that needs a full re-scrape of every vendor, and
+ * the raw snapshots are not committed. The titles themselves ARE committed, in
+ * `dim_species.aliases`, so the fixed parser can be re-run over them here.
+ *
+ * This is idempotent, not a patch: on a full refresh the warehouse writes a
+ * good name and running the same function over the same titles reproduces it.
+ * The layer earns its keep either way, because it is also where the human
+ * overrides are applied.
+ */
+function resolveName(
+  speciesId: string,
+  warehouseName: string,
+  scientificName: string | undefined,
+  aliases: string[],
+  tally: { rederived: number; overridden: number; fellBack: number },
+): string {
+  const override = OVERRIDE_BY_ID.get(speciesId);
+  if (override) {
+    tally.overridden += 1;
+    // A null override means "no trustworthy common name exists" - an explicit
+    // human decision to show the binomial rather than invent something.
+    if (override.commonName) return override.commonName;
+    return scientificName ?? warehouseName;
+  }
+
+  if (isUsableName(warehouseName)) return warehouseName;
+
+  const derived = deriveCommonName(aliases);
+  if (derived) {
+    tally.rederived += 1;
+    return derived;
+  }
+
+  tally.fellBack += 1;
+  return scientificName ?? warehouseName;
+}
 
 async function main() {
   const factPath = `${WAREHOUSE}/dim/dim_species.parquet`;
@@ -93,14 +156,33 @@ async function main() {
     ORDER BY s.common_name
   `);
 
-  const species: CatalogEntry[] = rows.getRowObjects().map((r) => {
+  const naming = { rederived: 0, overridden: 0, fellBack: 0 };
+
+  const species: CatalogEntry[] = rows.getRowObjects()
+    // Vendor typos minted the same fish two or three times over. Dropping the
+    // non-canonical record here is what stops three "Blue Discus" cards.
+    .filter((r) => !SYNONYM_IDS.has(String(r.species_id)))
+    .map((r) => {
     const url = nn(r.img_url);
     const license = nn(r.img_license);
+    const speciesId = String(r.species_id);
+    const scientificName = nn(r.scientific_name);
+    const aliases = split(r.aliases);
+    const traits = traitsFor(scientificName);
+
     return {
-      speciesId: String(r.species_id),
-      commonName: String(r.common_name),
-      scientificName: nn(r.scientific_name),
-      aliases: split(r.aliases),
+      speciesId,
+      commonName: resolveName(speciesId, String(r.common_name), scientificName, aliases, naming),
+      scientificName,
+      aliases,
+      ...(traits
+        ? {
+            family: traits.family,
+            organismKind: traits.kind,
+            habitatNote: traits.note,
+            ...(traits.zone ? { waterZone: traits.zone } : {}),
+          }
+        : {}),
       adultSizeIn: num(r.adult_size_in),
       minVolumeGal: num(r.min_volume_gal),
       aggression: nn(r.aggression),
@@ -138,7 +220,41 @@ async function main() {
   console.log(`  species          ${species.length}`);
   console.log(`  with a portrait  ${withArt}  (${Math.round((withArt / species.length) * 100)}%)`);
   console.log(`  without          ${species.length - withArt}`);
+
+  const zoned = species.filter((s) => s.waterZone).length;
+  console.log('\n  habitat (derived from family)');
+  console.log(`    with a water zone         ${zoned}  (${Math.round((zoned / species.length) * 100)}%)`);
+  console.log(`    family unmapped           ${species.filter((s) => !s.family).length}`);
+  for (const k of ['fish', 'plant', 'invertebrate', 'amphibian', 'reptile'] as const) {
+    const n = species.filter((s) => s.organismKind === k).length;
+    if (n) console.log(`    ${k.padEnd(24)}  ${n}`);
+  }
+  console.log(`\n  dropped ${SPECIES_SYNONYMS.length} duplicate species minted by vendor typos`);
+  for (const s of SPECIES_SYNONYMS) console.log(`      ${s.speciesId} -> ${s.canonicalId}`);
+
+  console.log('\n  naming');
+  console.log(`    from the warehouse as-is  ${species.length - naming.rederived - naming.overridden - naming.fellBack}`);
+  console.log(`    re-derived from titles    ${naming.rederived}`);
+  console.log(`    human override            ${naming.overridden}`);
+  console.log(`    fell back to the binomial ${naming.fellBack}`);
+
+  // Verify the side effect actually happened. A mart that still contains
+  // vendor boilerplate is the failure this whole layer exists to prevent, and
+  // reporting "wrote catalog.json" over the top of it would be a lie.
+  const problems = findProblems(species);
+  if (problems.length > 0) {
+    console.error(`\n  ✗ ${problems.length} quality problems remain: ${JSON.stringify(summarise(problems))}`);
+    for (const p of problems.slice(0, 20)) {
+      console.error(`      ${p.speciesId}: ${p.code} — ${p.detail}`);
+    }
+    if (problems.length > 20) console.error(`      …and ${problems.length - 20} more`);
+    console.error('    Fix the parser or add a sourced entry to species-overrides.ts.');
+  } else {
+    console.log('\n  ✓ catalog quality gate passed');
+  }
+
   console.log(`\n  wrote ${OUT_DIR}/catalog.json`);
+  if (problems.length > 0) process.exitCode = 1;
 }
 
 main().catch((e) => {

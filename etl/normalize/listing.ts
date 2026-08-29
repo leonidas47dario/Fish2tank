@@ -33,7 +33,7 @@ export function normalizeProduct(
   match: ReturnType<typeof buildMatcher>,
   retrievedAt: string,
 ): MarketListing[] {
-  const m = match(product.title);
+  const m = match(product.title, product.product_type);
 
   /**
    * A binomial the curated catalog does not cover still names a real species,
@@ -45,9 +45,9 @@ export function normalizeProduct(
    */
   const speciesId = m.speciesId
     ?? (m.scientificNameInTitle ? derivedSpeciesId(m.scientificNameInTitle) : undefined);
-  const matchMethod = m.speciesId
+  const matchMethod: MarketListing['matchMethod'] = m.speciesId
     ? m.method
-    : (m.scientificNameInTitle ? ('derived-binomial' as const) : undefined);
+    : (m.scientificNameInTitle ? 'derived-binomial' : undefined);
 
   return product.variants.map((variant): MarketListing => {
     const parsed = sizeFromVariant(variant);

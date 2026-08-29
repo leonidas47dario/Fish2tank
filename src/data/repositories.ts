@@ -48,6 +48,73 @@ export interface CaptureFile {
   durationSeconds?: number;
 }
 
+/**
+ * Detach captured bytes from the File before they go near IndexedDB.
+ *
+ * WHY THIS EXISTS. A File from `<input capture>` is a Blob backed by a path
+ * the browser owns, not by bytes the page holds. That backing can go stale
+ * between the change event and the transaction commit - the camera or photo
+ * library hands over a reference and then invalidates it - and the structured
+ * clone fails at write time. Dexie surfaces that as `blobs.bulkAdd()` naming
+ * the table and nothing else, which is unactionable and was exactly the report
+ * that prompted this.
+ *
+ * Reading into an ArrayBuffer first makes the stored blob self-contained, so
+ * what we persist cannot depend on a handle we do not own. It also moves the
+ * failure EARLIER and makes it legible: an unreadable photo is caught here, by
+ * name and size, instead of half-way through a transaction.
+ *
+ * NFR-03 still holds - the bytes are copied, never re-encoded.
+ */
+async function detachFiles(files: CaptureFile[]): Promise<Array<CaptureFile & { data: ArrayBuffer }>> {
+  return Promise.all(
+    files.map(async (f, i) => {
+      try {
+        return { ...f, data: await f.blob.arrayBuffer() };
+      } catch (cause) {
+        throw new Error(
+          `Could not read capture ${i + 1} of ${files.length} ` +
+            `(${f.kind}, ${f.mimeType || 'unknown type'}, ${f.blob.size} bytes): ` +
+            `${cause instanceof Error ? `${cause.name}: ${cause.message}` : String(cause)}`,
+          { cause },
+        );
+      }
+    }),
+  );
+}
+
+/**
+ * Turn a storage failure into something a person can act on.
+ *
+ * Dexie's own message is `blobs.bulkAdd()` plus, sometimes, a count. That says
+ * which table refused and nothing about why, which is the difference between a
+ * five-minute fix and a day of guessing. This pulls the underlying name out -
+ * QuotaExceededError and DataCloneError need completely different responses -
+ * and states how much was being written when it happened.
+ */
+export function storageError(cause: unknown, bytes: number, count: number): Error {
+  const e = cause as { name?: string; message?: string; inner?: { name?: string; message?: string } };
+  const inner = e?.inner;
+  const name = inner?.name ?? e?.name ?? 'Error';
+  const mb = (bytes / 1_048_576).toFixed(1);
+
+  const advice =
+    name === 'QuotaExceededError'
+      ? 'This device is out of storage for the app. Free some space, or export and clear older catches.'
+      : name === 'DataCloneError'
+        ? 'The browser would not store this capture. Try taking the photo again rather than picking it from the library.'
+        : name === 'InvalidStateError'
+          ? 'Storage is unavailable — private browsing blocks it on some browsers.'
+          : 'Could not write the capture to this device.';
+
+  return new Error(
+    `${advice} (${name} while saving ${count} file${count === 1 ? '' : 's'}, ${mb} MB${
+      inner?.message || e?.message ? `: ${inner?.message ?? e?.message}` : ''
+    })`,
+    { cause },
+  );
+}
+
 export interface CreateCatchDraftInput {
   files: CaptureFile[];
   placeId?: Id;
@@ -104,7 +171,8 @@ export async function createCatchDraft(input: CreateCatchDraftInput, database: D
   };
 
   const media: Media[] = [];
-  const blobs = input.files.map((f) => {
+  const files = await detachFiles(input.files);
+  const blobs = files.map((f) => {
     const key = newId('blob');
     const m: Media = {
       id: newId('media'),
@@ -112,32 +180,39 @@ export async function createCatchDraft(input: CreateCatchDraftInput, database: D
       specimenIds: [specimen.id],
       encounterId: encounter.id,
       originalBlobKey: key,
-      originalBytes: f.blob.size,
+      originalBytes: f.data.byteLength,
       mimeType: f.mimeType,
       durationSeconds: f.durationSeconds,
       capturedAt: at,
       syncState: 'local-draft',
     };
     media.push(m);
-    return { key, blob: f.blob, bytes: f.blob.size, mimeType: f.mimeType, storedAt: at };
+    return { key, data: f.data, bytes: f.data.byteLength, mimeType: f.mimeType, storedAt: at };
   });
 
-  await database.transaction(
-    'rw',
-    [database.specimens, database.encounters, database.media, database.blobs, database.draftKeys],
-    async () => {
-      await database.specimens.add(specimen);
-      await database.encounters.add(encounter);
-      if (media.length) await database.media.bulkAdd(media);
-      if (blobs.length) await database.blobs.bulkAdd(blobs);
-      await database.draftKeys.add({
-        clientKey: input.clientKey,
-        specimenId: specimen.id,
-        encounterId: encounter.id,
-        createdAt: at,
-      });
-    },
-  );
+  try {
+    await database.transaction(
+      'rw',
+      [database.specimens, database.encounters, database.media, database.blobs, database.draftKeys],
+      async () => {
+        await database.specimens.add(specimen);
+        await database.encounters.add(encounter);
+        if (media.length) await database.media.bulkAdd(media);
+        if (blobs.length) await database.blobs.bulkAdd(blobs);
+        await database.draftKeys.add({
+          clientKey: input.clientKey,
+          specimenId: specimen.id,
+          encounterId: encounter.id,
+          createdAt: at,
+        });
+      },
+    );
+  } catch (cause) {
+    // The transaction rolls back as a unit, so there is no half-written draft
+    // to clean up - but the caller still needs to know WHY, not just which
+    // table refused.
+    throw storageError(cause, blobs.reduce((n, b) => n + b.bytes, 0), blobs.length);
+  }
 
   return { specimen, encounter, media };
 }
@@ -546,27 +621,32 @@ export async function addPhotos(
 
   const at = input.capturedAt ?? nowIso();
   const media: Media[] = [];
-  const blobs = input.files.map((f) => {
+  const files = await detachFiles(input.files);
+  const blobs = files.map((f) => {
     const key = newId('blob');
     media.push({
       id: newId('media'),
       kind: f.kind,
       specimenIds: [input.specimenId],
       originalBlobKey: key,
-      originalBytes: f.blob.size,
+      originalBytes: f.data.byteLength,
       mimeType: f.mimeType,
       durationSeconds: f.durationSeconds,
       capturedAt: at,
       syncState: 'local-draft',
     });
-    return { key, blob: f.blob, bytes: f.blob.size, mimeType: f.mimeType, storedAt: at };
+    return { key, data: f.data, bytes: f.data.byteLength, mimeType: f.mimeType, storedAt: at };
   });
 
-  await database.transaction('rw', [database.media, database.blobs, database.specimens], async () => {
-    await database.media.bulkAdd(media);
-    await database.blobs.bulkAdd(blobs);
-    await database.specimens.update(input.specimenId, { updatedAt: at });
-  });
+  try {
+    await database.transaction('rw', [database.media, database.blobs, database.specimens], async () => {
+      await database.media.bulkAdd(media);
+      await database.blobs.bulkAdd(blobs);
+      await database.specimens.update(input.specimenId, { updatedAt: at });
+    });
+  } catch (cause) {
+    throw storageError(cause, blobs.reduce((n, b) => n + b.bytes, 0), blobs.length);
+  }
 
   return media;
 }

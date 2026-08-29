@@ -18,7 +18,12 @@
  */
 import type { Species } from '@/domain/types';
 
-export type MatchMethod = 'scientific-name' | 'common-name' | 'alias' | 'derived-binomial';
+export type MatchMethod =
+  | 'scientific-name'
+  | 'product-type'
+  | 'common-name'
+  | 'alias'
+  | 'derived-binomial';
 
 export interface SpeciesMatch {
   speciesId?: string;
@@ -48,6 +53,32 @@ export function extractScientificName(title: string): string | undefined {
   if (!epithet || NOT_AN_EPITHET.has(epithet)) return undefined;
   const parts = [genus, epithet];
   // A trailing qualifier ("Pterophyllum scalare sp") is dropped, not kept.
+  if (sub && !NOT_AN_EPITHET.has(sub)) parts.push(sub);
+  return parts.join(' ');
+}
+
+/**
+ * A bare binomial in Shopify's `product_type` field.
+ *
+ * WHY THIS PATH EXISTS. The parenthesised-binomial rule above assumes the
+ * vendor writes "Candy Cane Coral (Caulastrea furcata)". LiveAquaria does not:
+ * across 250 sampled products, ZERO titles carry a binomial in parentheses,
+ * and the scientific name is in `product_type` instead, bare and unbracketed.
+ * Without this the store would contribute 3,000 listings and resolve none.
+ *
+ * The field is structured metadata rather than marketing copy, so it is a
+ * cleaner signal than the title - but it is also frequently a bare genus
+ * ("Sarcophyton sp.") or empty, both of which must resolve to nothing rather
+ * than mint a fake species. Same NOT_AN_EPITHET guard as the title path.
+ */
+const BINOMIAL_BARE = /^([A-Z][a-z]{2,})\s+([a-z]{2,})(?:\s+([a-z]{2,}))?\.?$/;
+
+export function extractProductTypeBinomial(productType: string | undefined): string | undefined {
+  const m = productType?.trim().match(BINOMIAL_BARE);
+  if (!m) return undefined;
+  const [, genus, epithet, sub] = m;
+  if (!epithet || NOT_AN_EPITHET.has(epithet)) return undefined;
+  const parts = [genus, epithet];
   if (sub && !NOT_AN_EPITHET.has(sub)) parts.push(sub);
   return parts.join(' ');
 }
@@ -115,7 +146,7 @@ export function buildMatcher(catalog: Species[], options: MatcherOptions = {}) {
   }
   names.sort((a, b) => b.name.length - a.name.length);
 
-  return function match(title: string): SpeciesMatch {
+  return function match(title: string, productType?: string): SpeciesMatch {
     const scientificNameInTitle = extractScientificName(title);
 
     if (scientificNameInTitle) {
@@ -125,6 +156,16 @@ export function buildMatcher(catalog: Species[], options: MatcherOptions = {}) {
       // not fall through to a loose common-name match: the title has already
       // told us precisely what it is, and it is not in the catalog.
       return { scientificNameInTitle };
+    }
+
+    // The vendor stated the binomial in structured metadata instead of the
+    // title. Same precision as the title path, so it gets the same precedence
+    // over common-name guessing, and the same refusal to fall through.
+    const fromType = extractProductTypeBinomial(productType);
+    if (fromType) {
+      const hit = byScientific.get(fromType.toLowerCase());
+      if (hit) return { speciesId: hit, method: 'product-type', scientificNameInTitle: fromType };
+      return { scientificNameInTitle: fromType };
     }
 
     const normalized = normalize(title);

@@ -12,7 +12,7 @@
  * per-species so you can fall back when your photo is a blur through algae.
  */
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '@/data/db';
+import { blobFor, db } from '@/data/db';
 import { resolveCardArt, type CatalogCard } from '@/data/catalog';
 import { formatVolume } from '@/domain/units';
 
@@ -20,6 +20,14 @@ interface Props {
   card: CatalogCard;
   onOpen?: (speciesId: string) => void;
 }
+
+/** Shape carries the meaning as well as position, per NFR-06. */
+const ZONE_GLYPH: Record<string, string> = {
+  top: '▔', mid: '━', bottom: '▁', 'all-levels': '↕',
+};
+const ZONE_LABEL: Record<string, string> = {
+  top: 'Top dweller', mid: 'Mid-water', bottom: 'Bottom dweller', 'all-levels': 'Swims all levels',
+};
 
 const TIER_TONE: Record<string, string> = {
   familiar: 'var(--color-muted)',
@@ -40,8 +48,8 @@ export function FishCard({ card, onOpen }: Props) {
     if (art.kind !== 'own') return undefined;
     const media = await db.media.get(art.mediaId);
     if (!media) return undefined;
-    const stored = await db.blobs.get(media.originalBlobKey);
-    return stored ? URL.createObjectURL(stored.blob) : undefined;
+    const blob = blobFor(await db.blobs.get(media.originalBlobKey));
+    return blob ? URL.createObjectURL(blob) : undefined;
   }, [art.kind === 'own' ? art.mediaId : undefined]);
 
   // Greyed only when you have never had this species - neither met nor kept.
@@ -89,6 +97,19 @@ export function FishCard({ card, onOpen }: Props) {
       {species.minVolumeGal !== undefined && (
         <span className="gem gem--volume" title="Minimum tank">
           {formatVolume({ value: species.minVolumeGal, unit: 'gal' })}
+        </span>
+      )}
+
+      {/* Where it lives, as a glyph in the top-left run. Silent when the
+          family is unmapped - an absent badge is honest, a "mid" default
+          would not be. */}
+      {species.waterZone && (
+        <span
+          className={`zone-pip zone-pip--${species.waterZone}`}
+          title={`${ZONE_LABEL[species.waterZone]}${species.habitatNote ? ` — ${species.habitatNote}` : ''}`}
+        >
+          <span aria-hidden="true">{ZONE_GLYPH[species.waterZone]}</span>
+          <span className="visually-hidden">{ZONE_LABEL[species.waterZone]}</span>
         </span>
       )}
 

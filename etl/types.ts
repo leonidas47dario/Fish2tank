@@ -9,6 +9,7 @@
  * A listing is never collapsed into a bare number.
  */
 import type { LengthMeasurement } from '@/domain/types';
+import type { MatchMethod } from './normalize/species';
 
 export interface StoreConfig {
   /** Stable key used in output files and the market index. */
@@ -24,6 +25,17 @@ export interface StoreConfig {
    * prices could be pooled with the others.
    */
   currency: string;
+  /**
+   * What the store mostly sells.
+   *
+   * Declared because LiveAquaria is overwhelmingly marine - corals, anemones
+   * and reef fish - while every other tracked store and every tank the owner
+   * actually keeps is freshwater. Without this the catalog fills with 3,000
+   * coral frags that no freshwater keeper will ever screen, and the library
+   * stops being about their hobby. Used to tag the species it discovers, not
+   * to exclude the store.
+   */
+  waterType?: 'freshwater' | 'marine' | 'mixed';
 }
 
 /** One store listing at one size, normalized. The unit of the dataset. */
@@ -44,8 +56,10 @@ export interface MarketListing {
    * How the species was resolved, so a bad match is traceable.
    * 'derived-binomial' means the vendor stated a scientific name the curated
    * catalog does not cover, and a species was minted from it.
+   * 'product-type' means the binomial came from Shopify's product_type field
+   * rather than the title - see etl/normalize/species.ts.
    */
-  matchMethod?: 'scientific-name' | 'common-name' | 'alias' | 'derived-binomial';
+  matchMethod?: MatchMethod;
   /** Scientific name lifted from the title, even when it matched no catalog entry. */
   scientificNameInTitle?: string;
 
@@ -102,7 +116,24 @@ export interface MarketSpeciesStats {
    */
   priceBySize: Array<{ sizeIn: number; medianPrice: number; listings: number }>;
   /** Which stores carry it and how many listings each. */
-  stores: Array<{ storeId: string; listings: number; inStock: number; medianPrice: number }>;
+  stores: Array<{
+    storeId: string;
+    listings: number;
+    inStock: number;
+    medianPrice: number;
+    /**
+     * A link straight to the product page, so a price can be checked against
+     * the shop rather than taken on trust.
+     *
+     * Which listing it points at matters. A store often has several listings
+     * for one species, and the useful one is the one you can actually buy, so
+     * an in-stock listing is always preferred over a sold-out one. Absent when
+     * the store's listings carry no usable URL.
+     */
+    productUrl?: string;
+    /** Whether productUrl points at something in stock. Never implied. */
+    productInStock?: boolean;
+  }>;
   /** Earliest and latest publish date seen, as a rough catalogue span. */
   listedBetween?: { earliest: string; latest: string };
 }
@@ -143,4 +174,22 @@ export const STORES: StoreConfig[] = [
   { id: 'aquarium-coop', name: 'Aquarium Co-Op', host: 'www.aquariumcoop.com', currency: 'USD' },
   { id: 'flip-aquatics', name: 'Flip Aquatics', host: 'flipaquatics.com', currency: 'USD' },
   { id: 'aquahuna', name: 'AquaHuna', host: 'www.aquahuna.com', currency: 'USD' },
+  /**
+   * Added 2026-08-29. Both verified the same way as the original eight:
+   * Shopify, robots.txt states public product data is crawlable, and neither
+   * disallows /products.json.
+   *
+   * Nu Aqua is a Chicagoland shop (Orland Park, IL) and the first tracked
+   * vendor the owner can actually walk into, which is the point - this app is
+   * about the fish in front of you, and a local price is the one that decides
+   * anything. 936 products.
+   *
+   * LiveAquaria is Petco's aquatics brand, and is here because Petco itself
+   * cannot be read: it is not Shopify, exposes no product feed, and is blocked
+   * at the network edge. This is the honest substitute for a big-box baseline,
+   * and it is tagged marine because that is what it mostly sells. 3,000
+   * products.
+   */
+  { id: 'nu-aqua', name: 'Nu Aqua', host: 'nuaquashop.com', region: 'Chicagoland', currency: 'USD', waterType: 'freshwater' },
+  { id: 'liveaquaria', name: 'LiveAquaria', host: 'www.liveaquaria.com', currency: 'USD', waterType: 'marine' },
 ];

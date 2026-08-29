@@ -8,7 +8,7 @@
  */
 import { useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '@/data/db';
+import { blobFor, db } from '@/data/db';
 import type { Id } from '@/domain/types';
 
 interface Props {
@@ -25,8 +25,8 @@ export function OwnPhotoStrip({ mediaIds, selected, onPick }: Props) {
     const found: Array<{ id: Id; blob: Blob }> = [];
     for (const m of media) {
       if (!m) continue;
-      const stored = await db.blobs.get(m.originalBlobKey);
-      if (stored) found.push({ id: m.id, blob: stored.blob });
+      const blob = blobFor(await db.blobs.get(m.originalBlobKey));
+      if (blob) found.push({ id: m.id, blob });
     }
     return found;
   }, [key]);
