@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { CATALOG, cardPrice, ownership, resolveCardArt, type CatalogCard, type CatalogSpecies } from './catalog';
+import {
+  CATALOG, cardPrice, ownership, portraitCredit, resolveCardArt,
+  type CatalogCard, type CatalogSpecies,
+} from './catalog';
 import type { MarketSpeciesStats } from './market';
 
 function species(over: Partial<CatalogSpecies> = {}): CatalogSpecies {
   return {
     speciesId: 'sp_jaguar_cichlid', commonName: 'Jaguar Cichlid',
     scientificName: 'Parachromis managuensis', aliases: [], predationTags: [],
-    portrait: { url: 'https://commons/x.jpg', license: 'Public domain' },
+    portrait: { url: 'https://commons/x.jpg', provenance: 'wikimedia', license: 'Public domain' },
     ...over,
   };
 }
@@ -107,13 +110,18 @@ describe('cardPrice', () => {
 });
 
 describe('the shipped catalog mart', () => {
-  it('covers every species and carries licences for the portraits it has', () => {
+  it('covers every species and can account for every portrait it has', () => {
     expect(CATALOG.species.length).toBeGreaterThan(40);
     for (const s of CATALOG.species) {
       expect(s.speciesId).toBeTruthy();
       expect(s.commonName).toBeTruthy();
-      // An image without a stateable licence must never reach the mart.
-      if (s.portrait) expect(s.portrait.license).toBeTruthy();
+      // Spec 002: the gate is traceability, not licence - vendor and web
+      // photos have no licence and are shipped deliberately with visible
+      // credit, but every portrait must still carry an attribution link.
+      if (s.portrait) {
+        expect(s.portrait.attributionUrl).toBeTruthy();
+        expect(['wikimedia', 'vendor', 'web']).toContain(s.portrait.provenance);
+      }
     }
   });
 
@@ -140,5 +148,43 @@ describe('ownership', () => {
 
   it('counts both when you caught it and kept it', () => {
     expect(ownership(2, 3)).toEqual({ caught: true, kept: true, inCollection: true });
+  });
+});
+
+describe('portraitCredit', () => {
+  it('credits a Wikimedia photo to its photographer and licence', () => {
+    expect(portraitCredit({
+      url: 'x', provenance: 'wikimedia', license: 'CC BY 3.0', artist: 'Per Harald Olsen',
+    })).toBe('Per Harald Olsen, CC BY 3.0');
+  });
+
+  it('credits a Wikimedia photo with no named artist to the licence alone', () => {
+    expect(portraitCredit({ url: 'x', provenance: 'wikimedia', license: 'CC0' })).toBe('CC0');
+  });
+
+  it('credits a vendor photo to the shop, and says it is a listing photo', () => {
+    // No CC licence exists for these, and implying one would be a lie.
+    expect(portraitCredit({
+      url: 'x', provenance: 'vendor', artist: 'Imperial Tropicals',
+    })).toBe('Photo: Imperial Tropicals (product listing)');
+  });
+
+  it('credits a web photo to its site', () => {
+    expect(portraitCredit({
+      url: 'x', provenance: 'web', artist: 'Fishbase',
+    })).toBe('Photo: Fishbase');
+  });
+
+  it('says the source is unrecorded rather than inventing one', () => {
+    expect(portraitCredit({ url: 'x', provenance: 'web' })).toBe('Source not recorded');
+  });
+
+  it('never claims a licence for a vendor photo, even if one is somehow present', () => {
+    // Defence in depth. The mart should never produce this, but if it did,
+    // rendering "Imperial Tropicals, CC BY 4.0" would assert a licence the
+    // shop never granted. Provenance decides the sentence, not the fields.
+    expect(portraitCredit({
+      url: 'x', provenance: 'vendor', artist: 'Imperial Tropicals', license: 'CC BY 4.0',
+    })).toBe('Photo: Imperial Tropicals (product listing)');
   });
 });

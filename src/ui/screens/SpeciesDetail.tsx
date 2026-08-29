@@ -27,6 +27,7 @@ import {
   cardPrice,
   marketAndScarcity,
   ownership,
+  portraitCredit,
   type CareField,
   type CatalogCard,
   type CatalogSpecies,
@@ -306,8 +307,7 @@ export default function SpeciesDetail() {
         <section className="card">
           <h2>Picture credit</h2>
           <p className="small" style={{ marginBottom: 0 }}>
-            {species.portrait.artist ? `${species.portrait.artist}, ` : ''}
-            <strong>{species.portrait.license}</strong>
+            <strong>{portraitCredit(species.portrait)}</strong>
             {species.portrait.attributionUrl && (
               <> — <a href={species.portrait.attributionUrl} target="_blank" rel="noreferrer">source</a></>
             )}

@@ -14,7 +14,10 @@ import type { MarketSpeciesStats } from './market';
 
 export interface CatalogPortrait {
   url: string;
-  license: string;
+  /** Which credit line to render. See spec 002. */
+  provenance: 'wikimedia' | 'vendor' | 'web';
+  /** Present for Wikimedia images only; vendor and web photos have none. */
+  license?: string;
   artist?: string;
   attributionUrl?: string;
   width?: number;
@@ -166,9 +169,15 @@ export function resolveCardArt(
   return { kind: 'none' };
 }
 
-/** Price to show on the card's cost gem. */
+/**
+ * Price to show on the card's cost gem.
+ *
+ * Undefined when the index has listings but too few sized ones to estimate
+ * from. The gem stays empty and the species page shows the vendors instead - a
+ * card is a glance, and a glance has no room to say "one listing, unsized".
+ */
 export function cardPrice(market: MarketSpeciesStats | undefined, sizeIn?: number): number | undefined {
-  if (!market) return undefined;
+  if (!market?.price) return undefined;
   if (sizeIn !== undefined) {
     const band = bandForSize(market, { value: sizeIn, unit: 'in' });
     if (band) return band.medianPrice;
@@ -180,4 +189,23 @@ export function marketAndScarcity(speciesId: string) {
   const market = marketFor(speciesId);
   const scarcity = scarcityFor(speciesId);
   return { market, scarcityBand: scarcity.available ? scarcity.band : undefined };
+}
+
+/**
+ * The sentence under a portrait, which differs by where the picture came from.
+ *
+ * A Wikimedia file is used under a stated licence and credits its
+ * photographer. A vendor listing photo has no licence at all and is used by
+ * the owner's decision (spec 002), so it names the shop plainly instead of
+ * borrowing the shape of a licence line. Dressing the second up as the first
+ * would be the actual dishonesty here, so provenance decides the sentence and
+ * the presence of a `license` field never overrides it.
+ */
+export function portraitCredit(p: CatalogPortrait): string {
+  if (p.provenance === 'wikimedia' && p.license) {
+    return p.artist ? `${p.artist}, ${p.license}` : p.license;
+  }
+  if (p.provenance === 'vendor' && p.artist) return `Photo: ${p.artist} (product listing)`;
+  if (p.artist) return `Photo: ${p.artist}`;
+  return 'Source not recorded';
 }

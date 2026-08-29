@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { deriveCommonName, derivedSpeciesId, discoverSpecies } from './derive-species';
+import { canonicalSpeciesId, deriveCommonName, derivedSpeciesId, discoverSpecies } from './derive-species';
+import { SPECIES_SYNONYMS, SYNONYM_IDS } from '@/data/seed/species-overrides';
 
 describe('derivedSpeciesId', () => {
   it('is a stable, readable slug', () => {
@@ -13,6 +14,37 @@ describe('derivedSpeciesId', () => {
     expect(derivedSpeciesId('Panaque nigrolineatus laurafabianae'))
       .toBe('sp_panaque_nigrolineatus_laurafabianae');
     expect(derivedSpeciesId('  Heros  efasciatus ')).toBe('sp_heros_efasciatus');
+  });
+});
+
+describe('canonicalSpeciesId', () => {
+  it('folds a misspelled binomial onto the record the catalog actually shows', () => {
+    // Three spellings of one fish. build-marts drops the first two from the
+    // catalog, so any listing left pointing at them is a price nobody can see.
+    expect(canonicalSpeciesId('sp_symphysodon_aequifaciatus')).toBe('sp_symphysodon_aequifasciatus');
+    expect(canonicalSpeciesId('sp_symphysodon_aequifasciata')).toBe('sp_symphysodon_aequifasciatus');
+    expect(canonicalSpeciesId('sp_xiphophorus_helleri')).toBe('sp_xiphophorus_hellerii');
+    expect(canonicalSpeciesId('sp_xiphophorus_helleri_hybrid')).toBe('sp_xiphophorus_hellerii');
+  });
+
+  it('leaves every other id exactly as it found it', () => {
+    expect(canonicalSpeciesId('sp_pterophyllum_scalare')).toBe('sp_pterophyllum_scalare');
+    expect(canonicalSpeciesId('sp_symphysodon_discus')).toBe('sp_symphysodon_discus');
+  });
+
+  it('resolves in one hop, because no synonym points at another synonym', () => {
+    // A chain would make the result depend on iteration order. Assert the data
+    // has none rather than writing a loop to survive one.
+    for (const s of SPECIES_SYNONYMS) {
+      expect(SYNONYM_IDS.has(s.canonicalId)).toBe(false);
+    }
+  });
+
+  it('sends every synonym somewhere the catalog will keep', () => {
+    for (const s of SPECIES_SYNONYMS) {
+      expect(canonicalSpeciesId(s.speciesId)).toBe(s.canonicalId);
+      expect(SYNONYM_IDS.has(canonicalSpeciesId(s.speciesId))).toBe(false);
+    }
   });
 });
 
@@ -158,5 +190,46 @@ describe('discoverSpecies', () => {
       { scientificNameInTitle: 'Genus species', title: 'Beta (Genus species)' },
     ];
     expect(discoverSpecies(odd, new Set())[0]!.commonName).toBe('Genus species');
+  });
+});
+
+describe('water type, taken from the vendors rather than the fish', () => {
+  const water = new Map<string, 'freshwater' | 'marine' | 'mixed'>([
+    ['liveaquaria', 'marine'],
+    ['petsmart', 'freshwater'],
+  ]);
+  const listing = (storeId: string, sci: string, title = sci) =>
+    ({ storeId, scientificNameInTitle: sci, title });
+
+  it('tags a species only a marine vendor carries', () => {
+    const [d] = discoverSpecies([listing('liveaquaria', 'Chaetodon auriga')], new Set(), water);
+    expect(d!.waterType).toBe('marine');
+  });
+
+  it('lets one freshwater vendor outrank a marine one', () => {
+    // A freshwater shop stocking it means a freshwater keeper can buy it,
+    // whatever else also lists it.
+    const [d] = discoverSpecies(
+      [listing('liveaquaria', 'Betta splendens'), listing('petsmart', 'Betta splendens')],
+      new Set(),
+      water,
+    );
+    expect(d!.waterType).toBe('freshwater');
+  });
+
+  it('declares nothing when no vendor declared anything', () => {
+    // Undefined is not a claim that the fish is freshwater. Most of the
+    // catalog is here, and defaulting it would be inventing the fact.
+    const [d] = discoverSpecies([listing('predatory-fins', 'Parachromis managuensis')], new Set(), water);
+    expect(d!.waterType).toBeUndefined();
+  });
+
+  it('declares nothing when a vendor without a declaration also carries it', () => {
+    const [d] = discoverSpecies(
+      [listing('liveaquaria', 'Amphiprion ocellaris'), listing('predatory-fins', 'Amphiprion ocellaris')],
+      new Set(),
+      water,
+    );
+    expect(d!.waterType).toBeUndefined();
   });
 });

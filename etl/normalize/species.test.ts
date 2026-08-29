@@ -28,6 +28,74 @@ describe('extractScientificName', () => {
   });
 });
 
+describe('a binomial followed by a cultivar, locality or morph', () => {
+  /**
+   * WHY THIS EXISTS. Requiring the closing paren immediately after the epithet
+   * made the extractor blind to the commonest way a vendor qualifies a fish,
+   * and the cost was not a miss - it was a WRONG MATCH. The title fell through
+   * to common-name guessing, and the derived catalog names are shared across
+   * relatives, so:
+   *
+   *   "Peruvian Altum Angelfish (Pterophyllum scalare "Peruvian Altum")"
+   *      -> matched the name "Angelfish" -> filed under Pterophyllum ALTUM
+   *   "Orange Venezuelan Cory Catfish (Corydoras aeneus "Venezuela")"
+   *      -> matched "Cory Catfish" -> filed under Corydoras HABROSUS
+   *
+   * The title said what it was both times. Reading it is strictly better than
+   * guessing, and 473 listings resolve correctly on this change.
+   */
+  it('reads the binomial before a quoted cultivar', () => {
+    expect(extractScientificName('Peruvian Altum Angelfish (Pterophyllum scalare "Peruvian Altum"), Tank-Bred'))
+      .toBe('Pterophyllum scalare');
+    expect(extractScientificName('Orange Venezuelan Cory Catfish (Corydoras aeneus "Venezuela"), Tank-Bred'))
+      .toBe('Corydoras aeneus');
+    expect(extractScientificName('Albino Threadfin Acara (Acarichthys heckelii “albino”) 4”'))
+      .toBe('Acarichthys heckelii');
+  });
+
+  it('reads it before a var. clause or a bare locality', () => {
+    expect(extractScientificName('Narrow Leaf Java Fern (Microsorum pteropus var. ‘Narrow Leaf’)'))
+      .toBe('Microsorum pteropus');
+    expect(extractScientificName('Rio Tocantins Severum (Heros efasciatus "Rio Tocantins")'))
+      .toBe('Heros efasciatus');
+  });
+
+  it('takes only the binomial, never a colour word as an epithet', () => {
+    // "(Alestopetersius brichardi red / blue)" - without the closing paren to
+    // anchor the end, a third word is far likelier to be a colour than a
+    // subspecies, so the loose path never takes one.
+    expect(extractScientificName('Cherry Red Congo Tetra (Alestopetersius brichardi red / blue)'))
+      .toBe('Alestopetersius brichardi');
+  });
+
+  it('still refuses English words sitting where an epithet would', () => {
+    // These do not merely fail to match. An unrecognised binomial gets MINTED
+    // as a species, so a false read puts `sp_pack_of` in the catalog.
+    expect(extractScientificName('Drape Fin Barb 0.75-1” (Pack of 10 fish)')).toBeUndefined();
+    expect(extractScientificName('Something (Group of 6 males)')).toBeUndefined();
+    expect(extractScientificName('Colony Grade Neocaridina Shrimp (Bred by: someone)')).toBeUndefined();
+    expect(extractScientificName('White Tropical Springtails (Collembola springtails sp.)')).toBeUndefined();
+  });
+
+  it('refuses an explicit hybrid rather than filing it as the first parent', () => {
+    // A cross is not either parent. Recording it as pure S. fryeri would put a
+    // hybrid's price into a real species' median.
+    expect(extractScientificName('Blueberry OB Fryeri (Sciaenochromis fryeri X Aulonocara sp.)'))
+      .toBeUndefined();
+    expect(extractScientificName('RTC Hybrid (Phractocephalus hemioliopterus x Leiarius marmoratus)'))
+      .toBeUndefined();
+  });
+
+  it('leaves the strict, fully-parenthesised forms exactly as they were', () => {
+    expect(extractScientificName('Black Kumpay Goby (Stiphodon atropurpureus)'))
+      .toBe('Stiphodon atropurpureus');
+    expect(extractScientificName('Some Fish (Genus species subspecies)'))
+      .toBe('Genus species subspecies');
+    expect(extractScientificName('HQ Super Red Dragon Flowerhorn ( Male ) #M1')).toBeUndefined();
+    expect(extractScientificName('Something (Grade A)')).toBeUndefined();
+  });
+});
+
 describe('scientific-name matching', () => {
   it('resolves a catalog species by its binomial', () => {
     const m = match('Jaguar Cichlid (Parachromis managuensis)');
@@ -173,5 +241,26 @@ describe('binomial from product_type', () => {
     const m = match('Some Coral Frag', 'Caulastrea furcata');
     expect(m.speciesId).toBeUndefined();
     expect(m.scientificNameInTitle).toBe('Caulastrea furcata');
+  });
+});
+
+describe('vendor catch-all buckets are not genera', () => {
+  // Imperial Tropicals files its odds and ends under product_type "Other
+  // catfish" and "Other loricariids". Both have the shape of a binomial, and
+  // before the NOT_A_GENUS guard they minted two species that 246 listings
+  // pooled into - one of them holding eight unrelated fish under the name
+  // "Catfish", which is exactly the ambiguous-generic failure the catalog
+  // quality gate exists to catch.
+  it('refuses "Other catfish" as a product_type binomial', () => {
+    expect(extractProductTypeBinomial('Other catfish')).toBeUndefined();
+    expect(extractProductTypeBinomial('Other loricariids')).toBeUndefined();
+  });
+
+  it('refuses the same construction in a title', () => {
+    expect(extractScientificName('Mystery Fish (Assorted cichlids)')).toBeUndefined();
+  });
+
+  it('still accepts a real binomial that merely starts with O', () => {
+    expect(extractProductTypeBinomial('Osteoglossum bicirrhosum')).toBe('Osteoglossum bicirrhosum');
   });
 });

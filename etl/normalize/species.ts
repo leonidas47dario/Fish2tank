@@ -40,21 +40,108 @@ export interface SpeciesMatch {
 const SCIENTIFIC_IN_PARENS = /\(\s*([A-Z][a-z]{2,})\s+([a-z]{2,})(?:\s+([a-z]{2,}))?\s*\)/;
 
 /**
+ * The same binomial, but with the vendor's qualifier still to come inside the
+ * parens - a quoted cultivar, a locality, a `var.` clause.
+ *
+ * WHY THIS PATH EXISTS, AND WHY IT WAS NOT MERELY A MISS. Requiring the
+ * closing paren directly after the epithet made the extractor blind to the
+ * commonest way a store qualifies a fish. The title then fell through to
+ * common-name guessing - and because a derived catalog name is shared across
+ * relatives, the guess landed on the wrong animal rather than on nothing:
+ *
+ *   "Peruvian Altum Angelfish (Pterophyllum scalare "Peruvian Altum")"
+ *      matched the name "Angelfish"    -> filed under Pterophyllum ALTUM
+ *   "Orange Venezuelan Cory Catfish (Corydoras aeneus "Venezuela")"
+ *      matched the name "Cory Catfish" -> filed under Corydoras HABROSUS
+ *   "Electric Blue Ram Dwarf Cichlid (Mikrogeophagus ramirezi "Electric Blue")"
+ *      matched "Ram Dwarf Cichlid"     -> filed under M. ALTISPINOSUS
+ *
+ * Across the shipped warehouse this reads 652 binomials the strict pattern
+ * missed: 473 the catalog knows, which now resolve correctly, and 179 it does
+ * not, which now correctly refuse rather than being guessed onto a relative.
+ *
+ * BINOMIAL ONLY, never a trinomial. Without the closing paren anchoring the
+ * end, a third word is far likelier to be a colour than an epithet -
+ * "(Alestopetersius brichardi red / blue)" is one fish, not a subspecies.
+ *
+ * The epithet needs three letters here, where the strict pattern accepts two.
+ * A closing bracket is strong evidence the thing in front of it was a name; a
+ * space is not, and "Bred by:" reads as the genus "Bred" and the epithet "by".
+ * That one would not merely fail to match - an unrecognised binomial gets
+ * MINTED as a species, so the catalog would gain a fish called `sp_bred_by`.
+ */
+const SCIENTIFIC_BEFORE_QUALIFIER = /\(\s*([A-Z][a-z]{2,})\s+([a-z]{3,})(?=[\s,;/"'‘’“”])/;
+
+/**
+ * An explicit cross. A hybrid is not either of its parents, so recording it as
+ * the first one would put a hybrid's price into a real species' median. The
+ * strict pattern never saw these - the parens do not close after the epithet -
+ * so the looser one has to be told.
+ */
+const EXPLICIT_HYBRID = /\(\s*[A-Z][a-z]{2,}\s+[a-z]{2,}[^)]*?\s[xX×]\s/;
+
+/**
  * Open-nomenclature qualifiers, not species epithets. "Cichlasoma sp." means
  * "some Cichlasoma we have not identified" - treating `sp` as an epithet
  * invented a species called "Cichlasoma sp" that 57 listings then pooled into.
  */
 const NOT_AN_EPITHET = new Set(['sp', 'spp', 'cf', 'aff', 'var', 'nov', 'indet']);
 
+/**
+ * English determiners a vendor uses to label a catch-all bucket. Never a genus.
+ *
+ * Imperial Tropicals files its odds and ends under product_type "Other
+ * catfish" and "Other loricariids", which have the exact Capitalised-word
+ * lowercase-word shape of a binomial. Before this guard those minted two
+ * species that 246 listings pooled into - one of them holding eight
+ * unrelated fish under the name "Catfish", which is the ambiguous-generic
+ * failure the catalog quality gate exists to catch.
+ *
+ * 'other' is the one observed in the wild; the rest are the same construction
+ * and are listed so the next vendor bucket does not have to break the build
+ * first.
+ */
+const NOT_A_GENUS = new Set([
+  'other', 'assorted', 'misc', 'miscellaneous', 'mixed', 'various', 'unknown', 'unsorted',
+]);
+
+/**
+ * English words that sit exactly where an epithet would, once the closing
+ * paren stops guarding the position. "(Pack of 10 fish)" is a genus "Pack" and
+ * an epithet "of" as far as the shape is concerned.
+ */
+const NOT_LATIN = new Set([
+  'of', 'the', 'and', 'or', 'with', 'for', 'per', 'each', 'pack', 'packs', 'lot',
+  'fish', 'plant', 'plants', 'male', 'female', 'males', 'females', 'pair', 'pairs',
+  'group', 'groups', 'set', 'box', 'combo', 'assorted', 'mixed', 'live', 'tank',
+  'bred', 'raised', 'grown', 'small', 'medium', 'large', 'inch', 'inches', 'cm',
+  // Observed in a real title: "(Collembola springtails sp.)". The common name
+  // sits where the epithet belongs, and would mint sp_collembola_springtails.
+  'springtails',
+]);
+
+const notAnEpithet = (w: string) => NOT_AN_EPITHET.has(w) || NOT_LATIN.has(w);
+
 export function extractScientificName(title: string): string | undefined {
-  const m = SCIENTIFIC_IN_PARENS.exec(title);
-  if (!m) return undefined;
-  const [, genus, epithet, sub] = m;
-  if (!epithet || NOT_AN_EPITHET.has(epithet)) return undefined;
-  const parts = [genus, epithet];
-  // A trailing qualifier ("Pterophyllum scalare sp") is dropped, not kept.
-  if (sub && !NOT_AN_EPITHET.has(sub)) parts.push(sub);
-  return parts.join(' ');
+  const m = title.match(SCIENTIFIC_IN_PARENS);
+  if (m) {
+    const [, genus, epithet, sub] = m;
+    if (!genus || NOT_A_GENUS.has(genus.toLowerCase())) return undefined;
+    if (!epithet || notAnEpithet(epithet)) return undefined;
+    const parts = [genus, epithet];
+    // A trailing qualifier ("Pterophyllum scalare sp") is dropped, not kept.
+    if (sub && !notAnEpithet(sub)) parts.push(sub);
+    return parts.join(' ');
+  }
+
+  // The vendor qualified the binomial instead of closing the bracket after it.
+  if (EXPLICIT_HYBRID.test(title)) return undefined;
+  const q = title.match(SCIENTIFIC_BEFORE_QUALIFIER);
+  if (!q) return undefined;
+  const [, genus, epithet] = q;
+  if (!genus || NOT_A_GENUS.has(genus.toLowerCase())) return undefined;
+  if (!epithet || notAnEpithet(epithet)) return undefined;
+  return `${genus} ${epithet}`;
 }
 
 /**
@@ -69,7 +156,7 @@ export function extractScientificName(title: string): string | undefined {
  * The field is structured metadata rather than marketing copy, so it is a
  * cleaner signal than the title - but it is also frequently a bare genus
  * ("Sarcophyton sp.") or empty, both of which must resolve to nothing rather
- * than mint a fake species. Same NOT_AN_EPITHET guard as the title path.
+ * than mint a fake species. Same NOT_A_GENUS / epithet guards as the title path.
  */
 const BINOMIAL_BARE = /^([A-Z][a-z]{2,})\s+([a-z]{2,})(?:\s+([a-z]{2,}))?\.?$/;
 
@@ -77,9 +164,10 @@ export function extractProductTypeBinomial(productType: string | undefined): str
   const m = productType?.trim().match(BINOMIAL_BARE);
   if (!m) return undefined;
   const [, genus, epithet, sub] = m;
-  if (!epithet || NOT_AN_EPITHET.has(epithet)) return undefined;
+  if (!genus || NOT_A_GENUS.has(genus.toLowerCase())) return undefined;
+  if (!epithet || notAnEpithet(epithet)) return undefined;
   const parts = [genus, epithet];
-  if (sub && !NOT_AN_EPITHET.has(sub)) parts.push(sub);
+  if (sub && !notAnEpithet(sub)) parts.push(sub);
   return parts.join(' ');
 }
 

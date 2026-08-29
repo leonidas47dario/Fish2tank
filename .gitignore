@@ -36,6 +36,11 @@ etl/**/*.js
 .remember/
 .tmp/
 
+# Git worktrees live here so concurrent sessions stop switching each other's
+# branches. They are whole checkouts of this repo - committing one would nest
+# the repository inside itself. .claude/skills/ IS tracked, deliberately.
+.claude/worktrees/
+
 # Stray screenshots from browser-driven verification.
 catalog-tiles.png
 reveal.png

@@ -4,34 +4,42 @@
  *   npm run images
  *
  * Writes data/market/images.jsonl, which build-warehouse.ts loads into
- * dim_image. Images without a stateable licence are dropped, not shipped.
+ * dim_image.
+ *
+ * Images we cannot ACCOUNT FOR are dropped, not shipped. That used to mean
+ * "no stateable licence"; spec 002 changed it to "no URL a human can open to
+ * see where this came from", because vendor listing photos have no licence and
+ * are shipped deliberately with visible credit. See `isPublishable`.
  */
-import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
-import { fetchSpeciesPortrait, isPublishable, type SpeciesImage } from './sources/wikimedia';
-import { surrogateKey } from './build-warehouse';
+import { readFileSync, existsSync } from 'node:fs';
+import {
+  fetchSpeciesPortrait, searchCommonsPortrait, isPublishable, type SpeciesImage,
+} from './sources/wikimedia';
+import { fetchVendorPortrait } from './sources/vendor';
+import { IMAGES_PATH, isBundleable, isBundleableUrl, mergeRows, readRows, toRow, writeRows } from './images-jsonl';
 
-const OUT = 'data/market/images.jsonl';
 const CATALOG = 'src/data/seed/marts/catalog.json';
 const MARKET = 'src/data/seed/marts/market-index.json';
 
 /**
- * How many species to fetch portraits for. Every one of them, by default.
- *
- * This was capped at 320 on an estimate of ~27MB for full coverage. That
- * estimate was wrong: measured, 695 bundled portraits come to 9.6MB - about
- * 14KB each after downscaling - against a 1GB GitHub Pages limit. The cap was
- * costing two thirds of the library its picture to save nothing.
- *
- * Species are still fetched most-listed first, so a run stopped early (or
- * capped via PORTRAIT_LIMIT for a quick pass) covers the fish you are most
- * likely to actually meet. Species with no usable image keep their silhouette.
+ * How many species to attempt without a row, per run. Every one of them, by
+ * default.
  */
 const LIMIT = Number(process.env.PORTRAIT_LIMIT ?? Number.POSITIVE_INFINITY);
 
 interface CatalogRow { speciesId: string; commonName: string; scientificName?: string }
 
-/** Species worth a picture, most-listed first. */
-function targets(): CatalogRow[] {
+/**
+ * Species that still need a picture, most-listed first.
+ *
+ * Gap-fill, not rebuild. This used to re-fetch all 700 rows it already had on
+ * every run, which made a re-run cost ten minutes of Wikimedia calls to change
+ * nothing, and destroyed the committed file if it was interrupted. Now it
+ * attempts only species with no BUNDLEABLE row, so the step is idempotent and
+ * safe to run after every catalog change. "Bundleable" rather than "any"
+ * because a row the downscaler cannot decode is a gap wearing a hat.
+ */
+function targets(have: Set<string>): CatalogRow[] {
   if (!existsSync(CATALOG)) {
     throw new Error(`${CATALOG} not found - run "npm run marts" first.`);
   }
@@ -42,71 +50,109 @@ function targets(): CatalogRow[] {
 
   return catalog.species
     .filter((s) => s.scientificName)
+    .filter((s) => !have.has(s.speciesId))
     .sort((a, b) =>
       (market.species[b.speciesId]?.totalListings ?? 0) - (market.species[a.speciesId]?.totalListings ?? 0) ||
       a.commonName.localeCompare(b.commonName))
     .slice(0, LIMIT);
 }
+
+/** Product URLs on record for a species, in-stock listings first. */
+function productUrls(speciesId: string): string[] {
+  if (!existsSync(MARKET)) return [];
+  const market = JSON.parse(readFileSync(MARKET, 'utf8')) as {
+    species: Record<string, { stores?: { productUrl?: string; productInStock?: boolean }[] }>;
+  };
+  return (market.species[speciesId]?.stores ?? [])
+    .filter((s) => s.productUrl)
+    .sort((a, b) => Number(b.productInStock ?? false) - Number(a.productInStock ?? false))
+    .map((s) => s.productUrl!);
+}
+
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+/**
+ * Routes in preference order.
+ *
+ * Wikipedia first, then Commons search, then the shop. A stated free licence
+ * beats borrowed art whenever both exist, so the order is the policy.
+ */
+async function resolve(species: CatalogRow): Promise<{ image: SpeciesImage; via: string } | undefined> {
+  // Two conditions, and they are different questions. isPublishable asks
+  // whether we can say where the picture came from; isBundleableUrl asks
+  // whether the downscaler can actually decode it. A Commons .tif passes the
+  // first and fails the second, and accepting it there is what turned the
+  // retry of the five .tif species into a no-op loop.
+  const usable = (i: SpeciesImage | undefined): i is SpeciesImage =>
+    isPublishable(i) && isBundleableUrl(i.url);
+
+  const article = await fetchSpeciesPortrait(species.speciesId, species.scientificName!);
+  if (usable(article)) return { image: article, via: 'article' };
+
+  await sleep(200);
+  const commons = await searchCommonsPortrait(species.speciesId, species.scientificName!);
+  if (usable(commons)) return { image: commons, via: 'commons' };
+
+  for (const url of productUrls(species.speciesId)) {
+    await sleep(200);
+    const vendor = await fetchVendorPortrait(species.speciesId, url);
+    if (usable(vendor)) return { image: vendor, via: 'vendor' };
+  }
+  return undefined;
+}
+
 async function main() {
-  mkdirSync('data/market', { recursive: true });
+  const existing = readRows();
+  // A row whose image the bundler cannot decode does NOT count as covered.
+  // Otherwise the five .tif rows in the committed data hold their species
+  // hostage forever: counted as done here, dropped at bundle time, never
+  // retried by any other route. Treating them as gaps lets Commons search,
+  // the vendor route, or the subagent stage replace them.
+  const unbundleable = existing.filter((r) => !isBundleable(r));
+  const have = new Set(existing.filter(isBundleable).map((r) => r.species_id));
+  const wanted = targets(have);
+
+  console.log(`  ${have.size} species already have a bundleable image row`);
+  if (unbundleable.length > 0) {
+    console.log(`  ${unbundleable.length} rows the bundler cannot decode, retrying those species:`);
+    for (const r of unbundleable) console.log(`    ${r.species_id}  ${r.url.split('/').pop()}`);
+  }
+  console.log(`  attempting ${wanted.length} without one\n`);
 
   const found: SpeciesImage[] = [];
+  const byRoute: Record<string, number> = { article: 0, commons: 0, vendor: 0 };
   const missing: string[] = [];
-  const unlicensed: string[] = [];
-
-  const wanted = targets();
-  console.log(`  fetching portraits for the ${wanted.length} most-listed species\n`);
 
   for (const species of wanted) {
     process.stdout.write(`  ${species.commonName.slice(0, 26).padEnd(26)}`);
     try {
-      const image = await fetchSpeciesPortrait(species.speciesId, species.scientificName!);
-      if (isPublishable(image)) {
-        found.push(image);
-        console.log(`ok  ${image.license}`);
-      } else if (image) {
-        unlicensed.push(species.commonName);
-        console.log('dropped (no licence metadata)');
+      const hit = await resolve(species);
+      if (hit) {
+        found.push(hit.image);
+        byRoute[hit.via] = (byRoute[hit.via] ?? 0) + 1;
+        console.log(`ok  via ${hit.via}  ${hit.image.license ?? hit.image.provenance}`);
       } else {
         missing.push(species.commonName);
-        console.log('no image');
+        console.log('no image on any route');
       }
     } catch (e) {
       missing.push(species.commonName);
       console.log(`failed (${e instanceof Error ? e.message : 'error'})`);
     }
-    // Wikimedia asks for politeness rather than enforcing a rate limit.
     await sleep(300);
   }
 
-  const rows = found.map((i) => ({
-    image_key: surrogateKey(i.url).toString(),
-    species_id: i.speciesId,
-    role: i.role,
-    source: i.source,
-    url: i.url,
-    license: i.license ?? null,
-    artist: i.artist ?? null,
-    attribution_url: i.attributionUrl ?? null,
-    width: i.width ?? null,
-    height: i.height ?? null,
-    retrieved_at: i.retrievedAt,
-  }));
-  writeFileSync(OUT, rows.map((r) => JSON.stringify(r)).join('\n') + '\n');
+  const merged = mergeRows(existing, found.map(toRow));
+  writeRows(merged);
 
   console.log('\n─── images ───');
-  console.log(`  licensed portraits  ${found.length} / ${wanted.length} attempted`);
-  console.log(`  no image found      ${missing.length}`);
-  console.log(`  dropped, unlicensed ${unlicensed.length}`);
-  const byLicense = found.reduce<Record<string, number>>((a, i) => {
-    const k = i.license ?? '?';
-    a[k] = (a[k] ?? 0) + 1;
-    return a;
-  }, {});
-  console.log(`  licences            ${JSON.stringify(byLicense)}`);
-  console.log(`\n  wrote ${OUT}`);
+  console.log(`  attempted           ${wanted.length}`);
+  console.log(`  resolved            ${found.length}  ${JSON.stringify(byRoute)}`);
+  console.log(`  still uncovered     ${missing.length}`);
+  console.log(`  rows in ${IMAGES_PATH}  ${merged.length}`);
+  if (found.length === 0 && wanted.length > 0) {
+    console.log('  WARNING: attempted species but resolved none - check network and API shapes.');
+  }
 }
 
 main().catch((e) => {

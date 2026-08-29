@@ -26,7 +26,12 @@ export interface MarketSpeciesStats {
   totalListings: number;
   inStock: number;
   soldOut: number;
-  price: { median: number; min: number; max: number; currency: string };
+  /**
+   * Absent when too few listings carry a size to estimate from. The stores
+   * below are still real and still linked - absence of a price is not absence
+   * of a market. See hasPriceEstimate().
+   */
+  price?: { median: number; min: number; max: number; currency: string };
   sizeRangeIn?: { min: number; max: number };
   priceBySize: MarketSizeBand[];
   stores: Array<{
@@ -38,6 +43,10 @@ export interface MarketSpeciesStats {
     productUrl?: string;
     /** Whether that link points at something in stock. Never inferred. */
     productInStock?: boolean;
+    /** That listing's own asking price. One observation, not an aggregate. */
+    productPrice?: number;
+    /** And the option text it is priced for - "3 Fish", "4 - 4.5 inches". */
+    productSizeLabel?: string;
   }>;
   listedBetween?: { earliest: string; latest: string };
 }
@@ -47,6 +56,8 @@ export interface MarketIndex {
   builtAt: string;
   minimumSampleCount: number;
   sources: Array<{ id: string; name: string; host: string; listingsFetched: number; retrievedAt: string }>;
+  /** Vendors the ETL could not reach. Present only on a --allow-partial build. */
+  partial?: Array<{ storeId: string; reason: string }>;
   species: Record<string, MarketSpeciesStats>;
   unmatchedScientificNames: Array<{ scientificName: string; listings: number }>;
 }
@@ -60,6 +71,20 @@ export const STORE_NAMES: Record<string, string> = Object.fromEntries(
 export function marketFor(speciesId: string | undefined): MarketSpeciesStats | undefined {
   if (!speciesId) return undefined;
   return MARKET_INDEX.species[speciesId];
+}
+
+/**
+ * Whether this species has enough size-bearing listings to be worth a number.
+ *
+ * The distinction the whole panel turns on: a species can have real vendors,
+ * real links and real asking prices and still not support an estimate. Ask
+ * this before rendering anything that reads as "what it costs"; render the
+ * store references either way.
+ */
+export function hasPriceEstimate(
+  stats: MarketSpeciesStats | undefined,
+): stats is MarketSpeciesStats & { price: NonNullable<MarketSpeciesStats['price']> } {
+  return stats?.price !== undefined;
 }
 
 /**
