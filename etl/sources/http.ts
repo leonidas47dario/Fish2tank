@@ -29,6 +29,41 @@ export interface PoliteOptions {
 }
 
 /**
+ * Tell a host being down apart from our own network blocking that host.
+ *
+ * A corporate web filter answers for the origin, so the reply is a plain 5xx
+ * carrying an HTML interstitial rather than anything the host sent. It looks
+ * exactly like an outage, and unlike an outage it does not recover - so a
+ * refresh gets retried for an hour against a site that was never down. On
+ * 2026-08-29 that was predatoryfins.com behind a Palo Alto / Menlo filter, and
+ * the whole diagnosis was one look at the response body.
+ *
+ * It lives here rather than in shopify.ts because it is a property of this
+ * network, not of any one vendor, and the big-box sources are likelier to be
+ * categorised than the small Shopify shops.
+ *
+ * Deliberately narrow, and only ever on the failure path: it needs BOTH an
+ * HTML doctype and a named filter vendor, so a genuine HTML error page from a
+ * real origin still reports the same terse message it always did.
+ */
+const FILTER_VENDORS = /menlosecurity|paloCategory|zscaler|forcepoint|bluecoat|websense|umbrella\.com/i;
+
+async function filterHint(res: Response): Promise<string> {
+  try {
+    const body = (await res.clone().text()).slice(0, 4000);
+    if (!/^\s*<(!doctype|html)/i.test(body)) return '';
+    const filter = body.match(FILTER_VENDORS);
+    if (!filter) return '';
+    return ` - the response is an HTML interstitial from a network filter (matched "${filter[0]}"),`
+      + ' not the host. It is probably up and unreachable from this network;'
+      + ' retrying will not help.';
+  } catch {
+    // A diagnostic that masks the failure it describes is worse than none.
+    return '';
+  }
+}
+
+/**
  * GET with retries on the failures that are worth retrying, and only those.
  *
  * A 404 or a 403 is an answer, not a hiccup: retrying it just means asking a
@@ -49,7 +84,7 @@ export async function getWithRetry(url: string, options: PoliteOptions = {}): Pr
 
     const retryable = res.status === 429 || res.status >= 500;
     if (!retryable || attempt >= maxRetries) {
-      throw new Error(`GET ${url} failed: HTTP ${res.status}`);
+      throw new Error(`GET ${url} failed: HTTP ${res.status}${await filterHint(res)}`);
     }
     // Honour Retry-After whenever the host sends one - including 0, which
     // means "retry now" and must not be mistaken for "header absent".
@@ -84,7 +119,7 @@ export async function postJsonWithRetry(
 
     const retryable = res.status === 429 || res.status >= 500;
     if (!retryable || attempt >= maxRetries) {
-      throw new Error(`POST ${url} failed: HTTP ${res.status}`);
+      throw new Error(`POST ${url} failed: HTTP ${res.status}${await filterHint(res)}`);
     }
     const header = res.headers.get('retry-after');
     const retryAfter = header === null ? NaN : Number(header);
