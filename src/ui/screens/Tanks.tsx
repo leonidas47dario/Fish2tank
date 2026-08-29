@@ -14,6 +14,7 @@ import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { setTankPhoto } from '@/data/repositories';
 import { formatVolume } from '@/domain/units';
+import type { Aquarium } from '@/domain/types';
 import { useTankSummaries } from '../hooks';
 
 export default function Tanks() {
@@ -38,7 +39,7 @@ export default function Tanks() {
 }
 
 function TankCard({ aquarium, stats, photoUrl }: {
-  aquarium: { id: string; name: string; volume?: Parameters<typeof formatVolume>[0] };
+  aquarium: Pick<Aquarium, 'id' | 'name' | 'volume' | 'dimensions'>;
   stats: { fish: number; species: number; estimatedValue?: number };
   photoUrl?: string;
 }) {
@@ -84,11 +85,22 @@ function TankCard({ aquarium, stats, photoUrl }: {
               <span>${Math.round(stats.estimatedValue).toLocaleString()} <span className="muted">est.</span></span>
             )}
           </span>
-          {!aquarium.volume && (
-            <span className="badge badge--insufficient-data">
-              <span aria-hidden="true">?</span> Unmeasured
-            </span>
-          )}
+          {/* Volume and dimensions gate different rules: volume alone clears the
+              stocking minimum, but the footprint and adult-size checks read
+              dimensions separately (engine.ts), so a tank with only a volume is
+              still partly unscreenable. Saying "Unmeasured" until both are in
+              would understate the 20G and 40G; dropping the badge the moment a
+              volume lands would overstate them. So the badge names what is
+              actually still missing. */}
+          {(() => {
+            if (aquarium.volume && aquarium.dimensions) return null;
+            const label = aquarium.volume ? 'Needs dimensions' : 'Unmeasured';
+            return (
+              <span className="badge badge--insufficient-data">
+                <span aria-hidden="true">?</span> {label}
+              </span>
+            );
+          })()}
         </span>
       </Link>
 
