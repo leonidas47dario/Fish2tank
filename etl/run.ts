@@ -23,6 +23,8 @@ const OUT_DIR = 'data/market';
 const APP_INDEX = 'src/data/seed/marts/market-index.json';
 
 const offline = process.argv.includes('--offline');
+/** Publish an index built from fewer stores than STORES declares. See main(). */
+const allowPartial = process.argv.includes('--allow-partial');
 const catalog = SPECIES_CATALOG.map((e) => e.species);
 
 async function main() {
@@ -32,6 +34,7 @@ async function main() {
 
   const allListings: MarketListing[] = [];
   const sources: Array<(typeof STORES)[number] & { listingsFetched: number; retrievedAt: string }> = [];
+  const failures: Array<{ storeId: string; reason: string }> = [];
 
   for (const store of STORES) {
     const rawPath = join(RAW_DIR, `${store.id}.json`);
@@ -40,7 +43,8 @@ async function main() {
 
     if (offline) {
       if (!existsSync(rawPath)) {
-        console.error(`  ${store.id}: no cached snapshot at ${rawPath}, skipping`);
+        console.error(`  ${store.name}: no cached snapshot at ${rawPath} -> SKIPPED`);
+        failures.push({ storeId: store.id, reason: `no cached snapshot at ${rawPath}` });
         continue;
       }
       const cached = JSON.parse(readFileSync(rawPath, 'utf8')) as { retrievedAt: string; products: ShopifyProduct[] };
@@ -48,9 +52,20 @@ async function main() {
       console.log(`  ${store.name}: ${products.length} products from cache (${cached.retrievedAt})`);
     } else {
       process.stdout.write(`  ${store.name}: fetching`);
-      products = await fetchAllProducts(store.host, {
-        onPage: (page, count) => process.stdout.write(` p${page}:${count}`),
-      });
+      try {
+        products = await fetchAllProducts(store.host, {
+          onPage: (page, count) => process.stdout.write(` p${page}:${count}`),
+        });
+      } catch (e) {
+        // One small business's server being down must not discard the nine
+        // stores that answered. Recorded, never swallowed - the run still
+        // refuses to publish below.
+        const reason = e instanceof Error ? e.message : String(e);
+        process.stdout.write(`  -> FAILED\n`);
+        console.error(`      ${reason}`);
+        failures.push({ storeId: store.id, reason });
+        continue;
+      }
       process.stdout.write(`  -> ${products.length} products\n`);
       writeFileSync(rawPath, JSON.stringify({ store: store.id, retrievedAt, products }, null, 2));
     }
@@ -61,13 +76,44 @@ async function main() {
   }
 
   // --- Outputs ------------------------------------------------------------
+  // The diagnostic dumps are always written: they are how you work out what a
+  // partial run actually got, and nothing ships from them.
   writeFileSync(join(OUT_DIR, 'listings.jsonl'), allListings.map((l) => JSON.stringify(l)).join('\n') + '\n');
   writeFileSync(join(OUT_DIR, 'listings.csv'), toCsv(allListings));
 
-  const index = buildMarketIndex(allListings, { sources });
-  writeFileSync(APP_INDEX, JSON.stringify(index, null, 2));
+  const index = buildMarketIndex(allListings, {
+    sources,
+    ...(failures.length ? { partial: failures } : {}),
+  });
 
-  report(allListings, index);
+  report(allListings, index, failures);
+
+  /**
+   * A partial refresh must not quietly degrade what the app ships.
+   *
+   * Every median, and the market-scarcity denominator behind it, is computed
+   * over whatever stores answered. Overwriting market-index.json after a
+   * nine-of-ten run silently reprices the catalog against a smaller market,
+   * and nothing in the app would say so. This is also how the shipped index
+   * came to list 8 vendors while STORES declared 10: an offline run skipped
+   * the two with no snapshot and published anyway.
+   *
+   * So the default is to refuse, and --allow-partial is the explicit,
+   * recorded way to say you meant it.
+   */
+  if (failures.length && !allowPartial) {
+    console.error(`\n  ✗ ${failures.length} of ${STORES.length} stores failed - ${APP_INDEX} NOT overwritten.`);
+    console.error('    Re-run when they are up, or pass --allow-partial to publish without them.');
+    process.exitCode = 1;
+    return;
+  }
+
+  writeFileSync(APP_INDEX, JSON.stringify(index, null, 2));
+  console.log(`\n  wrote ${OUT_DIR}/listings.jsonl, ${OUT_DIR}/listings.csv, ${APP_INDEX}`);
+  if (failures.length) {
+    console.warn(`  ⚠ published WITHOUT ${failures.map((f) => f.storeId).join(', ')} (--allow-partial).`);
+    console.warn('    Prices and market scarcity are computed over the stores that answered.');
+  }
 }
 
 function toCsv(listings: MarketListing[]): string {
@@ -88,19 +134,24 @@ function toCsv(listings: MarketListing[]): string {
   return [cols.join(','), ...rows].join('\n') + '\n';
 }
 
-function report(listings: MarketListing[], index: ReturnType<typeof buildMarketIndex>) {
+function report(
+  listings: MarketListing[],
+  index: ReturnType<typeof buildMarketIndex>,
+  failures: Array<{ storeId: string; reason: string }>,
+) {
   const matched = listings.filter((l) => l.speciesId).length;
   const sized = listings.filter((l) => l.size).length;
   const soldOut = listings.filter((l) => !l.available).length;
 
   console.log('\n─── ETL summary ───');
+  console.log(`  stores answered    ${index.sources.length} of ${STORES.length}`);
   console.log(`  listings           ${listings.length}`);
   console.log(`  sold out           ${soldOut}  (${pct(soldOut, listings.length)})  <- the back catalogue`);
   console.log(`  with a real size   ${sized}  (${pct(sized, listings.length)})`);
   console.log(`  matched to catalog ${matched}  (${pct(matched, listings.length)})`);
   console.log(`  species indexed    ${Object.keys(index.species).length}  (>= ${index.minimumSampleCount} sized listings)`);
   console.log(`  unmatched binomials ${index.unmatchedScientificNames.length}`);
-  console.log(`\n  wrote ${OUT_DIR}/listings.jsonl, ${OUT_DIR}/listings.csv, ${APP_INDEX}`);
+  for (const f of failures) console.log(`  ✗ ${f.storeId}: ${f.reason}`);
 }
 
 const pct = (n: number, d: number) => (d ? `${Math.round((n / d) * 100)}%` : '0%');

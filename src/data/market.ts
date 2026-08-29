@@ -47,6 +47,8 @@ export interface MarketIndex {
   builtAt: string;
   minimumSampleCount: number;
   sources: Array<{ id: string; name: string; host: string; listingsFetched: number; retrievedAt: string }>;
+  /** Vendors the ETL could not reach. Present only on a --allow-partial build. */
+  partial?: Array<{ storeId: string; reason: string }>;
   species: Record<string, MarketSpeciesStats>;
   unmatchedScientificNames: Array<{ scientificName: string; listings: number }>;
 }

@@ -30,6 +30,8 @@ export interface BuildOptions {
   minimumSampleCount?: number;
   builtAt?: string;
   sources?: Array<StoreConfig & { listingsFetched: number; retrievedAt: string }>;
+  /** Stores that were configured but did not contribute. See MarketIndex.partial. */
+  partial?: Array<{ storeId: string; reason: string }>;
 }
 
 export function buildMarketIndex(listings: MarketListing[], options: BuildOptions = {}): MarketIndex {
@@ -126,6 +128,7 @@ export function buildMarketIndex(listings: MarketListing[], options: BuildOption
     builtAt: options.builtAt ?? new Date().toISOString(),
     minimumSampleCount,
     sources: options.sources ?? [],
+    ...(options.partial?.length ? { partial: options.partial } : {}),
     species,
     unmatchedScientificNames: [...unmatched.entries()]
       .map(([scientificName, listings]) => ({ scientificName, listings }))

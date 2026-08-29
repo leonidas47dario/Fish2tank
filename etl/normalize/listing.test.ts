@@ -29,17 +29,18 @@ function product(title: string, sizes: string[], price: number): ShopifyProduct 
     updated_at: '2026-01-01T00:00:00Z',
     variants: sizes.map((option1, i) => ({
       id: id * 1000 + i,
-      product_id: id,
       title: option1,
       option1,
       option2: null,
       option3: null,
+      sku: null,
       price: String(price),
       compare_at_price: null,
       available: true,
+      created_at: '2026-01-01T00:00:00Z',
       updated_at: '2026-01-01T00:00:00Z',
     })),
-  } as ShopifyProduct;
+  };
 }
 
 const normalize = (products: ShopifyProduct[]) =>

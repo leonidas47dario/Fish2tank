@@ -144,6 +144,16 @@ export interface MarketIndex {
   /** Minimum comparable listings before stats are published at all. */
   minimumSampleCount: number;
   sources: Array<StoreConfig & { listingsFetched: number; retrievedAt: string }>;
+  /**
+   * Stores that STORES declares but that did not contribute to this build.
+   *
+   * Present only on an index published with --allow-partial. Every median here
+   * and the market-scarcity denominator behind it were computed over the
+   * stores that answered, so an index missing a vendor is a different
+   * measurement, not the same one with a gap. Recorded in the artifact rather
+   * than only in a console line nobody kept.
+   */
+  partial?: Array<{ storeId: string; reason: string }>;
   species: Record<string, MarketSpeciesStats>;
   /**
    * Titles that look like a species we do not have in the catalog. Surfaced so
