@@ -1,9 +1,11 @@
 /**
  * One species, opened from the catalog.
  *
- * The card is shown large, then the things you can only say about a species
- * rather than an individual: its care profile, what the vendors charge, and
- * where the picture came from.
+ * This is the screen for the question asked standing in the aisle, before the
+ * fish is yours: what is it, how big does it get, what tank does it need, and
+ * what do the shops charge. The photograph is shown large, then the facts, and
+ * where a fact does not exist the screen says so rather than leaving a gap the
+ * reader has to interpret.
  *
  * This is also where the art choice lives. A species in your collection
  * defaults to your own photo - the product's claim is that the exact specimen
@@ -21,15 +23,27 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { db } from '@/data/db';
 import type { Id } from '@/domain/types';
-import { addPhotos, ensureSpecimenForHolding, type CaptureFile } from '@/data/repositories';
+import {
+  addPhotos, addToDreamList, ensureSpecimenForHolding, removeFromDreamList, type CaptureFile,
+} from '@/data/repositories';
 import {
   CATALOG_BY_SPECIES, cardPrice, marketAndScarcity, ownership, portraitCredit, type CatalogCard,
 } from '@/data/catalog';
 import { deriveQuantity } from '@/domain/holdings';
 import { formatVolume } from '@/domain/units';
-import { FishCard } from '../components/FishCard';
 import { MarketPanel } from '../components/MarketPanel';
 import { OwnPhotoStrip } from '../components/OwnPhotoStrip';
+import { Plate, useCardArt } from '../components/Plate';
+import { ScarcityBadge, TierBadge } from '../components/Badges';
+import { CaretLeftIcon, PlusIcon } from '../components/Icons';
+import type { DiscoveryTier } from '@/domain/types';
+import { SCARCITY_LABELS, type MarketScarcityBand } from '@/engine/rarity/market-scarcity';
+
+const TIERS: readonly DiscoveryTier[] = ['familiar', 'uncommon', 'rare', 'epic', 'legendary'];
+const isTier = (v: string | undefined): v is DiscoveryTier =>
+  v !== undefined && (TIERS as readonly string[]).includes(v);
+const isScarcityBand = (v: string | undefined): v is MarketScarcityBand =>
+  v !== undefined && v in SCARCITY_LABELS;
 
 export default function SpeciesDetail() {
   const { id } = useParams<{ id: string }>();
@@ -38,16 +52,17 @@ export default function SpeciesDetail() {
 
   const data = useLiveQuery(async () => {
     if (!id) return undefined;
-    const [specimens, snapshots, holdings, lifeEvents, residencies, media] = await Promise.all([
+    const [specimens, snapshots, holdings, lifeEvents, residencies, media, dream] = await Promise.all([
       db.specimens.where('speciesId').equals(id).toArray(),
       db.raritySnapshots.where('speciesId').equals(id).toArray(),
       db.holdings.where('speciesId').equals(id).toArray(),
       db.lifeEvents.toArray(), db.residencies.toArray(), db.media.toArray(),
+      db.dreamList.where('speciesId').equals(id).first(),
     ]);
     const ownPhotos = media
       .filter((m) => m.kind === 'photo' && m.specimenIds.some((sid) => specimens.some((s) => s.id === sid)))
       .sort((a, b) => b.capturedAt.localeCompare(a.capturedAt));
-    return { specimens, snapshots, holdings, lifeEvents, residencies, ownPhotos };
+    return { specimens, snapshots, holdings, lifeEvents, residencies, ownPhotos, dream };
   }, [id]);
 
   const pref = useLiveQuery(() => (id ? db.cardPrefs.get(id) : undefined), [id]);
@@ -56,8 +71,30 @@ export default function SpeciesDetail() {
   const [saving, setSaving] = useState(false);
   const [photoError, setPhotoError] = useState<string | undefined>();
 
-  if (!id || !species) return <p className="empty">No such species in the catalog.</p>;
-  if (!data) return <p className="muted">Loading…</p>;
+  /* A dead end with no way out is not an empty state. This one is reachable
+     from a stale bookmark or a link written before a catalog rebuild renamed
+     an id, so it says what happened and offers the one door out. */
+  if (!id || !species) {
+    return (
+      <div className="screen">
+        <div className="topbar">
+          <button type="button" className="iconbtn" onClick={() => navigate(-1)} aria-label="Back">
+            <CaretLeftIcon size={22} aria-hidden="true" />
+          </button>
+          <h1 className="topbar__title">Not found</h1>
+        </div>
+        <div className="state">
+          <p className="state__head">No such species in the catalog</p>
+          <p className="state__body">
+            Nothing in the library has the id <span className="data">{id ?? '(none)'}</span>. Catalog
+            ids can change when the species list is rebuilt, so an old link can end up here.
+          </p>
+          <Link to="/catalog" className="state__act">Search the catalog</Link>
+        </div>
+      </div>
+    );
+  }
+  if (!data) return <p className="empty muted">Loading…</p>;
 
   const confirmed = data.specimens.filter((s) => s.identityStatus === 'user-confirmed');
   const currentlyKept = data.holdings.some((h) => {
@@ -74,7 +111,7 @@ export default function SpeciesDetail() {
       specimenCount: data.specimens.length,
       tier: data.snapshots[0]?.tier,
       golden: data.specimens.some((s) => Boolean(s.golden)),
-      onDreamList: false,
+      onDreamList: Boolean(data.dream),
       ownPhotoMediaIds: data.ownPhotos.map((m) => m.id),
     },
     market,
@@ -127,27 +164,115 @@ export default function SpeciesDetail() {
     }
   }
 
-  return (
-    <div className="stack">
-      <button type="button" className="btn--ghost" style={{ alignSelf: 'flex-start' }} onClick={() => navigate(-1)}>
-        ← Back
-      </button>
+  /* What the catalog actually holds for this fish. 47 of 2,178 species have a
+     curated care profile, so on most species this is empty - and an empty
+     profile panel that says nothing is a screen the reader has to interpret. */
+  const profile = [
+    species.adultSizeIn !== undefined
+      && { k: 'Adult size', v: `${Math.round(species.adultSizeIn * 10) / 10}"` },
+    species.minVolumeGal !== undefined
+      && { k: 'Minimum tank', v: formatVolume({ value: species.minVolumeGal, unit: 'gal' }) },
+    species.aggression && { k: 'Temperament', v: species.aggression },
+    species.tempMinC !== undefined && species.tempMaxC !== undefined
+      && { k: 'Temperature', v: `${species.tempMinC}–${species.tempMaxC}°C` },
+    species.predationTags.length > 0 && { k: 'Predation', v: species.predationTags.join(', ') },
+    species.waterZone && { k: 'Water column', v: species.waterZone.replace('-', ' ') },
+  ].filter((r): r is { k: string; v: string } => Boolean(r));
 
-      <div style={{ maxWidth: 260, margin: '0 auto', width: '100%' }}>
-        <FishCard card={card} />
+  const onDream = Boolean(data.dream) && !data.dream?.fulfilledBySpecimenId;
+
+  return (
+    <div className="screen">
+      <div className="topbar">
+        <button type="button" className="iconbtn" onClick={() => navigate(-1)} aria-label="Back">
+          <CaretLeftIcon size={22} aria-hidden="true" />
+        </button>
+        <span className="grow" />
       </div>
 
-      <header className="stack">
-        <h1 style={{ marginBottom: 0 }}>{species.commonName}</h1>
-        {species.scientificName && <p className="muted sci" style={{ marginBottom: 0 }}>{species.scientificName}</p>}
-        {species.aliases.length > 0 && (
-          <p className="xs muted" style={{ marginBottom: 0 }}>Also sold as: {species.aliases.join(', ')}</p>
-        )}
-      </header>
+      <SpeciesHero card={card} />
 
-      {/* --- Card art choice ------------------------------------------- */}
-      <section className="card stack">
-        <h2>Card art</h2>
+      <div className="pad">
+        {/* The binomial is set as the label, in real italic letterforms, and
+            the common name sits under it. This is the one screen where the
+            scientific name is what you are actually matching against a tag. */}
+        {species.scientificName
+          ? (
+            <>
+              <h1 className="specimen-sci">{species.scientificName}</h1>
+              <p className="specimen-common">{species.commonName}</p>
+            </>
+          )
+          : <h1 className="specimen-name">{species.commonName}</h1>}
+
+        <div className="tagrow">
+          {/* Both of these arrive as widened strings from the catalog view
+              model, so they are narrowed here rather than asserted. An unknown
+              tier draws nothing, which is the correct rendering of a tier this
+              build does not have a treatment for. */}
+          {isTier(card.user.tier) && <TierBadge tier={card.user.tier} golden={card.user.golden} />}
+          {isScarcityBand(scarcityBand) && <ScarcityBadge band={scarcityBand} />}
+          <button
+            type="button"
+            className="chip"
+            aria-pressed={onDream}
+            onClick={() => void (onDream ? removeFromDreamList(id) : addToDreamList(id))}
+          >
+            {onDream ? 'On your Dream List' : 'Want one'}
+          </button>
+        </div>
+
+        {species.aliases.length > 0 && (
+          <p className="panel__note panel__note--tight">Also sold as: {species.aliases.join(', ')}</p>
+        )}
+      </div>
+
+      {/* --- Care profile ------------------------------------------------ */}
+      <section className="panel">
+        <h2 className="sec-head">What we know</h2>
+        {profile.length > 0 ? (
+          <dl className="kv">
+            {profile.map((r) => (
+              <div key={r.k} style={{ display: 'contents' }}>
+                <dt>{r.k}</dt>
+                <dd>{r.v}</dd>
+              </div>
+            ))}
+          </dl>
+        ) : (
+          /* Not an empty panel and not a row of dashes. The absence has a
+             cause, and naming it is the difference between "the app is
+             broken" and "nobody has written this profile yet". */
+          <div className="state">
+            <p className="state__head">No care profile for this one</p>
+            <p className="state__body">
+              This species is in the catalog because a store listed it, not because anyone has
+              recorded how big it gets or what it needs. Nothing here is guessed from the family,
+              so a screening against your tanks will say it cannot answer rather than invent one.
+            </p>
+          </div>
+        )}
+        {(species.adultSizeIn === undefined || species.minVolumeGal === undefined) && profile.length > 0 && (
+          <p className="panel__note panel__note--tight">
+            {species.adultSizeIn === undefined && species.minVolumeGal === undefined
+              ? 'Adult size and minimum tank are both unrecorded, so this cannot be screened for fit.'
+              : species.adultSizeIn === undefined
+                ? 'Adult size is unrecorded.'
+                : 'Minimum tank is unrecorded.'}
+          </p>
+        )}
+        {species.sourceLabel && (
+          <p className="panel__note panel__note--tight">
+            {species.sourceUrl
+              ? <>Care data: <a href={species.sourceUrl} target="_blank" rel="noreferrer">{species.sourceLabel}</a></>
+              : <>Care data: {species.sourceLabel}</>}
+          </p>
+        )}
+      </section>
+
+      {/* --- Card art choice --------------------------------------------- */}
+      <section className="panel">
+        <h2 className="sec-head">Card art</h2>
         {hasOwnPhoto ? (
           <>
             <div className="filters">
@@ -162,17 +287,17 @@ export default function SpeciesDetail() {
                 Reference portrait
               </button>
             </div>
-            <p className="xs muted" style={{ marginBottom: 0 }}>
+            <p className="panel__note panel__note--tight">
               {species.portrait
                 ? 'Your own photo is the default — it is the fish you actually met.'
                 : 'No reference portrait exists for this species, so your photo is the only art available.'}
             </p>
           </>
         ) : (
-          <p className="small muted" style={{ marginBottom: 0 }}>
+          <p className="panel__note">
             {card.user.inCollection
-              ? 'No photo of yours yet. Add one and it becomes this card\u2019s art.'
-              : 'Catch one and your own photo becomes this card\u2019s art.'}
+              ? 'No photo of yours yet. Add one and it becomes this card’s art.'
+              : 'Catch one and your own photo becomes this card’s art.'}
           </p>
         )}
 
@@ -192,86 +317,85 @@ export default function SpeciesDetail() {
             />
             <button
               type="button"
-              className="btn"
+              className="cta cta--quiet"
+              style={{ marginTop: 'var(--space-3)' }}
               disabled={saving}
               onClick={() => fileRef.current?.click()}
             >
-              {saving ? 'Saving\u2026' : hasOwnPhoto ? '\u2295  Add another photo' : '\u2295  Add your photo'}
+              <PlusIcon size={16} aria-hidden="true" />
+              {saving ? 'Saving…' : hasOwnPhoto ? 'Add another photo' : 'Add your photo'}
             </button>
-            {photoError && <p className="warn" style={{ marginBottom: 0 }}>{photoError}</p>}
+            {photoError && <p className="warn" style={{ marginTop: 'var(--space-3)' }}>{photoError}</p>}
             {data.ownPhotos.length > 0 && (
-              <OwnPhotoStrip
-                mediaIds={data.ownPhotos.map((m) => m.id)}
-                onPick={(mediaId) => void db.cardPrefs.put({
-                  speciesId: id, artSource: 'own', preferredMediaId: mediaId,
-                  updatedAt: new Date().toISOString(),
-                })}
-                selected={usingOwn ? (pref?.preferredMediaId ?? data.ownPhotos[0]!.id) : undefined}
-              />
+              <div style={{ marginTop: 'var(--space-3)' }}>
+                <OwnPhotoStrip
+                  mediaIds={data.ownPhotos.map((m) => m.id)}
+                  onPick={(mediaId) => void db.cardPrefs.put({
+                    speciesId: id, artSource: 'own', preferredMediaId: mediaId,
+                    updatedAt: new Date().toISOString(),
+                  })}
+                  selected={usingOwn ? (pref?.preferredMediaId ?? data.ownPhotos[0]!.id) : undefined}
+                />
+              </div>
             )}
           </>
-        )}
-      </section>
-
-      {/* --- Care profile ------------------------------------------------ */}
-      <section className="card stack">
-        <h2>Profile</h2>
-        <dl className="kv">
-          {species.adultSizeIn !== undefined && (<><dt>Adult size</dt><dd>{Math.round(species.adultSizeIn * 10) / 10}&quot;</dd></>)}
-          {species.minVolumeGal !== undefined && (<><dt>Minimum tank</dt><dd>{formatVolume({ value: species.minVolumeGal, unit: 'gal' })}</dd></>)}
-          {species.aggression && (<><dt>Temperament</dt><dd>{species.aggression}</dd></>)}
-          {species.tempMinC !== undefined && species.tempMaxC !== undefined && (
-            <><dt>Temperature</dt><dd>{species.tempMinC}–{species.tempMaxC}°C</dd></>
-          )}
-          {species.predationTags.length > 0 && (<><dt>Predation</dt><dd>{species.predationTags.join(', ')}</dd></>)}
-        </dl>
-        {species.sourceLabel && (
-          <p className="xs muted" style={{ marginBottom: 0 }}>
-            {species.sourceUrl
-              ? <>Care data: <a href={species.sourceUrl} target="_blank" rel="noreferrer">{species.sourceLabel}</a></>
-              : <>Care data: {species.sourceLabel}</>}
-          </p>
         )}
       </section>
 
       <MarketPanel speciesId={id} />
 
       {/* --- Your specimens ---------------------------------------------- */}
-      <section className="card stack">
+      <section className="panel panel--flush">
         {/* Not "encounters": a fish minted from a kept holding was never met
             anywhere, it has simply always been yours. */}
-        <h2>Your fish</h2>
-        {data.specimens.length === 0 && (
-          <p className="muted small" style={{ marginBottom: 0 }}>
+        <h2 className="sec-head">Your fish</h2>
+        {data.specimens.length === 0 ? (
+          <p className="panel__note" style={{ padding: '0 var(--space-4)' }}>
             {card.user.kept
               ? 'Add a photo above and this becomes a record of the one you keep.'
-              : 'You haven\u2019t caught one yet.'}
+              : 'You haven’t caught one yet.'}
           </p>
+        ) : (
+          data.specimens.map((s) => (
+            <Link key={s.id} to={`/specimen/${s.id}`} className="tankrow">
+              <span className="grow">
+                <span className="tankrow__name">{s.nickname ?? s.rawLabel ?? 'Unnamed specimen'}</span>
+              </span>
+              <span className="tankrow__meta num">{new Date(s.createdAt).toLocaleDateString()}</span>
+            </Link>
+          ))
         )}
-        <ul className="list">
-          {data.specimens.map((s) => (
-            <li key={s.id}>
-              <Link to={`/specimen/${s.id}`} className="card card--raised spread" style={{ textDecoration: 'none', color: 'inherit' }}>
-                <span>{s.nickname ?? s.rawLabel ?? 'Unnamed specimen'}</span>
-                <span className="xs muted data">{new Date(s.createdAt).toLocaleDateString()}</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
       </section>
 
       {/* --- Attribution -------------------------------------------------- */}
       {species.portrait && (
-        <section className="card">
-          <h2>Picture credit</h2>
+        <section className="panel">
+          <h2 className="sec-head">Picture credit</h2>
           <p className="small" style={{ marginBottom: 0 }}>
-            <strong>{portraitCredit(species.portrait)}</strong>
+            {portraitCredit(species.portrait)}
             {species.portrait.attributionUrl && (
               <> — <a href={species.portrait.attributionUrl} target="_blank" rel="noreferrer">source</a></>
             )}
           </p>
         </section>
       )}
+    </div>
+  );
+}
+
+/** The plate at full width, honouring the same art preference as the tile. */
+function SpeciesHero({ card }: { card: CatalogCard }) {
+  const { art, ownUrl } = useCardArt(card);
+  return (
+    <div className="hero-plate">
+      <Plate
+        speciesId={card.species.speciesId}
+        art={art}
+        ownUrl={ownUrl}
+        alt={card.species.commonName}
+        locked={!card.user.inCollection}
+        owned={card.user.currentlyKept ? 'Kept' : card.user.inCollection ? 'Caught' : undefined}
+      />
     </div>
   );
 }

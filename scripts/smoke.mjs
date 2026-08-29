@@ -91,9 +91,21 @@ const verdicts = await page.locator('.badge').allInnerTexts();
 console.log('VERDICT BADGES:', JSON.stringify(verdicts.slice(0, 12)));
 await page.screenshot({ path: `${SHOTS}/04-evaluate.png`, fullPage: true });
 
-// Expand a factor to prove the working is inspectable.
-const details = page.locator('details').first();
-if (await details.count()) { await details.click(); await page.waitForTimeout(300); }
+// Expand a tank, then a factor inside it, to prove the working is inspectable.
+// The factors used to be printed unconditionally, so this step only had to
+// find a <details>. They now live one tap behind the tank row that owns them,
+// and FR-E04 is satisfied by REACHABILITY rather than by everything being on
+// screen at once - so the check has to walk the two steps a user walks.
+const tankRow = page.locator('.tankrow[aria-expanded]').first();
+if (!(await tankRow.count())) throw new Error('No screened tank row to expand');
+await tankRow.click();
+await page.waitForTimeout(300);
+const factor = page.locator('.factor-item').first();
+if (!(await factor.count())) throw new Error('Tank row expanded but exposed no inspectable factor');
+await factor.locator('summary').click();
+await page.waitForTimeout(300);
+const shownInputs = await page.locator('.factor__detail').first().innerText();
+console.log('FACTOR INPUTS:', JSON.stringify(shownInputs.split('\n').slice(0, 3)));
 await page.screenshot({ path: `${SHOTS}/05-factors.png`, fullPage: true });
 
 // --- Reveal, on revisiting --------------------------------------------------

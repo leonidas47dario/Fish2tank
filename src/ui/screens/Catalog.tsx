@@ -6,20 +6,34 @@
  * ones greyed, not a "mine" screen and an "all" screen; two screens iterating
  * the same species list would have diverged within a month.
  *
- * So: every species is a card, the ones in your collection are in colour, the
- * rest are locked, and the filters let you narrow to just yours when you want
- * that view. In colour means caught OR kept - a fish in the tank downstairs is
- * as much yours as one you photographed in a store.
+ * So: every species is a tile, the ones in your collection are in colour, the
+ * rest are desaturated, and the filters let you narrow to just yours when you
+ * want that view. In colour means caught OR kept - a fish in the tank
+ * downstairs is as much yours as one you photographed in a store.
+ *
+ * Three things changed in the redesign, all of them measured:
+ *
+ *   - Two up, not one. One tile per row made the rendered page 583,302px
+ *     tall, about 700 phone screens.
+ *   - The tiles window themselves. 2,178 species is 1,089 rows, and every one
+ *     of them used to be laid out, styled and painted on first render.
+ *   - The default order is no longer alphabetical. Alphabetical opens the
+ *     library on the African Clawed Frog and fills the first screen with
+ *     species that have no portrait and no care data - the app at its least
+ *     able to say anything.
  */
 import { useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useNavigate } from 'react-router-dom';
 import { db } from '@/data/db';
-import { CATALOG, cardPrice, marketAndScarcity, ownership, type CatalogCard } from '@/data/catalog';
+import {
+  CATALOG, cardPrice, marketAndScarcity, ownership, portraitAsset, type CatalogCard,
+} from '@/data/catalog';
+import { MARKET_INDEX } from '@/data/market';
 import { deriveQuantity } from '@/domain/holdings';
 import type { AggressionRating } from '@/domain/types';
 import type { OrganismKind, WaterZone } from '@/data/seed/taxonomy';
-import { FishCard } from '../components/FishCard';
+import { Tile } from '../components/Tile';
+import { MagnifyingGlassIcon, SlidersHorizontalIcon, XIcon } from '../components/Icons';
 
 type Filter = 'all' | 'caught' | 'uncaught' | 'kept';
 
@@ -28,6 +42,27 @@ const FILTERS: Array<{ id: Filter; label: string }> = [
   { id: 'caught', label: 'Caught' },
   { id: 'uncaught', label: 'Not yet' },
   { id: 'kept', label: 'Kept' },
+];
+
+/**
+ * How the grid is ordered, as an explicit control with an honest default.
+ *
+ * `documented` leads with the fish this app can actually tell you something
+ * about - yours first, then the ones with a portrait. That is the fix for
+ * opening on a screen of grey placeholders, and it claims nothing.
+ *
+ * `stock` is deliberately NOT the default, tempting as it is for shopping. The
+ * in-stock flag comes from an unscheduled scrape of mail-order stores and much
+ * of that dataset is sold-out back catalogue years old. Ordering the entire
+ * library by it silently asserts a present tense the data cannot support, so
+ * it is opt-in and prints its own date when chosen.
+ */
+type Sort = 'documented' | 'stock' | 'alpha';
+
+const SORTS: Array<{ id: Sort; label: string }> = [
+  { id: 'documented', label: 'Yours first' },
+  { id: 'stock', label: 'In stock' },
+  { id: 'alpha', label: 'A–Z' },
 ];
 
 /**
@@ -40,13 +75,13 @@ const FILTERS: Array<{ id: Filter; label: string }> = [
  */
 type ZoneFilter = 'any' | WaterZone | 'unknown';
 
-const ZONES: Array<{ id: ZoneFilter; label: string; glyph: string }> = [
-  { id: 'any', label: 'Any level', glyph: '≡' },
-  { id: 'top', label: 'Top', glyph: '▔' },
-  { id: 'mid', label: 'Mid', glyph: '━' },
-  { id: 'bottom', label: 'Bottom', glyph: '▁' },
-  { id: 'all-levels', label: 'All levels', glyph: '↕' },
-  { id: 'unknown', label: 'Not recorded', glyph: '?' },
+const ZONES: Array<{ id: ZoneFilter; label: string }> = [
+  { id: 'any', label: 'Any level' },
+  { id: 'top', label: 'Top' },
+  { id: 'mid', label: 'Mid' },
+  { id: 'bottom', label: 'Bottom' },
+  { id: 'all-levels', label: 'All levels' },
+  { id: 'unknown', label: 'Not recorded' },
 ];
 
 /** Fish, plant, invert. "Specialty" in the trade sense. */
@@ -78,10 +113,13 @@ const AGGRESSION: Array<{ id: AggressionFilter; label: string }> = [
   { id: 'unknown', label: 'Not rated' },
 ];
 
+const NUM = new Intl.NumberFormat();
+
 export default function Catalog() {
-  const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
+  const [sort, setSort] = useState<Sort>('documented');
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [zone, setZone] = useState<ZoneFilter>('any');
   const [kind, setKind] = useState<KindFilter>('any');
   const [aggression, setAggression] = useState<AggressionFilter>('any');
@@ -103,7 +141,7 @@ export default function Catalog() {
         return residencies.some((r) => r.holdingId === h.id && !r.endDate);
       });
 
-      // Newest first, so the card shows your most recent look at it.
+      // Newest first, so the tile shows your most recent look at it.
       const ownPhotos = media
         .filter((m) => m.kind === 'photo' && m.specimenIds.some((id) => mine.some((s) => s.id === id)))
         .sort((a, b) => b.capturedAt.localeCompare(a.capturedAt))
@@ -139,7 +177,7 @@ export default function Catalog() {
     return cards
       .filter((c) => {
         if (filter === 'caught' && !c.user.caught) return false;
-        // "Not yet" is the complement of the cards in colour, so a fish you
+        // "Not yet" is the complement of the tiles in colour, so a fish you
         // keep never shows up under it.
         if (filter === 'uncaught' && c.user.inCollection) return false;
         if (filter === 'kept' && !c.user.kept) return false;
@@ -165,133 +203,274 @@ export default function Catalog() {
           s.aliases.some((a) => a.toLowerCase().includes(q))
         );
       })
-      // Yours first: your own collection leads, the rest is what's out there.
-      .sort((a, b) =>
-        Number(b.user.inCollection) - Number(a.user.inCollection) ||
-        a.species.commonName.localeCompare(b.species.commonName));
-  }, [cards, query, filter, zone, kind, aggression]);
+      .sort((a, b) => {
+        const alpha = a.species.commonName.localeCompare(b.species.commonName);
+        // Yours leads in every order. Your own collection is the one thing on
+        // this screen that is unambiguously about you.
+        const yours = Number(b.user.inCollection) - Number(a.user.inCollection);
+        if (sort === 'alpha') return yours || alpha;
+        if (sort === 'stock') {
+          return yours
+            || Number((b.market?.inStock ?? 0) > 0) - Number((a.market?.inStock ?? 0) > 0)
+            || alpha;
+        }
+        // documented: yours, then the ones this app can actually picture.
+        return yours
+          || Number(Boolean(portraitAsset(b.species.speciesId)))
+             - Number(Boolean(portraitAsset(a.species.speciesId)))
+          || alpha;
+      });
+  }, [cards, query, filter, sort, zone, kind, aggression]);
 
   // Shown on the collapsed summary so a filter left on inside it is never invisible.
   const activeExtra = [zone !== 'any', kind !== 'any', aggression !== 'any'].filter(Boolean).length;
 
+  /** Real counts on the chips, so a filter says what it costs before you tap it. */
+  const counts = useMemo(() => ({
+    all: cards?.length ?? 0,
+    caught: cards?.filter((c) => c.user.caught).length ?? 0,
+    uncaught: cards?.filter((c) => !c.user.inCollection).length ?? 0,
+    kept: cards?.filter((c) => c.user.kept).length ?? 0,
+  }), [cards]);
+
   const mine = cards?.filter((c) => c.user.inCollection).length ?? 0;
-  const total = cards?.length ?? 0;
+  const narrowed = Boolean(query.trim()) || filter !== 'all' || activeExtra > 0;
 
   return (
-    <div className="stack">
-      <header>
-        <h1>Catalog</h1>
-        <p className="muted small data">{mine} of {total} in your collection</p>
-      </header>
+    <div className="screen catalog-scroll">
+      {/*
+        The pinned block holds the CONTROLS. An earlier pass pinned a bar
+        containing only the title and the count, while search and filters -
+        the only things on this screen anyone reaches for twice - scrolled
+        away within one flick of a thousand rows.
+      */}
+      <div className="sticky">
+        <div className="topbar">
+          <h1 className="topbar__title">Catalog</h1>
+          {/* Your collection against the library, which is the number a
+              collector is actually tracking — until something narrows the
+              list, at which point how much is left is the more useful one. */}
+          <span className="topbar__count">
+            {narrowed
+              ? `${NUM.format(shown.length)} of ${NUM.format(counts.all)}`
+              : `${NUM.format(mine)} / ${NUM.format(counts.all)}`}
+          </span>
+        </div>
 
-      <input
-        type="search"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder="Search name, scientific name or trade name…"
-        aria-label="Search the catalog"
-      />
+        <div className="searchbar">
+          <div className="search">
+            <MagnifyingGlassIcon size={16} aria-hidden="true" />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Name, scientific name or trade name"
+              aria-label="Search the catalog"
+            />
+            {query && (
+              <button type="button" className="iconbtn" onClick={() => setQuery('')} aria-label="Clear search">
+                <XIcon size={16} aria-hidden="true" />
+              </button>
+            )}
+          </div>
+        </div>
 
-      <div className="filters" role="group" aria-label="Filter by what you have">
-        {FILTERS.map((f) => (
-          <button
-            key={f.id}
-            type="button"
-            className="chip"
-            aria-pressed={filter === f.id}
-            onClick={() => setFilter(f.id)}
-          >
-            {f.label}
-          </button>
-        ))}
+        <div className="chips" role="group" aria-label="Filter by what you have">
+          {FILTERS.map((f) => (
+            <button
+              key={f.id}
+              type="button"
+              className="chip"
+              aria-pressed={filter === f.id}
+              onClick={() => setFilter(f.id)}
+            >
+              {f.label}
+              <span className="chip__n">{NUM.format(counts[f.id])}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/*
-        Collapsed by default, and that is a deliberate correction rather than
-        shyness about the feature. Laid out flat, three more chip rows filled
-        an entire iPhone screen and pushed every fish below the fold - a
-        catalog whose first screen contains no catalog. The summary carries the
-        active count, so a filter can never be silently on.
+        Not pinned, and one row rather than two. Sort and the secondary filters
+        are things you touch once a session; inside the sticky block they cost
+        about 180px of an 844px viewport permanently, and on separate rows the
+        filter button sat alone eating 70px of the first screen.
       */}
-      <details className="filters-more">
-        <summary>
-          More filters
+      <div className="sortline">
+        <button
+          type="button"
+          className="chip"
+          aria-expanded={sheetOpen}
+          aria-controls="filter-sheet"
+          onClick={() => setSheetOpen((v) => !v)}
+        >
+          <SlidersHorizontalIcon size={16} aria-hidden="true" />
+          Filters
           {activeExtra > 0 && <span className="filters-more__count">{activeExtra}</span>}
-        </summary>
+        </button>
+        <span>
+          {SORTS.map((s, i) => (
+            <span key={s.id}>
+              {i > 0 && <span aria-hidden="true"> · </span>}
+              <button
+                type="button"
+                aria-pressed={sort === s.id}
+                onClick={() => setSort(s.id)}
+                style={sort === s.id
+                  ? { color: 'var(--color-text)', fontWeight: 'var(--weight-semibold)' }
+                  : undefined}
+              >
+                {s.label}
+              </button>
+            </span>
+          ))}
+        </span>
+      </div>
 
-        {/* Where it lives. The glyph carries the meaning as well as the word,
-            so the row reads at a glance and in monochrome (NFR-06). */}
-        <div className="filters" role="group" aria-label="Filter by where it lives in the tank">
-          {ZONES.map((z) => (
-            <button
-              key={z.id}
-              type="button"
-              className="chip"
-              aria-pressed={zone === z.id}
-              onClick={() => setZone(z.id)}
-            >
-              <span aria-hidden="true" className="chip__glyph">{z.glyph}</span> {z.label}
-            </button>
+      {/* Stock is the most perishable field in the app. If it is ordering the
+          library, it states its own age rather than implying a present tense
+          the scrape cannot support. */}
+      {sort === 'stock' && (
+        <p className="asof">
+          Stock as last collected on {MARKET_INDEX.builtAt.slice(0, 10)}, across{' '}
+          {MARKET_INDEX.sources.length} mail-order stores. Much of that dataset is sold-out back
+          catalogue, so treat this as an ordering, not a promise.
+        </p>
+      )}
+
+      {sheetOpen && (
+        <div className="filters-more">
+          <div className="sheet" id="filter-sheet">
+          <fieldset className="sheet__group">
+            <legend className="sheet__legend">Where it lives</legend>
+            <p className="sheet__why">
+              Derived from taxonomic family, so &ldquo;not recorded&rdquo; is a real answer rather than a
+              bucket for everything unclassified.
+            </p>
+            <div className="sheet__chips" role="group" aria-label="Filter by where it lives in the tank">
+              {ZONES.map((z) => (
+                <button
+                  key={z.id}
+                  type="button"
+                  className="chip"
+                  aria-pressed={zone === z.id}
+                  onClick={() => setZone(z.id)}
+                >
+                  {z.label}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+
+          <fieldset className="sheet__group">
+            <legend className="sheet__legend">Kind</legend>
+            <div className="sheet__chips" role="group" aria-label="Filter by kind">
+              {KINDS.map((k) => (
+                <button
+                  key={k.id}
+                  type="button"
+                  className="chip"
+                  aria-pressed={kind === k.id}
+                  onClick={() => setKind(k.id)}
+                >
+                  {k.label}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+
+          <fieldset className="sheet__group">
+            <legend className="sheet__legend">Temperament</legend>
+            {/* Temperament comes only from the curated care profiles, so the
+                filter is mostly empty by design. Saying so beats looking broken. */}
+            <p className="sheet__why">
+              Only recorded for the species with a curated care profile. It is never guessed from the
+              family, because a family can hold both a ram and a jaguar cichlid.
+            </p>
+            <div className="sheet__chips" role="group" aria-label="Filter by temperament">
+              {AGGRESSION.map((a) => (
+                <button
+                  key={a.id}
+                  type="button"
+                  className="chip"
+                  aria-pressed={aggression === a.id}
+                  onClick={() => setAggression(a.id)}
+                >
+                  {a.label}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+
+            <div className="sheet__foot">
+              {activeExtra > 0 && (
+                <button
+                  type="button"
+                  className="chip"
+                  onClick={() => { setZone('any'); setKind('any'); setAggression('any'); }}
+                >
+                  Clear {activeExtra} filter{activeExtra === 1 ? '' : 's'}
+                </button>
+              )}
+              <button
+                type="button"
+                className="chip"
+                style={{ marginLeft: 'auto' }}
+                onClick={() => setSheetOpen(false)}
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Shaped like the grid it is standing in for, rather than the word
+          "Loading…" where 2,178 tiles are about to be. */}
+      {cards === undefined && (
+        <div className="catalog-grid" aria-hidden="true">
+          {Array.from({ length: 6 }, (_, i) => (
+            <div key={i} className="tile">
+              <div className="skel skel--plate" />
+              <div className="skel skel--line" style={{ width: '80%' }} />
+              <div className="skel skel--line" style={{ width: '55%' }} />
+            </div>
           ))}
         </div>
+      )}
+      {cards === undefined && <p className="visually-hidden" role="status">Loading the catalog</p>}
 
-        <div className="filters" role="group" aria-label="Filter by kind">
-          {KINDS.map((k) => (
-            <button
-              key={k.id}
-              type="button"
-              className="chip"
-              aria-pressed={kind === k.id}
-              onClick={() => setKind(k.id)}
-            >
-              {k.label}
-            </button>
-          ))}
-        </div>
-
-        <div className="filters" role="group" aria-label="Filter by temperament">
-          {AGGRESSION.map((a) => (
-            <button
-              key={a.id}
-              type="button"
-              className="chip"
-              aria-pressed={aggression === a.id}
-              onClick={() => setAggression(a.id)}
-            >
-              {a.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Temperament comes only from the curated care profiles, so the filter
-            is mostly empty by design. Saying so beats looking broken. */}
-        {aggression !== 'any' && aggression !== 'unknown' && (
-          <p className="xs muted">
-            Temperament is only recorded for species with a curated care profile. It is never
-            guessed from the family, because a family can hold both a ram and a jaguar cichlid.
-          </p>
-        )}
-      </details>
-
-      {cards === undefined && <p className="muted small">Loading…</p>}
       {cards && shown.length === 0 && (
-        <p className="empty">Nothing matches. Try a different search or filter.</p>
+        <div className="state">
+          <p className="state__head">Nothing matches</p>
+          <p className="state__body">
+            {query
+              ? <>No species matches &ldquo;{query}&rdquo;{activeExtra > 0 && ' with those filters'}.</>
+              : 'No species matches those filters.'}
+          </p>
+          <button
+            type="button"
+            className="state__act"
+            onClick={() => {
+              setQuery(''); setFilter('all'); setZone('any'); setKind('any'); setAggression('any');
+            }}
+          >
+            Clear everything
+          </button>
+        </div>
       )}
 
       <div className="catalog-grid">
         {shown.map((card) => (
-          <FishCard
-            key={card.species.speciesId}
-            card={card}
-            onOpen={(id) => navigate(`/species/${id}`)}
-          />
+          <Tile key={card.species.speciesId} card={card} />
         ))}
       </div>
 
-      <p className="xs muted">
+      <p className="pad xs faint">
         Portraits come from Wikimedia Commons under their stated licences, from vendor product
-        listings, or from the open web; each card&apos;s detail page names its source. Where you
-        have your own photo of a fish, it is used instead.
+        listings, or from the open web; each species page names its source. Where you have your own
+        photo of a fish, it is used instead.
       </p>
     </div>
   );

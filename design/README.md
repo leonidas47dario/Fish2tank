@@ -1,10 +1,9 @@
-# Fish2Tank UI/UX redesign - "The Drawer"
+# The Drawer — the UI/UX redesign, as shipped
 
-A design proposal. Nothing here is wired into the app; no file under `src/` was
-touched.
-
-Open `index.html` in a browser. Six phone frames: Home, Catalog, Species,
-Specimen, States, More filters.
+This directory used to hold a proposal. The proposal is now the app: every
+change described below is in `src/`. `prototype/` keeps the static board it was
+designed against, which no longer matches the running build and is here as a
+record rather than a reference.
 
 ---
 
@@ -26,198 +25,250 @@ changes, no nav relabelling, no renamed form fields.
 
 ---
 
-## How this was made
+## What it cost, measured
 
-Seven rounds. Each one was rated by three independent reviewers against fixed
-rubrics: visual craft, UX and information architecture, and accessibility plus
-token discipline. Every round's named defects became the next round's work.
+Both columns are the same seed data, the same viewport (390×844) and the same
+scripts, run against a build of `origin/uat` and a build of this branch.
 
-| Round | Visual | UX | A11y | Average |
-|---|---|---|---|---|
-| 2 | 5.0 | 5.0 | 4.0 | **4.67** |
-| 5 | 6.4 | 6.2 | 5.4 | **6.00** |
-| 6 | 6.0 | 6.2 | 6.0 | **6.07** |
-| 7 | not re-rated | | | |
+| | Before | After |
+|---|---|---|
+| Catalog document height | 555,102 px | **233,416 px** |
+| Catalog, first tile on screen | 1,491 ms | **~900 ms** |
+| Full style + layout pass over the grid | 769 ms | **~100 ms** |
+| Specimen page (six tanks screened) | 10,174 px | **3,560 px** |
+| Home | 1,181 px | 1,081 px, and now has fish on it |
+| Tanks / Journal / Settings (untouched) | 13,864 / 902 / 1,955 px | 13,624 / 896 / 1,934 px |
 
-The target was 8. It did not get there, and rounds 5 to 6 moved 0.07, so this
-stopped on the agreed rule rather than on reaching the bar. Round 7 applied
-every remaining named fix but was not re-rated, so treat the last row as
-unmeasured rather than as an improvement.
-
-**What the reviewers caught that mattered most**, all of which are fixed:
-
-- The verdict was compressed from the engine's five levels to three, so a tank
-  reading *Conditional* hid "eats 4 residents" in red underneath.
-- `--color-accent` was aliased to `--color-primary`, which silently collapses
-  three shipped component pairs that use the two colours to tell things apart
-  (`.tier--uncommon/rare`, `.gem--cost/size`, `.zone-pip--mid/top`).
-- The species screen said "Fits none of your 6 tanks" when four of the six were
-  unmeasured, on the newest screen, breaking the product's own spine.
-- The first depth gradient was painted across scroll height, so within one
-  viewport it shifted under 0.04 L. Decoration, measured as such.
-- `plates.css` baked absolute lightness into a generated file, which would have
-  made a theme change require re-running the derivation.
-- `speak: never` was used to hide decorative glyphs from screen readers. It is
-  a no-op; CSS Speech was never implemented in any engine.
-- The catalog was drawn against data that does not exist. See below.
+Reproduce with `npm run build && npm run preview`, then `npm run shots`.
 
 ---
 
-## Audit of the shipped build
-
-Measured from the checked-in smoke screenshots and the seed assets.
-
-| Finding | Evidence |
-|---|---|
-| Catalog renders all 1,076 cards, unvirtualised, one per row | `smoke-shots/08-collection.png` is **583,302 px tall**, about 700 phone screens |
-| Specimen prints 7 factors for each of 6 tanks, expanded, no sticky header | `smoke-shots/04-evaluate.png` is **20,286 px tall** |
-| Library sorts alphabetically | It opens on *African Clawed Frog* |
-| Photographs fight the canvas | 120-portrait sample: 10% white cut-outs, 20% near-black, 70% full-bleed |
-| Missing-portrait fallback is an emoji | 381 of 1,076 species hit it |
-| Price-by-size chart breaks its own layout | From the 9" row down the value wraps onto its own line |
-| Search clips its own placeholder | "…or trade nam" |
-| Home shows no fish at all | A visual collecting app whose front door is a list of text rows |
-| Georgia as the display face | A system serif, different on every device |
-| Nav icons are typed characters | `⌂ ◈ ◉ ▤ ✎` |
-
-### Kept, because it already works
-
-The token contract. Non-colour status encoding (glyph + word + border style).
-The 3:2 landscape card and the reasoning behind it. The refusal to invent a
-number, which this redesign makes louder rather than quieter.
-
----
-
-## Result
-
-Benchmarked against every round, not only the shipped build, so the proposal
-cannot hide its own regressions.
-
-| Screen | Shipped | Round 2 | Final |
-|---|---|---|---|
-| Specimen | 20,286 px | 1,794 px | **~2,000 px** |
-| Catalog | 583,302 px, 1-up, alphabetical | 2-up | 2-up, in-stock-first |
-| Home | no fish | 1,010 px | **806 px** |
-| Species (pre-purchase) | buried | absent | **~1,200 px** |
-
-The specimen is larger than round 2's low-water mark. That is the cost of the
-honesty fixes: the worst factor printed on the collapsed row, `n=` on every
-price band, the "not enough to compare" refusal, ask/member/paid kept as three
-facts, and a "Check my tanks again" control. All are load-bearing.
-
----
-
-## The moves
+## The eight moves
 
 **1. The catalog is drawn against the data that actually exists.**
 
-The most important finding in the whole exercise, and it was not a data problem
-but a design one. The catalog mart has no `adultSize` or `minimumVolume` field
-at all, and `species-catalog.ts` carries a care profile for **47 of 1,076
-species, 4.4%**. Earlier rounds drew nine of ten tiles with a confident
-`3in 5gal` pair. The tile was designed around three numbers that exist for one
-row in twenty.
+The most important finding in the exercise, and it was not a data problem but a
+design one. The catalog mart has no `adultSize` or `minimumVolume` for most of
+the library: **47 of 2,178 species** carry a curated care profile. The shipped
+tile was a collectible card built around three coloured discs holding price,
+adult size and minimum tank — a format whose entire structure is three numbers,
+on a library that has all three for one row in forty-six.
 
-The grid now uses ten real rows from `marts/catalog.json` in the real default
-order. Four of ten show size and tank, because four of ten actually have them.
-Where a fact is missing the tile does not draw it, and one line above the grid
-says why for the whole library. The chips say `Fits 12` and `Can't tell 1,029`,
-because a Fits count larger than the 47 screenable species is a number the app
-would be inventing.
-
-Worth noting for the sort: in-stock-first correlates with being well
-documented, so the *default view* runs about 40% profiled against the global
-4.4%. The sort is doing more work than it was given credit for.
+The tile is now the photograph, with the facts under it in one line, and a fact
+that does not exist is not drawn. See `ui/components/Tile.tsx`.
 
 **2. Every photograph gets a derived plate.**
 
-A portrait never sits on the canvas. It sits on a plate derived from that
-photograph's own border ring: the **mode** in a quantised cube (not the median,
-which averaged plants and gravel into a chartreuse that appeared nowhere in the
-image), converted to OKLCH, with **chroma clamped to 0.04** so a plate can never
-become a saturated field.
+A portrait never sits on the canvas. It sits on a plate derived at build time
+from that photograph's own border ring: the **mode** in a quantised cube — not
+the median, which averaged plants and gravel into a chartreuse appearing
+nowhere in the image — converted to OKLCH with **chroma clamped to 0.04**, so a
+plate can never become a colour field.
+
+`scripts/derive-plates.mjs` (`npm run plates`) writes one `--plate-l/-c/-h`
+triple per portrait into `src/theme/plates.css`. Across the 1,011 bundled
+portraits: 442 dark-edged, 239 light-edged, 330 between. That spread is why one
+fixed letterbox colour was never going to work.
 
 The image supplies hue, chroma and lightness, because all three are facts about
 the photograph. The **theme** supplies `--plate-l-min` and `--plate-l-max`,
 because how light a mat may be is a fact about the page. So one generated file
-serves all three territories and a theme change stays a token swap. An earlier
-version gave the whole lightness channel to the theme, which put every dark
-portrait in a near-white mat under both light themes.
+serves all three territories and a theme change stays a token swap — baking
+absolute lightness into the generated file would mean re-running the derivation
+per theme, which is the migration PRD 7.3 forbids.
 
-One clamp everywhere, hero included: a hero's neighbour is its own catalog
-tile, one tap earlier.
+This is what makes `object-fit: contain` affordable. A fish is a long
+horizontal animal, and the old 3:4 `cover` card kept about 37% of a 3:2
+photograph's width, cropping through the middle of the animal.
 
-**3. The verdict may never be calmer than its own contents.**
+**3. The grid windows itself, in two declarations and no dependency.**
+
+2,178 species is 1,089 rows two-up. `content-visibility: auto` plus
+`contain-intrinsic-size: auto 190px` on `.tile` lets the browser skip layout,
+paint and style for everything off screen. Measured by forcing a full reflow
+with the property on and then disabled: **~100 ms against ~770 ms**.
+
+Worth recording how that was verified, because the obvious methods are wrong.
+Counting skipped tiles by reading a bounding rect *forces* the skipped subtree
+to render, and `checkVisibility({contentVisibilityAuto: true})` reported every
+tile as rendered either way. Only the cost is observable. `npm run shots`
+prints both numbers.
+
+**4. The verdict may never be calmer than its own contents.**
 
 All five engine levels (`suitable / conditional / high-risk / extreme-risk /
-insufficient-data`), the collapsed pill is the **worst** factor rather than an
-average, and that factor is printed on the collapsed row. In the aisle the pill
-*is* the answer; nobody expands a row to be talked out of amber. Every factor
-value carries a glyph, because positive and caution are **1.08:1 apart in
-greyscale**.
+insufficient-data`), and the reason the pill says what it says is printed on the
+**collapsed** row. Nobody expands a row to be talked out of amber. The engine
+already aggregates worst-wins and writes its top findings into `headline`; the
+old screen rendered that headline as 11px grey text under a badge, which is how
+a row reading *Conditional* could hide "eats 4 residents" one tap down.
 
-**4. Price says how much it is standing on.**
+Nothing was removed to get this screen from 10,174 px to 3,560 px. FR-E04 still
+holds: every factor, every input, every missing input and the rules version are
+reachable, one tap further in — and `scripts/smoke.mjs` now walks both taps
+rather than clicking whatever `<details>` it finds first.
 
-`n=` on every band, sub-threshold bands drawn thin, and the comparison gated
-behind the same minimum `price-fit.ts` enforces. Stock carries its own date,
-because a present-tense green pill sourced from an unscheduled scrape is an
-invented number in a nicer hat.
+**5. Price says how much it is standing on.**
 
-**5. Type, colour, icons, motion.**
+`n=` on every band, and any band below the index's own `minimumSampleCount` is
+drawn as the hairline it is, under a line saying why. Eight smooth bars scaled
+to the maximum read as a distribution; seven of those eight bands routinely hold
+one listing. Ask, member and paid stay three separate facts.
 
-Geist and Geist Mono, with mono reserved for what is *counted* and never for
-sentences. One second family, Source Sans 3 italic, for the one role where
-italic carries meaning: Geist ships no `ital` axis, so every binomial in the app
-was a synthesised slant of a neutral grotesk, on a product whose subject is
-1,076 Latin names. Phosphor, subset, replacing typed glyphs. No glows anywhere.
+**6. Type, colour, icons.**
+
+Geist and Geist Mono, self-hosted, with mono reserved for what is *counted* and
+never for sentences. Georgia is gone: a system serif is a different serif on
+every device, so a design that specifies it has not specified a face.
+
+One second family, Source Sans 3 Italic, for the one role where italic carries
+meaning. Geist ships no italic axis, so every binomial in an app about 2,176
+Latin names was a synthesised slant of a neutral grotesk.
+
+The open question — "40 KB on an offline-first bundle, worth it?" — answered
+itself once the assets were measured. The three faces total **157 KB** next to
+**24 MB** of bundled portraits: 0.6% of what the app already ships, and all
+three are precached by the service worker.
+
+Phosphor replaces the typed characters `⌂ ◈ ◉ ▤ ✎`, which rendered at a
+different weight and baseline in every system font and which some platforms have
+no glyph for at all. One family, one weight, re-exported through
+`ui/components/Icons.tsx` so that is a fact about a file rather than a
+convention someone has to remember.
+
+**7. The depth ramp is anchored to the viewport.**
+
+It was `background-image` on `<body>`, which sizes the gradient to the *scroll*
+height. Over a catalog 583,302 px tall the shift within any one screen was under
+0.04 L: present in the stylesheet, invisible on the device. It is now a fixed
+layer behind everything, and its last stop equals `--color-canvas` exactly, so
+there is no visible step where it ends.
+
+**8. States are designed, because an offline-first app meets them constantly.**
+
+Loading is a skeleton shaped like the grid. "No portrait exists" (1,167 species,
+permanent) and "the portrait failed to load" (transient) are different facts on
+different surfaces. Stale market data reads calm with a date on it, not red. An
+empty search offers a way out, and so does a species id that no longer resolves.
+The shimmer's duration is a token, so the in-app reduced-motion toggle actually
+stops it — a literal there survives the token change and leaves an infinite
+animation running on every tile in the grid.
 
 ---
 
-## Accessibility, computed rather than claimed
+## Accessibility, measured rather than claimed
 
-- Text tiers 17.37 / 8.75 / 5.92 on canvas; 11px is the floor.
-- Separate `--color-border-control` at 3.56:1 for anything whose boundary
-  identifies a control (1.4.11).
+`npm run contrast` walks the rendered DOM in **all three visual territories**,
+resolves what each piece of text is really painted on — compositing translucent
+ancestors and the `color-mix()` fills the token file never spells out — and
+exits non-zero below AA. It checks hover and pressed states too.
+
+Currently: **312 distinct text-on-background pairs, all three themes, pass.**
+
+That script exists because every accessibility claim in the original proposal
+was a number written in a CSS comment, and comments do not fail a build. It
+immediately found two things that reading the stylesheet had not:
+
+- `button:hover:not(:disabled)` scores (0,2,1) and beat `.btn--primary` at
+  (0,1,0), so hovering the Capture button — the one control the Catch screen
+  exists for — repainted it `--color-surface` while keeping
+  `--color-on-primary` text. **1.05:1.** The generic hover is now wrapped in
+  `:where()` so it carries no specificity, and each variant states its own.
+- "No portrait" sat on `--plate`: a per-image derived colour, clamped to a
+  themed band, hatched. 4.0:1 on the dark theme and **1.35:1 on the
+  fieldbook** — the one piece of text 1,167 species in this library actually
+  show. It now sits on a known surface.
+
+Also holding, by construction:
+
+- Three text tiers at 17.37 / 8.75 / 5.92 on canvas. 11px is the floor.
+- A separate `--color-border-control` at 3.56:1 for anything whose boundary
+  identifies a control (1.4.11). One token for both jobs had every input and
+  chip in the app at 1.4:1.
 - One `:focus-visible` rule on everything focusable, **plus** a
-  `forced-colors: active` outline, because `outline: none` with a box-shadow
-  ring means no focus indicator at all in Windows High Contrast.
-- `--tap-min: 44px`, and the reduced-motion blanket on **both** the OS media
-  query and the in-app toggle.
-- `--color-on-primary` and `--color-on-danger` themed per territory: dark ink on
-  the fieldbook brown is 3.19:1 and fails; white is 5.87:1.
-- Decorative generated glyphs use `content: '✓' / ''` alt text.
+  `forced-colors: active` outline — `outline: none` with a box-shadow ring
+  means no focus indicator at all in Windows High Contrast.
+- `--tap-min: 44px` (2.5.8) on every pressable thing.
+- `--color-on-primary` themed per territory: dark ink on the fieldbook brown is
+  3.19:1 and fails, white is 5.87:1.
+- Decorative generated glyphs use `content: '✓' / ''`. An earlier pass used
+  `speak: never`, which is a no-op — CSS Speech was never implemented in any
+  shipping engine, so every factor value was still being announced as "black
+  square, eats four residents".
 
 ---
 
-## Known gaps, honestly
+## Three bugs found on the way, all fixed
 
-1. **Round 7 was never rated.** It fixes every item the round-6 reviewers named,
-   but nobody has checked it. Assume unverified.
-2. **Only midnight-aquarium has been looked at.** The two light themes are
-   verified by arithmetic only. The board ships no `[data-theme]` switcher, and
-   the a11y reviewer expects more findings there, particularly around the plate.
-3. **The price-by-size chart still argues with itself:** eight bands, seven at
-   `n=1`, under copy saying there is not enough data to compare. Two reviewers
-   flagged it. Collapsing it to the range line and the one comparable band would
-   save several hundred pixels.
-4. **Distinctiveness never got above 5.** Three reviewers said the same thing:
-   strip the binomial and what remains is pill chips, rounded cards, a blue
-   primary and a tab bar with a raised centre control. The depth ramp and the
-   `top/mid/btm` column are the only product-specific ideas that landed.
-5. The plate needs an ETL field and a class per species; user-captured specimen
-   photos have no build-time class and fall back to the theme value.
+**The Dream List was unreachable.** `addToDreamList` existed and feeds 25 points
+of the Discovery tier, but no screen called it, and Home rendered a standing
+"Add species from the Collection" pointing at a screen that could not. There is
+now a "Want one" control on the species page and a `removeFromDreamList`
+counterpart, because adding without removing is a one-way door. A *fulfilled*
+entry is never deleted: that one is history, and it is why the tier can award
+for it.
+
+**No scroll reset on navigation.** Tapping a fish from deep in the catalog
+opened its page already scrolled past the photograph, the name and the care
+profile, landing on the store list — worse the deeper you browsed.
+
+**No scroll restoration on Back.** You landed at the top of 2,178 species. Both
+live in `ui/ScrollMemory.tsx`, and the fix took three attempts worth recording:
+
+- recording the outgoing position in a passive `useEffect` cleanup runs *after*
+  the incoming route's layout effect has already scrolled to 0, so every entry
+  recorded itself as 0;
+- a 1.2s restore budget expired before the catalog had any height, leaving the
+  page at 109px;
+- HashRouter hands out the key `default` to any entry it has no state for, so
+  two unrelated species pages shared one key and the second opened at the
+  first's scroll position.
+
+---
 
 ## Trimmed, deliberately
 
-Home's "stories you have not written", Dream List as a Home block, Fish Heaven
-and Keeper's Code as top-level Journal sections, the full per-factor "Values
-used" panels, the scarcity pill beside the rarity tier, and per-tile stock
-counts. None is load-bearing for the core loop.
+Home's "stories you have not written" block, and Dream List as a permanent Home
+section — it now appears only when it has something in it. The collectible-card
+gem treatment (`FishCard.tsx`, deleted) and the 7px three-segment water-column
+pip, which said the right thing and could not be read at tile scale.
 
-## Open questions
+---
 
-1. Self-hosted Geist plus one Source Sans 3 italic adds roughly 40 KB to an
-   offline-first bundle. Worth it?
-2. The derived plate is an ETL change, not a CSS change. In scope for a UI branch?
-3. The species screen is the one genuinely new surface, and it answers the aisle
-   question before a fish is yours. Worth building first?
+## Deviations from the proposal, and why
+
+**The default catalog sort is not in-stock-first.** The proposal argued for it,
+and it is one of three orders, but not the default. The in-stock flag comes from
+an unscheduled scrape of mail-order stores and much of that dataset is sold-out
+back catalogue years old; ordering the whole library by it silently asserts a
+present tense the data cannot support. The default is `Yours first` — your
+collection, then the species this app can actually picture — which solves the
+real problem (opening the library on the African Clawed Frog, on a first screen
+of grey placeholders) without claiming anything. Choosing `In stock` prints the
+collection date underneath it.
+
+**The proposal's "Fits 12 / Can't tell 1,029" chips are not built.** Screening
+2,178 species against every tank on catalog load is not a chip, and the number
+was contentious in review. The chips carry real counts of what they filter.
+
+**Rounds 1–7 of the proposal were rated by subagents against fixed rubrics and
+never reached the 8.0 bar** — best 6.07 average, and distinctiveness never above
+5. That process stopped on the no-material-improvement rule. This
+implementation is a separate artifact and those scores do not transfer to it.
+
+---
+
+## Known gaps
+
+1. **User-captured photos have no derived plate.** The derivation is a build
+   step over bundled portraits, so a photo taken this morning falls back to the
+   theme's plate value. Deriving in the browser on capture is the fix.
+2. **The catalog is still a 233,416 px document.** Windowing made it cheap to
+   render, not short. Search and the filters are the answer to depth; nobody
+   scrolls to the bottom of 2,178 species.
+3. **The price ladder still shows seven bands at n=1** for some species. Each
+   band now states its n and is drawn thin, which was the honesty fix, but
+   collapsing to the range line plus the one comparable band would save several
+   hundred pixels.
+4. **Tanks and Journal were not redesigned.** They render correctly on the new
+   tokens and are measurably unchanged, but Tanks is still 13,624 px.
