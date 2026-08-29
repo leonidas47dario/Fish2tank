@@ -15,7 +15,10 @@ import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { db } from '@/data/db';
-import { clearTankPhoto, moveHolding, recordDeath } from '@/data/repositories';
+import {
+  clearTankPhoto, deleteTank, moveHolding, planDeleteTank, recordDeath, setAquariumStatus,
+  type DeleteTankPlan,
+} from '@/data/repositories';
 import { formatVolume } from '@/domain/units';
 import type { Aquarium, StockingState } from '@/domain/types';
 import {
@@ -308,6 +311,8 @@ function TankManage({ aquarium, residents, allTanks }: {
         )}
       </section>
 
+      <TankLifecycle aquarium={aquarium} />
+
       {!aquarium.volume && (
         <p className="warn">
           Without a volume and footprint this tank can only ever return “Not enough data”. Measuring it
@@ -350,12 +355,117 @@ function TankManage({ aquarium, residents, allTanks }: {
   );
 }
 
+/**
+ * Putting a tank away, in the two ways that are honest.
+ *
+ * RETIRE is the usual one, and the only one available once a fish has lived
+ * here: the tank leaves the active list and every record that names it still
+ * reads correctly. It is reversible in one tap.
+ *
+ * DELETE is for a tank that never held anything - one added by mistake. It asks
+ * first, and the confirmation says what actually goes.
+ *
+ * When delete is refused, the reason from planDeleteTank is shown as-is rather
+ * than the button simply being missing, because "why can't I?" is the question
+ * a hidden control leaves unanswered.
+ */
+function TankLifecycle({ aquarium }: { aquarium: Aquarium }) {
+  const navigate = useNavigate();
+  const [plan, setPlan] = useState<DeleteTankPlan>();
+  const [confirming, setConfirming] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const retired = aquarium.status === 'retired';
+
+  async function ask() {
+    setPlan(await planDeleteTank(aquarium.id));
+    setConfirming(true);
+  }
+
+  async function confirm() {
+    setBusy(true);
+    try {
+      const result = await deleteTank(aquarium.id);
+      if (result.allowed) navigate('/tanks');
+      else setPlan(result);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section className="card stack">
+      <strong>{retired ? 'Retired tank' : 'Putting this tank away'}</strong>
+
+      {retired ? (
+        <>
+          <p className="small muted">
+            Retired. It stays out of your active tanks, and everything that lived here still
+            remembers it.
+          </p>
+          <button
+            type="button"
+            className="btn--ghost"
+            onClick={() => void setAquariumStatus(aquarium.id, 'active')}
+          >
+            Set up again
+          </button>
+        </>
+      ) : (
+        <>
+          <p className="small muted">
+            Retiring keeps the tank and its history, and takes it out of your active list. You can
+            set it up again at any time.
+          </p>
+          <button
+            type="button"
+            className="btn--ghost"
+            onClick={() => void setAquariumStatus(aquarium.id, 'retired')}
+          >
+            Retire this tank
+          </button>
+        </>
+      )}
+
+      {!confirming ? (
+        <button type="button" className="btn--ghost" onClick={() => void ask()}>
+          Delete this tank…
+        </button>
+      ) : plan && !plan.allowed ? (
+        <>
+          <p className="warn small">{plan.reason}</p>
+          <button type="button" className="btn--ghost" onClick={() => setConfirming(false)}>
+            OK
+          </button>
+        </>
+      ) : (
+        <>
+          <p className="warn small">
+            Delete {aquarium.name}? No fish has ever lived here, so nothing but the tank
+            {plan?.photo ? ' and its photo' : ''} goes. This cannot be undone.
+          </p>
+          <div className="row">
+            <button type="button" className="btn--danger" disabled={busy} onClick={() => void confirm()}>
+              {busy ? 'Deleting…' : 'Yes, delete it'}
+            </button>
+            <button type="button" className="btn--ghost" disabled={busy} onClick={() => setConfirming(false)}>
+              Keep it
+            </button>
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
 function TankForm({ aquarium, onDone }: { aquarium: Aquarium; onDone: () => void }) {
+  const [name, setName] = useState(aquarium.name);
   const [gallons, setGallons] = useState(aquarium.volume ? String(aquarium.volume.value) : '');
   const [l, setL] = useState(aquarium.dimensions ? String(aquarium.dimensions.length.value) : '');
   const [w, setW] = useState(aquarium.dimensions ? String(aquarium.dimensions.width.value) : '');
   const [h, setH] = useState(aquarium.dimensions ? String(aquarium.dimensions.height.value) : '');
   const [stocking, setStocking] = useState<StockingState | ''>(aquarium.stockingState ?? '');
+
+  const trimmed = name.trim();
 
   async function save() {
     const dims = l && w && h
@@ -366,6 +476,7 @@ function TankForm({ aquarium, onDone }: { aquarium: Aquarium; onDone: () => void
         }
       : undefined;
     await db.aquariums.update(aquarium.id, {
+      name: trimmed,
       volume: gallons ? { value: Number(gallons), unit: 'gal' } : undefined,
       dimensions: dims,
       stockingState: stocking || undefined,
@@ -375,6 +486,14 @@ function TankForm({ aquarium, onDone }: { aquarium: Aquarium; onDone: () => void
 
   return (
     <div className="stack">
+      <div>
+        <label htmlFor={`name-${aquarium.id}`}>Name</label>
+        <input
+          id={`name-${aquarium.id}`}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+      </div>
       <div>
         <label htmlFor={`vol-${aquarium.id}`}>Volume (gallons)</label>
         <input id={`vol-${aquarium.id}`} inputMode="decimal" value={gallons} onChange={(e) => setGallons(e.target.value)} />
@@ -397,7 +516,15 @@ function TankForm({ aquarium, onDone }: { aquarium: Aquarium; onDone: () => void
         </select>
         <p className="xs muted">Your judgement, used as-is. Nothing here is turned into a bioload figure.</p>
       </div>
-      <button type="button" className="btn--primary" onClick={() => void save()}>Save</button>
+      <button
+        type="button"
+        className="btn--primary"
+        disabled={!trimmed}
+        onClick={() => void save()}
+      >
+        Save
+      </button>
+      {!trimmed && <p className="xs warn">A tank needs a name.</p>}
     </div>
   );
 }

@@ -125,7 +125,7 @@ export interface DeletedRecord {
   id: Id;
   deletedAt: string;
   /** What kind of thing it was, so a future undo or audit can tell them apart. */
-  kind: 'specimen';
+  kind: 'specimen' | 'aquarium' | 'media';
 }
 
 export class Fish2TankDB extends Dexie {

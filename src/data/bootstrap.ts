@@ -241,7 +241,14 @@ export function bootstrap(): Promise<void> {
     if ((await db.species.count()) === 0) {
       for (const entry of SPECIES_CATALOG) await upsertSpecies(entry.species, entry.profile);
     }
-    if ((await db.aquariums.count()) === 0) await db.aquariums.bulkAdd(STARTER_TANKS);
+    if ((await db.aquariums.count()) === 0) {
+      // Not simply STARTER_TANKS: deleting every tank would take the count back
+      // to zero and seed all six straight back, which reads as the delete
+      // having silently failed. A tank the owner deleted stays deleted.
+      const tombstoned = new Set((await db.deletedRecords.toArray()).map((r) => r.id));
+      const fresh = STARTER_TANKS.filter((t) => !tombstoned.has(t.id));
+      if (fresh.length) await db.aquariums.bulkAdd(fresh);
+    }
     if ((await db.places.count()) === 0) await db.places.add(STARTER_PLACE);
     if ((await db.holdings.count()) === 0) {
       await applyInventoryImport(parseInventoryCsv(inventoryCsv));

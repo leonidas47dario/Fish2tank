@@ -44,8 +44,17 @@ export default function Home() {
     (speciesId ? species?.find((s) => s.id === speciesId)?.commonName : undefined)
     ?? (speciesId ? CATALOG_BY_SPECIES.get(speciesId)?.commonName : undefined);
 
-  const measured = tanks?.filter((t) => Boolean(t.aquarium.volume)).length ?? 0;
-  const tankCount = tanks?.length ?? 0;
+  /*
+   * Retired tanks keep their records but are not part of "your tanks" any
+   * more, so this screen stops at the active ones.
+   *
+   * Derived once and used for the hero line as well as the list. Counting the
+   * retired ones in "6 tanks, 3 measured" while drawing four rows underneath
+   * would make the summary disagree with the thing it is summarising.
+   */
+  const active = tanks?.filter(({ aquarium }) => aquarium.status !== 'retired') ?? [];
+  const measured = active.filter((t) => Boolean(t.aquarium.volume)).length;
+  const tankCount = active.length;
 
   return (
     <div className="screen">
@@ -121,7 +130,7 @@ export default function Home() {
             <Link to="/tanks" className="prompt__act">Add a tank</Link>
           </div>
         ) : (
-          tanks?.map(({ aquarium, residents }) => (
+          active.map(({ aquarium, residents }) => (
             /* Opens the tank itself, not the index. This used to be inert text,
                which put the one screen a visitor is shown two taps behind a
                nav item. */
