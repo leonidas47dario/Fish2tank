@@ -1,4 +1,4 @@
-# Local-shelf scarcity (spec 003, Phase A) - Implementation Plan
+# Local-shelf scarcity (spec 004, Phase A) - Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -10,7 +10,7 @@
 
 **Tech Stack:** TypeScript, Vitest, React. `npm test` runs the suite; `npm run typecheck` runs `tsc -b --noEmit`.
 
-**Reference:** [docs/specs/003-local-shelf-scarcity.md](../specs/003-local-shelf-scarcity.md)
+**Reference:** [docs/specs/004-local-shelf-scarcity.md](../specs/004-local-shelf-scarcity.md)
 
 **Branch:** work on `feat/local-shelf-scarcity`, then push to `uat` for Ryan to review on the deployed build before anything reaches `main`.
 
@@ -48,7 +48,7 @@ Resulting distribution over all 299 species: **24 widely-available, 7 available,
 Three files that look like they should change but must not:
 
 - `src/data/catalog.ts:169` (`marketAndScarcity`) and `src/ui/screens/SpecimenDetail.tsx` consume only `.band` behind an `available` check.
-- `src/ui/components/Badges.tsx` imports `SCARCITY_LABELS` and `MarketScarcityBand`, both unchanged. (Spec 003's Files list names it; that is stale and Task 6 corrects it.)
+- `src/ui/components/Badges.tsx` imports `SCARCITY_LABELS` and `MarketScarcityBand`, both unchanged. (Spec 004's Files list names it; that is stale and Task 6 corrects it.)
 
 ---
 
@@ -126,7 +126,7 @@ Create `src/data/store-channels.ts`:
  * Predatory Fins resolves 74.6% of its catalogue against ours while Aquarium
  * Co-Op resolves 0.3%, so weighting every vendor equally turned the rating
  * into a Predatory Fins catalogue dump: 275 of 299 species came from PF and
- * 198 were sole-source there. See docs/specs/003-local-shelf-scarcity.md.
+ * 198 were sole-source there. See docs/specs/004-local-shelf-scarcity.md.
  */
 export type StoreChannel = 'community' | 'specialist';
 
@@ -440,7 +440,7 @@ Replace the entire contents of `src/engine/rarity/market-scarcity.ts`:
  * coverage by lowering the threshold - that trade is exactly what the
  * calibration test refuses.
  *
- * See docs/specs/003-local-shelf-scarcity.md.
+ * See docs/specs/004-local-shelf-scarcity.md.
  */
 import type { MarketSpeciesStats } from '@/data/market';
 
@@ -643,7 +643,7 @@ import { STORE_CHANNELS } from './store-channels';
 
 describe('resolve rates are derived from the index, never hardcoded', () => {
   it('matches published listings over livestock listings', () => {
-    // Ground truth from the committed index. See docs/plans/003.
+    // Ground truth from the committed index. See docs/plans/004.
     expect(STORE_RESOLVE_RATES['aquatic-arts']).toBeCloseTo(902 / 5127, 4);
     expect(STORE_RESOLVE_RATES['imperial-tropicals']).toBeCloseTo(497 / 4133, 4);
     expect(STORE_RESOLVE_RATES['aquarium-coop']).toBeCloseTo(1 / 375, 4);
@@ -814,7 +814,7 @@ This is the test whose absence let the original bug ship. It asserts against the
  * that would have caught it.
  *
  * Expected values come from the committed market-index.json and are listed in
- * docs/plans/003-local-shelf-scarcity.md. If an ETL refresh moves them, look
+ * docs/plans/004-local-shelf-scarcity.md. If an ETL refresh moves them, look
  * at the new distribution before editing the numbers.
  */
 import { describe, expect, it } from 'vitest';

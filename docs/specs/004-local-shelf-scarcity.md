@@ -1,4 +1,4 @@
-# 003 - Local-shelf scarcity
+# 004 - Local-shelf scarcity
 
 **Status:** proposed
 **Date:** 2026-08-29
@@ -311,4 +311,4 @@ sampling - belongs to Phase B, alongside the store `channel` field on
 `src/ui/components/Badges.tsx` does **not** change: `SCARCITY_LABELS` and
 `MarketScarcityBand` are untouched.
 
-Implementation plan: [docs/plans/003-local-shelf-scarcity.md](../plans/003-local-shelf-scarcity.md).
+Implementation plan: [docs/plans/004-local-shelf-scarcity.md](../plans/004-local-shelf-scarcity.md).
