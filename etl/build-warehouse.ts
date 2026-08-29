@@ -13,22 +13,13 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { SPECIES_CATALOG } from '@/data/seed/species-catalog';
 import { STORES, type MarketListing } from './types';
 import { discoverSpecies } from './normalize/derive-species';
+import { surrogateKey } from './surrogate-key';
 
 const WAREHOUSE = 'warehouse';
 const LISTINGS = 'data/market/listings.jsonl';
 const IMAGES = 'data/market/images.jsonl';
 
-/** FNV-1a 64-bit. Stable across machines and runs, unlike an autoincrement. */
-export function surrogateKey(...parts: Array<string | number>): bigint {
-  let h = 0xcbf29ce484222325n;
-  const prime = 0x100000001b3n;
-  const mask = 0xffffffffffffffffn;
-  for (const byte of Buffer.from(parts.join('|'), 'utf8')) {
-    h = ((h ^ BigInt(byte)) * prime) & mask;
-  }
-  // Keep it inside signed BIGINT so every destination can store it.
-  return h >> 1n;
-}
+export { surrogateKey };
 
 export const dateKey = (iso: string): number => Number(iso.slice(0, 10).replace(/-/g, ''));
 
