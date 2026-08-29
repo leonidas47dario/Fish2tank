@@ -838,7 +838,7 @@ Also out of scope, and filed for the backlog rather than fixed here:
 
 - **uat and production share one IndexedDB** (spec 005). Origin-scoped, not
   path-scoped. Real today, worse with sync, but not caused by this release.
-- **`types.ts:11`'s claim that exact location "never leaves the device"**
+- **`types.ts:90`'s claim that exact location "never leaves the device"**
   overreaches past NFR-04, which forbids *publishing* it. The comment should
   be corrected when Release 2 makes it actually wrong.
 - **Per-user storage quotas**, which only matter once other keepers exist.
