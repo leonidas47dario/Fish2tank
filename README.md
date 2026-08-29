@@ -81,9 +81,17 @@ immediately, and measuring them once is what makes every later check real.
 **2. It never invents a number.** No confidence percentage on a manual
 identification. No median price below the minimum sample count. No bioload
 calculation from a "Crowded" checkbox. No Chicago rarity without a community
-dataset. A species the vendors named but nobody has profiled carries **no care
-data at all**, so screening it returns *Not enough data* rather than a guess.
-Where a fact is unknown, the app says so and shows what it would need.
+dataset. Where a fact is unknown, the app says so and shows what it would need.
+
+Care data is where this rule is now *mechanically enforced* rather than merely
+observed. Every backfilled value carries the verbatim sentence it came from,
+and `etl/ingest-care-proposals.ts` checks that sentence is really in the cached
+source text **and** that it really contains the figure attributed to it. A
+fabricated number cannot reach the catalog, because the sentence it claims to
+come from is not on disk. What no source states stays empty: 90% of the
+catalog still has no minimum tank volume, so screening those species returns
+*Not enough data* rather than a guess. That gap is the honest outcome of
+refusing to fill it.
 
 **3. It never rewrites history.** Correcting an identity supersedes the earlier
 assertion rather than replacing it. Re-running a screening adds a snapshot
@@ -165,18 +173,42 @@ so it is also just the right shape for the subject.
 | With a licensed portrait on Wikimedia Commons | 699 (65%) |
 | Portraits bundled | 695 — 14.9 MB at 480 px, ~21 KB each |
 | Rendering a silhouette | 377, plus 5 downloads that failed |
-| With a water-column zone | 956 (89%) |
-| With a curated care profile | 47 |
+| With a water-column zone | 965 (90%) |
+| With any care data | 697 (65%) — was 47 |
+| With a hand-curated care profile | 47 |
 
 The species dimension is derived from **what the vendors actually sell**, with
-the curated care profiles as an enrichment layer on top. Building it the other
+the care profiles as an enrichment layer on top. Building it the other
 way round — matching listings to a hand-written seed — was an early design
 error that left 96% of the library invisible.
 
 A binomial the curated catalog does not cover mints a species from the name the
 vendor stated explicitly. Note what this is not: it never guesses that one fish
-is another. Discovered species carry no care data, deliberately, so the
-compatibility engine returns *Not enough data* for them.
+is another.
+
+### Care coverage, per field
+
+96% of the catalog had no care data at all until the spec 003 backfill read
+the source documents for it. Reported per field, because a single coverage
+number would hide the shape of what the sources can and cannot give:
+
+| Field | Species | Share | Backfilled |
+|---|---:|---:|---:|
+| Adult size | 689 | 64% | 642 |
+| Temperature range | 217 | 20% | 170 |
+| Temperament | 206 | 19% | 159 |
+| Minimum tank volume | 92 | 9% | 45 |
+
+The unevenness is the point. Wikipedia states a body length for most species
+it covers and a minimum tank volume for almost none, so **most species still
+screen as *Not enough data***, which is the correct answer while no source
+states the figure. The hand-curated 47 are never overwritten: the backfill
+fills gaps only, so a scraped sentence can never overrule a person.
+
+Every backfilled value links to the sentence it came from, per field — a fish's
+size can come from Wikipedia while its tank volume comes from a store listing,
+and the species page credits each separately. The sentences themselves live in
+`src/data/seed/species-care.json`, which is the audit record.
 
 Portraits are precached (~14.9 MB) so the library draws itself
 offline per NFR-02. The install happens in the background after first paint and
@@ -299,6 +331,34 @@ Snowflake, Databricks or Postgres can run it unchanged.
 
 Details in [`docs/MARKET_ETL.md`](docs/MARKET_ETL.md) and
 [`docs/DATA_WAREHOUSE.md`](docs/DATA_WAREHOUSE.md).
+
+### The care backfill
+
+A separate pipeline, run deliberately and rarely, specified in
+[`docs/specs/003-care-profile-backfill.md`](docs/specs/003-care-profile-backfill.md):
+
+```bash
+npm run care:fetch     # cache Wikipedia + vendor prose to data/care/text/
+npm run care:plan      # split what has text into agent batches
+#                        (extraction agents read the cache and write proposals)
+npm run care:ingest    # verify every quote, then write species-care.json
+npm run marts          # overlay the result onto the catalog
+```
+
+Fetch and ingest are separate steps so a bad extraction never costs a re-fetch,
+and so the text a claim came from is still on disk when the gate checks it.
+`care:fetch` is idempotent — a second run makes zero network calls, including
+for the 246 species with no article, whose absence is remembered rather than
+re-asked. The cached prose is gitignored (it regenerates, and it is several
+megabytes that churn on every Wikipedia edit); the derived records beside it
+are committed, because those are the audit trail.
+
+**What this machine cannot reach.** FishBase, SeriouslyFish and Wikidata all
+return 503 through DRW's Menlo Security proxy, as do two of the eight vendor
+hosts — 233 Predatory Fins listings and 10 Aquatic Arts ones are unreachable
+here and are recorded as skipped rather than retried into a wall. The care
+databases that would answer this question properly are simply not available
+from this network.
 
 ### Rarity is one score, not two
 

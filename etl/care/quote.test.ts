@@ -80,6 +80,46 @@ describe('figureSupportedBy', () => {
     expect(figureSupportedBy(10, 'volume-gal', 'it usually requires a 10+ gallon aquarium')).toBe(true);
   });
 
+  // Each of the following threw away a correctly cited value in the first
+  // full run of the campaign. They are the commonest shapes in the corpus,
+  // not edge cases.
+  it('reads the hyphenated form, which is how tank sizes are usually written', () => {
+    expect(figureSupportedBy(100, 'volume-gal', 'they should be housed in at least a 100-gallon tank')).toBe(true);
+  });
+
+  it('reads the inch mark on a vendor spec sheet', () => {
+    expect(figureSupportedBy(12, 'length-in', 'Max Size : 12"')).toBe(true);
+  });
+
+  it('reads a curly inch mark in prose', () => {
+    expect(figureSupportedBy(5, 'length-in', 'are capable of growing up to 5” long')).toBe(true);
+  });
+
+  it('reads "US gal" without mistaking "us" for the unit', () => {
+    expect(figureSupportedBy(48, 'volume-gal', 'The minimum aquarium size should be 48 US gal')).toBe(true);
+  });
+
+  it('reads "US liquid gallons", filler word and all', () => {
+    expect(figureSupportedBy(55, 'volume-gal', 'they need a minimum tank size of 55 US liquid gallons')).toBe(true);
+  });
+
+  it('reads a thousands separator as thousands, not as a decimal point', () => {
+    expect(figureSupportedBy(4000, 'volume-gal', 'would be around 4,000 gallons')).toBe(true);
+    // The failure this guards: 4,000 read as 4.0 would silently accept 4.
+    expect(figureSupportedBy(4, 'volume-gal', 'would be around 4,000 gallons')).toBe(false);
+  });
+
+  it('still reads a continental decimal comma', () => {
+    expect(figureSupportedBy(1, 'length-in', 'reaches about 2,5 cm in length')).toBe(true);
+  });
+
+  it('gives both ends of a range the unit only its second end carries', () => {
+    const q = 'kept in an aquarium with a volume of at least 45–55 gal';
+    expect(figureSupportedBy(45, 'volume-gal', q)).toBe(true);
+    expect(figureSupportedBy(55, 'volume-gal', q)).toBe(true);
+    expect(figureSupportedBy(90, 'volume-gal', q)).toBe(false);
+  });
+
   it('converts fahrenheit to celsius', () => {
     expect(figureSupportedBy(24, 'temp-c', 'Suggested Water Temperature: 75 degrees F')).toBe(true);
   });
@@ -112,6 +152,14 @@ describe('rangeSupportedBy', () => {
   it('still rejects a claim neither reading of a bare sign supports', () => {
     expect(rangeSupportedBy(10, 12, 'Temperature : 70-85°')).toBe(false);
   });
+
+  it('reads a bare "degrees" with no scale named', () => {
+    expect(rangeSupportedBy(25, 30, 'they must be kept between 25 and 30 degrees')).toBe(true);
+  });
+
+  it('reads a range whose first value carries its own degree sign', () => {
+    expect(rangeSupportedBy(24, 28, 'the temperature ranges from 76° to 82 °F, or 24° to 28 °C')).toBe(true);
+  });
 });
 
 describe('temperamentSupportedBy', () => {
@@ -138,6 +186,30 @@ describe('temperamentSupportedBy', () => {
 
   it('accepts "hostile to most other inhabitants" as aggressive', () => {
     expect(temperamentSupportedBy('aggressive', 'are hostile to most other inhabitants')).toBe(true);
+  });
+
+  it('accepts "semi aggressive" unhyphenated, as sources actually write it', () => {
+    expect(temperamentSupportedBy('semi-aggressive', 'Semi aggressive fish form a pecking order')).toBe(true);
+  });
+
+  it('accepts "aggressively territorial" as aggressive', () => {
+    expect(temperamentSupportedBy('aggressive', 'Convict cichlids are aggressively territorial during breeding'))
+      .toBe(true);
+  });
+
+  it('accepts "not aggressive" as evidence of peaceful', () => {
+    expect(temperamentSupportedBy('peaceful', 'It is not aggressive like its relatives')).toBe(true);
+  });
+
+  it('accepts "most aggressive of puffers" as highly-aggressive', () => {
+    expect(temperamentSupportedBy('highly-aggressive', 'is among the most aggressive of puffers in captivity'))
+      .toBe(true);
+  });
+
+  it('does not let "not aggressive" also prove aggressive', () => {
+    // The negation trap: `aggressiv\w*` alone would match the word inside
+    // "not aggressive" and accept the opposite of what the sentence says.
+    expect(temperamentSupportedBy('aggressive', 'It is not aggressive like its relatives')).toBe(false);
   });
 });
 

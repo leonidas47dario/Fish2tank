@@ -1,6 +1,8 @@
 # 003 - Care-profile backfill for the 1,029 unprofiled species
 
-**Status:** proposed
+**Status:** implemented 2026-08-29. See *What changed during implementation*
+at the foot of this document; three design decisions were reversed by contact
+with the real corpus.
 **Date:** 2026-08-29
 **Touches:** PRD 12.1 ("Species-care sources", still open), FR-E05 / 11.2 (missing
 inputs must return *Not enough data*, never *Suitable*).
@@ -268,3 +270,88 @@ the PR reports it per field rather than burying it in a total.
 
 **Taxonomy defects found but not applied.** Same debt spec 002 took on
 deliberately, and it lands in the same place.
+
+---
+
+## What changed during implementation
+
+Recorded because a spec that quietly diverges from the code is worse than no
+spec. Three decisions were reversed and several gate rules were loosened, all
+by contact with the real corpus rather than by argument.
+
+### 1. The overlay lands in the mart, not the warehouse
+
+The design put `care_sources` on `dim_species`. It is applied in
+`build-marts.ts` instead, for the reason `species-overrides.ts` already
+states: the warehouse is rebuilt from a vendor scrape, so anything merged into
+it must be re-derived on every refresh or it is lost. The forcing function was
+practical — `data/market/listings.jsonl` is gitignored and absent, so
+`build-warehouse.ts` cannot run here at all — but the precedent was already in
+the repository and points the same way.
+
+The overlay **fills gaps only**: a field the warehouse already holds came from
+a curated profile and is never touched. That one rule keeps the hand-written
+47 authoritative without maintaining a list of which species they are.
+
+### 2. The quote does not ship in the bundle
+
+Per-field `source` and `url` reach the mart; the sentence stays in
+`species-care.json`. Four quotes across 658 species would add roughly 250KB to
+a bundle the README already flags as too large, and the audit record is a
+developer artefact, not something a card needs to render.
+
+### 3. Six gate rules were wrong, and each was losing real data
+
+The gate was written against fixtures and then met 789 real proposals. Every
+one of these rejected a correctly cited value:
+
+| Rule as specified | What it missed |
+|---|---|
+| `\baggressive\b` | "aggressively territorial", "semi aggressive" unhyphenated, "somewhat aggressive", "not aggressive" as evidence of *peaceful* |
+| number followed by a space and a unit | `100-gallon tank`, `Max Size : 12"`, `10 US gal`, `55 US liquid gallons` |
+| `[.,]` as a decimal point | `4,000 gallons` read as 4.0 — worse than no match, since a wrong figure passes |
+| range needs a unit on both ends | `at least 45–55 gal` |
+| temperature needs a C or F | `warm (24–28°)`, `between 25 and 30 degrees`, `24° to 28 °C` |
+| adult size capped at 120 in | *Arapaima gigas* at a sourced 450 cm |
+
+Loosening `aggressive` to `aggressiv\w*` introduced a genuine hazard, caught
+by a test written for it: it matches the word inside "not aggressive" and
+would have asserted the exact opposite of the sentence, on the field where
+being wrong is most dangerous. Negated mentions are struck out before the
+aggressive lexicons are applied.
+
+### 4. Two defects in the fetcher, both about honesty
+
+`{{convert|20|to(-)|40|lb}}` is an ordinary range. Treating `to(-)` as a unit
+name rendered "Common mature size is 20 to(-)." and destroyed the figure in
+seven articles, including every temperature for the common carp.
+
+Species with no article left no file behind, so all 246 were re-requested on
+every run — the spec claims idempotence and the code did not deliver it. The
+previous run's log now remembers the answer.
+
+Separately, both entry-point modules ran `main()` on import. A subagent's
+read-only verification harness imported the ingest module and silently
+overwrote `species-care.json` with a partial rebuild. Both are guarded now.
+
+### 5. Results against the acceptance criteria
+
+| | Predicted | Actual |
+|---|---|---|
+| Species with source text | — | 789 of 1,029 |
+| Species gaining a value | — | 658 |
+| Adult size | — | 689 total (64%), 642 backfilled |
+| Temperature | — | 217 (20%), 170 backfilled |
+| Temperament | — | 206 (19%), 159 backfilled |
+| Minimum volume | thin, per the 3% sample | 92 (9%), 45 backfilled |
+| Field rejections | — | 14 of ~1,030 proposed values |
+
+The prediction that most species would still screen as *Not enough data* held:
+90% of the catalog has no minimum tank volume, so the compatibility engine
+returns *Not enough data* for them. That is the chosen trade, working as
+chosen.
+
+**Not done, deliberately:** the 35 genus reclassifications and the several
+wrong-article redirects the agents found are recorded in
+`data/care/care-review.jsonl`, not applied. Renaming a species is a different
+change with a different blast radius, exactly as spec 002 concluded.

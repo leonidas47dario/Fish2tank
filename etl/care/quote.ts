@@ -60,6 +60,12 @@ const TO_INCHES: Record<string, number> = {
   millimetre: 1 / 25.4, millimetres: 1 / 25.4, millimeter: 1 / 25.4, millimeters: 1 / 25.4,
   centimetre: 1 / 2.54, centimetres: 1 / 2.54, centimeter: 1 / 2.54, centimeters: 1 / 2.54,
   metre: 39.3701, metres: 39.3701, meter: 39.3701, meters: 39.3701,
+  // The inch and foot MARKS. Vendor spec sheets write `Max Size : 12"` far
+  // more often than they write "12 inches", and hobby prose uses the curly
+  // forms. Omitting these discarded a correctly sourced size on every
+  // vendor-sourced species in the campaign.
+  '"': 1, '”': 1, '″': 1, "''": 1,
+  "'": 12, '’': 12, '′': 12,
 };
 
 const TO_GALLONS: Record<string, number> = {
@@ -69,11 +75,50 @@ const TO_GALLONS: Record<string, number> = {
 };
 
 /**
- * `\+?` is not decoration. Stores and hobby prose write "a 10+ gallon tank"
- * and "20+ gallons" constantly, and without it every one of those figures
- * reads as unsupported and the value is thrown away.
+ * A number and the unit attached to it.
+ *
+ * Every piece of this pattern is here because a real, correctly cited figure
+ * was thrown away without it:
+ *
+ *   `\+?`            "a 10+ gallon tank"
+ *   `[-–—]?`  "a 100-gallon tank" - the hyphenated form is how
+ *                    almost every hobby source states a tank size
+ *   `us\s+` etc.     "10 US gal", where the unit token would otherwise read
+ *                    as the word "us"
+ *   the mark class   `Max Size : 12"`
+ *
+ * Thousands separators are handled in parseFigure, not here: matching
+ * `4,000` and then reading it as 4.0 is worse than not matching it at all,
+ * because a wrong figure passes the check that a missing one would fail.
  */
-const NUMBER_UNIT = /(\d+(?:[.,]\d+)?)\+?\s*(?:\(|\s)?\s*([a-z°µ]+)/gi;
+const NUMBER_UNIT =
+  /(\d[\d,]*(?:\.\d+)?)\s*\+?\s*[-–—]?\s*\(?\s*(?:us\s+|u\.s\.\s+|imperial\s+|imp\s+)?(?:liquid\s+|dry\s+)?([a-zµ°]+|"|”|″|''|'|’|′)/gi;
+
+/**
+ * Read a figure that may carry thousands separators.
+ *
+ * "4,000 gallons" must be 4000, not 4. Commas are thousands separators only
+ * in the 1,234,567 shape; anything else is treated as a decimal comma, which
+ * is how continental sources write 2,5 cm.
+ */
+export function parseFigure(digits: string): number {
+  if (/^\d{1,3}(,\d{3})+$/.test(digits)) return Number(digits.replace(/,/g, ''));
+  return Number(digits.replace(',', '.'));
+}
+
+/**
+ * Give both ends of a range the unit that only its second end carries.
+ *
+ * "an aquarium with a volume of at least 45–55 gal" states a minimum of 45
+ * gallons, but the token "45" is followed by a dash, not a unit, so a claim of
+ * 45 could not be re-derived from its own quote.
+ */
+function distributeRangeUnits(s: string): string {
+  return s.replace(
+    /(\d[\d,]*(?:\.\d+)?)\s*[-–—]\s*(\d[\d,]*(?:\.\d+)?)(\s*(?:us\s+|u\.s\.\s+)?[a-zµ°]+)/gi,
+    (_all, lo: string, hi: string, unit: string) => `${lo}${unit} ${hi}${unit}`,
+  );
+}
 
 /**
  * Stores write "75 degrees F" where Wikipedia writes "24 °C". Without this the
@@ -84,6 +129,11 @@ function foldDegreeWords(s: string): string {
   return s
     .replace(/\bdegrees?\s*(?:f\b|fahrenheit\b)/g, '°f')
     .replace(/\bdegrees?\s*(?:c\b|celsius\b|centigrade\b)/g, '°c')
+    // A bare "degrees" with no scale - "must be kept between 25 and 30
+    // degrees" - becomes a bare degree sign, which the range reader then
+    // tries as both Celsius and Fahrenheit. Dropping it instead would
+    // discard a stated range over a missing letter.
+    .replace(/\bdegrees?\b/g, '°')
     .replace(/°\s+/g, '°');
 }
 
@@ -95,11 +145,11 @@ interface Figure {
 /** Every "<number> <unit>" pair in a sentence, in order. */
 export function figuresIn(quote: string): Figure[] {
   const out: Figure[] = [];
-  const norm = foldDegreeWords(normalizeForMatch(quote));
+  const norm = distributeRangeUnits(foldDegreeWords(normalizeForMatch(quote)));
   for (const m of norm.matchAll(NUMBER_UNIT)) {
     const [, digits, unit] = m;
     if (!digits || !unit) continue;
-    const value = Number(digits.replace(',', '.'));
+    const value = parseFigure(digits);
     if (Number.isFinite(value)) out.push({ value, unit });
   }
   return out;
@@ -160,8 +210,10 @@ export function rangeSupportedBy(min: number, max: number, quote: string): boole
   // The word boundary applies only when a unit LETTER was matched. Requiring
   // it after a bare "°" fails at end-of-string, because there is no word
   // character on either side of the degree sign to bound.
+  // `°?` after the first number: sources write "24° to 28 °C", where the
+  // first value carries its own degree sign before the separator.
   const ranges = norm.matchAll(
-    /(\d+(?:\.\d+)?)\s*(?:-|to|and)\s*(\d+(?:\.\d+)?)\s*(?:°\s*(c|f)\b|°|\s(c|f)\b)/gi,
+    /(\d+(?:\.\d+)?)\s*°?\s*(?:-|to|and)\s*(\d+(?:\.\d+)?)\s*(?:°\s*(c|f)\b|°|\s(c|f)\b)/gi,
   );
   for (const m of ranges) {
     const [, lo, hi, unitA, unitB] = m;
@@ -190,14 +242,21 @@ export function rangeSupportedBy(min: number, max: number, quote: string): boole
  * asserted over a sentence that says nothing about temperament at all.
  */
 const TEMPERAMENT_TERMS: Record<AggressionRating, RegExp> = {
-  peaceful: /\b(peaceful|docile|non-?aggressive|gentle|community fish|good community)\b/,
+  // "not aggressive", "placid", "passive", "peacefully" and "shy" are all
+  // ordinary ways to state a peaceful disposition, and every one of them was
+  // rejected by the first version of this lexicon.
+  peaceful:
+    /\b(peaceful\w*|docile|placid|passive|timid|shy|non-?aggressive|not (particularly )?aggressive|unaggressive|inoffensive|gentle|community fish|good community|community (tank|aquari\w+))\b/,
   // "somewhat aggressive towards those of its own kind" is the single most
-  // common way an article describes a semi-aggressive fish, and the first
-  // version of this lexicon rejected every one of them.
+  // common way an article describes a semi-aggressive fish. "Semi aggressive"
+  // unhyphenated is the second.
   'semi-aggressive':
-    /\b(semi-?aggressive|territorial|boisterous|feisty|nippy|fin-?nipp\w*|(moderately|somewhat|slightly|mildly|can be|may be) aggressive|aggressive (towards|toward) (its |their )?own)\b/,
-  aggressive: /\b(aggressive|pugnacious|belligerent|combative|quarrelsome|hostile|will attack|may attack)\b/,
-  'highly-aggressive': /\b(highly aggressive|extremely aggressive|very aggressive|predatory|vicious|will kill)\b/,
+    /\b(semi[- ]?aggressive|territorial|boisterous|feisty|nippy|fin-?nipp\w*|harass\w*|bull(y|ies|ying)|(moderately|somewhat|slightly|mildly|can be|may be|may become) (extremely |very )?aggressiv\w*|aggressiv\w* (towards|toward) (its |their )?own)\b/,
+  // `aggressiv\w*` not `aggressive`: "aggressively territorial" is a
+  // temperament statement and the exact-word form missed it.
+  aggressive: /\b(aggressiv\w*|pugnacious|belligerent|combative|quarrelsome|hostile|will attack|may attack)\b/,
+  'highly-aggressive':
+    /\b((highly|extremely|very|most|exceptionally) aggressiv\w*|predatory|vicious|will kill)\b/,
 };
 
 export const AGGRESSION_VALUES: AggressionRating[] = [
@@ -211,9 +270,27 @@ export function isAggressionRating(v: unknown): v is AggressionRating {
   return typeof v === 'string' && (AGGRESSION_VALUES as string[]).includes(v);
 }
 
-/** Does the quote use a word that supports this rating? */
+/**
+ * A negated mention of aggression, which asserts the opposite of the word it
+ * contains: "It is not aggressive like its relatives".
+ */
+const NEGATED_AGGRESSION =
+  /\b(?:not|non-?|never|rarely|isn't|aren't|un)\s*(?:particularly\s+|especially\s+|very\s+|really\s+)?aggressiv\w*/g;
+
+/**
+ * Does the quote use a word that supports this rating?
+ *
+ * For the three aggressive ratings, negated mentions are struck out first.
+ * Matching `aggressiv\w*` is what lets "aggressively territorial" through,
+ * but the same looseness would let "not aggressive" prove aggression - the
+ * exact inverse of what the sentence says, on the field where being wrong is
+ * most dangerous. The peaceful lexicon reads those phrases instead, which is
+ * where they belong.
+ */
 export function temperamentSupportedBy(rating: AggressionRating, quote: string): boolean {
-  return TEMPERAMENT_TERMS[rating].test(normalizeForMatch(quote));
+  const norm = normalizeForMatch(quote);
+  const text = rating === 'peaceful' ? norm : norm.replace(NEGATED_AGGRESSION, ' ');
+  return TEMPERAMENT_TERMS[rating].test(text);
 }
 
 // ---------------------------------------------------------------------------
@@ -227,7 +304,11 @@ export function temperamentSupportedBy(rating: AggressionRating, quote: string):
  * not do.
  */
 export const PLAUSIBLE = {
-  'adult_size_in': { min: 0.2, max: 120 },
+  // 240 in (20 ft), not 120. Arapaima gigas is sourced at 450 cm = 177 in and
+  // the catalog also carries alligator gar and sturgeon. The cap still
+  // rejects the terrestrial plants that reach the extraction step - a 13 m
+  // bael tree and a 20 m pothos vine - which is what it is actually for.
+  'adult_size_in': { min: 0.2, max: 240 },
   // 10,000 gal, not 2,000. This catalog carries arapaima, sturgeon and a
   // goliath tigerfish, and a source really did state 4,000 gallons for the
   // last of those. A cap that rejects a true figure is not a safety check,
