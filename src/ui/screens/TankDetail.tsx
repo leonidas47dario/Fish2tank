@@ -15,8 +15,9 @@ import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { db } from '@/data/db';
-import { moveHolding, recordDeath } from '@/data/repositories';
+import { clearTankPhoto, moveHolding, recordDeath } from '@/data/repositories';
 import { formatVolume } from '@/domain/units';
+import type { Aquarium, StockingState } from '@/domain/types';
 import {
   AGGRESSION_LABEL, forDisplay, summariseTank,
   type TankResident, type TankStats,
@@ -285,12 +286,28 @@ function Coverage({ stats }: { stats: TankStats }) {
 // ── Manage ───────────────────────────────────────────────────────────────
 
 function TankManage({ aquarium, residents, allTanks }: {
-  aquarium: { id: string; volume?: unknown };
+  aquarium: Aquarium;
   residents: TankResident[];
   allTanks: Array<{ id: string; name: string }>;
 }) {
+  const [editing, setEditing] = useState(false);
   return (
     <div className="stack">
+      <section className="card stack">
+        <div className="spread">
+          <strong>Measurements</strong>
+          <button type="button" className="btn--ghost" onClick={() => setEditing(!editing)}>
+            {editing ? 'Done' : 'Edit'}
+          </button>
+        </div>
+        {editing && <TankForm aquarium={aquarium} onDone={() => setEditing(false)} />}
+        {aquarium.photoMediaId && (
+          <button type="button" className="btn--ghost" onClick={() => void clearTankPhoto(aquarium.id)}>
+            Remove tank photo
+          </button>
+        )}
+      </section>
+
       {!aquarium.volume && (
         <p className="warn">
           Without a volume and footprint this tank can only ever return “Not enough data”. Measuring it
@@ -329,6 +346,58 @@ function TankManage({ aquarium, residents, allTanks }: {
           </li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+function TankForm({ aquarium, onDone }: { aquarium: Aquarium; onDone: () => void }) {
+  const [gallons, setGallons] = useState(aquarium.volume ? String(aquarium.volume.value) : '');
+  const [l, setL] = useState(aquarium.dimensions ? String(aquarium.dimensions.length.value) : '');
+  const [w, setW] = useState(aquarium.dimensions ? String(aquarium.dimensions.width.value) : '');
+  const [h, setH] = useState(aquarium.dimensions ? String(aquarium.dimensions.height.value) : '');
+  const [stocking, setStocking] = useState<StockingState | ''>(aquarium.stockingState ?? '');
+
+  async function save() {
+    const dims = l && w && h
+      ? {
+          length: { value: Number(l), unit: 'in' as const },
+          width: { value: Number(w), unit: 'in' as const },
+          height: { value: Number(h), unit: 'in' as const },
+        }
+      : undefined;
+    await db.aquariums.update(aquarium.id, {
+      volume: gallons ? { value: Number(gallons), unit: 'gal' } : undefined,
+      dimensions: dims,
+      stockingState: stocking || undefined,
+    });
+    onDone();
+  }
+
+  return (
+    <div className="stack">
+      <div>
+        <label htmlFor={`vol-${aquarium.id}`}>Volume (gallons)</label>
+        <input id={`vol-${aquarium.id}`} inputMode="decimal" value={gallons} onChange={(e) => setGallons(e.target.value)} />
+      </div>
+      <div className="row">
+        <div className="grow"><label htmlFor={`l-${aquarium.id}`}>Length (in)</label>
+          <input id={`l-${aquarium.id}`} inputMode="decimal" value={l} onChange={(e) => setL(e.target.value)} /></div>
+        <div className="grow"><label htmlFor={`w-${aquarium.id}`}>Width</label>
+          <input id={`w-${aquarium.id}`} inputMode="decimal" value={w} onChange={(e) => setW(e.target.value)} /></div>
+        <div className="grow"><label htmlFor={`h-${aquarium.id}`}>Height</label>
+          <input id={`h-${aquarium.id}`} inputMode="decimal" value={h} onChange={(e) => setH(e.target.value)} /></div>
+      </div>
+      <div>
+        <label htmlFor={`stock-${aquarium.id}`}>How full does it feel?</label>
+        <select id={`stock-${aquarium.id}`} value={stocking} onChange={(e) => setStocking(e.target.value as StockingState | '')}>
+          <option value="">Not saying</option>
+          <option value="low">Low</option>
+          <option value="moderate">Moderate</option>
+          <option value="crowded">Crowded</option>
+        </select>
+        <p className="xs muted">Your judgement, used as-is. Nothing here is turned into a bioload figure.</p>
+      </div>
+      <button type="button" className="btn--primary" onClick={() => void save()}>Save</button>
     </div>
   );
 }

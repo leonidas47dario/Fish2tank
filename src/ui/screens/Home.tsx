@@ -122,7 +122,10 @@ export default function Home() {
           </div>
         ) : (
           tanks?.map(({ aquarium, residents }) => (
-            <Link key={aquarium.id} to="/tanks" className="tankrow">
+            /* Opens the tank itself, not the index. This used to be inert text,
+               which put the one screen a visitor is shown two taps behind a
+               nav item. */
+            <Link key={aquarium.id} to={`/tanks/${aquarium.id}`} className="tankrow">
               <span className="grow">
                 <span className="tankrow__name">{aquarium.name}</span>
                 <span className="tankrow__meta" style={{ display: 'block' }}>

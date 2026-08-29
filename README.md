@@ -19,7 +19,7 @@ npm run dev          # http://localhost:5173
 ```
 
 ```bash
-npm test             # 696 unit + integration tests across 38 files
+npm test             # 701 unit + integration tests across 38 files
 npm run build        # type-check, bundle, generate the service worker
 npm run preview      # serve the production build on :4173
 
@@ -375,7 +375,23 @@ What the tank *becomes*, since the two-inch fish in front of them is a
 fourteen-inch fish later. Then the fish themselves as portraits you can tap
 through to the species page.
 
-**Manage** is the old screen: move a fish, record a loss.
+**Manage** is everything that writes: move a fish, record a loss, set the
+measurements.
+
+**The index is a way in, not a second workspace.** It used to render every
+tank's full resident list along with move and record-a-loss controls — the same
+job the Manage tab does, in the wrong place, since a list answers *which tank?*
+rather than *what do I do with this fish?*. It is now a card per tank: a photo
+you can upload, the numbers worth a glance, and a tap to open. The tank rows on
+Home open the same screen, which they previously did not — inert text put the
+one screen a visitor is shown two taps behind a nav item.
+
+`Aquarium.photoMediaId` had been in the schema since it was written and nothing
+ever filled it. A tank photo is now a real Media row, so it obeys the same rules
+as every other picture here — bytes stored inline, original never downsampled.
+It carries no encounter and no specimen, because a photo of the glass is not a
+sighting of a fish and must never be counted as one, and replacing it deletes
+the old bytes rather than quietly growing the device's storage on every retake.
 
 **Every total reports its own denominator.** Twelve of the sixty-one seeded
 holdings are labels nobody could resolve to a species, and the 75-gallon's

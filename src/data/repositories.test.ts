@@ -8,8 +8,10 @@ import {
   assertIdentity,
   assessmentHistory,
   awardGolden,
+  clearTankPhoto,
   createCatchDraft,
   deleteCatch,
+  setTankPhoto,
   planDeleteCatch,
   updateCatch,
   storageError,
@@ -776,5 +778,65 @@ describe('deleting a catch', () => {
     const { specimen } = await aFullCatch();
     await deleteCatch(specimen.id, db);
     expect(await db.deletedRecords.get(specimen.id)).toMatchObject({ kind: 'specimen' });
+  });
+});
+
+describe('tank photos', () => {
+  const shot = (byte: number) => ({
+    kind: 'photo' as const,
+    blob: new Blob([new Uint8Array([byte])], { type: 'image/jpeg' }),
+    mimeType: 'image/jpeg',
+  });
+
+  async function aTank() {
+    const id = newId('aq');
+    await upsertAquarium({ id, name: 'Reef', kind: 'freshwater', status: 'active', createdAt: '' } as never, db);
+    return id;
+  }
+
+  it('stores the photo as a real media row, not a loose blob', async () => {
+    const id = await aTank();
+    const media = await setTankPhoto(id, shot(1), db);
+
+    expect((await db.aquariums.get(id))!.photoMediaId).toBe(media.id);
+    expect(await db.blobs.get(media.originalBlobKey)).toBeDefined();
+  });
+
+  it('is not a sighting of a fish, and is never counted as one', async () => {
+    // A photo of the glass has no encounter and no specimen. If it had either,
+    // it would turn up in a catch's media and in the catalog's ownership maths.
+    const id = await aTank();
+    const media = await setTankPhoto(id, shot(1), db);
+    expect(media.specimenIds).toEqual([]);
+    expect(media.encounterId).toBeUndefined();
+  });
+
+  it('replacing deletes the old bytes rather than accumulating them', async () => {
+    // A tank has one photo. Keeping every retake would quietly grow the
+    // device's storage, and that budget is the app's to respect.
+    const id = await aTank();
+    const first = await setTankPhoto(id, shot(1), db);
+    await setTankPhoto(id, shot(2), db);
+
+    expect(await db.media.get(first.id)).toBeUndefined();
+    expect(await db.blobs.get(first.originalBlobKey)).toBeUndefined();
+    expect(await db.media.count()).toBe(1);
+    expect(await db.blobs.count()).toBe(1);
+  });
+
+  it('clearing removes the photo and leaves the tank', async () => {
+    const id = await aTank();
+    const media = await setTankPhoto(id, shot(1), db);
+    await clearTankPhoto(id, db);
+
+    expect((await db.aquariums.get(id))!.photoMediaId).toBeUndefined();
+    expect(await db.media.get(media.id)).toBeUndefined();
+    expect(await db.blobs.count()).toBe(0);
+    expect(await db.aquariums.get(id)).toBeDefined();
+  });
+
+  it('clearing a tank that has no photo is a no-op, not an error', async () => {
+    const id = await aTank();
+    await expect(clearTankPhoto(id, db)).resolves.toBeUndefined();
   });
 });
