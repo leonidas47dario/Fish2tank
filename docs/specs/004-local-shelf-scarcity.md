@@ -104,12 +104,27 @@ calibrated against observed data.
 `StoreConfig` gains a required `channel` field.
 
 - **`community`** - generalist shops whose catalog approximates a normal local
-  shelf. **These are the sample.** Imperial Tropicals, Aquatic Arts, AquaHuna,
-  Aquarium Co-Op, Nu Aqua, LiveAquaria.
+  shelf. **These are the sample.** Imperial Tropicals, AquaHuna, Aquarium
+  Co-Op, Nu Aqua, LiveAquaria.
 - **`specialist`** - exotics importers and single-species boutiques. Predatory
-  Fins, Global Exoticquatics, J4 Flowerhorns, Flip Aquatics. They contribute
-  price data and proof that the animal exists in trade. They are **never** in
-  the breadth numerator or denominator.
+  Fins, Aquatic Arts, Global Exoticquatics, J4 Flowerhorns, Flip Aquatics.
+  They contribute price data and proof that the animal exists in trade. They
+  are **never** in the breadth numerator or denominator.
+
+**Aquatic Arts is `specialist`** on Ryan's call - "not a local fish store,
+more in line with Predatory Fins" - and the catalog shape agrees. Share of a
+store's species that no other tracked store carries:
+
+| Store | Species | Sole-source | Share |
+|---|---:|---:|---:|
+| Predatory Fins | 534 | 423 | 79.2% |
+| **Aquatic Arts** | **467** | **331** | **70.9%** |
+| Imperial Tropicals | 193 | 88 | 45.6% |
+| J4 Flowerhorns | 104 | 44 | 42.3% |
+
+A store where seven of every ten species are carried by nobody else is
+behaving like an aggregator of unusual stock, not like a shelf. Imperial
+Tropicals, at 45.6%, overlaps the rest of the market roughly twice as much.
 
 Two assignments worth stating explicitly because they are judgement calls:
 
@@ -243,15 +258,24 @@ rarity calls.
 
 Phase A is inert without this. In order:
 
-1. **Diagnose the resolution gap.** Fetch fresh snapshots for Aquarium Co-Op,
-   Imperial Tropicals, Aquatic Arts and AquaHuna and measure *why* titles miss.
-   The working hypothesis is common-name-only titles, but the repo currently
-   holds raw snapshots for Global Exoticquatics and J4 Flowerhorns only, so
-   this is unverified and must be measured before any matcher change.
-2. **Widen matching for the community tier** against catalog common names and
-   aliases, keeping the existing guard that makes single-word names match only
-   when they are essentially the whole title. `etl/normalize/species.ts`
-   documents why - "Bass" versus "Peacock Bass" - and that discipline holds.
+1. ~~Diagnose the resolution gap.~~ **Done, and the hypothesis was wrong.**
+   `80769ba` on uat (read the binomial the vendor already wrote) fixed most of
+   it: Aquatic Arts went 17.6% -> 73.4%, Imperial Tropicals 12.0% -> 21.5%,
+   Predatory Fins 74.6% -> 90.2%, and the index went from 299 species to 1,072.
+
+   Aquarium Co-Op stayed at 0.3%, and reading its 375 rows out of
+   `warehouse/fact/fact_listing.parquet` shows why. It is **not** a matcher
+   problem and not a common-name problem: the sample is barely livestock.
+   Titles include "Aquarium Co-Op Lanyard", "Murphy Mbu Puffer Keychain",
+   "Filter Optimizing Pad", "Aquarium Plant Weights", "Broken Seal Easy Green"
+   and a long tail of Aponogeton and Anubias. Zero of the 375 carry a
+   parenthesised binomial because almost none of them are fish. `isLivestock`
+   in `etl/normalize/listing.ts` is admitting hardware and plants, and 375
+   total products is itself suspiciously low for that vendor.
+
+2. **Fix `isLivestock`, not the matcher, for Aquarium Co-Op** - and confirm
+   whether its fetch is truncated. Widening common-name matching is not the
+   fix here and would not help.
 3. **Get all 10 declared stores into the index.** Nu Aqua and LiveAquaria are
    in `STORES` but absent from the shipped index, because an offline run with
    no snapshot for them published anyway. The `--allow-partial` guard on
