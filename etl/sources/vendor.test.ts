@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { fetchVendorPortrait, isReachableVendor, storeNameFor } from './vendor';
 
 const productJson = {
@@ -77,5 +77,21 @@ describe('fetchVendorPortrait', () => {
       { fetchImpl: spy });
     expect(got).toBeUndefined();
     expect(called).toBe(false);
+  });
+
+  it('returns undefined rather than throwing when the fetch errors, and logs rather than swallowing it', async () => {
+    // Same rule as searchCommonsPortrait's equivalent test: a caught and
+    // unlogged error is an invisible branch, and a vendor outage would
+    // otherwise look identical to a species that simply has no listing photo.
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    try {
+      const failing = (async () => { throw new Error('network down'); }) as unknown as typeof fetch;
+      const got = await fetchVendorPortrait('sp_x', 'https://imperialtropicals.com/products/gone-offline',
+        { fetchImpl: failing });
+      expect(got).toBeUndefined();
+      expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('gone-offline'));
+    } finally {
+      logSpy.mockRestore();
+    }
   });
 });

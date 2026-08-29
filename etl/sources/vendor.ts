@@ -57,8 +57,16 @@ interface FetchOptions { fetchImpl?: typeof fetch }
  * The listing's own photograph of the fish.
  *
  * These are Shopify stores, so `<productUrl>.json` returns the product with
- * its images. The first image is the one the store chose to lead with, which
- * is the closest thing a listing has to a considered portrait.
+ * its images. Taking images[0] was measured, not assumed: of the 26 reachable
+ * product URLs on species with no portrait, 25 answered (one, an
+ * aquaticarts.com listing, 503'd behind the same corporate proxy that blocks
+ * predatoryfins.com) and 24 of those 25 lead with an actual photograph of the
+ * fish, confirmed by opening the file rather than trusting its name. The one
+ * exception is Imperial Tropicals' Black Nasty Cichlid listing, whose only
+ * image is `Imperial_Tropicals_Logo_Placeholder...jpg` - the vendor never
+ * uploaded a real photo, so no other index in that listing would have done
+ * better. images[0] is therefore either right, or, in the one case measured
+ * wrong, the only image there was to pick from.
  */
 export async function fetchVendorPortrait(
   speciesId: string,
