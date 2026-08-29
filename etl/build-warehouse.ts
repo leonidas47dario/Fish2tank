@@ -153,13 +153,15 @@ async function main() {
   // Created even when empty: the schema must be complete so queries against
   // dim_image do not fail before the image ETL has ever run.
   await c.run(`CREATE TABLE dim_image (
-    image_key BIGINT, species_id VARCHAR, role VARCHAR, source VARCHAR, url VARCHAR,
+    image_key BIGINT, species_id VARCHAR, role VARCHAR, source VARCHAR,
+    provenance VARCHAR, url VARCHAR,
     license VARCHAR, artist VARCHAR, attribution_url VARCHAR,
     width INTEGER, height INTEGER, retrieved_at TIMESTAMP)`);
 
   if (existsSync(IMAGES) && readFileSync(IMAGES, 'utf8').trim()) {
     await c.run(`INSERT INTO dim_image SELECT
-      CAST(image_key AS BIGINT), species_id, role, source, url, license, artist,
+      CAST(image_key AS BIGINT), species_id, role, source,
+      coalesce(provenance, 'wikimedia'), url, license, artist,
       attribution_url, CAST(width AS INTEGER), CAST(height AS INTEGER),
       CAST(retrieved_at AS TIMESTAMP)
       FROM read_json_auto('${IMAGES}', format='newline_delimited')`);

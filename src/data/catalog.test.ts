@@ -6,7 +6,7 @@ function species(over: Partial<CatalogSpecies> = {}): CatalogSpecies {
   return {
     speciesId: 'sp_jaguar_cichlid', commonName: 'Jaguar Cichlid',
     scientificName: 'Parachromis managuensis', aliases: [], predationTags: [],
-    portrait: { url: 'https://commons/x.jpg', license: 'Public domain' },
+    portrait: { url: 'https://commons/x.jpg', provenance: 'wikimedia', license: 'Public domain' },
     ...over,
   };
 }
@@ -107,13 +107,18 @@ describe('cardPrice', () => {
 });
 
 describe('the shipped catalog mart', () => {
-  it('covers every species and carries licences for the portraits it has', () => {
+  it('covers every species and can account for every portrait it has', () => {
     expect(CATALOG.species.length).toBeGreaterThan(40);
     for (const s of CATALOG.species) {
       expect(s.speciesId).toBeTruthy();
       expect(s.commonName).toBeTruthy();
-      // An image without a stateable licence must never reach the mart.
-      if (s.portrait) expect(s.portrait.license).toBeTruthy();
+      // Spec 002: the gate is traceability, not licence - vendor and web
+      // photos have no licence and are shipped deliberately with visible
+      // credit, but every portrait must still carry an attribution link.
+      if (s.portrait) {
+        expect(s.portrait.attributionUrl).toBeTruthy();
+        expect(['wikimedia', 'vendor', 'web']).toContain(s.portrait.provenance);
+      }
     }
   });
 

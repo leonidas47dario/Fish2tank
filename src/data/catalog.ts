@@ -14,7 +14,10 @@ import type { MarketSpeciesStats } from './market';
 
 export interface CatalogPortrait {
   url: string;
-  license: string;
+  /** Which credit line to render. See spec 002. */
+  provenance: 'wikimedia' | 'vendor' | 'web';
+  /** Present for Wikimedia images only; vendor and web photos have none. */
+  license?: string;
   artist?: string;
   attributionUrl?: string;
   width?: number;
