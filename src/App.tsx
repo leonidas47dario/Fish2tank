@@ -3,6 +3,7 @@ import Home from './ui/screens/Home';
 import Catalog from './ui/screens/Catalog';
 import SpeciesDetail from './ui/screens/SpeciesDetail';
 import CatchScreen from './ui/screens/CatchScreen';
+import IdentifyFlow from './ui/screens/IdentifyFlow';
 import Tanks from './ui/screens/Tanks';
 import Journal from './ui/screens/Journal';
 import SpecimenDetail from './ui/screens/SpecimenDetail';
@@ -29,6 +30,8 @@ export default function App() {
           <Route path="/collection" element={<Navigate to="/catalog" replace />} />
           <Route path="/species/:id" element={<SpeciesDetail />} />
           <Route path="/catch" element={<CatchScreen />} />
+          {/* The guided identify + reveal step, entered straight from a capture. */}
+          <Route path="/catch/:specimenId/identify" element={<IdentifyFlow />} />
           <Route path="/tanks" element={<Tanks />} />
           <Route path="/journal" element={<Journal />} />
           <Route path="/specimen/:id" element={<SpecimenDetail />} />

@@ -17,3 +17,18 @@ etl/raw/
 # both would burn the git headroom the warehouse design depends on.
 data/market/listings.jsonl
 data/market/listings.csv
+
+# Emitted by a stray "tsc --noEmit false"; these shadow the .ts sources at runtime.
+src/**/*.js
+etl/**/*.js
+/vite.config.js
+/vitest.config.js
+
+# Agent/tooling scratch, not part of the app.
+.playwright-mcp/
+.remember/
+.tmp/
+
+# Stray screenshots from browser-driven verification.
+catalog-tiles.png
+reveal.png

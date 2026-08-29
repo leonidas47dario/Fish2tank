@@ -145,15 +145,37 @@ export function MarketPanel({ speciesId, observedSize, yourPrice }: Props) {
       <div>
         <p className="xs muted" style={{ marginBottom: 'var(--space-2)' }}>Stores</p>
         <ul className="list">
-          {stats.stores.map((s) => (
-            <li key={s.storeId} className="spread xs">
-              <span>{STORE_NAMES[s.storeId] ?? s.storeId}</span>
-              <span className="data">
-                {s.listings} listing{s.listings === 1 ? '' : 's'} · median ${s.medianPrice.toFixed(0)}
-                {s.inStock > 0 && ` · ${s.inStock} in stock`}
-              </span>
-            </li>
-          ))}
+          {stats.stores.map((s) => {
+            const name = STORE_NAMES[s.storeId] ?? s.storeId;
+            return (
+              <li key={s.storeId} className="spread xs">
+                {/* Link out only when there is a real URL. The label says
+                    whether the page is buyable, because most of this dataset
+                    is sold-out back catalogue and a link that silently leads
+                    to an unavailable listing is worse than no link. */}
+                {s.productUrl ? (
+                  <a
+                    href={s.productUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="store-link"
+                  >
+                    {name}
+                    <span aria-hidden="true"> ↗</span>
+                    <span className="visually-hidden">
+                      {s.productInStock ? ' (opens the store listing, in stock)' : ' (opens the store listing, sold out)'}
+                    </span>
+                  </a>
+                ) : (
+                  <span>{name}</span>
+                )}
+                <span className="data">
+                  {s.listings} listing{s.listings === 1 ? '' : 's'} · median ${s.medianPrice.toFixed(0)}
+                  {s.inStock > 0 && ` · ${s.inStock} in stock`}
+                </span>
+              </li>
+            );
+          })}
         </ul>
       </div>
 

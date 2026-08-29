@@ -36,7 +36,10 @@ export default function CatchScreen() {
       // A per-capture key so a retry after a failure reuses the same draft
       // rather than creating a second catch (FR-C07).
       const draft = await createCatchDraft({ files, clientKey: crypto.randomUUID() });
-      navigate(`/specimen/${draft.specimen.id}`);
+      // Straight into naming it, rather than dropping you on the full record
+      // to go and find the identity block. The draft is already safe either
+      // way - this screen's promise is kept before the next one renders.
+      navigate(`/catch/${draft.specimen.id}/identify`);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not save that catch.');
     } finally {

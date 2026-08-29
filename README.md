@@ -46,10 +46,10 @@ real UI.
 | PRD slice (11.1) | State |
 |---|---|
 | **1 — Private shell** | PWA installs and runs offline; drafts are created before media finishes writing; retries never duplicate a catch. No auth — see *No backend* below. |
-| **2 — Catalog** | Species / specimen / encounter modelled separately; Unknown / Provisional / Confirmed identity; reveal ceremony; Dream List. The library is a **card grid of 1,080 species** with search and filters. |
+| **2 — Catalog** | Species / specimen / encounter modelled separately; Unknown / Provisional / Confirmed identity; reveal ceremony; Dream List. The library is a **card grid of 1,076 species**, filterable by where a fish lives in the tank, what kind of thing it is, and temperament. |
 | **3 — Real tanks** | Aquariums, holdings, dated residencies, full lifecycle events, inventory importer. |
 | **4 — Evaluation** | Seven-factor deterministic screening over a versioned rule set, with immutable snapshots. |
-| **5 — Price + journal** | Ask / member / paid kept separate, comparability filtering, story chapters. Prices come from **8 tracked vendors**. |
+| **5 — Price + journal** | Ask / member / paid kept separate, comparability filtering, story chapters. Prices come from **10 tracked vendors**, each store row linking straight to its product page. |
 | **6 — Legacy + hardening** | Fish Heaven, Keeper's Code, JSON export, reduced-motion and mute, non-colour status cues. |
 
 ### Deliberately not built yet
@@ -59,7 +59,6 @@ block a first usable release:
 
 - Audio and video *memos*, and transcription (FR-J02, FR-J03). Video files are
   accepted as encounter media; a recorded memo attached to a chapter is not.
-- External visual-search handoff (FR-I03)
 - Geolocation capture — a favourite store is seeded, but there is no permission flow (FR-C03)
 - Opt-in "finish your story later" reminder (FR-C08)
 - User override on a verdict — modelled in the types, no UI (FR-E08)
@@ -148,17 +147,25 @@ locked. There is one browser, not a "mine" screen and an "all" screen —
 releases.
 
 Gem positions are borrowed deliberately. A card game trains the eye to find
-cost at the top-left and the creature's two stats in the bottom corners, so
-those hold market price, adult size and minimum tank volume — the three numbers
-a keeper actually decides on.
+cost at the top-left, so that holds market price; adult size and minimum tank
+volume sit bottom-right — the three numbers a keeper actually decides on.
+
+**The tiles are landscape, because the photographs are.** 612 of the 695
+bundled portraits (88%) are wider than they are tall, at a median aspect ratio
+of 1.50. The card used to be 3:4 with `object-fit: cover`, so a 3:2 photograph
+kept about 37% of its width and the crop went straight through the fish — head
+and tail outside the frame, a belly in the middle. Matching the tile to the
+source is the only thing that fixes that; no amount of `object-position` tuning
+saves a portrait box fed landscape images. A fish is a long horizontal animal,
+so it is also just the right shape for the subject.
 
 | | |
 |---|---|
-| Species in the catalog | **1,080** |
-| With a licensed portrait on Wikimedia Commons | 700 (65%) |
-| Portraits bundled | 695 — 9.6 MB at 320 px, ~14 KB each |
-| Rendering a silhouette | 380, plus 5 downloads that failed |
-| With enough listings for price stats | 299 |
+| Species in the catalog | **1,076** |
+| With a licensed portrait on Wikimedia Commons | 699 (65%) |
+| Portraits bundled | 695 — 14.9 MB at 480 px, ~21 KB each |
+| Rendering a silhouette | 377, plus 5 downloads that failed |
+| With a water-column zone | 956 (89%) |
 | With a curated care profile | 47 |
 
 The species dimension is derived from **what the vendors actually sell**, with
@@ -171,21 +178,104 @@ vendor stated explicitly. Note what this is not: it never guesses that one fish
 is another. Discovered species carry no care data, deliberately, so the
 compatibility engine returns *Not enough data* for them.
 
-Portraits are precached (677 entries, ~9.1 MB) so the library draws itself
+Portraits are precached (~14.9 MB) so the library draws itself
 offline per NFR-02. The install happens in the background after first paint and
 cards lazy-load, so it does not sit in front of the first render.
 
 **Known performance debt, logged rather than quietly accepted:** the marts are
 inlined into the JS bundle (1,185 KB raw / 262 KB gzip) and should be separate
-fetched assets, and all 1,080 cards render at once.
+fetched assets, and all 1,076 cards render at once.
 
 ---
 
+## Catalog data quality
+
+The species dimension is derived from vendor listing titles, and a vendor title
+is marketing copy, not a taxonomy. Left unchecked that produced **283 of 1,080
+species (26%) with unusable names** — fourteen different fish all called
+`- tank bred`, others called `BredBy Aquatic Arts` or `-Pack Of Fish`.
+
+Three things fixed it, in that order:
+
+1. **The parser.** `deriveCommonName()` ranked the shared *suffix* of a set of
+   titles, and vendors put their boilerplate at the end, so the boilerplate was
+   always what they had in common. It now cuts the title at the binomial and
+   ranks suffixes of the **head** — `"Red Robin Gourami (Trichogaster labiosa) -
+   Tank Bred"` yields `Gourami`, not `- Tank Bred`. That one change recovered
+   221 of the 234 broken names on its own.
+2. **[`species-overrides.ts`](src/data/seed/species-overrides.ts).** 94 sourced
+   corrections for what no parser can reach — nothing recovers "Convict Cichlid"
+   from six listings that all just say "Cichlid". Every entry cites a Wikipedia
+   article or the vendor title that named the fish, and one is deliberately
+   `null`: *Cherax boesemani* has no species-level common name, only four
+   contradictory trade strains, so the card shows the binomial.
+3. **A build gate.** [`catalog-quality.test.ts`](src/data/seed/catalog-quality.test.ts)
+   fails CI if any of it comes back, and `npm run marts` exits non-zero rather
+   than reporting success over a catalog it just poisoned.
+
+The review also caught duplicates nobody had noticed: `Symphysodon
+aequifaciatus` and `aequifasciata` are both misspellings of *aequifasciatus*,
+and `Xiphophorus helleri` is a known orthographic error for *hellerii*. Four
+records, three fish. They are dropped from the catalog and recorded in
+`SPECIES_SYNONYMS` — **their price listings are not yet pooled into the
+canonical record**, because that needs a full vendor re-scrape.
+
+**Result: 254 quality problems → 0, with 0 species falling back to a bare
+binomial.**
+
+## Where a fish lives
+
+Every card carries a glyph for its water column zone — top, mid, bottom or all
+levels — and the catalog filters on it, because "the bottom is full, what goes
+up top?" is the question a keeper actually asks.
+
+There is no machine source for this. FishBase and Wikidata are both unreachable
+from the network this was built on, and Wikipedia's prose does not reliably say
+it — the *Hypostomus plecostomus* article runs 6,500 characters without once
+using the phrase "bottom-dwelling". What **is** reliable is taxonomy: the
+binomial gives you the genus, genus→family is stable and checkable, and
+water-column habit is overwhelmingly a family-level trait. So
+[`taxonomy.ts`](src/data/seed/taxonomy.ts) maps 560 genera to 221 families and
+each family to a zone with the reason attached. **956 of 1,076 species (89%)**
+get one; the rest say "not recorded" and are excluded from every zone filter
+rather than defaulted into one.
+
+**Temperament is deliberately not derived this way.** Cichlidae holds both the
+ram and the jaguar cichlid, so a family-level aggression rating would be exactly
+the invented data this app refuses. It stays per-species and curated, and the
+filter says so.
+
+## Catch → identify → reveal
+
+Capture now runs straight into naming the fish instead of dropping you on the
+full record to go and find the identity block.
+
+**On Google Lens:** there is no public API, and Cloud Vision would need a
+billing-backed key plus shipping your photo to Google. PRD **FR-I03** anticipated
+this exactly — *"the product does not claim embedded Google Lens capability; the
+user returns and confirms the result manually"* — so the photo goes to Lens only
+through a share sheet you tap, and the app does the half that actually saves
+taps: turning whatever text comes back into a ranked shortlist of real catalog
+species. Paste `Parachromis managuensis` and Jaguar Cichlid is first; paste a
+whole messy Lens caption and it still resolves; type `freshwater aquarium fish`
+and it matches **nothing**, rather than ranking the catalog by how often the word
+"fish" appears.
+
+Nothing is ever auto-confirmed. Ordering is the only confidence signal shown,
+never a percentage (FR-I04).
+
+Confirming plays the unlock ceremony from PRD 7.5 — card rise, bubble burst,
+name, tier stamp — inside a 2.15s budget, skippable at any frame, with
+synthesized audio and haptics behind the existing mute switch (which defaults to
+on). Reduced motion renders the final frame with no animation at all, not a
+faster one.
+
 ## Data pipeline
 
-Eight Shopify storefronts are tracked: Global Exoticquatics, J4 Flowerhorns,
-Predatory Fins, Imperial Tropicals, Aquatic Arts, Aquarium Co-Op, Flip Aquatics
-and AquaHuna. Each was verified individually — Shopify, `robots.txt` permits
+Ten Shopify storefronts are tracked: Global Exoticquatics, J4 Flowerhorns,
+Predatory Fins, Imperial Tropicals, Aquatic Arts, Aquarium Co-Op, Flip Aquatics,
+AquaHuna, **Nu Aqua** (Orland Park IL, the first one you can walk into) and
+**LiveAquaria**. Each was verified individually — Shopify, `robots.txt` permits
 public product data, `/products.json` not disallowed. **15,434 listings.**
 
 ```bash

@@ -61,6 +61,60 @@ describe('deriveCommonName', () => {
   it('handles an empty list', () => {
     expect(deriveCommonName([])).toBeUndefined();
   });
+
+  /**
+   * Regressions for the derivation bug that made 26% of the catalog junk.
+   * Every title below is real, taken from the shipped mart's aliases.
+   */
+  describe('vendor boilerplate after the binomial', () => {
+    it('does not name a fish after how it was bred', () => {
+      // Both are Trichogaster labiosa. The shared TAIL is "- Tank Bred", which
+      // is what the old ranking picked; the name is in the head.
+      expect(deriveCommonName([
+        'Red Robin Gourami (Trichogaster labiosa) - Tank Bred',
+        'Sunset Thicklip Gourami (Trichogaster labiosa) - Tank Bred',
+      ])).toBe('Gourami');
+    });
+
+    it('does not name a fish after the shop that sold it', () => {
+      expect(deriveCommonName([
+        'Blue Oranda Goldfish (Carassius auratus auratus), Tank-Raised!!! - Aquatic Arts',
+      ])).toBe('Blue Oranda Goldfish');
+    });
+
+    it('keeps the head when only one listing exists', () => {
+      expect(deriveCommonName([
+        'Golden Dwarf Cichlid (Nannacara anomala), - Tank Bred',
+      ])).toBe('Golden Dwarf Cichlid');
+    });
+
+    it('ignores an "aka" alias rather than splicing it onto the name', () => {
+      expect(deriveCommonName([
+        'Samurai Gourami aka "Vaillant\'s Chocolate Gourami" (Sphaerichthys vaillanti) - Tank Bred',
+        'Samurai Gourami (Sphaerichthys vaillanti)',
+      ])).toBe('Samurai Gourami');
+    });
+
+    it('strips packaging from titles that carry no binomial at all', () => {
+      // Nu Aqua's format: no parenthesised binomial, trade clause after a dash.
+      expect(deriveCommonName([
+        'Albino Koi Guppy Pairs- Locally Bred',
+        'Japan Blue Double Sword Guppy Pairs- Locally Bred',
+      ])).toBe('Guppy');
+    });
+
+    it('returns undefined rather than a name that is only boilerplate', () => {
+      // Nothing recoverable here. The caller falls back to the binomial, which
+      // is honest; "10-Pack" as a species name is not.
+      expect(deriveCommonName(['10-Pack Of Fish', '6-Pack Of Fish'])).toBeUndefined();
+    });
+
+    it('keeps a colour word when the colour is the fish', () => {
+      // "Koi" is decoration in "Koi Angelfish" and the animal in "Butterfly
+      // Koi". Trailing-noise stripping must not eat it.
+      expect(deriveCommonName(['Butterfly Koi', 'Standard Butterfly Koi'])).toBe('Butterfly Koi');
+    });
+  });
 });
 
 describe('discoverSpecies', () => {

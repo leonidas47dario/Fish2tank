@@ -231,15 +231,28 @@ fieldset { border: 0; padding: 0; margin: 0 0 var(--space-3); }
    Everything reads tokens, so all three visual territories still apply.
 */
 
+/*
+  Landscape tiles, because the photographs are landscape.
+
+  88% of the 695 bundled portraits (612 of them) are wider than they are tall,
+  at a median aspect ratio of 1.50. The card used to be 3:4 with object-fit:
+  cover, so a 3:2 photograph kept about 37% of its width and the crop went
+  straight through the fish - head and tail outside the frame, a belly in the
+  middle. Matching the tile to the source is what fixes it; no amount of
+  object-position tuning saves a portrait box fed landscape images.
+
+  A fish is a long horizontal animal, so this is also just the right shape for
+  the subject.
+*/
 .catalog-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: var(--space-4);
 }
 
 .fish-card {
   position: relative;
-  aspect-ratio: 3 / 4;
+  aspect-ratio: 3 / 2;
   border-radius: var(--rarity-frame-radius);
   overflow: hidden;
   border: 2px solid var(--color-border);
@@ -292,13 +305,14 @@ fieldset { border: 0; padding: 0; margin: 0 0 var(--space-3); }
 }
 
 /* Scrim so the name stays readable over any photograph.
-   Bottom padding clears the stat gems: in a card game the creature's stats sit
-   BELOW the name banner, and letting the name run over them made both
-   unreadable. 30px gem + 8px inset + breathing room. */
+   On a landscape tile the stats sit BESIDE the name rather than under it, so
+   this reserves width on the right instead of height at the bottom. Stacking
+   them vertically on a short, wide card left the name squeezed into a strip
+   two thirds of the way down. */
 .fish-card__scrim {
   position: absolute;
   inset: auto 0 0 0;
-  padding: var(--space-5) var(--space-3) 46px;
+  padding: var(--space-5) 96px var(--space-3) var(--space-3);
   background: linear-gradient(to top,
     color-mix(in srgb, var(--color-canvas) 92%, transparent) 0%,
     color-mix(in srgb, var(--color-canvas) 78%, transparent) 45%,
@@ -307,7 +321,7 @@ fieldset { border: 0; padding: 0; margin: 0 0 var(--space-3); }
 
 .fish-card__name {
   font-family: var(--font-display);
-  font-size: var(--size-sm);
+  font-size: var(--size-md);
   font-weight: var(--weight-bold);
   line-height: 1.15;
   color: var(--color-text);
@@ -348,8 +362,12 @@ fieldset { border: 0; padding: 0; margin: 0 0 var(--space-3); }
   /* Above the scrim, which is painted over the art. */
   z-index: 2;
 }
-.gem--cost   { top: var(--space-2); left: var(--space-2);    background: var(--color-primary); }
-.gem--size   { bottom: var(--space-2); left: var(--space-2);  background: var(--color-accent); }
+/* Cost keeps the top-left corner a card game trains the eye to check first.
+   The two creature stats move to the bottom-RIGHT and sit side by side, since
+   a landscape tile has width to spare and no height to waste - the name takes
+   the bottom-left, which is where reading starts. */
+.gem--cost   { top: var(--space-2); left: var(--space-2);     background: var(--color-primary); }
+.gem--size   { bottom: var(--space-2); right: 44px;           background: var(--color-accent); }
 .gem--volume { bottom: var(--space-2); right: var(--space-2); background: var(--color-caution); }
 
 /* Rarity ribbon, top-right. Text + shape, never colour alone (NFR-06). */
@@ -432,4 +450,206 @@ fieldset { border: 0; padding: 0; margin: 0 0 var(--space-3); }
 .photo-strip__item--on {
   border-color: var(--color-primary);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 45%, transparent);
+}
+
+/* --- Store links ------------------------------------------------------- */
+.store-link {
+  color: var(--color-primary);
+  text-decoration: none;
+  border-bottom: var(--border-width) solid color-mix(in srgb, var(--color-primary) 40%, transparent);
+}
+.store-link:hover { border-bottom-color: var(--color-primary); }
+
+/* --- Habitat pip -------------------------------------------------------- */
+/* Sits under the cost gem in the top-left run. Glyph, not colour alone. */
+.zone-pip {
+  position: absolute;
+  z-index: 2;
+  top: calc(var(--space-2) + 34px);
+  left: var(--space-2);
+  min-width: 24px;
+  height: 24px;
+  padding: 0 var(--space-2);
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-data);
+  font-size: 12px;
+  line-height: 1;
+  background: color-mix(in srgb, var(--color-canvas) 80%, transparent);
+  border: var(--border-width) solid currentColor;
+  color: var(--color-muted);
+}
+.zone-pip--top { color: var(--color-accent); }
+.zone-pip--mid { color: var(--color-primary); }
+.zone-pip--bottom { color: var(--color-caution); }
+
+.chip__glyph { font-family: var(--font-data); }
+
+/* --- Reveal ceremony (PRD 7.5) ------------------------------------------ */
+/*
+ * Four beats: card rise, bubble burst, name, tier stamp. Under three seconds
+ * and skippable at any frame — `data-beat` is what the JS timeline drives, and
+ * every step below keys off it, so skipping is just jumping to the last value.
+ *
+ * Reduced motion is handled by `.reveal--still`, which turns every animation
+ * off rather than shortening it. A fast animation is still animation.
+ */
+.reveal {
+  position: relative;
+  overflow: hidden;
+  padding: var(--space-6) var(--space-4);
+  border-radius: var(--radius-card);
+  border: var(--border-width) solid var(--color-border);
+  background: var(--color-surface);
+  text-align: center;
+  cursor: pointer;
+  min-height: 260px;
+  display: grid;
+  place-items: center;
+}
+.reveal[data-beat='done'] { cursor: default; }
+.reveal:focus-visible { box-shadow: var(--focus-ring); outline: none; }
+
+.reveal__card {
+  animation: card-rise var(--duration-base) var(--ease-rise) both;
+  position: relative;
+  z-index: 1;
+}
+.reveal__eyebrow {
+  font-size: var(--size-xs);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  margin-bottom: var(--space-3);
+}
+.reveal__card h2 { margin-bottom: var(--space-1); }
+
+/* Name and tier each fade up as their beat lands. */
+.reveal__name, .reveal__tier {
+  opacity: 0;
+  transform: translateY(calc(10px * var(--reveal-intensity)));
+  transition: opacity var(--duration-base) var(--ease-standard),
+              transform var(--duration-base) var(--ease-rise);
+}
+.reveal__name.is-in, .reveal__tier.is-in { opacity: 1; transform: none; }
+
+.reveal__tier {
+  margin-top: var(--space-4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+}
+/* The stamp lands rather than fades: overshoot down onto the card. */
+.reveal__tier.is-in .tier { animation: tier-stamp var(--duration-base) var(--ease-standard) both; }
+.reveal__score { color: var(--color-muted); font-size: var(--size-sm); }
+
+@keyframes tier-stamp {
+  from { transform: scale(1.6); opacity: 0; }
+  70%  { transform: scale(0.94); opacity: 1; }
+  to   { transform: scale(1); }
+}
+
+/* Bubbles rise past the card and pop. Pure CSS: twelve spans, no canvas. */
+.reveal__bubbles { position: absolute; inset: 0; pointer-events: none; }
+.reveal__bubble {
+  position: absolute;
+  bottom: -10%;
+  border-radius: var(--radius-pill);
+  border: var(--border-width) solid color-mix(in srgb, var(--color-accent) 55%, transparent);
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  animation: bubble-rise calc(var(--duration-reveal) * 0.6) var(--ease-standard) both;
+}
+@keyframes bubble-rise {
+  from { transform: translateY(0) scale(0.6); opacity: 0; }
+  20%  { opacity: 0.9; }
+  to   { transform: translateY(-260px) scale(1.15); opacity: 0; }
+}
+
+.reveal--golden {
+  border-color: var(--color-legendary);
+  box-shadow: 0 0 0 1px var(--color-legendary),
+              0 0 28px color-mix(in srgb, var(--color-legendary) calc(var(--foil-strength) * 55%), transparent);
+}
+.reveal--golden .reveal__card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(115deg, transparent 35%,
+    color-mix(in srgb, var(--color-legendary) calc(var(--foil-strength) * 100%), transparent) 50%,
+    transparent 65%);
+  background-size: 300% 100%;
+  animation: foil-sweep var(--duration-reveal) var(--ease-standard) both;
+}
+
+.reveal__skip {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  z-index: 2;
+  padding: var(--space-1) var(--space-3);
+  color: var(--color-muted);
+}
+
+/* FR-R04. Not a shorter animation — none. */
+.reveal--still .reveal__card,
+.reveal--still .reveal__name,
+.reveal--still .reveal__tier,
+.reveal--still .reveal__tier.is-in .tier,
+.reveal--still .reveal__card::after {
+  animation: none !important;
+  transition: none !important;
+  opacity: 1;
+  transform: none;
+}
+
+/* --- Identify flow ------------------------------------------------------ */
+.identify__shot {
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  max-height: 40vh;
+}
+.identify__hit { width: 100%; text-align: left; }
+/* The lead candidate is only emphasised when the match is clearly ahead;
+   the component decides, so a near-tie shows a flat list of equals. */
+.identify__hit--lead { border-color: var(--color-primary); }
+.identify__hits { gap: var(--space-2); }
+
+/* --- Collapsible secondary filters -------------------------------------- */
+/* Flat, the zone/kind/temperament rows filled a whole phone screen and left no
+   room for a single fish. Collapsed, the catalog leads with the catalog. */
+.filters-more > summary {
+  cursor: pointer;
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-pill);
+  border: var(--border-width) solid var(--color-border);
+  color: var(--color-muted);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-medium);
+}
+.filters-more > summary::-webkit-details-marker { display: none; }
+.filters-more > summary::after { content: '▾'; font-family: var(--font-data); }
+.filters-more[open] > summary::after { content: '▴'; }
+.filters-more > summary:focus-visible { box-shadow: var(--focus-ring); outline: none; }
+.filters-more[open] > summary { color: var(--color-text); border-color: var(--color-primary); }
+.filters-more > *:not(summary) { margin-top: var(--space-3); }
+
+/* A count, not just a dot: "2" says how much is narrowing the list. */
+.filters-more__count {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary);
+  color: var(--color-canvas);
+  font-family: var(--font-data);
+  font-size: 11px;
+  display: grid;
+  place-items: center;
 }

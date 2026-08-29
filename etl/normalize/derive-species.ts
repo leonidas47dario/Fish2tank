@@ -13,6 +13,8 @@
  * fish nobody has profiled.
  */
 
+import { isUsableName } from '@/data/seed/catalog-quality';
+
 /** Stable, readable id from a binomial. Same input always yields the same id. */
 export function derivedSpeciesId(scientificName: string): string {
   const slug = scientificName
@@ -21,6 +23,22 @@ export function derivedSpeciesId(scientificName: string): string {
     .replace(/^_+|_+$/g, '');
   return `sp_${slug}`;
 }
+
+/**
+ * Packaging and husbandry words that trail a title but never end a name.
+ *
+ * Kept separate from DECORATION on purpose. DECORATION holds colour and morph
+ * words ("koi", "albino") which are stripped only when they make up the WHOLE
+ * candidate - "Butterfly Koi" must survive, because koi is the fish. These are
+ * different: nothing is ever called a "Pairs" or a "Culture", so they can be
+ * peeled off the end of a title unconditionally.
+ */
+const TRAILING_NOISE = new Set([
+  'pairs', 'pair', 'pack', 'packs', 'lot', 'lots', 'group', 'groups',
+  'culture', 'cultures', 'portion', 'portions', 'bunch', 'bunched', 'bunches',
+  'each', 'set', 'sets', 'pcs', 'piece', 'pieces', 'qty', 'count',
+  'tbsp', 'cup', 'bag', 'box', 'combo', 'special', 'sale', 'new',
+]);
 
 /** Words that are grading, colour or trade decoration rather than the fish. */
 const DECORATION = new Set([
@@ -31,6 +49,67 @@ const DECORATION = new Set([
   'koi', 'marble', 'leucistic', 'melanistic', 'gfp', 'live', 'juvenile',
   'male', 'female', 'unsexed', 'pair', 'young', 'adult', 'rare', 'new',
   'b', 'c', 'the', 'and', 'with', 'x', 'combo', 'pack', 'lot', 'group',
+]);
+
+/**
+ * The part of a listing title that can contain the fish's name.
+ *
+ * THE BUG THIS FIXES. Ranking shared SUFFIXES of the whole title produced 26%
+ * of the catalog as garbage, because vendors append their boilerplate to the
+ * end and every listing shares it:
+ *
+ *   "Red Robin Gourami (Trichogaster labiosa) - Tank Bred"
+ *   "Sunset Thicklip Gourami (Trichogaster labiosa) - Tank Bred"
+ *
+ * The longest suffix shared by both is "- Tank Bred", so that became the
+ * species name. Fourteen unrelated species ended up called "- tank bred".
+ *
+ * The structure the vendors actually use is
+ * `<name> (<binomial>) <how it was raised, what size, who sells it>`. The name
+ * is the HEAD, and everything from the binomial onward is decoration. So cut
+ * there first and rank suffixes of the head - "Gourami" for the pair above,
+ * which is right, and still "Angelfish" across four differently-coloured
+ * angelfish, which is what the suffix ranking was always for.
+ */
+function titleHead(title: string): string[] {
+  let head = title;
+
+  // Everything from the binomial onward is vendor decoration.
+  const paren = head.search(/\(\s*[A-Z][a-z]{2,}\s+[a-z]{2,}/);
+  if (paren > 0) head = head.slice(0, paren);
+
+  // "Samurai Gourami aka "Vaillant's Chocolate Gourami"" - the alias after
+  // "aka" is a second name for the same fish, not part of the first one.
+  head = head.split(/\s+(?:aka|a\.k\.a\.?|also known as)\s+/i)[0] ?? head;
+
+  // A trailing clause made only of trade vocabulary, for the vendors who put
+  // it after a dash with no binomial at all ("Koi Guppy Pairs- Locally Bred").
+  head = head.replace(/[,\-–—]\s*[^,\-–—]*$/, (clause) => {
+    const words = clause.replace(/[^A-Za-z\s]/g, ' ').trim().toLowerCase().split(/\s+/).filter(Boolean);
+    if (words.length === 0) return '';
+    const junk = words.every((w) => TRAILING_NOISE.has(w) || DECORATION.has(w) || BRED.has(w));
+    return junk ? '' : clause;
+  });
+
+  const words = head
+    .replace(/#\w+/g, ' ')         // stock codes
+    .replace(/[^A-Za-z\s-]/g, ' ') // punctuation and sizes
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+
+  // Peel packaging off the end: "Albino Koi Guppy Pairs" is a guppy.
+  while (words.length > 1 && TRAILING_NOISE.has(words[words.length - 1]!.toLowerCase())) {
+    words.pop();
+  }
+  return words;
+}
+
+/** How a fish was raised. Never part of its name, common in trailing clauses. */
+const BRED = new Set([
+  'tank', 'bred', 'raised', 'locally', 'captive', 'wild', 'caught',
+  'aquacultured', 'imported', 'domestic', 'farm', 'farmed', 'bare', 'root',
+  'w', 'lead', 'with', 'plant', 'plants', 'potted', 'loose',
 ]);
 
 /**
@@ -49,17 +128,7 @@ const DECORATION = new Set([
 export function deriveCommonName(titles: string[]): string | undefined {
   if (titles.length === 0) return undefined;
 
-  const tokenised = titles
-    .map((t) =>
-      t
-        .replace(/\(.*?\)/g, ' ')      // drop the binomial itself
-        .replace(/#\w+/g, ' ')         // stock codes
-        .replace(/[^A-Za-z\s-]/g, ' ') // punctuation and sizes
-        .trim()
-        .split(/\s+/)
-        .filter(Boolean),
-    )
-    .filter((t) => t.length > 0);
+  const tokenised = titles.map(titleHead).filter((t) => t.length > 0);
   if (tokenised.length === 0) return undefined;
 
   /**
@@ -95,7 +164,14 @@ export function deriveCommonName(titles: string[]): string | undefined {
     }
   }
 
-  return best ? titleCase(best.name) : undefined;
+  if (!best) return undefined;
+
+  // Last line of defence. Even with the head cut, a vendor can put its own
+  // name where the fish's should be. The same rules the build gate applies to
+  // the shipped catalog apply here, at the point the name is minted, so the
+  // two can never disagree about what is acceptable.
+  const name = titleCase(best.name);
+  return isUsableName(name) ? name : undefined;
 }
 
 function titleCase(s: string): string {

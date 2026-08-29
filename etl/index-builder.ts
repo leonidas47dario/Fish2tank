@@ -63,11 +63,19 @@ export function buildMarketIndex(listings: MarketListing[], options: BuildOption
     const stores = storeIds.map((storeId) => {
       const mine = all.filter((l) => l.storeId === storeId);
       const minePriced = mine.filter((l) => l.size !== undefined && l.price > 0).map((l) => l.price);
+
+      // Link to something you can actually buy. Most of this dataset is
+      // sold-out back catalogue, so picking the first listing would usually
+      // send you to a dead page; an in-stock one wins whenever there is one.
+      const linkable = mine.filter((l) => l.url);
+      const best = linkable.find((l) => l.available) ?? linkable[0];
+
       return {
         storeId,
         listings: mine.length,
         inStock: mine.filter((l) => l.available).length,
         medianPrice: minePriced.length ? round2(median(minePriced)) : 0,
+        ...(best ? { productUrl: best.url, productInStock: best.available } : {}),
       };
     });
 

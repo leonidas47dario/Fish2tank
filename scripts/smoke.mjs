@@ -42,16 +42,36 @@ const png = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAHUlEQVR42mNk+M9Qz0AEYBxVSF+FjIyMDEQoBABtqgb9pC1lQwAAAABJRU5ErkJggg==',
   'base64');
 await page.setInputFiles('#capture', { name: 'panther.png', mimeType: 'image/png', buffer: png });
-await page.waitForURL(/#\/specimen\//, { timeout: 10000 });
+// Capture now leads straight into the guided identify step rather than
+// dropping you on the full record (PRD 3.3 / FR-I03).
+await page.waitForURL(/#\/catch\/.+\/identify/, { timeout: 10000 });
 await page.waitForTimeout(500);
 console.log('DRAFT URL:', page.url());
 await page.screenshot({ path: `${SHOTS}/02-draft.png`, fullPage: true });
 
-// --- Identify --------------------------------------------------------------
-await page.fill('#species-search', 'managuense');
+// --- Identify in the guided flow -------------------------------------------
+// A binomial pasted out of a visual search is the highest-precision path, so
+// this exercises the same route a real Lens handoff would come back through.
+await page.fill('#idq', 'Parachromis managuensis');
 await page.waitForTimeout(400);
-await page.getByRole('button', { name: /Jaguar Cichlid/i }).click();
+const leadHit = page.locator('.identify__hit').first();
+console.log('TOP CANDIDATE:', (await leadHit.innerText()).split('\n')[0]);
+await leadHit.click();
+
+// --- Reveal ceremony (PRD 7.5) ---------------------------------------------
+await page.waitForSelector('[data-testid="reveal-ceremony"]', { timeout: 10000 });
+await page.waitForTimeout(300);
+await page.screenshot({ path: `${SHOTS}/02b-reveal.png`, fullPage: true });
+// Must be skippable at any frame, not merely fast.
+await page.getByRole('button', { name: /^Skip$/ }).click();
+await page.waitForFunction(
+  () => document.querySelector('[data-testid="reveal-ceremony"]')?.getAttribute('data-beat') === 'done',
+  { timeout: 3000 });
+console.log('REVEAL: skipped to final frame');
+await page.getByRole('button', { name: /See the full record/i }).click();
+await page.waitForURL(/#\/specimen\//, { timeout: 10000 });
 await page.waitForTimeout(400);
+
 await page.fill('#nickname', 'the Panther');
 await page.locator('#nickname').blur();
 await page.waitForTimeout(300);
@@ -76,12 +96,18 @@ const details = page.locator('details').first();
 if (await details.count()) { await details.click(); await page.waitForTimeout(300); }
 await page.screenshot({ path: `${SHOTS}/05-factors.png`, fullPage: true });
 
-// --- Reveal ----------------------------------------------------------------
-await page.getByRole('button', { name: /^Reveal$/ }).click();
-await page.waitForTimeout(900);
+// --- Reveal, on revisiting --------------------------------------------------
+// The ceremony already played in the capture flow, so the specimen page shows
+// the stored snapshot rather than a Reveal button. PRD 7.5: "no full-screen
+// delay after the first viewing." revealSpecimen() is idempotent, so the tier
+// here must be the same one the ceremony stamped.
+await page.waitForSelector('.tier', { timeout: 10000 });
 await page.screenshot({ path: `${SHOTS}/06-reveal.png`, fullPage: true });
 const tierText = await page.locator('.tier').first().innerText();
-console.log('TIER:', tierText);
+console.log('TIER (persisted, not replayed):', tierText);
+if (await page.getByRole('button', { name: /^Reveal$/ }).count()) {
+  throw new Error('Specimen page still offers Reveal after the ceremony already ran');
+}
 
 // --- Theme comparison (PRD 7.6) -------------------------------------------
 for (const theme of ['playful-collector', 'expedition-fieldbook']) {

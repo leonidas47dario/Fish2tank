@@ -21,6 +21,14 @@ interface Props {
   onOpen?: (speciesId: string) => void;
 }
 
+/** Shape carries the meaning as well as position, per NFR-06. */
+const ZONE_GLYPH: Record<string, string> = {
+  top: '▔', mid: '━', bottom: '▁', 'all-levels': '↕',
+};
+const ZONE_LABEL: Record<string, string> = {
+  top: 'Top dweller', mid: 'Mid-water', bottom: 'Bottom dweller', 'all-levels': 'Swims all levels',
+};
+
 const TIER_TONE: Record<string, string> = {
   familiar: 'var(--color-muted)',
   uncommon: 'var(--color-primary)',
@@ -89,6 +97,19 @@ export function FishCard({ card, onOpen }: Props) {
       {species.minVolumeGal !== undefined && (
         <span className="gem gem--volume" title="Minimum tank">
           {formatVolume({ value: species.minVolumeGal, unit: 'gal' })}
+        </span>
+      )}
+
+      {/* Where it lives, as a glyph in the top-left run. Silent when the
+          family is unmapped - an absent badge is honest, a "mid" default
+          would not be. */}
+      {species.waterZone && (
+        <span
+          className={`zone-pip zone-pip--${species.waterZone}`}
+          title={`${ZONE_LABEL[species.waterZone]}${species.habitatNote ? ` — ${species.habitatNote}` : ''}`}
+        >
+          <span aria-hidden="true">{ZONE_GLYPH[species.waterZone]}</span>
+          <span className="visually-hidden">{ZONE_LABEL[species.waterZone]}</span>
         </span>
       )}
 

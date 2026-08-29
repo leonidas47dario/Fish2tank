@@ -21,12 +21,27 @@ const IMAGES = 'data/market/images.jsonl';
 const OUT_DIR = 'src/data/seed/assets/portraits';
 
 /**
- * Cards render at ~150 CSS px in the grid, so 320 covers 2x displays and there
- * is nothing to gain above it. At this width a portrait averages 14KB, which is
- * what makes bundling all 695 of them affordable at 9.6MB.
+ * Cards are landscape now, not portrait.
+ *
+ * The grid used to lay out 150px-wide tiles, so 320 covered 2x displays. The
+ * tiles are 3:2 and ~300 CSS px wide since 88% of these photographs are
+ * landscape and a 3:4 box was cropping the fish's head off, and at that size
+ * 320px source visibly softens on a retina screen.
+ *
+ * 480 is a measured compromise, not a guess. The three options were built and
+ * weighed, because these are precached in full and the install is the cost:
+ *
+ *   320px   9.6 MB   1x on the new tile - visibly soft on any retina screen
+ *   480px  ~13 MB    1.5x - the chosen default
+ *   640px  23.5 MB   2x - crisp, but 2.5x the precache for the last half-step
+ *
+ * A catalog that cannot draw itself offline has failed NFR-02, so every one of
+ * these ships to the device. Tripling that download to sharpen a 300px grid
+ * thumbnail is not a trade worth making; 1.5x closes most of the visible gap
+ * for a third of the cost.
  */
-const MAX_WIDTH = 320;
-const QUALITY = 0.72;
+const MAX_WIDTH = 480;
+const QUALITY = 0.68;
 
 /**
  * Wikimedia rate-limits bursts, and a first run without this got 429s on 7 of
