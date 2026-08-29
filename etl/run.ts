@@ -14,8 +14,10 @@ import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { fetchAllProducts, type ShopifyProduct } from './sources/shopify';
 import { normalizeStore, isLivestock } from './normalize/listing';
+import { discoverSpecies } from './normalize/derive-species';
 import { buildMarketIndex } from './index-builder';
 import { STORES, type MarketListing } from './types';
+import type { Species } from '@/domain/types';
 import { SPECIES_CATALOG } from '@/data/seed/species-catalog';
 
 const RAW_DIR = 'etl/raw';
@@ -32,8 +34,7 @@ async function main() {
   mkdirSync(OUT_DIR, { recursive: true });
   mkdirSync('src/data/seed/marts', { recursive: true });
 
-  const allListings: MarketListing[] = [];
-  const sources: Array<(typeof STORES)[number] & { listingsFetched: number; retrievedAt: string }> = [];
+  const fetched: Array<{ store: (typeof STORES)[number]; products: ShopifyProduct[]; retrievedAt: string }> = [];
   const failures: Array<{ storeId: string; reason: string }> = [];
 
   for (const store of STORES) {
@@ -70,7 +71,63 @@ async function main() {
       writeFileSync(rawPath, JSON.stringify({ store: store.id, retrievedAt, products }, null, 2));
     }
 
-    const normalized = normalizeStore(store, products, catalog, retrievedAt).filter(isLivestock);
+    fetched.push({ store, products, retrievedAt });
+  }
+
+  /**
+   * TWO PASSES, because one pass can only read the vendors who write Latin.
+   *
+   * The curated catalog is 47 species. Everything else the app knows was
+   * MINTED from binomials vendors put in their own titles, which means a store
+   * that writes "Black Ruby Barb - L" instead of "Puntius nigrofasciatus" can
+   * only ever match those 47 - and silently contributes nothing.
+   *
+   * That is not a rounding error, it decides what the app can say. Measured on
+   * Nu Aqua, the one shop the owner can physically walk into: 1,222 livestock
+   * listings, 39 matched against the curated 47, a 3.2% resolve rate. Against
+   * the vocabulary the binomial-writing stores establish in pass 1, the same
+   * snapshot resolves 294 listings across 168 species - 24.1%. Nothing about
+   * the store changed; we simply learned the names first.
+   *
+   * So: pass 1 resolves what the vendors name outright and mints species from
+   * it. Pass 2 re-reads every store against curated + discovered. Order does
+   * not matter within a pass, and the result is deterministic, because
+   * discoverSpecies derives its ids from the binomial alone.
+   */
+  const pass1 = fetched
+    .flatMap((f) => normalizeStore(f.store, f.products, catalog, f.retrievedAt))
+    .filter(isLivestock);
+
+  const curatedBinomials = new Set(
+    catalog.map((s) => s.scientificName?.toLowerCase()).filter((n): n is string => Boolean(n)),
+  );
+  const discovered = discoverSpecies(pass1, curatedBinomials);
+  const vocabulary: Species[] = [
+    ...catalog,
+    ...discovered.map((d) => ({
+      id: d.speciesId,
+      commonName: d.commonName,
+      scientificName: d.scientificName,
+      aliases: d.aliases,
+      createdAt: new Date(0).toISOString(),
+    })),
+  ];
+  console.log(
+    `\n  vocabulary: ${catalog.length} curated + ${discovered.length} discovered = ${vocabulary.length}`,
+  );
+
+  const allListings: MarketListing[] = [];
+  const sources: Array<(typeof STORES)[number] & { listingsFetched: number; retrievedAt: string }> = [];
+  for (const { store, products, retrievedAt } of fetched) {
+    const normalized = normalizeStore(store, products, vocabulary, retrievedAt).filter(isLivestock);
+    const before = pass1.filter((l) => l.storeId === store.id);
+    const rate = (ls: MarketListing[]) => (ls.length ? ls.filter((l) => l.speciesId).length / ls.length : 0);
+    // Log the outcome, not just the intent: a pass that quietly resolved
+    // nothing extra is the thing worth seeing.
+    console.log(
+      `  ${store.name}: ${normalized.length} livestock, resolve ` +
+      `${(rate(before) * 100).toFixed(1)}% -> ${(rate(normalized) * 100).toFixed(1)}%`,
+    );
     allListings.push(...normalized);
     sources.push({ ...store, listingsFetched: normalized.length, retrievedAt });
   }
