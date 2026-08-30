@@ -1474,3 +1474,108 @@ describe('noting which shop a price was seen at', () => {
     expect(await resolveShop('   ', db)).toBeUndefined();
   });
 });
+
+/**
+ * Deleting a catch used to refuse outright when the fish had a memorial -
+ * "that record is deliberately permanent". Nothing tested that refusal, which
+ * is part of why it survived so long: it was a sentence in a function, not a
+ * decision anything checked.
+ */
+describe('deleting a catch that was mourned', () => {
+  // Local, because the fuller helper is scoped to another block. This needs a
+  // confirmed catch and nothing else.
+  async function aCatch() {
+    const { specimen } = await createCatchDraft({ files: [photo()], clientKey: newId('k') }, db);
+    await assertIdentity(
+      { specimenId: specimen.id, speciesId: 'sp_jaguar_cichlid', source: 'user', status: 'user-confirmed' },
+      db,
+    );
+    return { specimen };
+  }
+
+  async function mourned() {
+    const { specimen } = await aCatch();
+    if (!(await db.aquariums.get('tank_75g'))) await db.aquariums.add(seventyFive());
+    const { holding } = await createOpeningBalanceHolding(
+      { aquariumId: 'tank_75g', specimenId: specimen.id, speciesId: 'sp_jaguar_cichlid',
+        rawLabel: 'Jaguar', kind: 'individual', openingQuantity: 1 },
+      db,
+    );
+    const memorial = await recordDeath({ holdingId: holding.id, lesson: 'Quarantine everything.' }, db);
+    return { specimen, holding, memorial };
+  }
+
+  it('no longer refuses, and says the memorial is going', async () => {
+    const { specimen } = await mourned();
+    const plan = await planDeleteCatch(specimen.id, db);
+
+    expect(plan.allowed).toBe(true);
+    expect(plan.memorials).toBe(1);
+    // Planning it removes nothing.
+    expect(await db.memorials.count()).toBe(1);
+  });
+
+  it('removes the memorial with the catch', async () => {
+    const { specimen, memorial } = await mourned();
+    const result = await deleteCatch(specimen.id, db);
+
+    expect(result.allowed).toBe(true);
+    expect(await db.memorials.get(memorial.id)).toBeUndefined();
+    expect(await db.specimens.get(specimen.id)).toBeUndefined();
+  });
+
+  /**
+   * A memorial points at a HOLDING as well as a specimen, and the holdings go
+   * too. Gathering by specimenId alone would leave one pointing at a holding
+   * that no longer exists - which the Journal renders as an anonymous "A fish"
+   * rather than failing, so it would have been a quiet wrong.
+   */
+  it('finds a memorial that names only the holding', async () => {
+    const { specimen, holding } = await mourned();
+    // Strip the specimen link, leaving only the holdingId route.
+    const [m] = await db.memorials.where('holdingId').equals(holding.id).toArray();
+    await db.memorials.update(m!.id, { specimenId: undefined });
+
+    await deleteCatch(specimen.id, db);
+    expect(await db.memorials.count()).toBe(0);
+  });
+
+  it('removes a principle written from that memorial', async () => {
+    const { specimen, memorial } = await mourned();
+    await createKeeperPrinciple('Quarantine every wild-caught fish.', { memorialId: memorial.id }, db);
+    expect(await db.keeperPrinciples.count()).toBe(1);
+
+    const result = await deleteCatch(specimen.id, db);
+    expect(result.principles).toBe(1);
+    expect(await db.keeperPrinciples.count()).toBe(0);
+  });
+
+  /**
+   * The boundary on "all associated". A principle is a lesson in the keeper's
+   * own words about how they keep fish; one with no source, or one from a
+   * different fish, outlives this record. Deleting a test catch must not take
+   * a rule written for every future tank with it.
+   */
+  it('leaves a principle that did not come from this fish', async () => {
+    const { specimen } = await mourned();
+    await createKeeperPrinciple('Never trust a store bag.', {}, db);           // no source
+    const other = await aCatch();
+    await createKeeperPrinciple('Feed less than you think.', { specimenId: other.specimen.id }, db);
+
+    const result = await deleteCatch(specimen.id, db);
+
+    expect(result.principles).toBe(0);
+    const left = (await db.keeperPrinciples.toArray()).map((k) => k.text).sort();
+    expect(left).toEqual(['Feed less than you think.', 'Never trust a store bag.']);
+  });
+
+  it('leaves another fish\'s memorial alone', async () => {
+    const mine = await mourned();
+    const theirs = await mourned();
+
+    await deleteCatch(mine.specimen.id, db);
+
+    expect(await db.memorials.get(theirs.memorial.id)).toBeDefined();
+    expect(await db.specimens.get(theirs.specimen.id)).toBeDefined();
+  });
+});

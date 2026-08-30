@@ -991,6 +991,23 @@ function DeleteCatch({ specimenId, name, onDeleted }: {
               line rather than folded into the list above, and naming the tanks
               rather than counting them, because "also removes it from 2 tanks"
               is a number to accept on faith. */}
+          {/* Fish Heaven, named on its own line.
+​
+              This used to be a refusal - "that record is deliberately
+              permanent" - and it is the heaviest thing the cascade takes, so
+              it does not get folded into the comma-list above with the price
+              notes. A memorial is a fish you mourned; if it is going, that
+              should be the sentence you read, not a clause. */}
+          {plan.memorials > 0 && (
+            <p className="warn panel__note--tight">
+              Its {plan.memorials === 1 ? 'memorial' : `${plan.memorials} memorials`} in Fish Heaven
+              {plan.principles > 0 && (
+                <>, and the {plan.principles === 1 ? 'principle' : `${plan.principles} principles`} you
+                  wrote from {plan.principles === 1 ? 'it' : 'them'},</>
+              )}
+              {' '}will be removed too.
+            </p>
+          )}
           {plan.holdings > 0 && (
             <p className="warn panel__note--tight">
               {plan.inTanks.length > 0
