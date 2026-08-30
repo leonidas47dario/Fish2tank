@@ -58,7 +58,8 @@ export const STARTER_PLACE = {
   name: 'Aquarium Adventure',
   type: 'fish-store' as const,
   coarseLocation: 'Chicago area',
-  // NFR-04 / 8.2: exact locations stay private and never leave the device.
+  // NFR-04 / 8.2: exact locations stay private and are never published. Not
+  // "never leave the device" - see the note on Place.exactLocation (BUG-05).
   privacy: 'private-exact' as const,
   isFavorite: true,
   createdAt: SEEDED_AT,
