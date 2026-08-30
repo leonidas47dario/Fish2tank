@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
-  CATALOG, cardPrice, ownership, portraitCredit, resolveCardArt,
+  CATALOG, cardPrice, ownership, portraitCredit, resolveCardArt, searchableSpecies,
   type CatalogCard, type CatalogSpecies,
 } from './catalog';
+import { identifyFromText } from './identify';
 import type { MarketSpeciesStats } from './market';
+import type { Species } from '@/domain/types';
 
 function species(over: Partial<CatalogSpecies> = {}): CatalogSpecies {
   return {
@@ -186,5 +188,58 @@ describe('portraitCredit', () => {
     expect(portraitCredit({
       url: 'x', provenance: 'vendor', artist: 'Imperial Tropicals', license: 'CC BY 4.0',
     })).toBe('Photo: Imperial Tropicals (product listing)');
+  });
+});
+
+describe('the searchable corpus (spec 007)', () => {
+  const local = (over: Partial<Species> = {}): Species => ({
+    id: 'sp_user_1', commonName: 'Weird Pleco', aliases: [],
+    createdAt: '2026-08-30T00:00:00.000Z', origin: 'user-submitted', ...over,
+  });
+
+  it('contains every catalog species', () => {
+    expect(searchableSpecies([])).toHaveLength(CATALOG.species.length);
+  });
+
+  it('adds a species the keeper submitted, which is in no mart', () => {
+    const corpus = searchableSpecies([local()]);
+    expect(corpus.map((s) => s.speciesId)).toContain('sp_user_1');
+    expect(corpus).toHaveLength(CATALOG.species.length + 1);
+  });
+
+  it('leaves a submitted species empty of care data rather than filling it with zeroes', () => {
+    // catalogShapeForLocal's contract, asserted here because the corpus is now
+    // what feeds the UI: nobody sourced an adult size for a fish the keeper
+    // typed in, and the card's "not enough data" path must be the one that runs.
+    const entry = searchableSpecies([local()]).find((s) => s.speciesId === 'sp_user_1')!;
+    expect(entry.commonName).toBe('Weird Pleco');
+    expect(entry.adultSizeIn).toBeUndefined();
+    expect(entry.portrait).toBeUndefined();
+  });
+
+  it('does not re-add a seeded species that is already a mart row', () => {
+    // The 47 seeded care profiles carry the SAME ids as their mart rows, so
+    // passing the whole species table must not duplicate them. A duplicate
+    // would show the user the same fish twice and make them guess.
+    const seeded: Species = {
+      id: 'sp_jaguar_cichlid', commonName: 'Jaguar Cichlid', aliases: [],
+      createdAt: '2026-08-27T00:00:00.000Z',
+    };
+    const corpus = searchableSpecies([seeded, local()]);
+    expect(corpus.filter((s) => s.speciesId === 'sp_jaguar_cichlid')).toHaveLength(1);
+    expect(corpus).toHaveLength(CATALOG.species.length + 1);
+  });
+
+  it('finds a catalog species that has no seeded care profile', () => {
+    // BUG-01's own reproduction case. Erythrinus erythrinus is a real mart row
+    // with real listings and no hand-written profile, so the old panel - which
+    // searched the 47 seeded rows - returned nothing for it.
+    const hits = identifyFromText('Rainbow Wolf Fish', searchableSpecies([]));
+    expect(hits.map((c) => c.species.speciesId)).toContain('sp_erythrinus_erythrinus');
+  });
+
+  it('finds a submitted species by the name the keeper gave it', () => {
+    const hits = identifyFromText('Weird Pleco', searchableSpecies([local()]));
+    expect(hits[0]?.species.speciesId).toBe('sp_user_1');
   });
 });
