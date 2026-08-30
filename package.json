@@ -26,6 +26,7 @@
     "care:plan": "tsx etl/plan-care-batches.ts",
     "care:ingest": "tsx etl/ingest-care-proposals.ts",
     "species:review": "tsx etl/review-user-species.ts",
+    "fixture:smoke": "tsx etl/build-smoke-fixture.ts",
     "contrast": "node scripts/contrast-audit.mjs",
     "shots": "node scripts/review-shots.mjs",
     "plates": "node scripts/derive-plates.mjs"
