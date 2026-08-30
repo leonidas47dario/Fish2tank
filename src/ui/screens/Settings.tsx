@@ -30,6 +30,19 @@ import { exportArchive } from '@/data/portability/export';
 import { importArchive } from '@/data/portability/import';
 import { eraseEverything } from '@/data/portability/erase';
 
+/**
+ * Who the backup belongs to, for its filename (spec 016).
+ *
+ * Read at the moment of export rather than held in state: an export can be
+ * the last thing that happens before an erase, and a stale name on that file
+ * is the one you would not be able to identify afterwards. Signed out there
+ * is no account, and the name simply carries the timestamp.
+ */
+function backupAccount(): string | undefined {
+  const user = db.cloud.currentUser?.value;
+  return user?.isLoggedIn ? (user.email || user.name || user.userId) : undefined;
+}
+
 /** Spec 005 FR-A04. Enough to cover where Ryan actually buys fish. */
 const CURRENCIES = ['USD', 'CAD', 'EUR', 'GBP', 'AUD', 'JPY'];
 
@@ -217,7 +230,7 @@ function BackupPanel() {
     setNote(undefined);
     setProblem(undefined);
     try {
-      const { blob, filename, manifest } = await exportArchive(db, { appBuild: BUILD_ID });
+      const { blob, filename, manifest } = await exportArchive(db, { appBuild: BUILD_ID, account: backupAccount() });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -326,7 +339,7 @@ function ErasePanel() {
     setNote(undefined);
     setProblem(undefined);
     try {
-      const { blob, filename, manifest } = await exportArchive(db, { appBuild: BUILD_ID });
+      const { blob, filename, manifest } = await exportArchive(db, { appBuild: BUILD_ID, account: backupAccount() });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
