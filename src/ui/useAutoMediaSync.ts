@@ -24,6 +24,7 @@ import {
   type AutoSync,
   type AutoSyncState,
 } from '@/data/sync/auto-sync';
+import { photoSyncWork } from '@/data/sync/media-queue';
 import { mediaSyncBlocker, runMediaSync } from '@/data/sync/media-sync';
 
 /**
@@ -38,6 +39,12 @@ let instance: AutoSync | undefined;
 export function autoSync(): AutoSync {
   instance ??= createAutoSync({ run: runMediaSync, blocked: mediaSyncBlocker });
   return instance;
+}
+
+/** What the status line says a run was for. */
+function workReason(work: { pending: number; missing: number }): string {
+  if (work.pending > 0 && work.missing > 0) return 'photos to send and fetch';
+  return work.pending > 0 ? 'photos to send' : 'photos to fetch';
 }
 
 /** Read-only view, for anything that wants to report the state. */
@@ -55,22 +62,35 @@ export function useAutoMediaSync(): void {
   const profile = useLiveQuery(() => db.users.get(LOCAL_PROFILE_ID));
   const minutes = profile?.settings.photoSyncMinutes ?? DEFAULT_SYNC_INTERVAL_MINUTES;
 
-  // Both numbers matter. `pending` rises when this device makes a photo;
-  // `total` rises when one arrives from somewhere else with its bytes still
-  // in the store - and that is a download nobody would otherwise ask for.
-  const counts = useLiveQuery(async () => ({
-    total: await db.media.count(),
-    pending: await db.media.where('syncState').notEqual('synced').count(),
-  }));
+  /*
+   * DOWNLOAD IS A FIRST-CLASS TRIGGER, NOT A SIDE EFFECT OF THE TIMER.
+   *
+   * This used to watch the media row count, on the reasoning that a row
+   * arriving from another device makes the count go up. It usually does - and
+   * the case where it does not is the common one: replacing a tank photo
+   * deletes one row and adds another in the same transaction, so the
+   * receiving device sees the count it already had. `syncState` is no help
+   * either, because a row arriving from elsewhere arrives `synced`; that flag
+   * is the SENDING device's obligation, not this one's.
+   *
+   * `photoSyncWork` asks the honest question instead - how many blob keys
+   * does some row name that this device does not hold - so a photo taken on
+   * the phone reaches the tablet as soon as the record does, without waiting
+   * for the timer.
+   */
+  const work = useLiveQuery(() => photoSyncWork(db));
 
   useEffect(() => {
     autoSync().setIntervalMinutes(minutes);
   }, [minutes]);
 
   useEffect(() => {
-    if (!counts) return;
-    autoSync().request('photos changed');
-  }, [counts?.total, counts?.pending]);
+    // Only when there is something to do. Asking on every change would put a
+    // no-op run on the end of every sync - the download queue writes blobs,
+    // which moves these numbers, which would ask again.
+    if (!work || (work.pending === 0 && work.missing === 0)) return;
+    autoSync().request(workReason(work));
+  }, [work?.pending, work?.missing]);
 
   // Signing in is the moment a device stops being blocked. Without this the
   // first run after a sign-in waits for the timer, which is up to an hour of
