@@ -95,6 +95,41 @@ label in a table that looks shared.
   is larger than any single import run, and the spreadsheet carries none of
   the specimens, media, encounters, assessments or identifications.
 
+## Revision, 2026-08-30: the backup gets a name you can identify
+
+> I'd also like an option to clean my profile which first records a back up
+> zip with timestamp and username and then cleans my profile to a clean slate.
+
+The flow above already took the backup first. What it did not do was name it
+usefully: `archiveFilename` carried the **date alone**, so
+`fish2tank-export-2026-08-30.zip` was the name whether it came from an idle
+manual export or from the forced backup a minute before an erase, and whoever
+it belonged to. Two on one day and the browser quietly appends `(1)` — leaving
+the file you need to restore from as the one you cannot identify, at the exact
+moment identifying it matters most.
+
+Now `fish2tank-backup-<account>-<YYYY-MM-DD-HHMM>.zip`.
+
+Three calls worth recording, because each could reasonably have gone the other
+way:
+
+- **UTC, to the minute.** It matches `manifest.exportedAt` inside the archive,
+  so the name and the contents agree. A local-time name beside a UTC manifest
+  reads like two different backups.
+- **The local part of the email, not the whole address.** Enough to tell two
+  accounts apart, and a backup is a file people hand around when something has
+  gone wrong; a full address in the filename travels further than the person
+  who typed it expected.
+- **Signed out, the name is just the timestamp.** No placeholder, no
+  `unknown` — there is genuinely no account, and saying so by omission beats
+  inventing a word for it.
+
+The account is read at the moment of export rather than held in state,
+because an export is often the last thing that happens before an erase and a
+stale name on that file is unrecoverable. Six tests, including the
+same-day collision that motivated this and a display name of `???` that must
+not yield a bare `--.zip`.
+
 ## Requirements touched
 
 FR-A01 (which tables sync, and therefore what a deletion reaches), NFR-08
