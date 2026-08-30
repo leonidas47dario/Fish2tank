@@ -62,3 +62,6 @@ reveal.png
 
 # Local-only Worker secrets for `wrangler dev`. Never real credentials.
 worker/.dev.vars
+
+# Wrangler local cache, regenerated on every run.
+worker/.wrangler/
