@@ -35,8 +35,12 @@ export async function applyInventoryImport(
       }
     }
 
-    await database.holdings.bulkAdd(imported.holdings);
-    await database.residencies.bulkAdd(imported.residencies);
+    // put, not add: inventory ids are derived from the row content now
+    // (see stableId in inventory-import.ts), so importing the same sheet twice
+    // updates the same 61 rows instead of either duplicating them or throwing
+    // a constraint error on the second run.
+    await database.holdings.bulkPut(imported.holdings);
+    await database.residencies.bulkPut(imported.residencies);
   });
 
   return imported;
