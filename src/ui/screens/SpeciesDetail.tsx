@@ -31,6 +31,7 @@ import {
   type CareField, type CatalogCard, type CatalogSpecies,
 } from '@/data/catalog';
 import { deriveQuantity } from '@/domain/holdings';
+import { keptFishRows, type KeptFishRow } from '@/domain/kept-fish';
 import { loadProfile } from '@/data/profile';
 import { isBlended } from '@/engine/pricing/own-prices';
 import { formatVolume } from '@/domain/units';
@@ -162,23 +163,30 @@ export default function SpeciesDetail() {
   };
 
   /**
-   * Holdings of this species that no specimen stands for yet, with where they
-   * live. These are fish you keep that have never been photographed.
+   * Every fish of yours of this species, caught or merely kept, as one list.
+   * See `keptFishRows` for why the two used to be separate and why they no
+   * longer are.
    */
-  const holdingsWithoutSpecimen = data.holdings
-    .filter((h) => !h.specimenId)
-    .map((holding) => {
-      const open = data.residencies.find((r) => r.holdingId === holding.id && !r.endDate);
-      return {
-        holding,
-        aquarium: open ? data.aquariums.find((t) => t.id === open.aquariumId) : undefined,
-        quantity: deriveQuantity(holding, data.lifeEvents),
-      };
-    })
-    .filter((h) => h.quantity > 0);
+  const yourFish = keptFishRows({
+    specimens: data.specimens,
+    holdings: data.holdings,
+    residencies: data.residencies,
+    lifeEvents: data.lifeEvents,
+    aquariums: data.aquariums,
+    speciesName: species.commonName,
+  });
 
-  /** Ambiguous only when nothing has been photographed AND there are several. */
-  const needsPhotoTarget = data.specimens.length === 0 && holdingsWithoutSpecimen.length > 1;
+  /**
+   * Ambiguous whenever there is more than one fish it could be.
+   *
+   * This used to read `specimens.length === 0 && holdingsWithoutSpecimen.length > 1`,
+   * which had a seam in it. Opening a row now mints a specimen, so that first
+   * clause went false and the next photo routed silently to the newest
+   * specimen - one Congo Puffer holding opened, then a photo meant for the
+   * other, landing on the wrong fish with nothing said. One rule over one
+   * list has no seam to fall through.
+   */
+  const needsPhotoTarget = yourFish.length > 1;
 
   const hasOwnPhoto = data.ownPhotos.length > 0;
   const usingOwn = pref?.artSource !== 'portrait' && hasOwnPhoto;
@@ -190,25 +198,30 @@ export default function SpeciesDetail() {
   /**
    * Where a new photo goes. A photo is of a fish, not of a species.
    *
-   * A specimen you already have is the obvious target. Failing that the fish
-   * is one you keep but never caught, so the holding's specimen is minted on
-   * the spot - preferring one still in a tank, because that is the fish you
-   * just pointed a camera at.
+   * The chosen row when one was asked for, and otherwise the only row there
+   * is. A row that has no record yet mints one here, which is the same call
+   * opening the row makes.
    */
   async function targetSpecimenId(): Promise<Id> {
-    const newest = [...data!.specimens].sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
-    if (newest) return newest.id;
+    const chosen = needsPhotoTarget
+      ? yourFish.find((r) => r.key === photoTarget)
+      : yourFish[0];
+    if (!chosen) throw new Error('Nothing of yours to attach this photo to.');
+    if (chosen.specimenId) return chosen.specimenId;
+    return (await ensureSpecimenForHolding(chosen.holdingId!)).id;
+  }
 
-    // An explicit choice wins whenever one was needed. Falling back to .find()
-    // is only safe because the picker above is shown for every case where the
-    // answer is not unique.
-    if (photoTarget) return (await ensureSpecimenForHolding(photoTarget)).id;
-
-    const live = data!.holdings.find((h) =>
-      data!.residencies.some((r) => r.holdingId === h.id && !r.endDate));
-    const holding = live ?? data!.holdings[0];
-    if (!holding) throw new Error('Nothing of yours to attach this photo to.');
-    return (await ensureSpecimenForHolding(holding.id)).id;
+  /** Open the record for a row, minting it first if the fish never had one. */
+  async function openRow(row: KeptFishRow) {
+    if (row.specimenId) return navigate(`/specimen/${row.specimenId}`);
+    setPhotoError(undefined);
+    try {
+      const specimen = await ensureSpecimenForHolding(row.holdingId!);
+      navigate(`/specimen/${specimen.id}`);
+    } catch (e) {
+      console.error('[mint] opening a kept fish failed', { holdingId: row.holdingId, error: e });
+      setPhotoError(e instanceof Error ? e.message : 'Could not open that fish.');
+    }
   }
 
   async function onFiles(list: FileList | null) {
@@ -394,11 +407,13 @@ export default function SpeciesDetail() {
             />
             {/* Which fish is this a photo OF?
 ​
-                Only asked when it is genuinely ambiguous: no specimen exists
-                yet AND you keep this species in more than one place. Before
-                spec 005 the code picked a holding with .find() and attached
-                the photo to whichever came first, which was invisible and
-                wrong as soon as the same species could sit in two tanks. */}
+                Asked whenever you have more than one of this species, whether
+                or not each already has a record. Before spec 005 the code
+                picked a holding with .find() and attached the photo to
+                whichever came first, which was invisible and wrong as soon as
+                the same species could sit in two tanks; spec 019 widened the
+                question from holdings to every fish, because minting a record
+                used to switch the question off rather than answer it. */}
             {needsPhotoTarget && (
               <div style={{ marginTop: 'var(--space-3)' }}>
                 <label htmlFor="photo-target">Which one is this?</label>
@@ -408,9 +423,10 @@ export default function SpeciesDetail() {
                   onChange={(e) => setPhotoTarget(e.target.value)}
                 >
                   <option value="">Choose…</option>
-                  {holdingsWithoutSpecimen.map((h) => (
-                    <option key={h.holding.id} value={h.holding.id}>
-                      {h.aquarium ? h.aquarium.name : 'not in a tank'} — {h.holding.rawLabel ?? species.commonName} ×{h.quantity}
+                  {yourFish.map((r) => (
+                    <option key={r.key} value={r.key}>
+                      {r.tanks.length ? r.tanks.join(' + ') : 'not in a tank'} — {r.name}
+                      {r.quantity > 0 && ` ×${r.quantity}`}
                     </option>
                   ))}
                 </select>
@@ -454,42 +470,37 @@ export default function SpeciesDetail() {
         {/* Not "encounters": a fish minted from a kept holding was never met
             anywhere, it has simply always been yours. */}
         <h2 className="sec-head">Your fish</h2>
-        {data.specimens.length === 0 && data.holdings.length === 0 ? (
+        {yourFish.length === 0 ? (
           <p className="panel__note" style={{ padding: '0 var(--space-4)' }}>
             You haven&apos;t caught one yet.
           </p>
         ) : (
-          <>
-            {data.specimens.map((s) => (
-              <Link key={s.id} to={`/specimen/${s.id}`} className="tankrow">
-                <span className="grow">
-                  <span className="tankrow__name">{s.nickname ?? s.rawLabel ?? 'Unnamed specimen'}</span>
+          /* Every row opens, including a fish you keep that was never
+             photographed. Those rows used to be plain divs - "there is no
+             record to open until a photo mints one" - which made a fish you
+             have kept for years the one thing on this page you could not get
+             into. Opening it mints the record it always implied (spec 019). */
+          yourFish.map((row) => (
+            <button
+              key={row.key}
+              type="button"
+              className="tankrow"
+              onClick={() => void openRow(row)}
+            >
+              <span className="grow">
+                <span className="tankrow__name">
+                  {row.name}
+                  {row.quantity > 1 && <span className="muted data"> ×{row.quantity}</span>}
                 </span>
-                <span className="tankrow__meta num">{new Date(s.createdAt).toLocaleDateString()}</span>
-              </Link>
-            ))}
-
-            {/* Holdings with no specimen behind them. Invisible here before
-                spec 005, which meant a fish you keep but never photographed
-                did not appear on its own species page - and once the same
-                species can sit in two tanks, "your fish" has to be able to say
-                so. Not a link: there is no record to open until a photo mints
-                one. */}
-            {holdingsWithoutSpecimen.map((h) => (
-              <div key={h.holding.id} className="tankrow">
-                <span className="grow">
-                  <span className="tankrow__name">
-                    {h.holding.rawLabel ?? species.commonName}
-                    <span className="muted data"> ×{h.quantity}</span>
-                  </span>
-                  <span className="tankrow__meta" style={{ display: 'block' }}>
-                    {h.aquarium ? h.aquarium.name : 'not in a tank'}
-                  </span>
+                <span className="tankrow__meta" style={{ display: 'block' }}>
+                  {row.tanks.length ? row.tanks.join(' + ') : 'not in a tank'}
                 </span>
-                <span className="tankrow__meta">no photo yet</span>
-              </div>
-            ))}
-          </>
+              </span>
+              <span className={row.createdAt ? 'tankrow__meta num' : 'tankrow__meta'}>
+                {row.createdAt ? new Date(row.createdAt).toLocaleDateString() : 'no photo yet'}
+              </span>
+            </button>
+          ))
         )}
       </section>
 
