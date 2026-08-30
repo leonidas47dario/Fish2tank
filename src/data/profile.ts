@@ -11,6 +11,7 @@
  * the room a device is in, and stays in localStorage.
  */
 import { db, nowIso, type Fish2TankDB } from './db';
+import { DEFAULT_SYNC_INTERVAL_MINUTES } from './sync/auto-sync';
 import type { User, UserSettings } from '@/domain/types';
 
 /**
@@ -24,6 +25,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
   sceneId: 'original-tank',
   reducedMotion: false,
   currency: 'USD',
+  photoSyncMinutes: DEFAULT_SYNC_INTERVAL_MINUTES,
 };
 
 /** The shape ThemeProvider wrote to localStorage before this existed. */
@@ -56,6 +58,7 @@ export function foldLegacySettings(raw: string | null | undefined): UserSettings
     reducedMotion:
       typeof parsed.reducedMotion === 'boolean' ? parsed.reducedMotion : DEFAULT_SETTINGS.reducedMotion,
     currency: DEFAULT_SETTINGS.currency,
+    photoSyncMinutes: DEFAULT_SETTINGS.photoSyncMinutes,
   };
 }
 
