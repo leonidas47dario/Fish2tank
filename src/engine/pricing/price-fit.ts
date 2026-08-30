@@ -110,8 +110,14 @@ export interface PriceFitResult {
   message: string;
 }
 
-/** Per-fish price. Requires a package quantity, per FR-P04. */
-function unitPriceOf(o: PriceObservation): number | undefined {
+/**
+ * Per-fish price. Requires a package quantity, per FR-P04.
+ *
+ * Exported so the market blend normalises a keeper's observation exactly the
+ * way price-fit does. Two functions turning a PriceObservation into a number
+ * is two chances to disagree about what "$41.99 for 3 Fish" means.
+ */
+export function unitPriceOf(o: PriceObservation): number | undefined {
   const headline = o.memberPrice ?? o.askingPrice ?? o.paidPrice;
   if (headline === undefined) return undefined;
   if (!o.packageQuantity || o.packageQuantity < 1) return undefined;
