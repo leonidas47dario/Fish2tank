@@ -395,6 +395,16 @@ export default function SpecimenDetail() {
                 {price.paidPrice === undefined ? 'not bought' : `$${price.paidPrice}`}
               </dd>
             </div>
+            {/* Shown only when noted. A "not noted" row here would be a third
+                blank in a list that already carries two, and where the price
+                came from is context rather than a figure the record is
+                incomplete without. */}
+            {price.placeId && (
+              <div>
+                <dt>Shop</dt>
+                <dd>{places?.find((pl) => pl.id === price.placeId)?.name ?? 'noted'}</dd>
+              </div>
+            )}
           </dl>
         )}
 
@@ -403,6 +413,7 @@ export default function SpecimenDetail() {
           speciesId={specimen.speciesId}
           encounterId={latest?.id}
           marketEstimate={marketBand?.medianPrice}
+          places={places ?? []}
         />
 
         {priceFit && (
@@ -420,6 +431,7 @@ export default function SpecimenDetail() {
         observedSize={latest?.observedSize}
         yourPrice={price?.askingPrice}
         blended={isBlended(marketStats) ? marketStats : undefined}
+        placeNames={Object.fromEntries((places ?? []).map((pl) => [pl.id, pl.name]))}
       />
 
       {/* --- Reveal (PRD 4.6) --------------------------------------------- */}
@@ -1258,11 +1270,14 @@ function IdentityPanel({ specimen, species }: {
   );
 }
 
-function PriceForm({ specimenId, speciesId, encounterId, marketEstimate }: {
+function PriceForm({ specimenId, speciesId, encounterId, marketEstimate, places }: {
   specimenId: string; speciesId?: string; encounterId?: string; marketEstimate?: number;
+  /** Shops noted before, offered for reuse so the second visit is one tap. */
+  places: Array<{ id: string; name: string }>;
 }) {
   const [asking, setAsking] = useState('');
   const [size, setSize] = useState('');
+  const [shop, setShop] = useState('');
   const [saving, setSaving] = useState(false);
 
   async function save() {
@@ -1277,9 +1292,12 @@ function PriceForm({ specimenId, speciesId, encounterId, marketEstimate }: {
         specimenId, speciesId, encounterId,
         askingPrice: Number(asking),
         observedSize,
+        // Optional, and resolved to a Place - creating one the first time a
+        // name is used, reusing it every time after.
+        shopName: shop.trim() || undefined,
       });
     }
-    setAsking(''); setSize('');
+    setAsking(''); setSize(''); setShop('');
     setSaving(false);
   }
 
@@ -1300,6 +1318,28 @@ function PriceForm({ specimenId, speciesId, encounterId, marketEstimate }: {
           <label htmlFor="size">Approximate size (inches)</label>
           <input id="size" inputMode="decimal" value={size} onChange={(e) => setSize(e.target.value)} placeholder="6" />
         </div>
+      </div>
+
+      {/* A free-typed name with a datalist, not a select.
+​
+          Nothing in the app could create a Place until now - the picker on the
+          edit form has always offered a list of one, whatever the seeder
+          wrote - so a dropdown would have been a dropdown of nothing. Typing
+          works on the first visit; the list makes the second visit a tap, and
+          a matching name reuses the shop rather than making a second one. */}
+      <div>
+        <label htmlFor="shop">Shop <span className="faint">(optional)</span></label>
+        <input
+          id="shop"
+          list="known-shops"
+          value={shop}
+          onChange={(e) => setShop(e.target.value)}
+          placeholder="Aquarium Adventure"
+          autoComplete="off"
+        />
+        <datalist id="known-shops">
+          {places.map((p) => <option key={p.id} value={p.name} />)}
+        </datalist>
       </div>
       <button type="button" onClick={() => void save()} disabled={saving || (!asking && !size)}>
         Record

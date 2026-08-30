@@ -58,6 +58,8 @@ export interface OwnPricePoint {
   unitPrice: number;
   observedAt: string;
   sizeIn?: number;
+  /** The shop it was seen at, when the keeper noted one. */
+  placeId?: Id;
 }
 
 export interface OwnPriceSummary {
@@ -122,6 +124,7 @@ export function summariseOwnPrices(
       unitPrice: unit,
       observedAt: o.observedAt,
       sizeIn: inchesOf(o),
+      ...(o.placeId ? { placeId: o.placeId } : {}),
     });
   }
 

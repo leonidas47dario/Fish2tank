@@ -30,6 +30,8 @@ interface Props {
   observedSize?: LengthMeasurement;
   /** What the store is asking, for a like-for-like comparison. */
   yourPrice?: number;
+  /** Shops the keeper noted, by id, so their own rows can be named. */
+  placeNames?: Record<string, string>;
   /**
    * The species' market with the keeper's own prices already blended in.
    *
@@ -40,9 +42,14 @@ interface Props {
   blended?: BlendedMarket;
 }
 
-export function MarketPanel({ speciesId, observedSize, yourPrice, blended }: Props) {
+export function MarketPanel({ speciesId, observedSize, yourPrice, blended, placeNames }: Props) {
   const stats = blended ?? marketFor(speciesId);
   const own = blended?.own;
+  const shopNames = [...new Set(
+    (own?.points ?? [])
+      .map((pt) => (pt.placeId ? placeNames?.[pt.placeId] : undefined))
+      .filter((n): n is string => Boolean(n)),
+  )];
   if (!stats) {
     return (
       <section className="panel">
@@ -280,6 +287,16 @@ export function MarketPanel({ speciesId, observedSize, yourPrice, blended }: Pro
           <div className="store">
             <span>
               {own.points.length} price{own.points.length === 1 ? '' : 's'} you logged
+              {/* Named where you noted one, so your records read like the store
+                  rows above them rather than an anonymous block. Silent when
+                  you noted none - the field is optional and a "somewhere"
+                  would be noise. */}
+              {shopNames.length > 0 && (
+                <span className="tankrow__meta" style={{ display: 'block' }}>
+                  at {shopNames.slice(0, 3).join(', ')}
+                  {shopNames.length > 3 && ` and ${shopNames.length - 3} more`}
+                </span>
+              )}
             </span>
             <span className="store__flag store__flag--out">not a shop</span>
             <span className="store__price">

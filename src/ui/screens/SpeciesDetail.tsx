@@ -86,7 +86,7 @@ export default function SpeciesDetail() {
 
   const data = useLiveQuery(async () => {
     if (!id) return undefined;
-    const [specimens, snapshots, holdings, lifeEvents, residencies, media, dream, prices, profile] =
+    const [specimens, snapshots, holdings, lifeEvents, residencies, media, dream, prices, profile, places] =
       await Promise.all([
         db.specimens.where('speciesId').equals(id).toArray(),
         db.raritySnapshots.where('speciesId').equals(id).toArray(),
@@ -95,13 +95,15 @@ export default function SpeciesDetail() {
         db.dreamList.where('speciesId').equals(id).first(),
         db.priceObservations.where('speciesId').equals(id).toArray(),
         loadProfile(),
+        db.places.toArray(),
       ]);
     const aquariums = await db.aquariums.toArray();
     const ownPhotos = media
       .filter((m) => m.kind === 'photo' && m.specimenIds.some((sid) => specimens.some((s) => s.id === sid)))
       .sort((a, b) => b.capturedAt.localeCompare(a.capturedAt));
     return { specimens, snapshots, holdings, lifeEvents, residencies, ownPhotos, dream, aquariums,
-      prices, currency: profile.settings.currency };
+      prices, currency: profile.settings.currency,
+      placeNames: Object.fromEntries(places.map((pl) => [pl.id, pl.name])) };
   }, [id]);
 
   const pref = useLiveQuery(() => (id ? db.cardPrefs.get(id) : undefined), [id]);
@@ -441,7 +443,11 @@ export default function SpeciesDetail() {
         )}
       </section>
 
-      <MarketPanel speciesId={id} blended={isBlended(market) ? market : undefined} />
+      <MarketPanel
+        speciesId={id}
+        blended={isBlended(market) ? market : undefined}
+        placeNames={data.placeNames}
+      />
 
       {/* --- Your specimens ---------------------------------------------- */}
       <section className="panel panel--flush">
