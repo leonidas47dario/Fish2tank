@@ -13,6 +13,7 @@
  * evicted without ever touching the original (NFR-03).
  */
 import Dexie, { type EntityTable } from 'dexie';
+import { DB_NAME } from '@/build-info';
 import type {
   Aquarium,
   CompatibilityAssessment,
@@ -158,7 +159,7 @@ export class Fish2TankDB extends Dexie {
    *   `dexie-cloud-addon` in here, and nothing else in the app has to know.
    *   Passed at construction because Dexie can only take addons there.
    */
-  constructor(name = 'fish2tank', addons: Array<(db: Dexie) => void> = []) {
+  constructor(name = DB_NAME, addons: Array<(db: Dexie) => void> = []) {
     super(name, { addons });
     this.version(1).stores({
       users: 'id',
