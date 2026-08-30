@@ -13,6 +13,7 @@ import Settings from './ui/screens/Settings';
 import SharedTank from './ui/screens/SharedTank';
 import AuthGate from './ui/components/AuthGate';
 import AutoMediaSync from './ui/components/AutoMediaSync';
+import AutoRepublish from './ui/components/AutoRepublish';
 import ProfileButton from './ui/components/ProfileButton';
 import {
   CameraIcon, DropIcon, HouseIcon, NotePencilIcon, SquaresFourIcon,
@@ -63,6 +64,9 @@ function GatedApp() {
       {/* Spec 014: photos sync without being asked. Renders nothing; it is
           here so the effects live and die with the app shell. */}
       <AutoMediaSync />
+      {/* Spec 015: a shared tank keeps itself current. Inside the gate, since
+          only an owner has anything to republish. */}
+      <AutoRepublish />
       {/* FR-A10: the one control that used to be seven cards down Settings. */}
       <ProfileButton />
       <main className="app">
