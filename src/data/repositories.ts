@@ -23,6 +23,7 @@ import type {
   Media,
   MediaKind,
   Memorial,
+  Place,
   PriceBasis,
   PriceObservation,
   Dimensions,
@@ -443,6 +444,11 @@ export interface RecordPriceInput {
   speciesId?: Id;
   encounterId?: Id;
   placeId?: Id;
+  /**
+   * The shop, as the keeper typed it. Resolved to a Place, creating one when
+   * the name is new. Ignored when `placeId` is already given.
+   */
+  shopName?: string;
   askingPrice?: number;
   memberPrice?: number;
   paidPrice?: number;
@@ -460,18 +466,65 @@ export interface RecordPriceInput {
  * FR-P01: a price is a dated observation, not a mutable field on the species.
  * Repeat sightings therefore accumulate rather than overwrite.
  */
+/**
+ * Turn a typed shop name into a Place, reusing one where the name matches.
+ *
+ * WHY A PLACE AND NOT A STRING ON THE OBSERVATION. Place is already the thing
+ * the schema uses for "where a fish was seen", already carries privacy rules
+ * (NFR-04) that a loose string would sit outside of, and is already what an
+ * encounter points at. Storing the name twice would put two answers to "which
+ * shop" in the database and let them disagree.
+ *
+ * Nothing could create one before this. `places` had exactly the row the
+ * seeder wrote, so the picker on the edit form has always offered a list of
+ * one - which is why this asks for a name rather than offering that list.
+ *
+ * MATCHES ON THE NAME, CASE AND SPACING ASIDE. Typing the same shop on a
+ * second visit reuses the first row, so prices group by shop instead of
+ * scattering across near-identical places. Privacy defaults to
+ * `private-coarse`: nobody has given this place coordinates, and the stricter
+ * of the two is the safe default for a row created in passing.
+ */
+export async function resolveShop(name: string, database: DB = db): Promise<Place | undefined> {
+  const trimmed = name.trim();
+  if (!trimmed) return undefined;
+  const key = trimmed.toLowerCase().replace(/\s+/g, ' ');
+
+  const existing = (await database.places.toArray()).find(
+    (p) => p.name.trim().toLowerCase().replace(/\s+/g, ' ') === key,
+  );
+  if (existing) return existing;
+
+  const place: Place = {
+    id: newId('place'),
+    name: trimmed,
+    type: 'fish-store',
+    privacy: 'private-coarse',
+    isFavorite: false,
+    createdAt: nowIso(),
+  };
+  await database.places.add(place);
+  console.info('[price] noted a new shop', { placeId: place.id, name: trimmed });
+  return place;
+}
+
 export async function recordPrice(input: RecordPriceInput, database: DB = db): Promise<PriceObservation> {
   // FR-P01 / spec 005 FR-A04: an unstated currency is the keeper's own, not USD.
   // price-fit.ts excludes observations on currency mismatch, so a wrong default
   // silently discards evidence instead of failing visibly.
   const currency = input.currency ?? (await loadProfile(database)).settings.currency;
 
+  // An explicit placeId wins; a typed name is resolved, creating the shop the
+  // first time it is used.
+  const placeId = input.placeId
+    ?? (input.shopName ? (await resolveShop(input.shopName, database))?.id : undefined);
+
   const observation: PriceObservation = {
     id: newId('price'),
     specimenId: input.specimenId,
     speciesId: input.speciesId,
     encounterId: input.encounterId,
-    placeId: input.placeId,
+    placeId,
     askingPrice: input.askingPrice,
     memberPrice: input.memberPrice,
     paidPrice: input.paidPrice,
@@ -1232,18 +1285,10 @@ export async function removeFromDreamList(speciesId: Id, database: DB = db): Pro
   await database.dreamList.delete(existing.id);
 }
 
-/** FR-I02: search common names, scientific names and store aliases alike. */
-export async function searchSpecies(query: string, database: DB = db): Promise<Species[]> {
-  const q = query.trim().toLowerCase();
-  if (!q) return [];
-  const all = await database.species.toArray();
-  return all.filter(
-    (s) =>
-      s.commonName.toLowerCase().includes(q) ||
-      s.scientificName?.toLowerCase().includes(q) ||
-      s.aliases.some((a) => a.toLowerCase().includes(q)),
-  );
-}
+/* `searchSpecies` was here. It filtered db.species - the 47 seeded care
+   profiles - with .includes(), and was the second of two ways this app
+   searched for a species. FR-I02 is now served by one: identifyFromText()
+   over searchableSpecies(), which ranks and covers all 2,176 (spec 007). */
 
 // ─────────────────────────────────────────────────────────────────────────
 // Editing and deleting a catch

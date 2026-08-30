@@ -16,7 +16,9 @@ import { blobFor, db } from '@/data/db';
 import { CATALOG_BY_SPECIES, portraitAsset } from '@/data/catalog';
 import { formatVolume } from '@/domain/units';
 import type { Id } from '@/domain/types';
+import { LOCAL_PROFILE_ID } from '@/data/profile';
 import { useRecentCatches, useTanksWithResidents } from '../hooks';
+import { homeSummary } from './home-summary';
 import { Plate } from '../components/Plate';
 import { CameraIcon, GearIcon } from '../components/Icons';
 
@@ -24,6 +26,7 @@ export default function Home() {
   const recent = useRecentCatches(8);
   const tanks = useTanksWithResidents();
   const species = useLiveQuery(() => db.species.toArray(), []);
+  const profile = useLiveQuery(() => db.users.get(LOCAL_PROFILE_ID));
 
   /* Only shown when it has something in it. The shipped screen rendered a
      permanent "Nothing on it yet. Add species from the Collection" — and no
@@ -56,32 +59,43 @@ export default function Home() {
   const measured = active.filter((t) => Boolean(t.aquarium.volume)).length;
   const tankCount = active.length;
 
+  /*
+   * Fish kept, summed from the same residents the tank rows below are drawn
+   * from, for the same reason the tank count is: a hero line that disagrees
+   * with the list underneath it is worse than no hero line. `residents` is
+   * already filtered to open residencies with a live quantity, so retired
+   * tanks and dead stock are excluded without any extra rule here.
+   */
+  const fishKept = tanks === undefined
+    ? undefined
+    : active.reduce((n, t) => n + t.residents.reduce((m, r) => m + r.quantity, 0), 0);
+
+  const { heading, sub } = homeSummary({
+    metCount,
+    fishKept,
+    tankCount,
+    measured,
+    displayName: profile?.displayName?.trim() ?? '',
+  });
+
   return (
     <div className="screen">
       <header className="home-hero">
         {/*
-          Where you are, in one line, from your own data. Not a tagline, and
-          not a wordmark: the app's own name is the one fact the person holding
-          the phone already has.
+          Not a tagline, and not a wordmark: the app's own name is the one fact
+          the person holding the phone already has.
 
-          It is the h1 because it IS the heading of this page in substance. A
-          screen reader landing here should hear where the collection stands,
-          not the word "Home".
+          The h1 is now the greeting, which means it no longer carries the
+          collection state on its own. That state moved to the line directly
+          below rather than being dropped, so a screen reader landing here
+          still hears where the collection stands as the very next thing.
+
+          Both lines come from homeSummary(), because this file is .tsx and
+          vitest only collects .ts - branching copy belongs somewhere it can
+          be tested.
         */}
-        <h1 className="home-hero__line">
-          {metCount === undefined
-            ? 'Loading your collection…'
-            : metCount === 0
-              ? 'Nothing caught yet.'
-              : `${metCount} species met.`}
-        </h1>
-        <p className="home-hero__sub">
-          {tankCount === 0
-            ? 'No tanks recorded, so nothing can be screened yet.'
-            : measured === tankCount
-              ? `${tankCount} tank${tankCount === 1 ? '' : 's'}, all measured.`
-              : `${tankCount} tank${tankCount === 1 ? '' : 's'}, ${measured} measured.`}
-        </p>
+        <h1 className="home-hero__line">{heading}</h1>
+        <p className="home-hero__sub">{sub}</p>
       </header>
 
       <div className="pad">

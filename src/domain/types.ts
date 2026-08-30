@@ -95,7 +95,21 @@ export interface Place {
   type: PlaceType;
   /** Free-text coarse locality, e.g. "Chicago area". Safe to surface. */
   coarseLocation?: string;
-  /** Precise coordinates. Never leaves the device in the MVP. */
+  /**
+   * Precise coordinates. Private, and never published (NFR-04).
+   *
+   * THIS USED TO SAY "never leaves the device in the MVP", which is a harder
+   * constraint than any requirement actually imposes, and it nearly ruled out
+   * private per-account sync in spec 005 on a rule that does not exist. NFR-04
+   * is about PUBLICATION: "private by default; never publish exact home
+   * location". Writing a place into the keeper's own private realm is not
+   * publishing it to anyone.
+   *
+   * Still forbidden, and this is the part that matters: surfacing these
+   * coordinates in anything another person can see - a shared card, an export
+   * prepared for someone else, a community submission. Those get
+   * `coarseLocation` or nothing at all (BUG-05).
+   */
   exactLocation?: { lat: number; lon: number };
   privacy: PlacePrivacy;
   isFavorite: boolean;

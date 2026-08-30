@@ -30,9 +30,9 @@ import {
   recordDeath,
   recordPrice,
   removeHolding,
+  resolveShop,
   recordStoreLabel,
   revealSpecimen,
-  searchSpecies,
   submitUserSpecies,
   upsertAquarium,
   userSubmittedSpecies,
@@ -247,11 +247,11 @@ describe('identification (FR-I04, FR-I06)', () => {
     expect(specimen!.speciesId).toBe('sp_wolf_cichlid');
   });
 
-  it('searches common names, scientific names and store aliases (FR-I02)', async () => {
-    expect((await searchSpecies('managuense', db)).map((s) => s.id)).toContain('sp_jaguar_cichlid');
-    expect((await searchSpecies('Parachromis', db)).map((s) => s.id)).toHaveLength(2);
-    expect(await searchSpecies('', db)).toEqual([]);
-  });
+  /* The FR-I02 search test lived here, against searchSpecies(). That function
+     is gone (spec 007) and the requirement is now served by identifyFromText()
+     over searchableSpecies(), so its coverage moved with it: matching on
+     scientific name and alias is in identify.test.ts, and the corpus those run
+     against is in catalog.test.ts. */
 });
 
 describe('evaluation persistence (FR-E02, FR-E07)', () => {
@@ -1413,5 +1413,64 @@ describe('taking a fish out of a tank without killing it', () => {
 
   it('refuses an id that is not a holding', async () => {
     await expect(removeHolding('hold_nope', db)).rejects.toThrow(/unknown holding/i);
+  });
+});
+
+describe('noting which shop a price was seen at', () => {
+  it('creates the shop the first time the name is used', async () => {
+    // A name the harness has not already seeded - the collision case is its
+    // own test below, and asserting both here confused the two.
+    const p = await recordPrice({ speciesId: 'sp_neon_tetra', askingPrice: 4, shopName: '  Old Town Aquarium  ' }, db);
+    const place = await db.places.get(p.placeId!);
+
+    expect(place!.name).toBe('Old Town Aquarium');            // trimmed
+    expect(place!.type).toBe('fish-store');
+    // Nobody gave this place coordinates, so the stricter default applies.
+    expect(place!.privacy).toBe('private-coarse');
+  });
+
+  /**
+   * The point of resolving to a Place rather than storing a string: a second
+   * visit groups with the first instead of scattering across near-identical
+   * rows.
+   */
+  it('reuses the shop on a second visit, whatever the case and spacing', async () => {
+    const before = await db.places.count();
+    const a = await recordPrice({ speciesId: 'sp_neon_tetra', askingPrice: 4, shopName: 'Old Town Aquarium' }, db);
+    const b = await recordPrice({ speciesId: 'sp_neon_tetra', askingPrice: 5, shopName: '  old   town  aquarium ' }, db);
+
+    expect(b.placeId).toBe(a.placeId);
+    expect(await db.places.count()).toBe(before + 1);
+  });
+
+  it('leaves the price shopless when no name is typed', async () => {
+    const before = await db.places.count();
+    for (const shopName of [undefined, '', '   ']) {
+      const p = await recordPrice({ speciesId: 'sp_neon_tetra', askingPrice: 4, shopName }, db);
+      expect(p.placeId).toBeUndefined();
+    }
+    // And never mints a blank place.
+    expect(await db.places.count()).toBe(before);
+  });
+
+  it('prefers an explicit placeId over a typed name', async () => {
+    const chosen = await resolveShop('Somewhere Else', db);
+    const p = await recordPrice(
+      { speciesId: 'sp_neon_tetra', askingPrice: 4, placeId: chosen!.id, shopName: 'Ignored' },
+      db,
+    );
+    expect(p.placeId).toBe(chosen!.id);
+    expect(await db.places.filter((pl) => pl.name === 'Ignored').count()).toBe(0);
+  });
+
+  it('matches a shop the seeder already wrote, rather than duplicating it', async () => {
+    const seeded = await db.places.get(AQUARIUM_ADVENTURE);
+    expect(seeded).toBeDefined();
+    const p = await recordPrice({ speciesId: 'sp_neon_tetra', askingPrice: 4, shopName: seeded!.name.toUpperCase() }, db);
+    expect(p.placeId).toBe(AQUARIUM_ADVENTURE);
+  });
+
+  it('resolveShop refuses to mint a place from whitespace', async () => {
+    expect(await resolveShop('   ', db)).toBeUndefined();
   });
 });

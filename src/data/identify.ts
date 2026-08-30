@@ -3,9 +3,14 @@
  *
  * WHY IT WORKS THIS WAY. Google Lens has no public API - there is no endpoint
  * a third party can call - and Cloud Vision would need a billing-backed key
- * plus shipping the photograph to Google, which contradicts the one promise
- * this app makes without qualification: nothing leaves the device. PRD FR-I03
- * already anticipated this and specifies a *handoff*, not an integration.
+ * plus shipping the photograph to Google, which contradicts what the app does
+ * promise: your photographs are never handed to someone else's model. (Not
+ * "nothing leaves the device", which this said until BUG-05 - since spec 005
+ * media can sync to the keeper's OWN private storage. Their copy moving
+ * between their own devices is a different thing from a third party's
+ * analysis, and conflating the two nearly blocked sync on a rule nobody
+ * wrote.) PRD FR-I03 already anticipated this and specifies a *handoff*,
+ * not an integration.
  *
  * So the flow is: the photo goes to Lens only if you tap share, Lens tells YOU
  * what it thinks, and you type or paste the name back. This module is the half

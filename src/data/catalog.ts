@@ -6,10 +6,12 @@
  *   - market-index   price and availability (from the vendor ETL)
  *   - IndexedDB      what YOU have caught, kept and photographed
  */
-import type { Id, WaterType } from '@/domain/types';
+import type { CurrencyCode, Id, PriceObservation, WaterType } from '@/domain/types';
 import type { OrganismKind, WaterZone } from './seed/taxonomy';
 import catalogJson from './seed/marts/catalog.json';
-import { marketFor, scarcityFor, bandForSize } from './market';
+import { CANONICAL_BY_SYNONYM } from './seed/species-overrides';
+import { marketFor, scarcityFor, bandForSize, MARKET_INDEX } from './market';
+import { blendOwnPrices } from '@/engine/pricing/own-prices';
 import type { MarketSpeciesStats } from './market';
 
 export interface CatalogPortrait {
@@ -93,7 +95,24 @@ export function portraitAsset(speciesId: string): string | undefined {
   return BUNDLED_PORTRAITS[`./seed/assets/portraits/${speciesId}.jpg`];
 }
 
+/**
+ * Species by id, INCLUDING the ids that folded into one (spec 008).
+ *
+ * A merge drops the non-canonical row from the mart, and a specimen recorded
+ * before that merge still points at the dropped id. Without an entry for it,
+ * every lookup here misses and a real, correctly-identified fish renders as
+ * though it had no species at all - the app would appear to have forgotten a
+ * catch because a taxonomist moved a genus.
+ *
+ * So each folded id is also a key, pointing at the row that survived. Callers
+ * need no redirect logic and cannot forget to apply one, which matters because
+ * there are a dozen of them and only some would have been found in review.
+ */
 export const CATALOG_BY_SPECIES = new Map(CATALOG.species.map((s) => [s.speciesId, s]));
+for (const [folded, canonical] of CANONICAL_BY_SYNONYM) {
+  const row = CATALOG_BY_SPECIES.get(canonical);
+  if (row && !CATALOG_BY_SPECIES.has(folded)) CATALOG_BY_SPECIES.set(folded, row);
+}
 
 /**
  * Present a locally-submitted species as a catalog entry the UI can render.
@@ -121,6 +140,54 @@ export function catalogShapeForLocal(species: {
 /** Whether an id belongs to a species this keeper added rather than the catalog. */
 export function isUserSubmittedId(speciesId: string): boolean {
   return speciesId.startsWith('sp_user_');
+}
+
+/**
+ * What picking a species off a search result actually asserts (FR-I01).
+ *
+ * "User confirmed" means "this is that catalog species". For a name the keeper
+ * invented there is no catalog species to mean, so the strongest honest state
+ * is provisional - the rule `submitUserSpecies()` already follows when it
+ * creates the row.
+ *
+ * Shared by both identify surfaces on purpose. It was a ternary duplicated
+ * across two screens for about ten minutes, and in that time the two disagreed:
+ * the same submitted species was recorded `user-confirmed` from one screen and
+ * `provisional` from the other. Spec 007 exists because two screens doing the
+ * same thing drift; this is that, in miniature.
+ */
+export function identityStatusFor(speciesId: string): 'provisional' | 'user-confirmed' {
+  return isUserSubmittedId(speciesId) ? 'provisional' : 'user-confirmed';
+}
+
+/**
+ * Every species a keeper can search for, from both places they live (spec 007).
+ *
+ * There are two species libraries and neither is complete. `catalog.json` has
+ * all 2,176 derived species and no user submissions; `db.species` has the 47
+ * seeded care profiles plus whatever this keeper typed in when the catalog had
+ * never heard of their fish. Searching either one alone misses something real,
+ * which is exactly the bug this exists to close: the specimen "Change identity"
+ * panel searched the table and could reach 47 species, while the capture flow
+ * searched the mart and could not see the keeper's own.
+ *
+ * The seeded 47 are dropped rather than merged, because the ETL adopts the
+ * curated id where one exists - `sp_jaguar_cichlid` is a mart row, not
+ * `sp_parachromis_managuensis` - so every seeded row is already here under the
+ * same id. Adding them back would list the same fish twice and make the user
+ * guess which one is real. Verified as a test, not assumed: passing the seeded
+ * Jaguar Cichlid yields one entry, not two.
+ *
+ * FR-I02 (manual species search).
+ */
+export function searchableSpecies(
+  localSpecies: readonly { id: string; commonName: string; scientificName?: string;
+    aliases?: string[]; origin?: string }[],
+): CatalogSpecies[] {
+  const submitted = localSpecies.filter(
+    (s) => s.origin === 'user-submitted' && !CATALOG_BY_SPECIES.has(s.id),
+  );
+  return [...CATALOG.species, ...submitted.map(catalogShapeForLocal)];
 }
 
 /** What the user has done with this species. Everything here is personal. */
@@ -224,10 +291,44 @@ export function cardPrice(market: MarketSpeciesStats | undefined, sizeIn?: numbe
   return market.price.median;
 }
 
-export function marketAndScarcity(speciesId: string) {
-  const market = marketFor(speciesId);
+/**
+ * The market for a species, with the keeper's own logged prices counted in.
+ *
+ * One entry point for every screen that shows a price - a card, a species
+ * page, a tank's total - because a figure that differs between two screens is
+ * worse than no figure at all. Callers that have no observations to hand pass
+ * none and get exactly what they got before.
+ *
+ * Scarcity is deliberately NOT affected. It is a statement about how many
+ * shops stock a fish, and one keeper writing down a price is not a shop; see
+ * own-prices.ts for what the blend does and does not claim.
+ */
+export function marketAndScarcity(
+  speciesId: string,
+  own?: { prices: PriceObservation[]; currency: CurrencyCode },
+) {
+  const vendor = marketFor(speciesId);
+  const market = own
+    ? blendOwnPrices(vendor, own.prices, {
+        speciesId,
+        currency: own.currency,
+        minimumSampleCount: MARKET_INDEX.minimumSampleCount,
+      })
+    : vendor;
   const scarcity = scarcityFor(speciesId);
   return { market, scarcityBand: scarcity.available ? scarcity.band : undefined };
+}
+
+/** Group a flat table of observations by species, ready for the blend. */
+export function pricesBySpecies(observations: PriceObservation[]): Map<string, PriceObservation[]> {
+  const by = new Map<string, PriceObservation[]>();
+  for (const o of observations) {
+    if (!o.speciesId) continue;
+    const list = by.get(o.speciesId);
+    if (list) list.push(o);
+    else by.set(o.speciesId, [o]);
+  }
+  return by;
 }
 
 /** The stored rows a card is derived from. Whoever has them can build one. */

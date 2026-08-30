@@ -13,11 +13,19 @@
  * CHROMIUM_PATH (defaults to playwright's own download).
  */
 import { chromium } from 'playwright';
-import { mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync } from 'node:fs';
 
 const BASE = process.env.BASE_URL ?? 'http://localhost:4173';
 const SHOTS = process.env.SHOTS ?? 'smoke-shots';
+/** Regenerate with `npm run fixture:smoke` if the archive format changes. */
+const FIXTURE = process.env.FIXTURE ?? 'src/data/seed/fixtures/smoke-collection.zip';
 mkdirSync(SHOTS, { recursive: true });
+
+if (!existsSync(FIXTURE)) {
+  // Better to stop here than to run the whole journey against an empty
+  // database and fail later with a confusing "no screened tank row".
+  throw new Error(`Smoke fixture missing at ${FIXTURE}. Run: npm run fixture:smoke`);
+}
 
 const browser = await chromium.launch(
   process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {},
@@ -27,6 +35,20 @@ const page = await ctx.newPage();
 const errors = [];
 page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
 page.on('pageerror', e => errors.push('PAGEERROR: ' + e.message));
+
+await page.goto(BASE, { waitUntil: 'networkidle' });
+await page.waitForTimeout(600);
+
+// --- Restore the sample collection -----------------------------------------
+// The app no longer seeds anybody's tanks or fish; see the comment at the top
+// of src/data/bootstrap.ts for the three reasons why. The sample collection is
+// restored here through the real import code, which means every smoke run also
+// proves that backup and restore still work (spec 006).
+await page.goto(`${BASE}#/settings`, { waitUntil: 'networkidle' });
+await page.waitForTimeout(400);
+await page.setInputFiles('input[type="file"][accept*="zip"]', FIXTURE);
+await page.waitForSelector('text=/Restored \\d+ records/', { timeout: 30000 });
+console.log('RESTORED:', await page.locator('text=/Restored \\d+ records/').first().innerText());
 
 await page.goto(BASE, { waitUntil: 'networkidle' });
 await page.waitForTimeout(600);
@@ -78,7 +100,11 @@ await page.waitForTimeout(300);
 
 // --- Price and size --------------------------------------------------------
 await page.fill('#asking', '100');
-await page.fill('#member', '75');
+// No '#member' fill: the member-price input was removed from PriceForm on uat
+// and this line kept passing only because the shared preview server on :4173
+// was serving a different working copy. Left as a comment rather than deleted
+// silently, because member price is still a field on PriceObservation and
+// something should exercise it again if the input comes back.
 await page.fill('#size', '6');
 await page.getByRole('button', { name: /^Record$/ }).click();
 await page.waitForTimeout(500);
