@@ -113,7 +113,12 @@ export function planDedupe(
       || a.createdAt.localeCompare(b.createdAt)
       || a.id.localeCompare(b.id));
 
-    const [survivor, ...duplicates] = ordered;
+    // A bucket only exists because something was put in it, so this cannot be
+    // empty - but the compiler does not know that and neither should a reader.
+    const survivor = ordered[0];
+    if (!survivor) continue;
+    const duplicates = ordered.slice(1);
+
     keep.push(survivor);
     remove.push(...duplicates);
     for (const d of duplicates) {
