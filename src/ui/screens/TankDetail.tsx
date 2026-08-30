@@ -11,7 +11,7 @@
  * moments, and mixing them means a guest tapping around your tank can retire
  * a fish by accident.
  *
- * Since spec 019 the VIEW half lives in `components/tank/TankViewer.tsx`,
+ * Since spec 020 the VIEW half lives in `components/tank/TankViewer.tsx`,
  * because the public shared page renders the very same components. This file
  * keeps everything that writes, and supplies what a tap should do.
  */

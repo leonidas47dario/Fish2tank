@@ -1,7 +1,7 @@
 /**
  * A tank, drawn from what it contains. Nothing here reads a database.
  *
- * Lifted out of `TankDetail.tsx` (spec 019) so that two callers can render the
+ * Lifted out of `TankDetail.tsx` (spec 020) so that two callers can render the
  * same tank the same way: the keeper's live screen, and the public page a
  * stranger opens. A copy would have been faster and would have drifted within
  * a month - the guest's version quietly losing whatever the owner's gained.

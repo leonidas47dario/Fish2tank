@@ -1,5 +1,5 @@
 /**
- * Publishing and revoking a shared tank - spec 019, FR-S01 and FR-S05.
+ * Publishing and revoking a shared tank - spec 020, FR-S01 and FR-S05.
  *
  * The Worker owns access control; this owns *correctness of the report*. Every
  * mutation here logs its intent and its outcome as a pair, carrying the

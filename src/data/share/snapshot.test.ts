@@ -106,7 +106,7 @@ describe('buildSnapshot', () => {
 
     expect(snap.stats.fish).toBe(2);
     expect(snap.stats.species).toBe(1);
-    // The decision recorded in spec 019: estimated value is public.
+    // The decision recorded in spec 020: estimated value is public.
     expect(snap.stats.estimatedValue).toBe(24);
   });
 

@@ -72,7 +72,7 @@ details:
   to the tank with that fish already on your Dream List.
 - **It is an unlisted link, not a private one.** Anyone holding the URL can
   read the tank, including its estimated value. That was a deliberate call
-  (`docs/specs/019-share-a-tank.md`); the sheet says so in words before you
+  (`docs/specs/020-share-a-tank.md`); the sheet says so in words before you
   share.
 
 **Sharing needs the media Worker deployed for that tier.** A build with no

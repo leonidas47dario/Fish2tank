@@ -1,7 +1,7 @@
 # Share a tank — implementation plan
 
 > **For agentic workers:** steps use checkbox (`- [ ]`) syntax for tracking.
-> Spec: `docs/specs/019-share-a-tank.md`.
+> Spec: `docs/specs/020-share-a-tank.md`.
 
 **Goal:** A share icon on every tank card publishes a frozen, read-only page at
 an unguessable URL that anyone can open without an account, and that prompts a

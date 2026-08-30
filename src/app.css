@@ -1577,7 +1577,7 @@ summary.factor::-webkit-details-marker { display: none; }
 }
 
 /*
- * A tank shared with a stranger (spec 019).
+ * A tank shared with a stranger (spec 020).
  *
  * The page has no bottom nav, so it needs its own bottom breathing room -
  * without it the last card sits against the edge of the viewport on a phone.
@@ -1626,7 +1626,7 @@ summary.factor::-webkit-details-marker { display: none; }
 }
 
 /*
- * Sharing a tank (spec 019).
+ * Sharing a tank (spec 020).
  *
  * The two card actions sit on one rule below the body, sharing the border the
  * photo button already drew. The share control is sized to its content so the

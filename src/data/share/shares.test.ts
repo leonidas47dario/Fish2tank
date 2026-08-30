@@ -1,5 +1,5 @@
 /**
- * The local record of which tanks are published (spec 019).
+ * The local record of which tanks are published (spec 020).
  *
  * Small, but it is what every other part of the feature asks "is this tank
  * shared?", so the one-per-tank rule is worth pinning down: a second token for

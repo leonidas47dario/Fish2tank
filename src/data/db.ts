@@ -132,7 +132,7 @@ export interface DeletedRecord {
 }
 
 /**
- * A tank that has been published as a public page (spec 019, FR-S01).
+ * A tank that has been published as a public page (spec 020, FR-S01).
  *
  * Keyed by `aquariumId`, so a tank has at most one live link. Sharing the same
  * tank twice replaces the record rather than accumulating tokens nobody can
@@ -296,7 +296,7 @@ export class Fish2TankDB extends Dexie {
       });
     });
 
-    // v5 adds the record of which tanks are published (spec 019). A pure
+    // v5 adds the record of which tanks are published (spec 020). A pure
     // addition, like v2 and v3: existing data is carried forward untouched and
     // no upgrade function is needed. A device that has never shared anything
     // gets an empty table and behaves exactly as before.
