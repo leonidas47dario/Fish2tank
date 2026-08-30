@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
-  CATALOG, cardPrice, identityStatusFor, ownership, portraitCredit, resolveCardArt,
-  searchableSpecies,
+  CATALOG, CATALOG_BY_SPECIES, cardPrice, identityStatusFor, ownership, portraitCredit,
+  resolveCardArt, searchableSpecies,
   type CatalogCard, type CatalogSpecies,
 } from './catalog';
+import {
+  CANONICAL_BY_SYNONYM, OVERRIDE_BY_ID, SPECIES_OVERRIDES,
+} from './seed/species-overrides';
 import { identifyFromText } from './identify';
 import type { MarketSpeciesStats } from './market';
 import type { Species } from '@/domain/types';
@@ -242,6 +245,53 @@ describe('the searchable corpus (spec 007)', () => {
   it('finds a submitted species by the name the keeper gave it', () => {
     const hits = identifyFromText('Weird Pleco', searchableSpecies([local()]));
     expect(hits[0]?.species.speciesId).toBe('sp_user_1');
+  });
+});
+
+describe('a merged species does not strand what pointed at it (spec 008)', () => {
+  const folded = [...CANONICAL_BY_SYNONYM.keys()];
+
+  it('has synonyms to test with', () => {
+    expect(folded.length).toBeGreaterThan(0);
+  });
+
+  it('resolves a folded id to the row that survived', () => {
+    // A specimen identified before the merge still carries the old id. Without
+    // this the catalog lookup misses and a correctly-identified fish renders
+    // as though it had no species - the app appearing to forget a catch
+    // because a taxonomist moved a genus.
+    for (const id of folded) {
+      const canonical = CANONICAL_BY_SYNONYM.get(id)!;
+      const row = CATALOG_BY_SPECIES.get(canonical);
+      if (!row) continue; // NOT_A_SPECIES rows have no survivor, by design.
+      expect(CATALOG_BY_SPECIES.get(id)).toBe(row);
+    }
+  });
+
+  it('keeps the old binomial searchable as an alias', () => {
+    // Brachydanio rerio is what a shop tag says and what a keeper types. The
+    // merge must not turn it into a dead end.
+    const zebra = CATALOG_BY_SPECIES.get('sp_danio_rerio');
+    expect(zebra?.aliases).toContain('Brachydanio rerio');
+    expect(identifyFromText('Brachydanio rerio', searchableSpecies([]))[0]?.species.speciesId)
+      .toBe('sp_danio_rerio');
+  });
+
+  it('carries a researched name across a merge', () => {
+    // "Adolfo's Catfish" was researched against sp_corydoras_adolfoi. When that
+    // row folded away, the survivor briefly became "Adolfo S Hoplisoma" - a
+    // valid derived name, and a worse one, with the human work discarded.
+    expect(OVERRIDE_BY_ID.get('sp_hoplisoma_adolfoi')?.commonName).toBe("Adolfo's Catfish");
+    expect(CATALOG_BY_SPECIES.get('sp_hoplisoma_adolfoi')?.commonName).toBe("Adolfo's Catfish");
+  });
+
+  it('does not overwrite a name the surviving row researched for itself', () => {
+    for (const [foldedId, canonical] of CANONICAL_BY_SYNONYM) {
+      const own = SPECIES_OVERRIDES.find((o) => o.speciesId === canonical);
+      if (!own) continue;
+      expect(OVERRIDE_BY_ID.get(canonical)).toBe(own);
+      expect(foldedId).not.toBe(canonical);
+    }
   });
 });
 

@@ -14,7 +14,7 @@
  */
 
 import { isUsableName } from '@/data/seed/catalog-quality';
-import { SPECIES_SYNONYMS } from '@/data/seed/species-overrides';
+import { CANONICAL_BY_SYNONYM } from '@/data/seed/species-overrides';
 
 /** Stable, readable id from a binomial. Same input always yields the same id. */
 export function derivedSpeciesId(scientificName: string): string {
@@ -24,10 +24,6 @@ export function derivedSpeciesId(scientificName: string): string {
     .replace(/^_+|_+$/g, '');
   return `sp_${slug}`;
 }
-
-const CANONICAL_BY_SYNONYM: ReadonlyMap<string, string> = new Map(
-  SPECIES_SYNONYMS.map((s) => [s.speciesId, s.canonicalId]),
-);
 
 /**
  * Fold a species minted from a misspelled binomial onto the record the catalog
