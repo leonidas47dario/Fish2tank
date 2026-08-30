@@ -375,6 +375,33 @@ fieldset { border: 0; padding: 0; margin: 0 0 var(--space-3); }
    collection conceit. */
 .plate--locked .plate__img { filter: grayscale(1) contrast(0.92); opacity: 0.62; }
 
+/*
+ * The padlock on a fish you have never had.
+ *
+ * Centred over the plate, as it was before the rebuild dropped it. It sits on
+ * its own scrim rather than straight on the photograph, because a plate is a
+ * different lightness for every species - the whole point of deriving it from
+ * the portrait - and an unbacked glyph would vanish on the pale ones. The
+ * scrim is a surface token, so the mark reads the same on all three themes.
+ *
+ * Never on a plate that has no image: the "No portrait" state already draws a
+ * centred icon and its own caption there, and two glyphs stacked in one square
+ * is not a stronger signal, it is an unreadable one.
+ */
+.plate__lock {
+  position: absolute; inset: 0; z-index: 1;
+  display: grid; place-items: center;
+  pointer-events: none;
+}
+/* The icon only - the visually-hidden label must not get a scrim. */
+.plate__lock > svg {
+  padding: var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-muted);
+  box-sizing: content-box;
+}
+
 /* The only mark ever painted on a photograph, and only when the answer is
    yes. A solid fill reads at every plate lightness in the clamped band. */
 .plate__owned {
