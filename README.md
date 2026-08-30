@@ -608,10 +608,14 @@ with their exact wording kept as the evidence.
 Those never reach the shared catalog on their own. A maintainer reviews them:
 
 ```bash
-npm run species:review -- --export ~/fish2tank-export.json
-npm run species:review -- --export ~/fish2tank-export.json --accept sp_user_abc
+npm run species:review -- --export ~/fish2tank-export.zip
+npm run species:review -- --export ~/fish2tank-export.zip --accept sp_user_abc
 npm run marts          # fold the accepted ones into the catalog
 ```
+
+The export is the backup archive from the Settings screen. The older flat JSON
+export is still accepted, so a backup taken before spec 006 still reviews; the
+format is read from the file's first bytes rather than its extension.
 
 Listing is the default and writing takes an explicit decision. The gate rejects
 blanks and placeholders outright, and flags anything that looks like it is
@@ -629,7 +633,7 @@ for the undescribed Loricariids that have no binomial at all — the exact fish 
 vendor-derived catalog is most likely to be missing. Everything else the gate
 checks still applies to them.
 
-Keepers reach the tool through the JSON export on the Settings screen (NFR-08);
+Keepers reach the tool through the export on the Settings screen (NFR-08);
 there is no backend, and this pipeline does not add one.
 
 **What this machine cannot reach.** FishBase, SeriouslyFish and Wikidata all
