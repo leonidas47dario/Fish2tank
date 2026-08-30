@@ -28,6 +28,10 @@ describe('foldLegacySettings', () => {
       sceneId: 'planted',
       reducedMotion: true,
       currency: 'USD',
+      // Spec 014. The legacy payload predates it, so it folds to the default
+      // cadence rather than to nothing - an old profile should sync photos on
+      // the same schedule as a new one, not sit still.
+      photoSyncMinutes: 30,
     });
   });
 
