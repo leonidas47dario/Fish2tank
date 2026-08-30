@@ -14,7 +14,7 @@
  * comparison the engine itself declines to make.
  */
 import type { LengthMeasurement } from '@/domain/types';
-import type { BlendedMarket } from '@/engine/pricing/own-prices';
+import { OWN_RECORDS_STORE_ID, type BlendedMarket } from '@/engine/pricing/own-prices';
 import { formatLength } from '@/domain/units';
 import {
   bandForSize, hasPriceEstimate, isStale, marketAgeDays, marketFor, MARKET_INDEX,
@@ -76,10 +76,21 @@ export function MarketPanel({ speciesId, observedSize, yourPrice, blended }: Pro
     <section className="panel">
       <div className="spread" style={{ marginBottom: 'var(--space-3)' }}>
         <h2 className="sec-head" style={{ margin: 0 }}>Market reference</h2>
-        <span className="xs faint data">
-          {stats.totalListings} listing{stats.totalListings === 1 ? '' : 's'} · {stats.stores.length} store
-          {stats.stores.length === 1 ? '' : 's'}
-        </span>
+        {/* Counts SHOPS, not sources. Your own records are one of the sources
+            behind the figure but they are not a store, and letting them add to
+            a store count would overstate how widely the fish is actually sold -
+            the one thing this number is read for. */}
+        {(() => {
+          const shops = stats.stores.filter((s) => s.storeId !== OWN_RECORDS_STORE_ID);
+          const shopListings = stats.totalListings - (own?.points.length ?? 0);
+          return (
+            <span className="xs faint data">
+              {shopListings} listing{shopListings === 1 ? '' : 's'} · {shops.length} store
+              {shops.length === 1 ? '' : 's'}
+              {own && own.points.length > 0 && <> · +{own.points.length} yours</>}
+            </span>
+          );
+        })()}
       </div>
 
       {/* Where the figure came from.
@@ -217,7 +228,15 @@ export function MarketPanel({ speciesId, observedSize, yourPrice, blended }: Pro
 
       <div style={{ marginTop: 'var(--space-4)' }}>
         <p className="sec-head">{estimated ? 'Stores' : 'Stores carrying it'}</p>
-        {stats.stores.map((s) => {
+        {/* Your own records are NOT in this list, and that is the point.
+​
+            They are in the figure above - that is the whole feature - but this
+            heading says "stores carrying it", and a price you wrote down in a
+            shop is evidence about a price, not a shop with stock. Listing it
+            here would put a row under "sold out / in stock" that has no stock
+            to report, and would quietly inflate the store count that scarcity
+            is judged on. It gets its own row below instead. */}
+        {stats.stores.filter((s) => s.storeId !== OWN_RECORDS_STORE_ID).map((s) => {
           const name = STORE_NAMES[s.storeId] ?? s.storeId;
           return (
             <div key={s.storeId} className="store">
@@ -253,6 +272,22 @@ export function MarketPanel({ speciesId, observedSize, yourPrice, blended }: Pro
           );
         })}
       </div>
+
+      {/* And here, named as what it is. */}
+      {own && own.points.length > 0 && (
+        <div style={{ marginTop: 'var(--space-3)' }}>
+          <p className="sec-head">Your own records</p>
+          <div className="store">
+            <span>
+              {own.points.length} price{own.points.length === 1 ? '' : 's'} you logged
+            </span>
+            <span className="store__flag store__flag--out">not a shop</span>
+            <span className="store__price">
+              {own.median !== undefined ? `median $${own.median.toFixed(2)}` : '—'}
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Staleness is load-bearing: most of this dataset is sold-out back
           catalogue, and some of it is years old. Stale is not broken, so it
