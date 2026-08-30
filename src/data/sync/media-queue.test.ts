@@ -280,3 +280,38 @@ describe('sync logging', () => {
     expect(failures[0]).toContain('store holds 1B');
   });
 });
+
+/**
+ * The one line no other test touches.
+ *
+ * Every test above injects `fetchImpl`, so the default was never exercised -
+ * and the default was wrong. `fetch` captured into a variable and then called
+ * as `deps.fetchImpl(...)` arrives with `this` set to the deps object, which
+ * the browser refuses. It failed 28 uploads out of 28 on UAT while every test
+ * here stayed green.
+ */
+describe('the default fetch', () => {
+  it('is bound to the global, because a method call is an Illegal invocation', async () => {
+    await seedMedia();
+    const fake = fakeBackend();
+
+    // Node does not enforce the browser's rule, so reproduce it.
+    vi.stubGlobal('fetch', function (this: unknown, ...args: Parameters<typeof fetch>) {
+      if (this !== undefined && this !== globalThis) {
+        throw new TypeError("Failed to execute 'fetch' on 'Window': Illegal invocation");
+      }
+      return fake.fetchImpl(...args);
+    });
+
+    try {
+      // Deliberately no fetchImpl.
+      const summary = await runUploadQueue({
+        db, backend: fake.backend, env: ENV, logger: quietLogger(),
+      });
+      expect(summary.failed).toBe(0);
+      expect(summary.uploaded).toBe(3);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+});
