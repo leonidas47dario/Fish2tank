@@ -131,6 +131,43 @@ export interface DeletedRecord {
   kind: 'specimen' | 'aquarium' | 'media';
 }
 
+/**
+ * A tank that has been published as a public page (spec 015, FR-S01).
+ *
+ * Keyed by `aquariumId`, so a tank has at most one live link. Sharing the same
+ * tank twice replaces the record rather than accumulating tokens nobody can
+ * see or revoke - an orphaned token would keep serving a snapshot with no UI
+ * anywhere admitting it exists.
+ *
+ * DELIBERATELY SYNCED. It is not in `UNSYNCED_TABLES`, so revoking from a
+ * laptop is visible on the phone. A share the other device does not know about
+ * is one it cannot turn off, and "which of my tanks are public" is exactly the
+ * kind of question that must not have a per-device answer.
+ *
+ * The token is not a secret from the keeper's own devices - it is already in
+ * a URL they are handing out - so syncing it leaks nothing that the act of
+ * sharing has not already published.
+ */
+export interface ShareRecord {
+  aquariumId: Id;
+  /** The unguessable path segment. Also the R2 object name. */
+  token: string;
+  publishedAt: string;
+  /**
+   * What the published copy contains, hashed (FR-S03). Compared against the
+   * tank's current fingerprint to decide whether a republish would change
+   * anything, so an edit a guest cannot see does not spend a write.
+   */
+  fingerprint: string;
+  /**
+   * False when the tank has a photo that had not reached R2 at publish time,
+   * so the sheet can say why guests see the fallback.
+   */
+  photoIncluded: boolean;
+  /** Why the last automatic republish failed, if it did. Cleared on success. */
+  lastError?: string;
+}
+
 export class Fish2TankDB extends Dexie {
   users!: EntityTable<User, 'id'>;
   places!: EntityTable<Place, 'id'>;
@@ -154,6 +191,7 @@ export class Fish2TankDB extends Dexie {
   draftKeys!: EntityTable<DraftKey, 'clientKey'>;
   cardPrefs!: EntityTable<CardPref, 'speciesId'>;
   deletedRecords!: EntityTable<DeletedRecord, 'id'>;
+  shares!: EntityTable<ShareRecord, 'aquariumId'>;
 
   /**
    * @param addons Dexie addons to install, empty by default so the offline app
@@ -256,6 +294,14 @@ export class Fish2TankDB extends Dexie {
         ms: Date.now() - start,
         remapped: Object.keys(counts).length === 0 ? 'nothing to do' : counts,
       });
+    });
+
+    // v5 adds the record of which tanks are published (spec 015). A pure
+    // addition, like v2 and v3: existing data is carried forward untouched and
+    // no upgrade function is needed. A device that has never shared anything
+    // gets an empty table and behaves exactly as before.
+    this.version(5).stores({
+      shares: 'aquariumId, token',
     });
   }
 }
