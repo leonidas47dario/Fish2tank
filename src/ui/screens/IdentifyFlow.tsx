@@ -22,11 +22,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { blobFor, db } from '@/data/db';
-import { CATALOG } from '@/data/catalog';
+import { identityStatusFor } from '@/data/catalog';
 import { canShareFiles, identifyFromText, isConfident, shareForLens, type Candidate } from '@/data/identify';
 import { assertIdentity, revealSpecimen, submitUserSpecies } from '@/data/repositories';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useCatalogCard, useIsFirstOfSpecies, useSpecimenMedia } from '../hooks';
+import {
+  useCatalogCard, useIsFirstOfSpecies, useSearchableSpecies, useSpecimenMedia,
+} from '../hooks';
 import type { RevealOutcome } from '@/data/repositories';
 import { RevealCeremony } from '../components/RevealCeremony';
 
@@ -80,9 +82,17 @@ export default function IdentifyFlow() {
     return () => { cancelled = true; };
   }, [photo]);
 
+  /**
+   * Spec 007: the catalog PLUS anything this keeper has submitted before.
+   *
+   * Searching the mart alone meant a species you had already typed in once was
+   * invisible the second time you met the fish, and the only way through was
+   * "log it as is" again - typing the same name into a row that already exists.
+   */
+  const corpus = useSearchableSpecies();
   const candidates: Candidate[] = useMemo(
-    () => (query.trim() ? identifyFromText(query, CATALOG.species) : []),
-    [query],
+    () => (query.trim() ? identifyFromText(query, corpus) : []),
+    [query, corpus],
   );
   const confident = isConfident(candidates);
   const canShare = shareFile ? canShareFiles([shareFile]) : false;
@@ -102,8 +112,14 @@ export default function IdentifyFlow() {
     setError(undefined);
     try {
       // Supersedes any earlier assertion rather than overwriting it (FR-I06),
-      // and is recorded as user-confirmed, never as an AI percentage (FR-I04).
-      await assertIdentity({ specimenId, speciesId, source: 'user', status: 'user-confirmed' });
+      // and is recorded by the user, never as an AI percentage (FR-I04).
+      //
+      // Since spec 007 the corpus includes the keeper's own submissions, so one
+      // can be PICKED here and not only typed. identityStatusFor() is what keeps
+      // that from silently promoting an invented name to a confirmed species.
+      await assertIdentity({
+        specimenId, speciesId, source: 'user', status: identityStatusFor(speciesId),
+      });
       setOutcome(await revealSpecimen(specimenId));
       setStep('reveal');
     } catch (e) {
@@ -268,7 +284,7 @@ export default function IdentifyFlow() {
           now offered whenever there is something to log, sitting below the
           matches so a genuine one still leads.
 
-          Not a skip. The catalog holds 2,178 species and a shop will sell one
+          Not a skip. The catalog holds 2,176 species and a shop will sell one
           it has never heard of. What this records is the keeper's wording,
           verbatim, as its own species marked `user-submitted`, with the
           identity `provisional` - the weaker of the two, and displayed as

@@ -3,7 +3,8 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { blobFor, db } from '@/data/db';
 import {
   buildCatalogCard, CATALOG_BY_SPECIES, cardPrice, catalogShapeForLocal, portraitAsset,
-  type CatalogCard,
+  searchableSpecies,
+  type CatalogCard, type CatalogSpecies,
 } from '@/data/catalog';
 import { marketFor } from '@/data/market';
 import { deriveBadge, deriveQuantity } from '@/domain/holdings';
@@ -13,6 +14,23 @@ import { useBlobUrls } from './blob-url';
 
 export function useSpecies(id?: Id) {
   return useLiveQuery(async () => (id ? db.species.get(id) : undefined), [id]);
+}
+
+/**
+ * The species a search on this device can reach (spec 007).
+ *
+ * Live, because a keeper can submit a species from the capture flow and must
+ * then be able to find it from the specimen page without a reload. The table
+ * is scanned whole rather than queried: `origin` is not indexed, and the table
+ * holds the 47 seeded profiles plus a handful of submissions, so an index
+ * would cost more than it saves.
+ *
+ * Falls back to the catalog alone while the query is in flight, so the search
+ * box works on first paint instead of appearing to match nothing.
+ */
+export function useSearchableSpecies(): CatalogSpecies[] {
+  const local = useLiveQuery(() => db.species.toArray(), []);
+  return useMemo(() => searchableSpecies(local ?? []), [local]);
 }
 
 /**

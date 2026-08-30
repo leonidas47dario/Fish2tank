@@ -102,20 +102,28 @@ now asserts `provisional` when the chosen id is user-submitted
 because it is a behaviour change beyond the search, and a reviewer should get
 to disagree with it.
 
-## Three numbers, one truth
+## The catalog's size is misstated in sixteen places
 
-The catalog's size is stated in three places and all three disagree:
+Measured: `catalog.json` holds **2,176** species (2,176 distinct ids, built
+2026-08-29). What the repo says:
 
-| Says | Where | Actual |
+| Says | Where | Off by |
 |---|---|---|
-| "2,178 species" | `IdentifyFlow.tsx:271`, user-facing copy | 2,176 |
-| "1,080-species mart" | `docs/BACKLOG.md` BUG-01 | 2,176 |
-| "1,080+ cards" | `docs/BACKLOG.md` ENH-03 | 2,176 |
+| "2,178 species" | 14 code comments across `src/ui` and `src/data` | 2 |
+| "1,080-species mart" | `docs/BACKLOG.md` BUG-01 | 1,096 |
+| "1,080+ cards" | `docs/BACKLOG.md` ENH-03 | 1,096 |
 
-The user-facing one is fixed by **computing it** from `CATALOG.species.length`
-rather than restating it, so it cannot drift a fourth time. The backlog rows are
-corrected by hand. Measured, not assumed: 2,176 is `catalog.json`'s `species`
-array length at this commit.
+**Every one of the 14 is a code comment. None is user-facing.** An earlier draft
+of this spec claimed `IdentifyFlow.tsx:271` was rendered copy; it is inside a
+`{/* */}` block. Nothing in the running app states a species count, so there is
+no wrong number in front of the user and no count to compute from the data.
+
+Scope, therefore: correct the one comment in the file this change already edits,
+correct the two backlog rows (which are wrong by a thousand, not by two), and
+file the remaining 13 against **FR-D09**, the drift guard that already exists in
+the backlog for exactly this failure and would have caught all of them. Rewriting
+13 comments in files this change does not otherwise touch would be churn, and it
+would not stop the seventeenth.
 
 ## Out of scope
 
@@ -143,5 +151,6 @@ array length at this commit.
 5. Both surfaces rank with `identifyFromText`, so the same query yields the same
    ordering on each.
 6. `searchSpecies` no longer exists.
-7. The user-facing catalog count is derived from the data, and no hardcoded
-   species count remains in `src/ui`.
+7. The catalog size stated in the file this change edits, and in the two backlog
+   rows, matches the measured 2,176; the remaining 13 stale comments are filed
+   against FR-D09 rather than hand-corrected.

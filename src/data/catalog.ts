@@ -124,6 +124,24 @@ export function isUserSubmittedId(speciesId: string): boolean {
 }
 
 /**
+ * What picking a species off a search result actually asserts (FR-I01).
+ *
+ * "User confirmed" means "this is that catalog species". For a name the keeper
+ * invented there is no catalog species to mean, so the strongest honest state
+ * is provisional - the rule `submitUserSpecies()` already follows when it
+ * creates the row.
+ *
+ * Shared by both identify surfaces on purpose. It was a ternary duplicated
+ * across two screens for about ten minutes, and in that time the two disagreed:
+ * the same submitted species was recorded `user-confirmed` from one screen and
+ * `provisional` from the other. Spec 007 exists because two screens doing the
+ * same thing drift; this is that, in miniature.
+ */
+export function identityStatusFor(speciesId: string): 'provisional' | 'user-confirmed' {
+  return isUserSubmittedId(speciesId) ? 'provisional' : 'user-confirmed';
+}
+
+/**
  * Every species a keeper can search for, from both places they live (spec 007).
  *
  * There are two species libraries and neither is complete. `catalog.json` has

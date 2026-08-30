@@ -1232,18 +1232,10 @@ export async function removeFromDreamList(speciesId: Id, database: DB = db): Pro
   await database.dreamList.delete(existing.id);
 }
 
-/** FR-I02: search common names, scientific names and store aliases alike. */
-export async function searchSpecies(query: string, database: DB = db): Promise<Species[]> {
-  const q = query.trim().toLowerCase();
-  if (!q) return [];
-  const all = await database.species.toArray();
-  return all.filter(
-    (s) =>
-      s.commonName.toLowerCase().includes(q) ||
-      s.scientificName?.toLowerCase().includes(q) ||
-      s.aliases.some((a) => a.toLowerCase().includes(q)),
-  );
-}
+/* `searchSpecies` was here. It filtered db.species - the 47 seeded care
+   profiles - with .includes(), and was the second of two ways this app
+   searched for a species. FR-I02 is now served by one: identifyFromText()
+   over searchableSpecies(), which ranks and covers all 2,176 (spec 007). */
 
 // ─────────────────────────────────────────────────────────────────────────
 // Editing and deleting a catch

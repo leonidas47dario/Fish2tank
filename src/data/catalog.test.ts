@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
-  CATALOG, cardPrice, ownership, portraitCredit, resolveCardArt, searchableSpecies,
+  CATALOG, cardPrice, identityStatusFor, ownership, portraitCredit, resolveCardArt,
+  searchableSpecies,
   type CatalogCard, type CatalogSpecies,
 } from './catalog';
 import { identifyFromText } from './identify';
@@ -241,5 +242,21 @@ describe('the searchable corpus (spec 007)', () => {
   it('finds a submitted species by the name the keeper gave it', () => {
     const hits = identifyFromText('Weird Pleco', searchableSpecies([local()]));
     expect(hits[0]?.species.speciesId).toBe('sp_user_1');
+  });
+});
+
+describe('what picking a species asserts (FR-I01, spec 007)', () => {
+  it('confirms a catalog species', () => {
+    expect(identityStatusFor('sp_erythrinus_erythrinus')).toBe('user-confirmed');
+  });
+
+  it('will not confirm a species the keeper invented', () => {
+    // Regression, and it was real for about ten minutes: once submitted species
+    // became pickable in BOTH identify surfaces, each screen decided this for
+    // itself and they disagreed - the same species was recorded user-confirmed
+    // from one and provisional from the other, in one database, measured in a
+    // browser. "User confirmed" means "this is that catalog species", and there
+    // is no catalog species to mean.
+    expect(identityStatusFor('sp_user_0521cb3d')).toBe('provisional');
   });
 });
