@@ -11,7 +11,7 @@
  * phone already has.
  */
 import { Link } from 'react-router-dom';
-import { useLiveQuery } from 'dexie-react-hooks';
+import { useLiveQuery, useObservable } from 'dexie-react-hooks';
 import { blobFor, db } from '@/data/db';
 import { CATALOG_BY_SPECIES, portraitAsset } from '@/data/catalog';
 import { formatVolume } from '@/domain/units';
@@ -25,6 +25,7 @@ import { CameraIcon, GearIcon } from '../components/Icons';
 export default function Home() {
   const recent = useRecentCatches(8);
   const tanks = useTanksWithResidents();
+  const cloudUser = useObservable(db.cloud.currentUser);
   const species = useLiveQuery(() => db.species.toArray(), []);
   const profile = useLiveQuery(() => db.users.get(LOCAL_PROFILE_ID));
 
@@ -75,7 +76,12 @@ export default function Home() {
     fishKept,
     tankCount,
     measured,
-    displayName: profile?.displayName?.trim() ?? '',
+    // Spec 017. The signed-in account's name wins, because it is now the only
+    // name you can actually change - the Settings field that wrote
+    // `displayName` is gone. The stored value stays as the fallback so anyone
+    // who set one before that, or who is signed out, keeps their greeting
+    // instead of silently dropping to "Welcome back."
+    displayName: (cloudUser?.name || profile?.displayName || '').trim(),
   });
 
   return (

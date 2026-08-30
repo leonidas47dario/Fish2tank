@@ -1,5 +1,5 @@
 /**
- * Somebody else's tank, opened by a stranger - spec 015.
+ * Somebody else's tank, opened by a stranger - spec 019.
  *
  * THE ONLY ROUTE IN THIS APP THAT RENDERS WITHOUT AN ACCOUNT. It reads one
  * public file from the Worker and draws it with the same components the

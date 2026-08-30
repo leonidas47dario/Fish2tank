@@ -14,7 +14,7 @@
  * plainly when it does not know something rather than showing a comforting
  * zero.
  */
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useLiveQuery, useObservable } from 'dexie-react-hooks';
 import { db } from '@/data/db';
 import { CLOUD_DATABASE_URL, DEPLOYMENT } from '@/build-info';
@@ -37,7 +37,7 @@ const PHASE_TEXT: Record<string, string> = {
   offline: 'Offline, changes are saved here',
 };
 
-export default function AccountPanel() {
+export default function AccountPanel({ children }: { children?: ReactNode }) {
   const user = useObservable(db.cloud.currentUser);
   const syncState = useObservable(db.cloud.syncState);
   const [busy, setBusy] = useState<'in' | 'out' | undefined>();
@@ -87,9 +87,9 @@ export default function AccountPanel() {
   const phase = syncState?.phase ?? 'initial';
 
   return (
-    <section className="card stack">
-      <h2>Account</h2>
-
+    // Spec 018: the card and the "Account" heading belong to the collapsible
+    // section this now renders inside, so this is a plain stack.
+    <div className="stack">
       {signedIn ? (
         <>
           <p className="small" style={{ marginBottom: 0 }}>
@@ -123,6 +123,14 @@ export default function AccountPanel() {
         <p className="small" role="alert">{problem}</p>
       ) : null}
 
+      {/*
+        Spec 017. Settings passes the currency control in here rather than
+        keeping a section of its own for it. It sits above the sync block
+        because it is a thing you set, and everything below is a thing you
+        read.
+      */}
+      {children}
+
       <dl className="xs muted" style={{ margin: 0 }}>
         <div className="row">
           <dt>Status</dt>
@@ -155,7 +163,7 @@ export default function AccountPanel() {
       ) : null}
 
       {signedIn ? <MediaSyncRow /> : null}
-    </section>
+    </div>
   );
 }
 

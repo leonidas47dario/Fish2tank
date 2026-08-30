@@ -1,7 +1,7 @@
 /**
  * One tank's residents, joined to everything the app knows about them.
  *
- * Lifted out of `useTankResidents` (spec 015) so that code with no React
+ * Lifted out of `useTankResidents` (spec 019) so that code with no React
  * around it can ask the same question and get the same answer. Publishing a
  * shared tank has to produce exactly what the owner's screen shows, and the
  * only way to be sure of that is for both to call this.

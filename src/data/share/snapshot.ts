@@ -1,5 +1,5 @@
 /**
- * A tank, projected into the file a stranger is allowed to read - spec 015.
+ * A tank, projected into the file a stranger is allowed to read - spec 019.
  *
  * Pure, and separate from the code that publishes it, because this is the one
  * place that decides what leaves the device. A projection you can test

@@ -1,5 +1,24 @@
 # Importing the fish inventory
 
+> **Retired in spec 017. There is no longer a way to import a spreadsheet from
+> inside the app.** The Settings section is gone, and with it
+> `src/data/import-service.ts` and the `.xlsx` reader `src/data/seed/xlsx.ts`.
+> Backup and restore (spec 006) is the supported way to move a collection now:
+> it carries photos, specimens, encounters and assessments, none of which a
+> spreadsheet has.
+>
+> Two reasons beyond redundancy. The importer never reconciled - it only
+> `bulkPut`, so re-importing an *edited* sheet left the old rows beside the new
+> ones (**BUG-07**), and that path is now unreachable. And a non-idempotent
+> earlier version of it is what put 176 holdings in production where there were
+> 63 fish (**spec 015**).
+>
+> `src/data/seed/inventory-import.ts` survives, because
+> `etl/build-smoke-fixture.ts` still uses `parseInventoryCsv` and
+> `importInventory` to generate the smoke-test fixture. Everything below
+> describes the source workbook and the parsing rules, which are still accurate
+> for that use; the "How to load a newer version" steps are not.
+
 Implements FR-O03 and the migration rules in PRD 6.2.
 
 ## The file

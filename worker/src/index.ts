@@ -149,7 +149,7 @@ function safeBlobKey(value: unknown): string | undefined {
   return /^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(value) ? value : undefined;
 }
 
-// ── Sharing (spec 015) ──────────────────────────────────────────────────────
+// ── Sharing (spec 019) ──────────────────────────────────────────────────────
 
 /**
  * Share tokens are `crypto.randomUUID()`; refuse anything else.
@@ -235,7 +235,7 @@ export default {
     const expiresAt = new Date(Date.now() + URL_TTL_SECONDS * 1000).toISOString();
 
     /*
-     * THE PUBLIC SURFACE, AND ALL OF IT (spec 015, NFR-14).
+     * THE PUBLIC SURFACE, AND ALL OF IT (spec 019, NFR-14).
      *
      * Everything below this block requires a validated token. This branch is
      * the only exception, it handles GET alone, and it 404s anything that is

@@ -5,18 +5,48 @@
  * (7.6): the same Panther has to be comparable across all three territories,
  * and switching must change nothing but appearance. Mute and reduced motion
  * ship from first release, not later.
+ *
+ * SPEC 017 REORDERED THIS SCREEN. It had grown to nine cards in the order they
+ * were built, which put Account fifth and Backup seventh - the two things a
+ * keeper opens Settings to find. It is now five: Account (who you are, whether
+ * you are syncing, and what currency your prices read in), Theme (everything
+ * about how it looks), Your data (backup, restore, erase, together because
+ * erase is only safe next to backup), Privacy, and Build.
+ *
+ * Two sections were removed rather than moved. Profile held a display-name
+ * field and the currency picker; the name now comes from the signed-in
+ * account and the currency moved into Account. Import inventory was the last
+ * caller of the spreadsheet importer, and deleting it also closes BUG-07,
+ * whose only reachable path was re-importing an edited sheet.
  */
-import { useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { SCENES, THEMES, useTheme } from '@/theme/ThemeProvider';
+import { useState, type ReactNode } from 'react';
+import { useLiveQuery, useObservable } from 'dexie-react-hooks';
+import {
+  SCENES, THEMES, useTheme, usePrefersReducedMotion, type SceneId, type ThemeId,
+} from '@/theme/ThemeProvider';
 import { BUILD_ID, BUILT_AT } from '@/build-info';
 import { db } from '@/data/db';
-import { LOCAL_PROFILE_ID, setDisplayName, updateSettings } from '@/data/profile';
+import { LOCAL_PROFILE_ID, updateSettings } from '@/data/profile';
 import AccountPanel from '@/ui/components/AccountPanel';
-import { importInventoryFile } from '@/data/import-service';
+import CollapsibleSection from '@/ui/components/CollapsibleSection';
+import SettingsNav from '@/ui/components/SettingsNav';
+import { SETTINGS_SECTIONS, initiallyOpen, sectionDomId } from './settings-sections';
 import { exportArchive } from '@/data/portability/export';
 import { importArchive } from '@/data/portability/import';
-import type { ImportResult } from '@/data/seed/inventory-import';
+import { eraseEverything } from '@/data/portability/erase';
+
+/**
+ * Who the backup belongs to, for its filename (spec 016).
+ *
+ * Read at the moment of export rather than held in state: an export can be
+ * the last thing that happens before an erase, and a stale name on that file
+ * is the one you would not be able to identify afterwards. Signed out there
+ * is no account, and the name simply carries the timestamp.
+ */
+function backupAccount(): string | undefined {
+  const user = db.cloud.currentUser?.value;
+  return user?.isLoggedIn ? (user.email || user.name || user.userId) : undefined;
+}
 
 /** Spec 005 FR-A04. Enough to cover where Ryan actually buys fish. */
 const CURRENCIES = ['USD', 'CAD', 'EUR', 'GBP', 'AUD', 'JPY'];
@@ -29,17 +59,50 @@ export default function Settings() {
   // a write inside a query observing the table it writes to. ThemeProvider has
   // already created the row by the time this screen renders.
   const profile = useLiveQuery(() => db.users.get(LOCAL_PROFILE_ID));
+  const reduced = usePrefersReducedMotion();
 
-  return (
-    <div className="stack">
-      <header><h1>Settings</h1></header>
+  // Spec 018. A set rather than one id: these are independent disclosures, not
+  // an accordion. Opening Theme to compare two of them should not fold away
+  // the sync status you opened Settings to read in the first place.
+  const [open, setOpen] = useState<ReadonlySet<string>>(() => new Set(initiallyOpen()));
 
-      <section className="card stack">
-        <h2>Profile</h2>
-        <p className="muted small">
-          Follows your account across devices once you sign in. Never shared or published.
-        </p>
-        <DisplayNameField saved={profile?.displayName ?? ''} />
+  const setOpenFor = (id: string, isOpen: boolean) => setOpen((was) => {
+    const next = new Set(was);
+    if (isOpen) next.add(id);
+    else next.delete(id);
+    return next;
+  });
+
+  /*
+   * Expand first, then scroll. A collapsed target is a 48px strip, so
+   * scrolling to it and expanding afterwards lands the viewport in the wrong
+   * place and the section grows away underneath. The rAF waits for React to
+   * commit the open state so the element has its full height to scroll to.
+   */
+  const jumpTo = (id: string) => {
+    setOpenFor(id, true);
+    requestAnimationFrame(() => {
+      document.getElementById(sectionDomId(id))?.scrollIntoView({
+        behavior: reduced ? 'auto' : 'smooth',
+        block: 'start',
+      });
+    });
+  };
+
+  /*
+   * Section id to its contents. The sections themselves are rendered by
+   * walking SETTINGS_SECTIONS, so the nav and the panels come from one list
+   * and a section cannot exist in one and not the other. A missing entry here
+   * renders an empty card rather than throwing, which is the right failure for
+   * a settings screen: you can still reach everything else.
+   *
+   * Spec 017 fixed the order. Account first, because "am I signed in and is my
+   * collection safe" is the question this screen exists to answer; the
+   * currency picker rides inside it rather than justifying a section.
+   */
+  const content: Record<string, ReactNode> = {
+    account: (
+      <AccountPanel>
         <label className="stack">
           <span className="xs muted">Currency for new prices</span>
           <select
@@ -51,74 +114,24 @@ export default function Settings() {
             ))}
           </select>
         </label>
-      </section>
-
-      <section className="card stack">
-        <h2>App theme</h2>
-        <p className="muted small">
-          A comparison tool, not a finished decision. The records, the verdicts and the scores are identical
-          in all three.
-        </p>
-        {THEMES.map((t) => (
-          <label key={t.id} className="row" style={{ cursor: 'pointer', color: 'var(--color-text)' }}>
-            <input
-              type="radio" name="theme" value={t.id} checked={theme === t.id}
-              onChange={() => setTheme(t.id)} style={{ width: 'auto' }}
-            />
-            <span>
-              <strong>{t.name}</strong><br />
-              <span className="xs muted">{t.blurb}</span>
-            </span>
-          </label>
-        ))}
-      </section>
-
-      <section className="card stack">
-        <h2>Aquarium scene</h2>
-        <p className="muted small">
-          A surround for the media window. The original photo or video is never replaced or altered.
-        </p>
-        {SCENES.map((s) => (
-          <label key={s.id} className="row" style={{ cursor: 'pointer', color: 'var(--color-text)' }}>
-            <input
-              type="radio" name="scene" value={s.id} checked={scene === s.id}
-              onChange={() => setScene(s.id)} style={{ width: 'auto' }}
-            />
-            <span>
-              <strong>{s.name}</strong><br />
-              <span className="xs muted">{s.blurb}</span>
-            </span>
-          </label>
-        ))}
-      </section>
-
-      <section className="card stack">
-        <h2>Motion and sound</h2>
-        <label className="row" style={{ cursor: 'pointer', color: 'var(--color-text)' }}>
-          <input type="checkbox" checked={reducedMotion} onChange={(e) => setReducedMotion(e.target.checked)} style={{ width: 'auto' }} />
-          Reduce motion
-        </label>
-        <label className="row" style={{ cursor: 'pointer', color: 'var(--color-text)' }}>
-          <input type="checkbox" checked={muted} onChange={(e) => setMuted(e.target.checked)} style={{ width: 'auto' }} />
-          Mute everything
-        </label>
-        <p className="xs muted" style={{ marginBottom: 0 }}>
-          Reveals stay skippable whatever these are set to.
-        </p>
-      </section>
-
-      <AccountPanel />
-      <InventoryImport />
-      <BackupPanel />
-      <BuildStamp />
-
-      <section className="card">
-        <h2>Privacy</h2>
+      </AccountPanel>
+    ),
+    theme: (
+      <ThemePanel
+        theme={theme} setTheme={setTheme}
+        scene={scene} setScene={setScene}
+        reducedMotion={reducedMotion} setReducedMotion={setReducedMotion}
+        muted={muted} setMuted={setMuted}
+      />
+    ),
+    data: <DataPanel />,
+    privacy: (
+      <>
         {/*
-          Rewritten for spec 005. The old text promised "no account, no server",
-          which stopped being true the moment sync shipped. A privacy notice
-          that overclaims is worse than none, because it is the one paragraph
-          someone actually relies on.
+          Rewritten for spec 005. The old text promised "no account, no
+          server", which stopped being true the moment sync shipped. A privacy
+          notice that overclaims is worse than none, because it is the one
+          paragraph someone actually relies on.
         */}
         <p className="small muted">
           Signed out, everything lives on this device and nothing leaves it. Signed in, your
@@ -129,116 +142,126 @@ export default function Settings() {
           Store and home locations are never published, and no public profile, map or trading
           feature exists.
         </p>
-      </section>
+      </>
+    ),
+    build: <BuildStamp />,
+  };
+
+  return (
+    <div className="stack">
+      <header><h1>Settings</h1></header>
+
+      <div className="settings-layout">
+        <SettingsNav onJump={jumpTo} />
+
+        <div className="stack settings-panels">
+          {SETTINGS_SECTIONS.map((section) => (
+            <CollapsibleSection
+              key={section.id}
+              id={sectionDomId(section.id)}
+              label={section.label}
+              open={open.has(section.id)}
+              onToggle={(isOpen) => setOpenFor(section.id, isOpen)}
+            >
+              {content[section.id]}
+            </CollapsibleSection>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
 
 /**
- * The display name, saved when you leave the field rather than as you type.
+ * Everything that changes how the app looks and feels, in one card.
  *
- * It used to persist on every keystroke. That was harmless while the profile
- * was device-local and stops being harmless the moment it syncs: typing a name
- * became one mutation per character on the single record most likely to be
- * edited from two devices, against a free tier that allows 50 sync operations
- * per five minutes. Saving on blur makes it one.
+ * Spec 017. This was three sections - App theme, Aquarium scene, Motion and
+ * sound - which between them pushed Account and Backup below the fold on a
+ * phone. They are one concern (appearance) and one decision session, so they
+ * are one card with three headings rather than three cards with one each.
  *
- * `draft` is cleared after saving so a change arriving from another device is
- * not shadowed by a stale local value.
+ * The radio groups keep their `name` attributes, which is what makes each set
+ * behave as one group now that they share a fieldset-less card.
  */
-function DisplayNameField({ saved }: { saved: string }) {
-  const [draft, setDraft] = useState<string>();
-  const [problem, setProblem] = useState<string>();
-
-  async function commit() {
-    if (draft === undefined || draft === saved) {
-      setDraft(undefined);
-      return;
-    }
-    try {
-      await setDisplayName(draft);
-      setProblem(undefined);
-    } catch (cause) {
-      // A name that silently failed to save is a small lie the UI would keep
-      // telling, because the input would still show what you typed.
-      console.error('[profile] could not save display name', cause);
-      setProblem('Could not save that name.');
-    }
-    setDraft(undefined);
-  }
-
+function ThemePanel({
+  theme, setTheme, scene, setScene, reducedMotion, setReducedMotion, muted, setMuted,
+}: {
+  theme: ThemeId;
+  setTheme: (id: ThemeId) => void;
+  scene: SceneId;
+  setScene: (id: SceneId) => void;
+  reducedMotion: boolean;
+  setReducedMotion: (on: boolean) => void;
+  muted: boolean;
+  setMuted: (on: boolean) => void;
+}) {
   return (
-    <label className="stack">
-      <span className="xs muted">Display name</span>
-      <input
-        type="text"
-        value={draft ?? saved}
-        placeholder="Unnamed keeper"
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={() => void commit()}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') e.currentTarget.blur();
-        }}
-      />
-      {problem ? <span className="xs" role="alert">{problem}</span> : null}
-    </label>
+    <div className="stack">
+      <h3 className="small">Appearance</h3>
+      <p className="muted small">
+        A comparison tool, not a finished decision. The records, the verdicts and the scores are identical
+        in all three.
+      </p>
+      {THEMES.map((t) => (
+        <label key={t.id} className="row" style={{ cursor: 'pointer', color: 'var(--color-text)' }}>
+          <input
+            type="radio" name="theme" value={t.id} checked={theme === t.id}
+            onChange={() => setTheme(t.id)} style={{ width: 'auto' }}
+          />
+          <span>
+            <strong>{t.name}</strong><br />
+            <span className="xs muted">{t.blurb}</span>
+          </span>
+        </label>
+      ))}
+
+      <h3 className="small">Aquarium scene</h3>
+      <p className="muted small">
+        A surround for the media window. The original photo or video is never replaced or altered.
+      </p>
+      {SCENES.map((s) => (
+        <label key={s.id} className="row" style={{ cursor: 'pointer', color: 'var(--color-text)' }}>
+          <input
+            type="radio" name="scene" value={s.id} checked={scene === s.id}
+            onChange={() => setScene(s.id)} style={{ width: 'auto' }}
+          />
+          <span>
+            <strong>{s.name}</strong><br />
+            <span className="xs muted">{s.blurb}</span>
+          </span>
+        </label>
+      ))}
+
+      <h3 className="small">Motion and sound</h3>
+      <label className="row" style={{ cursor: 'pointer', color: 'var(--color-text)' }}>
+        <input type="checkbox" checked={reducedMotion} onChange={(e) => setReducedMotion(e.target.checked)} style={{ width: 'auto' }} />
+        Reduce motion
+      </label>
+      <label className="row" style={{ cursor: 'pointer', color: 'var(--color-text)' }}>
+        <input type="checkbox" checked={muted} onChange={(e) => setMuted(e.target.checked)} style={{ width: 'auto' }} />
+        Mute everything
+      </label>
+      <p className="xs muted" style={{ marginBottom: 0 }}>
+        Reveals stay skippable whatever these are set to.
+      </p>
+    </div>
   );
 }
 
-/** FR-O03: bring the existing 61-row inventory in as opening balances. */
-function InventoryImport() {
-  const [result, setResult] = useState<ImportResult | undefined>();
-  const [error, setError] = useState<string | undefined>();
-  const [busy, setBusy] = useState(false);
-
-  async function onFile(file: File | undefined) {
-    if (!file) return;
-    setError(undefined);
-    setBusy(true);
-    try {
-      setResult(await importInventoryFile(file));
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not read that file.');
-    } finally {
-      setBusy(false);
-    }
-  }
-
+/**
+ * Backup, restore and erase, together, because they are one decision.
+ *
+ * Spec 017. Erase is only safe because backup is right above it, and restore
+ * is the only thing that makes erase reversible. Splitting them across two
+ * cards separated by other settings hid that relationship; a keeper looking
+ * for "how do I start over" had to find two sections to do it safely.
+ */
+function DataPanel() {
   return (
-    <section className="card stack">
-      <h2>Import inventory</h2>
-      <p className="muted small">
-        Load the Fish Inventory sheet — the <code>.xlsx</code> directly, or a CSV export. Raw labels are
-        kept exactly as written, unclear IDs stay unclear, and no arrival dates are invented.
-      </p>
-      <input
-        type="file"
-        accept=".xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        disabled={busy}
-        onChange={(e) => void onFile(e.target.files?.[0])}
-      />
-      {busy && <p className="small muted">Reading…</p>}
-      {error && <p className="warn">{error}</p>}
-      {result && (
-        <>
-          <p className="small">
-            Imported {result.holdings.length} rows into {result.aquariums.length} enclosures.
-            {' '}{result.report.filter((r) => r.identity === 'unresolved').length} still need a species confirmed.
-          </p>
-          <details>
-            <summary className="small" style={{ cursor: 'pointer' }}>Row-by-row report</summary>
-            <ul className="list xs" style={{ marginTop: 'var(--space-3)' }}>
-              {result.report.map((r) => (
-                <li key={r.holdingId}>
-                  {r.row}. {r.tank} — {r.label} ×{r.quantity}{' '}
-                  <span className="muted">({r.identity})</span>
-                </li>
-              ))}
-            </ul>
-          </details>
-        </>
-      )}
-    </section>
+    <div className="stack">
+      <BackupPanel />
+      <ErasePanel />
+    </div>
   );
 }
 
@@ -264,7 +287,7 @@ function BackupPanel() {
     setNote(undefined);
     setProblem(undefined);
     try {
-      const { blob, filename, manifest } = await exportArchive(db, { appBuild: BUILD_ID });
+      const { blob, filename, manifest } = await exportArchive(db, { appBuild: BUILD_ID, account: backupAccount() });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -298,10 +321,10 @@ function BackupPanel() {
   }
 
   return (
-    <section className="card stack">
-      <h2>Backup</h2>
+    <div className="stack">
+      <h3 className="small">Backup</h3>
       <p className="muted small">
-        Every record and every photo, in one file. This is currently the only copy of your
+        Every record and every photo, in one file. Signed out, this is the only copy of your
         collection that lives anywhere but this browser.
       </p>
 
@@ -329,7 +352,136 @@ function BackupPanel() {
 
       {note ? <p className="small">{note}</p> : null}
       {problem ? <p className="small" role="alert">{problem}</p> : null}
-    </section>
+    </div>
+  );
+}
+
+/**
+ * Erase everything, so a keeper can restore a clean copy over an empty app.
+ *
+ * THE BACKUP IS NOT OPTIONAL AND NOT A CHECKBOX. The archive is written first,
+ * as step one of the flow, and a failed or cancelled export stops the whole
+ * thing. Asking someone to confirm they have a backup is asking them to
+ * remember; taking one is not.
+ *
+ * THREE STEPS, NOT ONE BUTTON. Backup, then consent, then erase. The consent
+ * step asks for the word ERASE rather than offering a second button, because
+ * the cost of a mis-tap here is the entire collection and the only honest
+ * defence is making the action impossible to perform by accident.
+ *
+ * IT SAYS WHAT IT WILL REACH. Signed in, this is not a local reset: the
+ * deletions sync, so the account is emptied on every device. Signed out it is
+ * this browser only. Those are very different acts and the text changes to
+ * match rather than describing the safer one.
+ */
+function ErasePanel() {
+  const user = useObservable(db.cloud.currentUser);
+  const signedIn = Boolean(user?.isLoggedIn);
+
+  const [stage, setStage] = useState<'idle' | 'confirming' | 'working'>('idle');
+  const [typed, setTyped] = useState('');
+  const [backup, setBackup] = useState<string>();
+  const [note, setNote] = useState<string>();
+  const [problem, setProblem] = useState<string>();
+
+  function reset() {
+    setStage('idle');
+    setTyped('');
+    setBackup(undefined);
+  }
+
+  /** Step one. Nothing is destroyed until this has actually produced a file. */
+  async function backupThenConfirm() {
+    setStage('working');
+    setNote(undefined);
+    setProblem(undefined);
+    try {
+      const { blob, filename, manifest } = await exportArchive(db, { appBuild: BUILD_ID, account: backupAccount() });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+      const rows = Object.values(manifest.tables).reduce((n, v) => n + v, 0);
+      setBackup(`${filename} (${rows} records, ${manifest.media.count} media files)`);
+      setStage('confirming');
+    } catch (err) {
+      console.error('[erase] refusing: the backup failed', err);
+      setProblem(`Backup failed, so nothing was erased: ${String(err)}`);
+      setStage('idle');
+    }
+  }
+
+  /** Step three. Step two is the keeper typing the word. */
+  async function erase() {
+    setStage('working');
+    try {
+      const result = await eraseEverything(db);
+      setNote(
+        `Erased ${result.total} records${result.userSpeciesRemoved > 0
+          ? `, including ${result.userSpeciesRemoved} species you added`
+          : ''}. Restore your backup to bring a collection back.`,
+      );
+      reset();
+    } catch (err) {
+      // A half-erase is the dangerous outcome: some of the collection is gone
+      // and the screen must not imply the rest is safe.
+      console.error('[erase] failed part way through', err);
+      setProblem(
+        `Erase failed part way through: ${String(err)}. Some records may be gone. `
+        + 'Restore the backup that was just saved.',
+      );
+      setStage('idle');
+    }
+  }
+
+  return (
+    <div className="stack">
+      <h3 className="small">Erase everything</h3>
+      <p className="muted small">
+        {signedIn
+          ? 'Empties your whole collection from this device and from your account, on every '
+            + 'device signed into it. A backup is saved first, and restoring it is the only way back.'
+          : 'Empties your whole collection from this browser. A backup is saved first, and '
+            + 'restoring it is the only way back.'}
+      </p>
+
+      {stage !== 'confirming' ? (
+        <button
+          type="button"
+          onClick={() => void backupThenConfirm()}
+          disabled={stage === 'working'}
+        >
+          {stage === 'working' ? 'Saving your backup…' : 'Back up, then erase everything'}
+        </button>
+      ) : (
+        <div className="stack">
+          <p className="small" role="alert">
+            Backup saved: <strong>{backup}</strong>
+          </p>
+          <p className="small">
+            {signedIn
+              ? 'This will delete every record in your account, everywhere. '
+              : 'This will delete every record in this browser. '}
+            Type <strong>ERASE</strong> to confirm.
+          </p>
+          <input
+            aria-label="Type ERASE to confirm"
+            value={typed}
+            onChange={(e) => setTyped(e.target.value)}
+            autoComplete="off"
+          />
+          <button type="button" onClick={() => void erase()} disabled={typed.trim() !== 'ERASE'}>
+            Erase everything now
+          </button>
+          <button type="button" onClick={reset}>Cancel</button>
+        </div>
+      )}
+
+      {note ? <p className="small">{note}</p> : null}
+      {problem ? <p className="small" role="alert">{problem}</p> : null}
+    </div>
   );
 }
 
@@ -371,8 +523,7 @@ function BuildStamp() {
   }
 
   return (
-    <section className="card stack">
-      <h2>Build</h2>
+    <div className="stack">
       <p className="muted small" style={{ marginBottom: 0 }}>
         Offline support means this device can keep running an older build than the one deployed. If
         something looks unfixed, check this first.
@@ -387,6 +538,6 @@ function BuildStamp() {
       <p className="xs muted" style={{ marginBottom: 0 }}>
         Clears the cached copy of the app and reloads. Your catches, photos and tanks are untouched.
       </p>
-    </section>
+    </div>
   );
 }

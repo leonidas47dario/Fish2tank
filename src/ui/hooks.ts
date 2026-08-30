@@ -173,7 +173,7 @@ export function useSpecimenMedia(specimenId?: Id) {
  * One tank's residents, live.
  *
  * The join itself lives in `data/tank-residents.ts` so that publishing a
- * shared tank can produce exactly what this screen shows (spec 015). This is
+ * shared tank can produce exactly what this screen shows (spec 019). This is
  * only the subscription.
  */
 export function useTankResidents(aquariumId: string | undefined) {

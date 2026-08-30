@@ -1,5 +1,5 @@
 /**
- * The panel behind a tank's share icon - spec 015.
+ * The panel behind a tank's share icon - spec 019.
  *
  * Four states, and the fourth is the one most share features get wrong:
  * not shared, working, shared, and FAILED WITH A REASON. A button that
@@ -9,7 +9,7 @@
  *
  * It also states, in words, what being shared actually means. A keeper should
  * not have to infer that the estimated value of their livestock is on a public
- * page; that decision was made deliberately (spec 015) and it is only
+ * page; that decision was made deliberately (spec 019) and it is only
  * defensible if it is visible.
  */
 import { useState } from 'react';

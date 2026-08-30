@@ -1,5 +1,5 @@
 /**
- * A shared tank keeps itself current - spec 015 FR-S03.
+ * A shared tank keeps itself current - spec 019 FR-S03.
  *
  * WATCH THE DATA, NOT THE CALLERS. Spec 014 established this and the reason
  * holds here exactly: at least eight functions change what a tank contains

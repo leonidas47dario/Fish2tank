@@ -1,5 +1,5 @@
 /**
- * Which tanks are published, from this device's point of view (spec 015).
+ * Which tanks are published, from this device's point of view (spec 019).
  *
  * Four functions over one table. They exist rather than callers touching
  * `db.shares` directly because "one token per tank" is a rule, and a rule
