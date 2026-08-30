@@ -1,13 +1,14 @@
 /**
  * Review the species keepers have added, and decide which ones ship.
  *
- *   npm run species:review -- --export <fish2tank-export.json>
+ *   npm run species:review -- --export <fish2tank-backup.zip>
  *   npm run species:review -- --export <file> --accept sp_user_abc,sp_user_def
  *   npm run species:review -- --export <file> --accept-all
  *
  * The app has no backend, so a keeper's records reach this tool the way NFR-08
- * says they should: through the JSON export on the Settings screen. That file
- * already carries the `species` table, so nothing had to be added to it.
+ * says they should: through the export on the Settings screen. That archive
+ * already carries the `species` table, so nothing had to be added to it. Both
+ * the current zip and the older flat JSON are accepted - see readExport.
  *
  * WHAT THIS IS FOR. A keeper who catches a fish the catalog is missing logs it
  * as-is, and that becomes a `user-submitted` species on their device. This
@@ -27,6 +28,7 @@
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
+import { unzipSync } from 'fflate';
 import {
   checkSubmission, findCatalogMatches, normalise,
   type CatalogEntry, type Submission, type Verdict,
@@ -34,6 +36,37 @@ import {
 
 const OUT = 'src/data/seed/community-species.json';
 const CATALOG_MART = 'src/data/seed/marts/catalog.json';
+/** Kept in step with src/data/portability/manifest.ts. */
+const RECORDS_PATH = 'records.json';
+
+/**
+ * Read an export, whichever of the two shapes it is.
+ *
+ * Spec 006 replaced the Settings screen's flat JSON with a zip archive -
+ * records.json plus the media files - and that silently broke this tool, whose
+ * whole input was the flat file. Both are read here rather than the CLI simply
+ * following the app, because a keeper may still have an older backup on disk
+ * and a review tool that rejects last month's export is not much of one.
+ *
+ * The format is decided by the file's own first bytes, not its extension: a
+ * downloaded archive gets renamed, and "PK\x03\x04" is what a zip actually is.
+ */
+export function readExport(path: string): ExportFile {
+  const raw = readFileSync(path);
+  const isZip = raw.length > 4
+    && raw[0] === 0x50 && raw[1] === 0x4b && raw[2] === 0x03 && raw[3] === 0x04;
+
+  if (!isZip) return JSON.parse(raw.toString('utf8')) as ExportFile;
+
+  const entries = unzipSync(new Uint8Array(raw));
+  const records = entries[RECORDS_PATH];
+  if (!records) {
+    throw new Error(
+      `${path} is a zip but has no ${RECORDS_PATH} in it — is it a Fish2Tank backup?`,
+    );
+  }
+  return JSON.parse(Buffer.from(records).toString('utf8')) as ExportFile;
+}
 
 const arg = (name: string): string | undefined => {
   const i = process.argv.indexOf(`--${name}`);
@@ -140,7 +173,13 @@ async function main(): Promise<void> {
     process.exit(2);
   }
 
-  const raw = JSON.parse(readFileSync(exportPath, 'utf8')) as ExportFile;
+  let raw: ExportFile;
+  try {
+    raw = readExport(exportPath);
+  } catch (e) {
+    console.error(`Could not read ${exportPath}: ${e instanceof Error ? e.message : String(e)}`);
+    process.exit(2);
+  }
   if (!Array.isArray(raw.species)) {
     console.error(`${exportPath} has no "species" array — is it a Fish2Tank export?`);
     process.exit(2);
