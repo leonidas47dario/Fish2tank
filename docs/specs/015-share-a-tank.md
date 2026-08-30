@@ -243,6 +243,76 @@ months, and it is why the refactor is in scope rather than a copy being made.
 11. Publish fails loudly if the object is not present afterwards.
 12. The authenticated routes still reject an anonymous caller.
 
+## Verified
+
+**1,060 unit and integration tests**, of which 60 are new, plus a typecheck
+and a production build. Four of the new guards were confirmed to have teeth by
+breaking the thing they guard and watching exactly those tests fail:
+
+| Guard removed | What went red |
+|---|---|
+| The projection's explicit field list, replaced with a spread | the exact-keys test, on the private note |
+| The Worker's `authenticate()` call | 5 tests, 3 of them pre-existing |
+| Publish and revoke reading back through the public route | exactly those 3 tests |
+| The republisher's in-flight and already-failed guards | exactly those 2 tests |
+
+Then driven through a real browser against the production build, with the
+owner and the guest in **separate browser contexts** - the guest's having no
+storage, no session and no history, which is the only honest way to check that
+nothing on that page needs an account.
+
+| Check | Result |
+|---|---|
+| The refactored viewer still draws every section | Where they swim, Temperament, Grown up, Who lives here |
+| Publishing produces a link | `#/share/545b29a0-…` |
+| The sheet says what is public, and whether the page is current | both present |
+| A stranger sees the tank, with no account and no gate | yes |
+| …the fish, the charts, and the estimated value | yes |
+| Every fish offers a heart | 2 of 2 |
+| Hearting prompts for an account, naming the fish | "Want a Betta?" |
+| **A fish added to the tank reached the shared page with nothing pressed** | yes |
+| Stop sharing returns the sheet to unshared | yes |
+| …and the stranger's link says it was turned off | yes |
+| Console errors introduced by this work | none |
+
+Two defects were found by looking at the screenshots rather than by any
+assertion, which is the argument for taking them:
+
+- The tank card's two actions **wrapped onto separate lines**. `width: 100%`
+  was correct while the photo button was the only action there.
+- The sheet said "the tank photo is not on the shared page" **for a tank with
+  no photo**, because `photoIncluded` is false in both cases. It now needs a
+  photo to exist before it reports one missing.
+
+### What this could NOT verify, and why
+
+- **The real Worker.** `wrangler dev` cannot run on this machine (workerd needs
+  a newer glibc, as `worker/src/index.test.ts` already records), so the browser
+  run went against a stand-in in `.tmp/` serving the four routes over memory.
+  It says nothing about the Worker's access control - that is what the 26 tests
+  in `worker/src/index.test.ts` are for - and nothing about R2.
+- **A real publish to a real bucket**, which needs the Worker deployed and a
+  Google session. This must be checked on UAT, signed in, before promotion.
+
+Two edits were made **in the working tree only** to make the browser run
+possible: pointing an unrecognised build at the local stand-in, and letting a
+developer-mode session past the signed-out check. Both were reverted, and
+`src/data/environment.ts` has **no diff against `uat` at all**.
+
+### One thing found and not fixed
+
+A guest's browser loads `dexie-cloud-addon` and attempts a `/sync` against the
+cloud database, because `db.ts` configures the client at module load regardless
+of route. Locally that fails on CORS, which is how it was noticed.
+
+It is left alone deliberately. Configuring cannot simply be skipped on the
+share route, because the funnel's whole purpose is for a guest to sign in
+*from that page*, which needs the client. And whether an anonymous, logged-out
+client actually holds one of the free tier's **10 connections** is not known -
+guessing either way would be inventing a number. Logged in `docs/BACKLOG.md`
+as a question to measure on UAT, where the origin is whitelisted and the
+answer is observable.
+
 ## Requirements claimed
 
 - **FR-S01** A tank can be published as a read-only page at an unguessable URL.

@@ -52,6 +52,33 @@ real UI.
 | **5 — Price + journal** | Ask / member / paid kept separate, comparability filtering, story chapters. Prices come from **12 tracked vendors**, each store row linking straight to its product page, and **8 Chicago PetSmart branches report what is in the tank today**. |
 | **6 — Legacy + hardening** | Fish Heaven, Keeper's Code, JSON export, reduced-motion and mute, non-colour status cues. |
 
+### Sharing a tank
+
+Every tank card has a share icon. It publishes a **4 KB file** to R2 and gives
+you a link anyone can open with no account: the fish, where they swim, what
+they grow into, and the tank's estimated value. The page keeps itself current —
+add a fish and the published copy is rewritten within seconds, so a link you
+sent last month is not showing last month's tank.
+
+Three properties worth knowing, because they are the design rather than
+details:
+
+- **Photos are not copied.** The published file names the photo it may show,
+  and the Worker serves that one object from the bucket it already lives in.
+  Nothing is duplicated, and revoking is a single delete that takes the page
+  and the photo down together.
+- **A guest can look, and must sign up to act.** Hearting a fish or opening its
+  profile asks for an account, and the tap survives the sign-in — you come back
+  to the tank with that fish already on your Dream List.
+- **It is an unlisted link, not a private one.** Anyone holding the URL can
+  read the tank, including its estimated value. That was a deliberate call
+  (`docs/specs/015-share-a-tank.md`); the sheet says so in words before you
+  share.
+
+**Sharing needs the media Worker deployed for that tier.** A build with no
+Worker configured — any local or preview build — says so in the share sheet
+rather than offering a button that does nothing. See `docs/RELEASING.md`.
+
 ### Deliberately not built yet
 
 All of these are **P1 or P2** in the PRD's own priority legend, so none of them

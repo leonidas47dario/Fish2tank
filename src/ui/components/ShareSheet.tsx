@@ -143,13 +143,6 @@ export default function ShareSheet({ aquarium, onClose }: {
 
           <ShareFreshness aquariumId={aquarium.id} share={share} />
 
-          {!share.photoIncluded && (
-            <p className="xs muted" style={{ marginBottom: 0 }}>
-              The tank photo is not on the shared page. It reaches guests once your photos
-              have synced and the page updates.
-            </p>
-          )}
-
           <div className="row">
             <button
               type="button" className="btn--ghost"
@@ -205,10 +198,20 @@ function ShareFreshness({ aquariumId, share }: {
 
   const stale = needsRepublish(share, current);
   return (
-    <p className="xs muted" style={{ marginBottom: 0 }}>
-      {stale
-        ? 'This tank has changed since the page was last published.'
-        : `Guests are seeing the tank as it is now. Published ${new Date(share.publishedAt).toLocaleString()}.`}
-    </p>
+    <>
+      <p className="xs muted" style={{ marginBottom: 0 }}>
+        {stale
+          ? 'This tank has changed since the page was last published.'
+          : `Guests are seeing the tank as it is now. Published ${new Date(share.publishedAt).toLocaleString()}.`}
+      </p>
+      {/* Only when there IS a photo that did not make it. A tank with no photo
+          has nothing missing, and saying otherwise reads as a fault. */}
+      {current.hasPhoto && !share.photoIncluded && (
+        <p className="xs muted" style={{ marginBottom: 0 }}>
+          The tank photo is not on the shared page yet. It reaches guests once your
+          photos have synced and the page updates.
+        </p>
+      )}
+    </>
   );
 }

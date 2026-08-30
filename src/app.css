@@ -1638,8 +1638,13 @@ summary.factor::-webkit-details-marker { display: none; }
   align-items: stretch;
   border-top: 1px solid var(--color-border);
 }
+/* `width: 100%` on the photo button is what it needed when it was the only
+   action; left alone it claims the whole line and wraps the share control
+   onto a second one. */
 .tankcard__actions .tankcard__photo-btn {
   border-top: none;
+  width: auto;
+  flex: 1;
 }
 .tankcard__share {
   width: auto;
