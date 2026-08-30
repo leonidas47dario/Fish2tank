@@ -58,6 +58,36 @@ git merge --no-ff uat
 git push          # deploy runs, production updates
 ```
 
+### The media Worker deploys separately, and has been forgotten before
+
+The Pages build ships the app. It does **not** ship `worker/`, which is a
+Cloudflare Worker with its own deploy per tier. On 2026-08-30 production had
+been running for weeks with no Worker at all: every photo upload got
+Cloudflare's `error code: 1042` and the app reported it as a retryable
+failure. See `docs/specs/011-photo-sync-tells-the-truth.md`.
+
+```bash
+npx wrangler login
+bash worker/setup-production.sh   # bucket, CORS, deploy, and verifies 401
+```
+
+The two R2 secrets are set separately, and are prompted for rather than passed
+as arguments so they never reach your shell history:
+
+```bash
+npx wrangler secret put R2_ACCESS_KEY_ID     --env production
+npx wrangler secret put R2_SECRET_ACCESS_KEY --env production
+```
+
+To check either tier is alive without deploying anything, POST an
+unauthenticated request and expect **401**. A 404 means nothing is deployed:
+
+```bash
+curl -si -X POST https://fish2tank-media-prod.leonidas47dario.workers.dev/presign/put \
+  -H 'Content-Type: application/json' -H 'Origin: https://leonidas47dario.github.io' \
+  -d '{"blobKey":"probe"}' | head -1
+```
+
 ---
 
 ## Refreshing the data
