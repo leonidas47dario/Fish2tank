@@ -17,23 +17,26 @@
  * input, every missing input and the rules version are all still reachable,
  * one tap further in.
  */
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { db } from '@/data/db';
 import {
   acquireSpecimen, addEncounterChapter, assertIdentity, awardGolden, deleteCatch,
-  evaluateSpecimen, moveHolding, planDeleteCatch, recordPrice, revealSpecimen, searchSpecies,
+  evaluateSpecimen, moveHolding, planDeleteCatch, recordPrice, revealSpecimen,
   stockTank, updateCatch,
   type DeleteCatchPlan,
 } from '@/data/repositories';
+import { identifyFromText } from '@/data/identify';
 import { deriveQuantity } from '@/domain/holdings';
 import { evaluatePriceFit } from '@/engine/pricing/price-fit';
 import { COMPONENT_LABELS, LOCAL_RARITY_UNAVAILABLE } from '@/engine/rarity/discovery-tier';
 import { formatLength, formatVolume } from '@/domain/units';
-import type { Specimen, Species, Verdict } from '@/domain/types';
-import { useSpecimenMedia } from '../hooks';
-import { CATALOG_BY_SPECIES, portraitAsset, type CatalogSpecies } from '@/data/catalog';
+import type { Specimen, Verdict } from '@/domain/types';
+import { useSearchableSpecies, useSpecimenMedia } from '../hooks';
+import {
+  CATALOG_BY_SPECIES, identityStatusFor, portraitAsset, type CatalogSpecies,
+} from '@/data/catalog';
 import { IdentityBadge, TierBadge, VerdictBadge, ScarcityBadge } from '../components/Badges';
 import { FactorList, MissingInputsNotice } from '../components/FactorList';
 import { MarketPanel } from '../components/MarketPanel';
@@ -1123,23 +1126,34 @@ function IdentityPanel({ specimen, species }: {
   species?: { commonName: string; scientificName?: string };
 }) {
   const [query, setQuery] = useState('');
-  const [matches, setMatches] = useState<Species[]>([]);
   const [busy, setBusy] = useState(false);
   const [changing, setChanging] = useState(false);
 
   const confirmed = specimen.identityStatus === 'user-confirmed';
   const provisional = specimen.identityStatus === 'provisional';
 
-  async function onSearch(value: string) {
-    setQuery(value);
-    setMatches(value.trim() ? await searchSpecies(value) : []);
-  }
+  /**
+   * The same corpus and the same ranking the capture flow uses (spec 007).
+   *
+   * This searched `db.species` until now - the 47 seeded care profiles - so
+   * correcting a misidentified fish could reach 47 of 2,176 species, and this
+   * is the ONLY screen that can repair a wrong identity (FR-I06).
+   */
+  const corpus = useSearchableSpecies();
+  const matches = useMemo(
+    () => (query.trim() ? identifyFromText(query, corpus) : []),
+    [query, corpus],
+  );
 
   async function confirm(speciesId: string) {
     setBusy(true);
-    await assertIdentity({ specimenId: specimen.id, speciesId, source: 'user', status: 'user-confirmed' });
+    // Provisional for a species the keeper invented; see identityStatusFor().
+    // This call site asserted `user-confirmed` unconditionally before spec 007,
+    // which already contradicted submitUserSpecies() one module over.
+    await assertIdentity({
+      specimenId: specimen.id, speciesId, source: 'user', status: identityStatusFor(speciesId),
+    });
     setQuery('');
-    setMatches([]);
     setChanging(false);
     setBusy(false);
   }
@@ -1175,16 +1189,16 @@ function IdentityPanel({ specimen, species }: {
             <input
               id="species-search"
               value={query}
-              onChange={(e) => void onSearch(e.target.value)}
+              onChange={(e) => setQuery(e.target.value)}
               placeholder="jaguar cichlid, managuensis, managuense…"
             />
-            {matches.map((s) => (
+            {matches.map(({ species: s }) => (
               <button
-                key={s.id}
+                key={s.speciesId}
                 type="button"
                 className="tankrow"
                 disabled={busy}
-                onClick={() => void confirm(s.id)}
+                onClick={() => void confirm(s.speciesId)}
               >
                 <span className="grow">
                   <span className="tankrow__name">{s.commonName}</span>
@@ -1193,7 +1207,7 @@ function IdentityPanel({ specimen, species }: {
               </button>
             ))}
             {changing && (
-              <button type="button" className="prompt__act" onClick={() => { setChanging(false); setQuery(''); setMatches([]); }}>
+              <button type="button" className="prompt__act" onClick={() => { setChanging(false); setQuery(''); }}>
                 Keep {species?.commonName ?? 'the current label'}
               </button>
             )}

@@ -32,7 +32,6 @@ import {
   removeHolding,
   recordStoreLabel,
   revealSpecimen,
-  searchSpecies,
   submitUserSpecies,
   upsertAquarium,
   userSubmittedSpecies,
@@ -247,11 +246,11 @@ describe('identification (FR-I04, FR-I06)', () => {
     expect(specimen!.speciesId).toBe('sp_wolf_cichlid');
   });
 
-  it('searches common names, scientific names and store aliases (FR-I02)', async () => {
-    expect((await searchSpecies('managuense', db)).map((s) => s.id)).toContain('sp_jaguar_cichlid');
-    expect((await searchSpecies('Parachromis', db)).map((s) => s.id)).toHaveLength(2);
-    expect(await searchSpecies('', db)).toEqual([]);
-  });
+  /* The FR-I02 search test lived here, against searchSpecies(). That function
+     is gone (spec 007) and the requirement is now served by identifyFromText()
+     over searchableSpecies(), so its coverage moved with it: matching on
+     scientific name and alias is in identify.test.ts, and the corpus those run
+     against is in catalog.test.ts. */
 });
 
 describe('evaluation persistence (FR-E02, FR-E07)', () => {

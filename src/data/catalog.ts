@@ -123,6 +123,54 @@ export function isUserSubmittedId(speciesId: string): boolean {
   return speciesId.startsWith('sp_user_');
 }
 
+/**
+ * What picking a species off a search result actually asserts (FR-I01).
+ *
+ * "User confirmed" means "this is that catalog species". For a name the keeper
+ * invented there is no catalog species to mean, so the strongest honest state
+ * is provisional - the rule `submitUserSpecies()` already follows when it
+ * creates the row.
+ *
+ * Shared by both identify surfaces on purpose. It was a ternary duplicated
+ * across two screens for about ten minutes, and in that time the two disagreed:
+ * the same submitted species was recorded `user-confirmed` from one screen and
+ * `provisional` from the other. Spec 007 exists because two screens doing the
+ * same thing drift; this is that, in miniature.
+ */
+export function identityStatusFor(speciesId: string): 'provisional' | 'user-confirmed' {
+  return isUserSubmittedId(speciesId) ? 'provisional' : 'user-confirmed';
+}
+
+/**
+ * Every species a keeper can search for, from both places they live (spec 007).
+ *
+ * There are two species libraries and neither is complete. `catalog.json` has
+ * all 2,176 derived species and no user submissions; `db.species` has the 47
+ * seeded care profiles plus whatever this keeper typed in when the catalog had
+ * never heard of their fish. Searching either one alone misses something real,
+ * which is exactly the bug this exists to close: the specimen "Change identity"
+ * panel searched the table and could reach 47 species, while the capture flow
+ * searched the mart and could not see the keeper's own.
+ *
+ * The seeded 47 are dropped rather than merged, because the ETL adopts the
+ * curated id where one exists - `sp_jaguar_cichlid` is a mart row, not
+ * `sp_parachromis_managuensis` - so every seeded row is already here under the
+ * same id. Adding them back would list the same fish twice and make the user
+ * guess which one is real. Verified as a test, not assumed: passing the seeded
+ * Jaguar Cichlid yields one entry, not two.
+ *
+ * FR-I02 (manual species search).
+ */
+export function searchableSpecies(
+  localSpecies: readonly { id: string; commonName: string; scientificName?: string;
+    aliases?: string[]; origin?: string }[],
+): CatalogSpecies[] {
+  const submitted = localSpecies.filter(
+    (s) => s.origin === 'user-submitted' && !CATALOG_BY_SPECIES.has(s.id),
+  );
+  return [...CATALOG.species, ...submitted.map(catalogShapeForLocal)];
+}
+
 /** What the user has done with this species. Everything here is personal. */
 export interface CatalogUserState {
   /** Confirmed at least one specimen of it, from an encounter. */
