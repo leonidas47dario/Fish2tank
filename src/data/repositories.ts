@@ -1391,6 +1391,14 @@ export interface DeleteCatchPlan {
   holdings: number;
   /** Tanks it is currently in, by name, so the confirmation can say where. */
   inTanks: string[];
+  /** Fish Heaven entries removed with it. */
+  memorials: number;
+  /**
+   * Keeper principles removed with it - only the ones written FROM this fish.
+   * A principle with no source, or sourced from another fish, is a lesson that
+   * outlives this record and is left alone.
+   */
+  principles: number;
 }
 
 /**
@@ -1401,7 +1409,7 @@ export interface DeleteCatchPlan {
  * accept an unspecified cascade.
  */
 export async function planDeleteCatch(specimenId: Id, database: DB = db): Promise<DeleteCatchPlan> {
-  const [encounters, allMedia, prices, assessments, reveals, ids, holdings, memorials] =
+  const [encounters, allMedia, prices, assessments, reveals, ids, holdings] =
     await Promise.all([
       database.encounters.where('specimenId').equals(specimenId).toArray(),
       database.media.where('specimenIds').equals(specimenId).toArray(),
@@ -1410,7 +1418,6 @@ export async function planDeleteCatch(specimenId: Id, database: DB = db): Promis
       database.raritySnapshots.where('specimenId').equals(specimenId).toArray(),
       database.identifications.where('specimenId').equals(specimenId).toArray(),
       database.holdings.where('specimenId').equals(specimenId).toArray(),
-      database.memorials.where('specimenId').equals(specimenId).toArray(),
     ]);
 
   const shared = allMedia.filter((m) => m.specimenIds.filter((s) => s !== specimenId).length > 0);
@@ -1427,6 +1434,34 @@ export async function planDeleteCatch(specimenId: Id, database: DB = db): Promis
     .map((id) => tanks.find((t) => t.id === id)?.name ?? id)
     .sort((a, b) => a.localeCompare(b));
 
+  /*
+   * Fish Heaven entries for this fish, by either route.
+   *
+   * A memorial points at a HOLDING as well as a specimen, and those holdings
+   * are about to be removed, so gathering by specimenId alone would leave a
+   * memorial pointing at a holding that no longer exists - which the Journal
+   * renders as an anonymous "A fish" rather than failing, so it would have
+   * been a quiet wrong rather than a loud one.
+   */
+  const holdingIds = new Set(holdings.map((h) => h.id));
+  const mourned = (await database.memorials.toArray()).filter(
+    (m) => m.specimenId === specimenId || (m.holdingId && holdingIds.has(m.holdingId)),
+  );
+
+  /*
+   * And the principles written FROM this fish.
+   *
+   * Only those: a principle is a lesson in the keeper's own words, and one
+   * with no source, or sourced from a different fish, is about how they keep
+   * fish rather than about this record. Deleting a test catch should not take
+   * a rule they wrote for every future tank with it.
+   */
+  const mournedIds = new Set(mourned.map((m) => m.id));
+  const sourcedPrinciples = (await database.keeperPrinciples.toArray()).filter(
+    (k) => k.sourceSpecimenId === specimenId
+      || (k.sourceMemorialId && mournedIds.has(k.sourceMemorialId)),
+  );
+
   const plan: DeleteCatchPlan = {
     allowed: true,
     encounters: encounters.length,
@@ -1438,6 +1473,8 @@ export async function planDeleteCatch(specimenId: Id, database: DB = db): Promis
     identifications: ids.length,
     holdings: holdings.length,
     inTanks,
+    memorials: mourned.length,
+    principles: sourcedPrinciples.length,
   };
 
   /*
@@ -1456,14 +1493,6 @@ export async function planDeleteCatch(specimenId: Id, database: DB = db): Promis
    * a person decides with the consequence in front of them. What it must never
    * be is silent, which is why `inTanks` exists rather than a bare number.
    */
-  if (memorials.length > 0) {
-    return {
-      ...plan,
-      allowed: false,
-      reason: 'This fish has a memorial in Fish Heaven. That record is deliberately permanent.',
-    };
-  }
-
   return plan;
 }
 
@@ -1505,6 +1534,30 @@ export async function deleteCatch(specimenId: Id, database: DB = db): Promise<De
    * re-runnable, rather than a fish in a tank whose specimen no longer exists.
    */
   const holdings = await database.holdings.where('specimenId').equals(specimenId).toArray();
+
+  /*
+   * Fish Heaven goes first, while the holdings it points at still exist.
+   *
+   * Gathered by the same two routes planDeleteCatch reports, so what the
+   * confirmation promised is what actually happens. Only principles written
+   * FROM this fish go with it; a lesson with no source, or one from another
+   * fish, is about how the keeper keeps fish rather than about this record.
+   */
+  const holdingIds = new Set(holdings.map((h) => h.id));
+  const mourned = (await database.memorials.toArray()).filter(
+    (m) => m.specimenId === specimenId || (m.holdingId && holdingIds.has(m.holdingId)),
+  );
+  const mournedIds = new Set(mourned.map((m) => m.id));
+  const sourcedPrinciples = (await database.keeperPrinciples.toArray()).filter(
+    (k) => k.sourceSpecimenId === specimenId
+      || (k.sourceMemorialId && mournedIds.has(k.sourceMemorialId)),
+  );
+
+  await database.transaction('rw', [database.memorials, database.keeperPrinciples], async () => {
+    await database.memorials.bulkDelete(mourned.map((m) => m.id));
+    await database.keeperPrinciples.bulkDelete(sourcedPrinciples.map((k) => k.id));
+  });
+
   for (const h of holdings) await removeHolding(h.id, database);
 
   // Price rows tied to this catch, plus any that point at an encounter about to
