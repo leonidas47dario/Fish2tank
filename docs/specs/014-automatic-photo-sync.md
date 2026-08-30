@@ -158,6 +158,70 @@ real upload succeeding. This environment has no Dexie Cloud session, so the
 run that fired was a real run that then failed to authenticate — which proves
 the trigger and not the transfer.
 
+## Revision, 2026-08-30: download is a first-class trigger
+
+> One thing I didn't think of is, the when photo change trigger is only an
+> upload, what about download? Can downstream device also detect download? Or
+> would it has to be the 30min sync
+
+The intent was already both directions — the trigger watched the media **row
+count** precisely so that a row arriving from another device would ask for a
+run. Checked properly rather than assumed, that signal has a hole, and it is
+the common case:
+
+- **Replacing a photo moves nothing.** `setTankPhoto` deletes one media row
+  and adds another in the same transaction, so the receiving device sees the
+  row count it already had and concludes nothing happened — while now holding
+  a media row whose bytes it does not have.
+- **`syncState` cannot help.** A row arriving from another device arrives
+  `synced`, because that flag records the *sending* device's obligation, not
+  the receiving one's.
+
+So the trigger now asks the honest question, in `photoSyncWork`:
+
+| Signal | Meaning | Drives |
+|---|---|---|
+| `pending` | rows this device still owes bytes for | upload |
+| `missing` | blob keys a row names and this device does not hold | download |
+
+`missing` rises the moment a photo arrives from anywhere, however the row
+count moved, and falls to zero once the download queue has done its job — so
+a settled device stops asking and the trigger cannot become a loop. A run is
+requested only when one of the two is non-zero, which is what keeps a no-op
+run off the end of every sync.
+
+**So: no, the downstream device does not wait for the 30-minute timer.** It
+syncs when the record arrives — immediately if the app is open, on next open
+otherwise, via the visibility trigger. The timer is the backstop for what
+neither can see, not the mechanism.
+
+Six tests on `photoSyncWork`, including one that asserts the two old signals
+are **unmoved** across a replace while `missing` is 1, so the reason they were
+not enough is written down beside the numbers rather than in a commit message.
+Regressing `missing` back to a row count fails two of them, so they have
+teeth.
+
+Verified in a browser as well, and the first attempt at that was wrong in a
+way worth recording: injecting the arriving record with **raw IndexedDB**
+produced no run at all, and the code was not at fault — a write that bypasses
+Dexie does not invalidate a `liveQuery`. `dexie-cloud-addon` applies remote
+changes *through* Dexie, so the second attempt wrote through Dexie too, and:
+
+| | |
+|---|---|
+| Idle, nothing to do | **0** runs in nine seconds — no chatter |
+| A `synced` row arrives with no bytes | **1** run, unprompted |
+| What that run did | `media download start` … `downloaded=0 skipped=0 failed=1` |
+
+The failure is this environment having no Dexie Cloud session; the point is
+that the **download queue ran at all**, without the timer and without anyone
+pressing anything.
+
+Three edits were made in the working tree to see this — force the photo row to
+render, force `mediaSyncBlocker` to return undefined, expose the Dexie
+instance on `globalThis` — and all three were reverted, with `db.ts` and
+`media-sync.ts` confirmed byte-identical to `uat`.
+
 ## Requirements touched
 
 - FR-A03 (media sync), NFR-13 (a run that cannot be read afterwards did not

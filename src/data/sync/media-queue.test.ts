@@ -4,7 +4,7 @@ import { Fish2TankDB } from '../db';
 import type { Media } from '@/domain/types';
 import { objectKeyFor, type MediaBackend, type ObjectHead, type SyncEnvironment } from './backend';
 import { createSyncLogger } from './sync-log';
-import { runDownloadQueue, runUploadQueue, transferOrder } from './media-queue';
+import { photoSyncWork, runDownloadQueue, runUploadQueue, transferOrder } from './media-queue';
 import { WorkerCallError } from './worker-backend';
 
 const ENV: SyncEnvironment = {
@@ -107,6 +107,91 @@ describe('transferOrder', () => {
   it('omits derivatives that were never generated', () => {
     const media = { originalBlobKey: 'o' } as Media;
     expect(transferOrder(media)).toEqual(['o']);
+  });
+});
+
+/**
+ * What the automatic trigger watches - spec 014.
+ *
+ * These are the cases that decide whether a device ever notices it has work,
+ * so they are written from the point of view of the device receiving records
+ * rather than the one sending them.
+ */
+describe('photoSyncWork', () => {
+  /** A row as it arrives from another device: already `synced`, no bytes. */
+  async function arriveFromElsewhere(id: string, keys: { original: string; preview?: string }) {
+    await db.media.put({
+      id,
+      kind: 'photo',
+      specimenIds: [],
+      originalBlobKey: keys.original,
+      originalBytes: 900,
+      previewBlobKey: keys.preview,
+      mimeType: 'image/jpeg',
+      capturedAt: '2026-08-29T00:00:00.000Z',
+      syncState: 'synced',
+    } as Media);
+  }
+
+  it('is zero on a device that holds everything it names', async () => {
+    await seedMedia({ syncState: 'synced' });
+    expect(await photoSyncWork(db)).toEqual({ pending: 0, missing: 0 });
+  });
+
+  it('counts a row this device still owes bytes for', async () => {
+    await seedMedia({ syncState: 'local-draft' });
+    expect(await photoSyncWork(db)).toEqual({ pending: 1, missing: 0 });
+  });
+
+  it('counts every blob a row names that this device does not hold', async () => {
+    // The receiving device: the record arrived, the megabytes did not.
+    await arriveFromElsewhere('med_remote', { original: 'blob_far', preview: 'blob_far_prev' });
+    expect(await photoSyncWork(db)).toEqual({ pending: 0, missing: 2 });
+  });
+
+  it('notices a REPLACED photo, which a row count cannot', async () => {
+    /*
+     * The case that motivated this. Replacing a tank photo deletes one media
+     * row and adds another in the same transaction, so a device receiving that
+     * pair sees the row count it already had. `syncState` does not help
+     * either: the row arrives `synced`, because that flag describes the
+     * SENDING device's obligation.
+     *
+     * Both of the old signals are asserted here explicitly, so that if anyone
+     * ever reaches for them again the reason they were not enough is written
+     * down next to the numbers.
+     */
+    await arriveFromElsewhere('med_a', { original: 'blob_a' });
+    const before = {
+      total: await db.media.count(),
+      pending: (await photoSyncWork(db)).pending,
+    };
+
+    await db.transaction('rw', db.media, async () => {
+      await db.media.delete('med_a');
+      await arriveFromElsewhere('med_b', { original: 'blob_b' });
+    });
+
+    const after = {
+      total: await db.media.count(),
+      pending: (await photoSyncWork(db)).pending,
+    };
+    expect(after).toEqual(before);          // row count and pending both unmoved
+    expect((await photoSyncWork(db)).missing).toBe(1);  // and yet there is work
+  });
+
+  it('falls back to zero once the download queue has done its job', async () => {
+    // A settled device must stop asking, or the trigger becomes a loop.
+    await arriveFromElsewhere('med_remote', { original: 'blob_far' });
+    await db.blobs.put({
+      key: 'blob_far', data: new ArrayBuffer(10), bytes: 10,
+      mimeType: 'image/jpeg', storedAt: '2026-08-29T00:00:00.000Z',
+    });
+    expect(await photoSyncWork(db)).toEqual({ pending: 0, missing: 0 });
+  });
+
+  it('is zero on an empty database rather than undefined', async () => {
+    expect(await photoSyncWork(db)).toEqual({ pending: 0, missing: 0 });
   });
 });
 

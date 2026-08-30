@@ -78,6 +78,45 @@ export function needsUpload(media: Media): boolean {
   return media.syncState !== 'synced';
 }
 
+/**
+ * How much work each direction has, right now - spec 014.
+ *
+ * The automatic trigger needs a signal that changes when there is something
+ * to do, and counting media rows is not it. `total` misses the case that
+ * matters most for DOWNLOAD: replacing a tank photo deletes one row and adds
+ * another in the same transaction, so a device receiving that pair sees the
+ * same row count it had a moment ago and concludes nothing happened - while
+ * holding a media row whose bytes it does not have. `pending` misses it too,
+ * because a row arriving from another device arrives already `synced`; that
+ * flag describes the sending device's obligation, not this one's.
+ *
+ * `missing` is the honest question: how many blob keys does some media row
+ * name that this device does not hold. It rises the moment a photo arrives
+ * from anywhere, however the row count moved, and it falls to zero when the
+ * download queue has done its job - so a settled device stops asking.
+ */
+export interface PhotoSyncWork {
+  /** Rows this device still owes bytes for. Drives upload. */
+  pending: number;
+  /** Blob keys a row names and this device does not hold. Drives download. */
+  missing: number;
+}
+
+export async function photoSyncWork(db: Fish2TankDB): Promise<PhotoSyncWork> {
+  // Keys only: `primaryKeys()` never loads the bytes, which matters when this
+  // table is the whole photo library and this runs on every media change.
+  const held = new Set((await db.blobs.toCollection().primaryKeys()) as string[]);
+  const media = await db.media.toArray();
+
+  let pending = 0;
+  let missing = 0;
+  for (const row of media) {
+    if (needsUpload(row)) pending += 1;
+    for (const key of transferOrder(row)) if (!held.has(key)) missing += 1;
+  }
+  return { pending, missing };
+}
+
 async function uploadOne(
   blobKey: string,
   deps: Required<Pick<MediaSyncDeps, 'db' | 'backend' | 'env' | 'fetchImpl'>>,
