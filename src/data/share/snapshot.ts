@@ -151,6 +151,36 @@ function collectBlobKeys(snapshot: SharedSnapshot): string[] {
 }
 
 /**
+ * A fingerprint of everything a guest can see (FR-S03).
+ *
+ * The automatic republisher compares this against the published copy's, so
+ * that an edit a guest cannot see - renaming a holding's private note, say -
+ * does not spend a write. What it covers is exactly what `buildSnapshot`
+ * publishes, minus the three fields that change on every publish by
+ * definition: `token`, `publishedAt` and `buildId`. Including those would make
+ * every fingerprint differ from every other and the comparison pointless.
+ *
+ * 64 bits of FNV-1a, as two 32-bit halves. Not cryptographic and does not need
+ * to be - nobody is attacking it, and the consequence of the ~1-in-10^19
+ * collision is one skipped republish, not a wrong page.
+ */
+export function fingerprintOf(snapshot: SharedSnapshot): string {
+  const material = JSON.stringify([snapshot.tank, snapshot.residents, snapshot.stats]);
+  return `${fnv1a(material, 0x811c9dc5)}${fnv1a(material, 0x01000193)}`;
+}
+
+function fnv1a(input: string, seed: number): string {
+  let hash = seed;
+  for (let i = 0; i < input.length; i += 1) {
+    hash ^= input.charCodeAt(i);
+    // The FNV prime, via shifts: `hash * 16777619` overflows to a float.
+    hash += (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
+    hash >>>= 0;
+  }
+  return hash.toString(16).padStart(8, '0');
+}
+
+/**
  * Strip what the Worker keeps to itself.
  *
  * `owner` is not a capability - a guest holding it still cannot read

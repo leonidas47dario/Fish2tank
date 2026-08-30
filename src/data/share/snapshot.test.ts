@@ -8,7 +8,7 @@
  * list breaks loudly the moment the projection stops being a projection.
  */
 import { describe, expect, it } from 'vitest';
-import { buildSnapshot, toPublic } from './snapshot';
+import { buildSnapshot, fingerprintOf, toPublic } from './snapshot';
 import type { Aquarium } from '@/domain/types';
 import type { TankResident } from '@/domain/tank-stats';
 
@@ -110,7 +110,61 @@ describe('buildSnapshot', () => {
     expect(snap.stats.estimatedValue).toBe(24);
   });
 
-  it('keeps the owner and the key list out of the public projection', () => {
+});
+
+describe('fingerprintOf', () => {
+  it('ignores the fields that change on every publish', () => {
+    const a = buildSnapshot({ ...base, tankPhotoBlobKey: undefined });
+    const b = buildSnapshot({
+      ...base, tankPhotoBlobKey: undefined,
+      token: 'a-different-token', publishedAt: '2027-01-01T00:00:00.000Z', buildId: 'b99',
+    });
+
+    // Otherwise every comparison would differ and nothing would ever be
+    // recognised as unchanged, so the republisher would write on every tick.
+    expect(fingerprintOf(a)).toBe(fingerprintOf(b));
+  });
+
+  it('changes when a guest would see something different', () => {
+    const before = buildSnapshot({ ...base, tankPhotoBlobKey: undefined });
+
+    const oneMore = buildSnapshot({
+      ...base, tankPhotoBlobKey: undefined,
+      residents: [{ ...resident, quantity: 3 } as TankResident],
+    });
+    expect(fingerprintOf(oneMore)).not.toBe(fingerprintOf(before));
+
+    const renamed = buildSnapshot({
+      ...base, tankPhotoBlobKey: undefined,
+      aquarium: { ...aquarium, name: 'The 40 Breeder' },
+    });
+    expect(fingerprintOf(renamed)).not.toBe(fingerprintOf(before));
+
+    const photographed = buildSnapshot({ ...base, tankPhotoBlobKey: 'blob_x' });
+    expect(fingerprintOf(photographed)).not.toBe(fingerprintOf(before));
+  });
+
+  it('does not change for an edit no guest can see', () => {
+    const before = buildSnapshot({ ...base, tankPhotoBlobKey: undefined });
+    const notePrivately = buildSnapshot({
+      ...base, tankPhotoBlobKey: undefined,
+      residents: [{
+        ...resident,
+        holding: { ...resident.holding, notes: 'PRIVATE - rehome the big one' },
+      } as TankResident],
+    });
+
+    expect(fingerprintOf(notePrivately)).toBe(fingerprintOf(before));
+  });
+
+  it('is stable across calls, or the republisher would loop', () => {
+    const snap = buildSnapshot({ ...base, tankPhotoBlobKey: undefined });
+    expect(fingerprintOf(snap)).toBe(fingerprintOf(snap));
+  });
+});
+
+describe('the public projection', () => {
+  it('is what a guest receives', () => {
     const snap = buildSnapshot({ ...base, tankPhotoBlobKey: 'blob_x' });
     const publicView = toPublic(snap);
 
