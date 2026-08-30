@@ -88,15 +88,45 @@ export async function loadProfile(
   return created;
 }
 
+/**
+ * Apply a change to the profile, and refuse to report success without it.
+ *
+ * WHY `update()` AND NOT `put()`. Once this row syncs it is the record most
+ * likely to be edited from two devices at once, because it is the one holding
+ * preferences that follow the person. Dexie Cloud syncs `put()` as "replace
+ * the entire object", so a phone setting a theme would silently discard a
+ * laptop setting a currency in the same window. `update()` with a changes
+ * object syncs as a property-level operation, and two devices touching
+ * different properties both survive. Same property from both is last-writer-
+ * wins by client clock, which is the best anyone can do.
+ *
+ * Dotted keys reach into `settings` so the granularity is per setting, not
+ * per settings object.
+ */
+async function patchProfile(
+  changes: Record<string, unknown>,
+  database: Fish2TankDB,
+): Promise<void> {
+  const updated = await database.users.update(LOCAL_PROFILE_ID, changes);
+  // A settings write that quietly hit no rows would leave the UI showing a
+  // value that was never stored. Say so rather than reporting success.
+  if (updated === 0) {
+    console.error('[profile] update matched no row', { id: LOCAL_PROFILE_ID, changes });
+    throw new Error(`Profile ${LOCAL_PROFILE_ID} was missing when saving ${Object.keys(changes).join(', ')}`);
+  }
+}
+
 /** Patches settings, creating the profile first if needed. */
 export async function updateSettings(
   patch: Partial<UserSettings>,
   database: Fish2TankDB = db,
 ): Promise<User> {
   const current = await loadProfile(database);
-  const next: User = { ...current, settings: { ...current.settings, ...patch } };
-  await database.users.put(next);
-  return next;
+  const changes = Object.fromEntries(
+    Object.entries(patch).map(([key, value]) => [`settings.${key}`, value]),
+  );
+  if (Object.keys(changes).length > 0) await patchProfile(changes, database);
+  return { ...current, settings: { ...current.settings, ...patch } };
 }
 
 /** Sets the display name, creating the profile first if needed. */
@@ -105,7 +135,7 @@ export async function setDisplayName(
   database: Fish2TankDB = db,
 ): Promise<User> {
   const current = await loadProfile(database);
-  const next: User = { ...current, displayName };
-  await database.users.put(next);
-  return next;
+  if (current.displayName === displayName) return current;
+  await patchProfile({ displayName }, database);
+  return { ...current, displayName };
 }

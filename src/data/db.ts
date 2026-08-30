@@ -13,6 +13,9 @@
  * evicted without ever touching the original (NFR-03).
  */
 import Dexie, { type EntityTable } from 'dexie';
+import dexieCloud from 'dexie-cloud-addon';
+import { BUILD_ID, CLOUD_DATABASE_URL, DB_NAME, DEPLOYMENT } from '@/build-info';
+import { UNSYNCED_TABLES } from '@/data/environment';
 import type {
   Aquarium,
   CompatibilityAssessment,
@@ -152,8 +155,14 @@ export class Fish2TankDB extends Dexie {
   cardPrefs!: EntityTable<CardPref, 'speciesId'>;
   deletedRecords!: EntityTable<DeletedRecord, 'id'>;
 
-  constructor(name = 'fish2tank') {
-    super(name);
+  /**
+   * @param addons Dexie addons to install, empty by default so the offline app
+   *   is unchanged. This is the seam NFR-12 asks for: spec 005 plugs
+   *   `dexie-cloud-addon` in here, and nothing else in the app has to know.
+   *   Passed at construction because Dexie can only take addons there.
+   */
+  constructor(name = DB_NAME, addons: Array<(db: Dexie) => void> = []) {
+    super(name, { addons });
     this.version(1).stores({
       users: 'id',
       places: 'id, name, isFavorite',
@@ -275,7 +284,51 @@ const RETIRED_SPECIES_TABLES: ReadonlyArray<readonly [string, string]> = [
   ['cardPrefs', 'speciesId'],
 ];
 
-export const db = new Fish2TankDB();
+/**
+ * The addon is installed in a browser and nowhere else.
+ *
+ * Tests run under Node with `fake-indexeddb/auto`, which supplies
+ * `indexedDB` but no `window`. They construct their own databases with no
+ * addons anyway; this guard is about the module-level `db` below, which every
+ * test importing `repositories.ts` constructs by side effect. A sync client
+ * spinning up a websocket during a unit test would be slow at best.
+ */
+const cloudAddons = typeof window === 'undefined' ? [] : [dexieCloud];
+
+export const db = new Fish2TankDB(DB_NAME, cloudAddons);
+
+/**
+ * Spec 005. Configured immediately after construction because Dexie Cloud
+ * needs its options before the database opens.
+ *
+ * FR-A05: `requireAuth: false`. An account is how you KEEP your collection
+ * across devices, not how you are permitted to open it. The app must work
+ * completely while logged out, exactly as it does today.
+ *
+ * `nameSuffix: false` is load-bearing and defaults to TRUE. Left on, Dexie
+ * Cloud appends part of the database URL to the IndexedDB name, which would
+ * rename production's `fish2tank` out from under the real collection and
+ * present an empty app. This repo separates its environments itself, in
+ * environment.ts, where the rule is tested (BUG-04).
+ */
+if (cloudAddons.length > 0) {
+  db.cloud.configure({
+    databaseUrl: CLOUD_DATABASE_URL,
+    requireAuth: false,
+    unsyncedTables: [...UNSYNCED_TABLES],
+    nameSuffix: false,
+  });
+
+  // NFR-13: say which tier this is, out loud, once. Wrong-tier writes are
+  // otherwise invisible until someone's fish turn up in the wrong database.
+  console.info('[sync] session identity', {
+    deployment: DEPLOYMENT,
+    localDatabase: DB_NAME,
+    cloudDatabase: CLOUD_DATABASE_URL,
+    unsyncedTables: UNSYNCED_TABLES,
+    build: BUILD_ID,
+  });
+}
 
 export function newId(prefix: string): Id {
   return `${prefix}_${crypto.randomUUID()}`;

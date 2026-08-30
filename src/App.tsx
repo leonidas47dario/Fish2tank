@@ -10,6 +10,8 @@ import TankDetail from './ui/screens/TankDetail';
 import Journal from './ui/screens/Journal';
 import SpecimenDetail from './ui/screens/SpecimenDetail';
 import Settings from './ui/screens/Settings';
+import AuthGate from './ui/components/AuthGate';
+import ProfileButton from './ui/components/ProfileButton';
 import {
   CameraIcon, DropIcon, HouseIcon, NotePencilIcon, SquaresFourIcon,
 } from './ui/components/Icons';
@@ -31,8 +33,13 @@ const DESTINATIONS = [
 
 export default function App() {
   return (
-    <>
+    // Spec 010 FR-A09: nothing below this renders without an account. The gate
+    // tests for a cached identity, not a network, so a device that has signed
+    // in once keeps working in a fish shop with no signal.
+    <AuthGate>
       <ScrollMemory />
+      {/* FR-A10: the one control that used to be seven cards down Settings. */}
+      <ProfileButton />
       <main className="app">
         <Routes>
           <Route path="/" element={<Home />} />
@@ -70,6 +77,6 @@ export default function App() {
           </NavLink>
         ))}
       </nav>
-    </>
+    </AuthGate>
   );
 }

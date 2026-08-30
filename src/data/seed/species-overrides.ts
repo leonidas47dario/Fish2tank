@@ -196,30 +196,39 @@ export const SPECIES_OVERRIDES: SpeciesOverride[] = [
 ];
 
 /**
- * Species the vendors minted twice by misspelling the binomial.
+ * One fish, arriving under two or three names.
  *
- * These are not synonyms in the taxonomic sense - they are typos and stale
- * orthography that the derivation faithfully turned into separate species,
- * so the catalog shows the same fish two or three times over.
+ * ORIGINALLY these were only typos - stale orthography the derivation
+ * faithfully turned into separate species, so the catalog showed the same fish
+ * twice. Spec 008 added the larger category: real superseded combinations.
+ * Vendors do not agree on taxonomy, so one shop sells `Danio rerio` and the
+ * next sells `Brachydanio rerio`, and both are honest.
  *
- * WHAT HAPPENS TO THEM. build-marts.ts drops the non-canonical record from the
- * catalog. It does NOT pool their price listings into the canonical one:
- * market-index.json is built by a separate stage that needs a full vendor
- * re-scrape, so those listings stay attached to an id the catalog no longer
- * shows until the next `npm run refresh`. That is a known, bounded loss - a
- * handful of listings on three fish - and it is recorded here rather than
- * being quietly papered over.
  * WHAT HAPPENS TO THEM. The listing normalizer folds them onto the canonical
  * id at mint time (see canonicalSpeciesId in etl/normalize/derive-species.ts),
  * so the JSONL, the CSV, the fact table and the market index all agree with
- * the catalog. build-marts.ts still drops the non-canonical record, which is
- * now a safety net rather than the only line of defence.
+ * the catalog. build-marts.ts drops the non-canonical record, carrying its
+ * binomial and aliases onto the survivor so the old name still finds the fish,
+ * and OVERRIDE_BY_ID carries any researched common name across too.
  *
- * It was not always so, and the loss was bigger than "a handful": before the
- * fold, 43 of the 65 Green Swordtail listings were discarded with the dropped
- * records, and the shipped Discus median was $95 from the 11 listings under
- * the canonical spelling while 13 listings under `aequifasciata` said $59.99.
- * A fold only takes effect on the next `npm run refresh`.
+ * IT USED TO SAY a fold "only takes effect on the next `npm run refresh`", and
+ * that a full vendor re-scrape was needed to pool the listings. `npm run
+ * reindex` (etl/rebuild-index.ts) replays normalization over the warehouse
+ * with no network, so a fold now lands with `reindex && marts`. Spec 008's 21
+ * entries were shipped that way, from a machine that cannot reach three of the
+ * vendors at all.
+ *
+ * WHY IT MATTERS, measured. Before the fold, 43 of the 65 Green Swordtail
+ * listings were discarded with the dropped records, and the shipped Discus
+ * median was $95 from 11 listings while 13 listings under `aequifasciata` said
+ * $59.99. Spec 008 moved another 172 listings onto the id the catalog actually
+ * shows - 56 tiger barbs where there had been 34 and 22.
+ *
+ * EVERY ENTRY CITES EVIDENCE, and `npm run synonyms:propose` is what produces
+ * it. Two rows sharing a portrait only nominates a pair; the merge requires
+ * that all of the group's binomials resolve to one Wikipedia article and that
+ * the article's taxobox name the accepted binomial. Three candidate groups
+ * failed that test and are deliberately absent.
  */
 export interface SpeciesSynonym {
   /** The id to drop. */
@@ -255,10 +264,141 @@ export const SPECIES_SYNONYMS: SpeciesSynonym[] = [
     reason: 'Not a taxon at all - a hybrid/strain grouping the parser minted from "Xiphophorus helleri hybrid" in a title.',
     source: `${WIKI}Xiphophorus_hellerii`,
   },
+
+  // ── Added 2026-08-30 by `npm run synonyms:propose` (spec 008, BUG-02) ──
+  // Every entry below was verified the same way: all of the group's binomials
+  // resolve to ONE Wikipedia article, and that article's taxobox names the
+  // accepted binomial. Three candidate groups were REFUSED by that test and
+  // are deliberately absent - see the spec.
+  {
+    speciesId: 'sp_corydoras_adolfoi',
+    canonicalId: 'sp_hoplisoma_adolfoi',
+    reason: "All 2 names resolve to \"Adolfo's catfish\", whose taxobox gives the accepted binomial as \"Hoplisoma adolfoi\".",
+    source: "https://en.wikipedia.org/wiki/Adolfo's_catfish",
+  },
+  {
+    speciesId: 'sp_pangasius_hypophthalmus',
+    canonicalId: 'sp_pangasianodon_hypophthalmus',
+    reason: "All 2 names resolve to \"Iridescent shark\", whose taxobox gives the accepted binomial as \"Pangasianodon hypophthalmus\".",
+    source: "https://en.wikipedia.org/wiki/Iridescent_shark",
+  },
+  {
+    speciesId: 'sp_glyptoperichthys_gibbiceps',
+    canonicalId: 'sp_pterygoplichthys_gibbiceps',
+    reason: "All 2 names resolve to \"Pterygoplichthys gibbiceps\", whose taxobox gives the accepted binomial as \"Pterygoplichthys gibbiceps\".",
+    source: "https://en.wikipedia.org/wiki/Pterygoplichthys_gibbiceps",
+  },
+  {
+    speciesId: 'sp_dekeyseria_brachyura',
+    canonicalId: 'sp_dekeyseria_picta',
+    reason: "All 2 names resolve to \"Dekeyseria picta\", whose taxobox gives the accepted binomial as \"Dekeyseria picta\".",
+    source: "https://en.wikipedia.org/wiki/Dekeyseria_picta",
+  },
+  {
+    speciesId: 'sp_balantiocheilus_melanopterus',
+    canonicalId: 'sp_balantiocheilos_melanopterus',
+    reason: "All 2 names resolve to \"Bala shark\", whose taxobox gives the accepted binomial as \"Balantiocheilos melanopterus\".",
+    source: "https://en.wikipedia.org/wiki/Bala_shark",
+  },
+  {
+    speciesId: 'sp_puntius_sachsii',
+    canonicalId: 'sp_barbodes_semifasciolatus',
+    reason: "All 3 names resolve to \"Gold barb\", whose taxobox gives the accepted binomial as \"Barbodes semifasciolatus\".",
+    source: "https://en.wikipedia.org/wiki/Gold_barb",
+  },
+  {
+    speciesId: 'sp_puntius_semifasciolatus',
+    canonicalId: 'sp_barbodes_semifasciolatus',
+    reason: "All 3 names resolve to \"Gold barb\", whose taxobox gives the accepted binomial as \"Barbodes semifasciolatus\".",
+    source: "https://en.wikipedia.org/wiki/Gold_barb",
+  },
+  {
+    speciesId: 'sp_puntius_tetrazona',
+    canonicalId: 'sp_puntigrus_tetrazona',
+    reason: "All 2 names resolve to \"Tiger barb\", whose taxobox gives the accepted binomial as \"Puntigrus tetrazona\".",
+    source: "https://en.wikipedia.org/wiki/Tiger_barb",
+  },
+  {
+    speciesId: 'sp_myleus_schomburgkii',
+    canonicalId: 'sp_myloplus_schomburgkii',
+    reason: "All 2 names resolve to \"Myloplus schomburgkii\", whose taxobox gives the accepted binomial as \"Myloplus schomburgkii\".",
+    source: "https://en.wikipedia.org/wiki/Myloplus_schomburgkii",
+  },
+  {
+    speciesId: 'sp_carassius_auratus_auratus',
+    canonicalId: 'sp_carassius_auratus',
+    reason: "All 2 names resolve to \"Goldfish\", whose taxobox gives the accepted binomial as \"Carassius auratus\".",
+    source: "https://en.wikipedia.org/wiki/Goldfish",
+  },
+  {
+    speciesId: 'sp_puntius_titteya',
+    canonicalId: 'sp_rohanella_titteya',
+    reason: "All 2 names resolve to \"Cherry barb\", whose taxobox gives the accepted binomial as \"Rohanella titteya\".",
+    source: "https://en.wikipedia.org/wiki/Cherry_barb",
+  },
+  {
+    speciesId: 'sp_synodontis_multipunctata',
+    canonicalId: 'sp_cuckoo_catfish',
+    reason: "All 2 names resolve to \"Synodontis multipunctatus\", whose taxobox gives the accepted binomial as \"Synodontis multipunctatus\".",
+    source: "https://en.wikipedia.org/wiki/Synodontis_multipunctatus",
+  },
+  {
+    speciesId: 'sp_brachydanio_rerio',
+    canonicalId: 'sp_danio_rerio',
+    reason: "All 2 names resolve to \"Zebrafish\", whose taxobox gives the accepted binomial as \"Danio rerio\".",
+    source: "https://en.wikipedia.org/wiki/Zebrafish",
+  },
+  {
+    speciesId: 'sp_sturisoma_panamense',
+    canonicalId: 'sp_sturisomatichthys_panamensis',
+    reason: "All 2 names resolve to \"Sturisomatichthys panamensis\", whose taxobox gives the accepted binomial as \"Sturisomatichthys panamensis\".",
+    source: "https://en.wikipedia.org/wiki/Sturisomatichthys_panamensis",
+  },
+  {
+    speciesId: 'sp_trichogaster_trichopterus',
+    canonicalId: 'sp_trichopodus_trichopterus',
+    reason: "All 2 names resolve to \"Three spot gourami\", whose taxobox gives the accepted binomial as \"Trichopodus trichopterus\".",
+    source: "https://en.wikipedia.org/wiki/Three_spot_gourami",
+  },
+  {
+    speciesId: 'sp_tetraodon_palembangensis',
+    canonicalId: 'sp_pao_palembangensis',
+    reason: "All 2 names resolve to \"Pao palembangensis\", whose taxobox gives the accepted binomial as \"Pao palembangensis\".",
+    source: "https://en.wikipedia.org/wiki/Pao_palembangensis",
+  },
+  {
+    speciesId: 'sp_hoplisoma_panda',
+    canonicalId: 'sp_panda_cory',
+    reason: "All 2 names resolve to \"Hoplisoma panda\", whose taxobox gives the accepted binomial as \"Hoplisoma panda\". Canonical id is the curated sp_panda_cory, which stored records already reference.",
+    source: "https://en.wikipedia.org/wiki/Hoplisoma_panda",
+  },
+  {
+    speciesId: 'sp_puntius_conchonius',
+    canonicalId: 'sp_pethia_conchonius',
+    reason: "All 2 names resolve to \"Rosy barb\", whose taxobox gives the accepted binomial as \"Pethia conchonius\".",
+    source: "https://en.wikipedia.org/wiki/Rosy_barb",
+  },
+  {
+    speciesId: 'sp_botia_modesta',
+    canonicalId: 'sp_yasuhikotakia_modesta',
+    reason: "All 2 names resolve to \"Yasuhikotakia modesta\", whose taxobox gives the accepted binomial as \"Yasuhikotakia modesta\".",
+    source: "https://en.wikipedia.org/wiki/Yasuhikotakia_modesta",
+  },
+  {
+    speciesId: 'sp_crossocheilus_siamensis',
+    canonicalId: 'sp_crossocheilus_oblongus',
+    reason: "All 2 names resolve to \"Siamese algae-eater\", whose taxobox gives the accepted binomial as \"Crossocheilus oblongus\".",
+    source: "https://en.wikipedia.org/wiki/Siamese_algae-eater",
+  },
+  {
+    speciesId: 'sp_giuris_margaritaceus',
+    canonicalId: 'sp_snakehead_gudgeon',
+    reason: "All 2 names resolve to \"Giuris margaritaceus\", whose taxobox gives the accepted binomial as \"Giuris margaritaceus\". Canonical id is the curated sp_snakehead_gudgeon, which stored records already reference.",
+    source: "https://en.wikipedia.org/wiki/Giuris_margaritaceus",
+  },
 ];
 
-/** Fast lookup for build-marts.ts. */
-export const OVERRIDE_BY_ID: ReadonlyMap<string, SpeciesOverride> = new Map(
+const OVERRIDE_BY_OWN_ID: ReadonlyMap<string, SpeciesOverride> = new Map(
   SPECIES_OVERRIDES.map((o) => [o.speciesId, o]),
 );
 
@@ -320,3 +460,52 @@ export const SYNONYM_IDS: ReadonlySet<string> = new Set([
   ...SPECIES_SYNONYMS.map((s) => s.speciesId),
   ...NOT_A_SPECIES.map((s) => s.speciesId),
 ]);
+
+/**
+ * Dropped id -> the id it folds onto.
+ *
+ * Lives here, beside the data, because four callers need it and each one that
+ * built its own copy was a chance for them to disagree: the listing normalizer
+ * folds prices onto the canonical id, build-marts carries the dropped names
+ * across as aliases, and the app redirects stored records that still point at
+ * a folded id.
+ *
+ * Deliberately excludes NOT_A_SPECIES. Those rows are not another name for a
+ * real fish - they are hybrids and parser artefacts with nothing to fold onto,
+ * and giving them a canonical would invent a claim.
+ */
+export const CANONICAL_BY_SYNONYM: ReadonlyMap<string, string> = new Map(
+  SPECIES_SYNONYMS.map((s) => [s.speciesId, s.canonicalId]),
+);
+
+/**
+ * Fast lookup for build-marts.ts, with curated names following a merge.
+ *
+ * A NAME OUTLIVES THE ID IT WAS WRITTEN FOR. Somebody looked up Adolfo's
+ * catfish and wrote "Adolfo's Catfish" against `sp_corydoras_adolfoi`. When
+ * spec 008 folded that row into `sp_hoplisoma_adolfoi`, the override stopped
+ * matching anything and the survivor fell back to a name derived from vendor
+ * titles: "Adolfo S Hoplisoma". `Puntius sachsii`'s "Gold Barb" went the same
+ * way and left the survivor called, simply, "Barb".
+ *
+ * Both were caught by looking at the output. Neither would have failed a test,
+ * because a derived name is a perfectly valid name - it is just a worse one,
+ * and the human research that produced the better one was silently discarded.
+ *
+ * So an override for a folded id transfers to the id it folded onto, unless
+ * that one has research of its own. The alternative was hand-copying two
+ * entries and waiting for the next merge to do it again.
+ */
+export const OVERRIDE_BY_ID: ReadonlyMap<string, SpeciesOverride> = (() => {
+  const merged = new Map(OVERRIDE_BY_OWN_ID);
+  for (const [folded, canonical] of CANONICAL_BY_SYNONYM) {
+    const inherited = OVERRIDE_BY_OWN_ID.get(folded);
+    if (!inherited || merged.has(canonical)) continue;
+    merged.set(canonical, {
+      ...inherited,
+      speciesId: canonical,
+      note: `${inherited.note ? `${inherited.note} ` : ''}Name researched for ${folded}, which folded into this row (spec 008).`,
+    });
+  }
+  return merged;
+})();

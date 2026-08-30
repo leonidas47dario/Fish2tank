@@ -24,7 +24,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { blobFor, db } from '@/data/db';
 import { resolveCardArt, type CardArt, type CatalogCard } from '@/data/catalog';
 import { useBlobUrl } from '../blob-url';
-import { FishIcon, ImageBrokenIcon } from './Icons';
+import { FishIcon, ImageBrokenIcon, LockIcon } from './Icons';
 
 /**
  * Which image this card shows, and an object URL if it is one of yours.
@@ -73,7 +73,7 @@ interface Props {
   ownUrl?: string;
   /** Empty by default: on a tile the name is right there in the text below. */
   alt?: string;
-  /** Never had this species. Desaturated, but still identifiable. */
+  /** Never had this species. Desaturated and padlocked, but still identifiable. */
   locked?: boolean;
   /** The one mark ever painted on a photograph, and only when it is yours. */
   owned?: string;
@@ -94,6 +94,28 @@ export function Plate({ speciesId, art, ownUrl, alt = '', locked, owned, classNa
       data-species={speciesId}
     >
       {owned && <span className="plate__owned">{owned}</span>}
+
+      {/* The lock the Drawer rebuild dropped, restored.
+​
+          It is the collection conceit made visible: greyscale alone says "this
+          image is dull", a padlock says "this one is not yours yet", and the
+          second is the thing the catalog is actually for. Back as a Phosphor
+          icon rather than the 🔒 it used to be, because that emoji is exactly
+          the class of typed glyph the rebuild removed for having no rendering
+          at all on two of five platforms.
+
+          It carries its own text. Before the rebuild the card's aria-label
+          ended with "not in your collection" and the glyph could be decorative;
+          the current tile says no such thing, so a lock that were aria-hidden
+          would leave "have I got this one" as a fact you can only get by
+          looking - desaturation and a padlock, both visual, and nothing else
+          (NFR-06). */}
+      {locked && src && !failed && (
+        <span className="plate__lock">
+          <LockIcon size={20} aria-hidden="true" />
+          <span className="visually-hidden">Not in your collection</span>
+        </span>
+      )}
 
       {src && !failed && (
         <img

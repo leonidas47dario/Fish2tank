@@ -12,7 +12,10 @@ import { SCENES, THEMES, useTheme } from '@/theme/ThemeProvider';
 import { BUILD_ID, BUILT_AT } from '@/build-info';
 import { db } from '@/data/db';
 import { LOCAL_PROFILE_ID, setDisplayName, updateSettings } from '@/data/profile';
+import AccountPanel from '@/ui/components/AccountPanel';
 import { importInventoryFile } from '@/data/import-service';
+import { exportArchive } from '@/data/portability/export';
+import { importArchive } from '@/data/portability/import';
 import type { ImportResult } from '@/data/seed/inventory-import';
 
 /** Spec 005 FR-A04. Enough to cover where Ryan actually buys fish. */
@@ -34,17 +37,9 @@ export default function Settings() {
       <section className="card stack">
         <h2>Profile</h2>
         <p className="muted small">
-          Kept on this device. Nothing here is shared or published.
+          Follows your account across devices once you sign in. Never shared or published.
         </p>
-        <label className="stack">
-          <span className="xs muted">Display name</span>
-          <input
-            type="text"
-            value={profile?.displayName ?? ''}
-            placeholder="Unnamed keeper"
-            onChange={(e) => void setDisplayName(e.target.value)}
-          />
-        </label>
+        <DisplayNameField saved={profile?.displayName ?? ''} />
         <label className="stack">
           <span className="xs muted">Currency for new prices</span>
           <select
@@ -112,19 +107,81 @@ export default function Settings() {
         </p>
       </section>
 
+      <AccountPanel />
       <InventoryImport />
-      <DataExport />
+      <BackupPanel />
       <BuildStamp />
 
       <section className="card">
         <h2>Privacy</h2>
+        {/*
+          Rewritten for spec 005. The old text promised "no account, no server",
+          which stopped being true the moment sync shipped. A privacy notice
+          that overclaims is worse than none, because it is the one paragraph
+          someone actually relies on.
+        */}
+        <p className="small muted">
+          Signed out, everything lives on this device and nothing leaves it. Signed in, your
+          records sync to a private space only your account can read, and photos still never
+          leave the device that took them.
+        </p>
         <p className="small muted" style={{ marginBottom: 0 }}>
-          Everything lives on this device. There is no account, no server and no sharing in this build.
-          Store and home locations are never published, and no public profile, map or trading feature
-          exists.
+          Store and home locations are never published, and no public profile, map or trading
+          feature exists.
         </p>
       </section>
     </div>
+  );
+}
+
+/**
+ * The display name, saved when you leave the field rather than as you type.
+ *
+ * It used to persist on every keystroke. That was harmless while the profile
+ * was device-local and stops being harmless the moment it syncs: typing a name
+ * became one mutation per character on the single record most likely to be
+ * edited from two devices, against a free tier that allows 50 sync operations
+ * per five minutes. Saving on blur makes it one.
+ *
+ * `draft` is cleared after saving so a change arriving from another device is
+ * not shadowed by a stale local value.
+ */
+function DisplayNameField({ saved }: { saved: string }) {
+  const [draft, setDraft] = useState<string>();
+  const [problem, setProblem] = useState<string>();
+
+  async function commit() {
+    if (draft === undefined || draft === saved) {
+      setDraft(undefined);
+      return;
+    }
+    try {
+      await setDisplayName(draft);
+      setProblem(undefined);
+    } catch (cause) {
+      // A name that silently failed to save is a small lie the UI would keep
+      // telling, because the input would still show what you typed.
+      console.error('[profile] could not save display name', cause);
+      setProblem('Could not save that name.');
+    }
+    setDraft(undefined);
+  }
+
+  return (
+    <label className="stack">
+      <span className="xs muted">Display name</span>
+      <input
+        type="text"
+        value={draft ?? saved}
+        placeholder="Unnamed keeper"
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={() => void commit()}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') e.currentTarget.blur();
+        }}
+      />
+      {problem ? <span className="xs" role="alert">{problem}</span> : null}
+    </label>
   );
 }
 
@@ -185,53 +242,93 @@ function InventoryImport() {
   );
 }
 
-/** NFR-08: export records in a documented machine-readable form. */
-function DataExport() {
-  const [busy, setBusy] = useState(false);
+/**
+ * Backup and restore - spec 006. NFR-08.
+ *
+ * Supersedes the records-only JSON export this section used to hold. That
+ * version deliberately left media out, which made it a fine data dump and a
+ * poor backup: P3 says the media IS the record, so restoring without photos
+ * restores the index and loses the collection.
+ *
+ * This matters more than it sounds. Everything lives in one browser's
+ * IndexedDB, and Safari can evict that after about a week on a non-installed
+ * site (ENH-04). Until sync exists, this archive is the only copy.
+ */
+function BackupPanel() {
+  const [busy, setBusy] = useState<'export' | 'import' | undefined>();
+  const [note, setNote] = useState<string>();
+  const [problem, setProblem] = useState<string>();
 
-  async function exportAll() {
-    setBusy(true);
-    const payload = {
-      exportedAt: new Date().toISOString(),
-      schemaVersion: 1,
-      // Media BLOBS are deliberately excluded: they are large and binary. The
-      // metadata rows retain each original's key, size and type so a media
-      // export can be added without changing this shape.
-      note: 'Record export. Original media files are not included in this JSON.',
-      species: await db.species.toArray(),
-      speciesProfiles: await db.speciesProfiles.toArray(),
-      specimens: await db.specimens.toArray(),
-      encounters: await db.encounters.toArray(),
-      media: await db.media.toArray(),
-      identifications: await db.identifications.toArray(),
-      priceObservations: await db.priceObservations.toArray(),
-      raritySnapshots: await db.raritySnapshots.toArray(),
-      dreamList: await db.dreamList.toArray(),
-      aquariums: await db.aquariums.toArray(),
-      holdings: await db.holdings.toArray(),
-      residencies: await db.residencies.toArray(),
-      lifeEvents: await db.lifeEvents.toArray(),
-      assessments: await db.assessments.toArray(),
-      memorials: await db.memorials.toArray(),
-      keeperPrinciples: await db.keeperPrinciples.toArray(),
-      places: await db.places.toArray(),
-    };
-    const url = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }));
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `fish2tank-export-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    setBusy(false);
+  async function runExport() {
+    setBusy('export');
+    setNote(undefined);
+    setProblem(undefined);
+    try {
+      const { blob, filename, manifest } = await exportArchive(db, { appBuild: BUILD_ID });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+      const rows = Object.values(manifest.tables).reduce((n, v) => n + v, 0);
+      setNote(`Saved ${filename}: ${rows} records and ${manifest.media.count} media files.`);
+    } catch (err) {
+      // Never silent. A backup that failed quietly is worse than none, because
+      // you would go on believing you had one.
+      console.error('[backup] export failed', err);
+      setProblem(`Export failed: ${String(err)}`);
+    }
+    setBusy(undefined);
+  }
+
+  async function runImport(file: File) {
+    setBusy('import');
+    setNote(undefined);
+    setProblem(undefined);
+    try {
+      const result = await importArchive(new Uint8Array(await file.arrayBuffer()), db);
+      const rows = Object.values(result.tables).reduce((n, v) => n + v, 0);
+      setNote(`Restored ${rows} records and ${result.mediaRestored} media files from ${file.name}.`);
+    } catch (err) {
+      console.error('[backup] import rejected', err);
+      setProblem(err instanceof Error ? err.message : String(err));
+    }
+    setBusy(undefined);
   }
 
   return (
     <section className="card stack">
-      <h2>Export</h2>
-      <p className="muted small">Every record, as JSON. Yours to keep and to move.</p>
-      <button type="button" onClick={() => void exportAll()} disabled={busy}>
-        {busy ? 'Preparing…' : 'Export records'}
+      <h2>Backup</h2>
+      <p className="muted small">
+        Every record and every photo, in one file. This is currently the only copy of your
+        collection that lives anywhere but this browser.
+      </p>
+
+      <button type="button" onClick={() => void runExport()} disabled={Boolean(busy)}>
+        {busy === 'export' ? 'Packing…' : 'Export everything'}
       </button>
+
+      <label className="stack">
+        <span className="xs muted">Restore from a backup</span>
+        <input
+          type="file"
+          accept=".zip,application/zip"
+          disabled={Boolean(busy)}
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) void runImport(file);
+            e.target.value = '';
+          }}
+        />
+      </label>
+      <p className="xs muted">
+        Restoring adds to what is here and never deletes it. Importing the same file twice is
+        safe. An archive that does not match its own manifest is refused whole.
+      </p>
+
+      {note ? <p className="small">{note}</p> : null}
+      {problem ? <p className="small" role="alert">{problem}</p> : null}
     </section>
   );
 }
