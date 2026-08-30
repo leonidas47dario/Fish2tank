@@ -42,6 +42,36 @@ function blobKeyFrom(key: string, account: string): string {
   return blobKey;
 }
 
+/**
+ * A Worker call that failed, carrying the status so a caller can tell what
+ * kind of failure it was.
+ *
+ * `${route} failed: 404 Not Found` is a diagnosis to a developer reading a
+ * log, and nothing at all to somebody holding a phone. The status is kept as
+ * a field so the UI can distinguish "this will never work until somebody
+ * deploys something" from "this failed once, try again", instead of promising
+ * a retry that cannot succeed.
+ */
+export class WorkerCallError extends Error {
+  constructor(readonly status: number, readonly route: string, message: string) {
+    super(message);
+    this.name = 'WorkerCallError';
+  }
+
+  /**
+   * Whether retrying is pointless until a person changes something.
+   *
+   * 404 is the one that matters here and it is not the app's own 404: a
+   * workers.dev subdomain with no Worker deployed answers `error code: 1042`
+   * in plain text, from Cloudflare rather than from us, so every media upload
+   * fails forever while the UI says it will retry. 401 and 403 are the same
+   * shape of problem - a token or origin nobody can fix by waiting.
+   */
+  get isConfiguration(): boolean {
+    return this.status === 404 || this.status === 401 || this.status === 403;
+  }
+}
+
 export function createWorkerBackend(options: WorkerBackendOptions): MediaBackend {
   // Bound to the global: see the note in media-queue.ts. A bare `fetch`
   // reference called through a variable is an Illegal invocation.
@@ -68,7 +98,11 @@ export function createWorkerBackend(options: WorkerBackendOptions): MediaBackend
       } catch {
         detail = res.statusText;
       }
-      throw new Error(`${route} failed: ${res.status} ${detail}`.trim());
+      throw new WorkerCallError(
+        res.status,
+        route,
+        `${route} failed: ${res.status} ${detail}`.trim(),
+      );
     }
     return res.json();
   }

@@ -187,6 +187,21 @@ function MediaSyncRow() {
   const moved = (result?.upload?.uploaded ?? 0) + (result?.download?.downloaded ?? 0);
   const failed = (result?.upload?.failed ?? 0) + (result?.download?.failed ?? 0);
 
+  /*
+   * A failure nobody can wait out.
+   *
+   * On 2026-08-30 every photo on production failed because production's media
+   * Worker had never been deployed - the URL answered Cloudflare's own "no
+   * Worker here", not ours - and this panel said they "will be retried". Every
+   * retry failed identically, and the screen kept promising the next one
+   * would not. Saying which kind of failure it was is the difference between
+   * an hour spent looking for a photo bug and a one-line answer.
+   */
+  const misconfigured = Boolean(
+    result?.upload?.configurationFault || result?.download?.configurationFault,
+  );
+  const firstError = result?.upload?.firstError ?? result?.download?.firstError;
+
   return (
     <>
       <hr />
@@ -206,8 +221,20 @@ function MediaSyncRow() {
             </p>
           ) : null}
           {failed > 0 ? (
-            <p className="xs" role="alert" style={{ marginBottom: 0 }}>
-              Some photos did not transfer. They stay on this device and will be retried.
+            <p className="xs warn" role="alert" style={{ marginBottom: 0 }}>
+              {misconfigured ? (
+                <>
+                  Photo storage is not reachable for this build, so retrying will not help until
+                  it is set up. Your photos are safe on this device and nothing has been lost.
+                </>
+              ) : (
+                <>Some photos did not transfer. They stay on this device and will be retried.</>
+              )}
+              {/* The verbatim reason, small and last. Useless to most readers
+                  and the only thing that matters to whoever fixes it. */}
+              {firstError && (
+                <span className="faint data" style={{ display: 'block' }}>{firstError}</span>
+              )}
             </p>
           ) : null}
         </>

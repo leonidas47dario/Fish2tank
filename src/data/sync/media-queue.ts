@@ -19,6 +19,7 @@ import { blobFor, type Fish2TankDB } from '../db';
 import type { Media } from '@/domain/types';
 import { objectKeyFor, type MediaBackend, type SyncEnvironment } from './backend';
 import { createSyncLogger, type SyncLogger } from './sync-log';
+import { WorkerCallError } from './worker-backend';
 
 export interface MediaSyncDeps {
   db: Fish2TankDB;
@@ -34,6 +35,18 @@ export interface TransferSummary {
   downloaded: number;
   skipped: number;
   failed: number;
+  /**
+   * Why the first failure failed, when there was one.
+   *
+   * Counts alone let the UI say "28 failed" and then guess at the rest. On
+   * 2026-08-30 that guess was "they will be retried", while the real answer
+   * was that production's media Worker had never been deployed - so every
+   * retry was going to fail in exactly the same way, forever, and the screen
+   * said the opposite.
+   */
+  firstError?: string;
+  /** True when retrying cannot help until somebody changes a deployment. */
+  configurationFault?: boolean;
 }
 
 /**
@@ -128,6 +141,21 @@ async function uploadOne(
  * the next run re-uploads the same keys, and an object already present simply
  * verifies again. Nothing is double-counted and nothing is lost.
  */
+/**
+ * Keep the FIRST failure's reason, not the last.
+ *
+ * Twenty-eight failures with one cause are one problem, and the first one is
+ * the one that has not yet been coloured by whatever the failure did to the
+ * next attempt. Later failures still count; they just do not overwrite the
+ * diagnosis.
+ */
+function noteFailure(summary: TransferSummary, cause: unknown): void {
+  const isConfig = cause instanceof WorkerCallError && cause.isConfiguration;
+  if (isConfig) summary.configurationFault = true;
+  if (summary.firstError) return;
+  summary.firstError = cause instanceof Error ? cause.message : String(cause);
+}
+
 export async function runUploadQueue(deps: MediaSyncDeps): Promise<TransferSummary> {
   const fetchImpl = deps.fetchImpl ?? boundFetch;
   const log = deps.logger ?? createSyncLogger(deps.env);
@@ -145,11 +173,12 @@ export async function runUploadQueue(deps: MediaSyncDeps): Promise<TransferSumma
         const sent = await uploadOne(blobKey, resolved, log);
         if (sent) summary.uploaded += 1;
         else summary.skipped += 1;
-      } catch {
+      } catch (cause) {
         // Already logged with its reason inside uploadOne. Recorded here as a
         // failed transfer so the row stays retryable rather than being marked
         // clean, which is the entire point of NFR-13.
         summary.failed += 1;
+        noteFailure(summary, cause);
         allOk = false;
       }
     }
@@ -158,7 +187,10 @@ export async function runUploadQueue(deps: MediaSyncDeps): Promise<TransferSumma
     });
   }
 
-  log.runFinished('media upload', { ...summary });
+  // The logger's contract is counts. The reason is carried on the summary for
+  // the UI and has already been logged with its own line by uploadOne.
+  const { uploaded, downloaded, skipped, failed } = summary;
+  log.runFinished('media upload', { uploaded, downloaded, skipped, failed });
   return summary;
 }
 
@@ -222,10 +254,12 @@ export async function runDownloadQueue(deps: MediaSyncDeps): Promise<TransferSum
       } catch (err) {
         done('failed', String(err));
         summary.failed += 1;
+        noteFailure(summary, err);
       }
     }
   }
 
-  log.runFinished('media download', { ...summary });
+  const { uploaded, downloaded, skipped, failed } = summary;
+  log.runFinished('media download', { uploaded, downloaded, skipped, failed });
   return summary;
 }

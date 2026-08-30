@@ -5,6 +5,7 @@ import type { Media } from '@/domain/types';
 import { objectKeyFor, type MediaBackend, type ObjectHead, type SyncEnvironment } from './backend';
 import { createSyncLogger } from './sync-log';
 import { runDownloadQueue, runUploadQueue, transferOrder } from './media-queue';
+import { WorkerCallError } from './worker-backend';
 
 const ENV: SyncEnvironment = {
   account: 'acct_1',
@@ -313,5 +314,92 @@ describe('the default fetch', () => {
     } finally {
       vi.unstubAllGlobals();
     }
+  });
+});
+
+/**
+ * The failure that cost an hour on 2026-08-30.
+ *
+ * Production's media Worker had never been deployed. Its workers.dev URL
+ * answered Cloudflare's own "no Worker here" - a plain-text `error code: 1042`
+ * with a 404, not a response from this app - so every photo failed, and the
+ * account panel said they "will be retried". Every retry failed identically
+ * while the screen kept promising the next one would not.
+ *
+ * The counts were right and the conclusion drawn from them was wrong, so these
+ * pin the reason travelling with the counts.
+ */
+describe('a failure that retrying cannot fix', () => {
+  /** A backend whose presign calls 404, the way an undeployed Worker does. */
+  function undeployedBackend(message = '/presign/put failed: 404 Not Found'): MediaBackend {
+    const fail = () => { throw new WorkerCallError(404, '/presign/put', message); };
+    return { presignPut: fail, presignGet: fail, head: fail };
+  }
+
+  it('marks a 404 from the Worker as a configuration fault', async () => {
+    await seedMedia();
+    const summary = await runUploadQueue({
+      db, backend: undeployedBackend(), fetchImpl: fakeBackend().fetchImpl,
+      env: ENV, logger: quietLogger(),
+    });
+
+    expect(summary.failed).toBeGreaterThan(0);
+    expect(summary.configurationFault).toBe(true);
+    // And the verbatim reason, for whoever has to fix it.
+    expect(summary.firstError).toMatch(/404/);
+  });
+
+  it('leaves the photo retryable, because the bytes are still the only copy', async () => {
+    await seedMedia();
+    await runUploadQueue({
+      db, backend: undeployedBackend(), fetchImpl: fakeBackend().fetchImpl,
+      env: ENV, logger: quietLogger(),
+    });
+
+    expect((await db.media.get('med_1'))!.syncState).toBe('retry-required');
+    expect(await db.blobs.get('blob_orig')).toBeDefined();
+  });
+
+  /**
+   * A rejected PUT is a different animal: the Worker answered, signed a URL,
+   * and the upload itself failed. That genuinely may work next time, and must
+   * not be reported as somebody's deployment mistake.
+   */
+  it('does not call an ordinary upload failure a configuration fault', async () => {
+    await seedMedia();
+    const fake = fakeBackend();
+    fake.rejectPuts(500);
+    const summary = await runUploadQueue({ db, ...fake, env: ENV, logger: quietLogger() });
+
+    expect(summary.failed).toBeGreaterThan(0);
+    expect(summary.configurationFault).toBeFalsy();
+  });
+
+  it('keeps the first reason, not the last', async () => {
+    await seedMedia();
+    let n = 0;
+    const backend: MediaBackend = {
+      presignPut: () => { throw new WorkerCallError(404, '/presign/put', `failure ${++n}`); },
+      presignGet: async (key) => ({ url: `https://fake/get/${key}`, expiresAt: 'later' }),
+      head: async () => undefined,
+    };
+    const summary = await runUploadQueue({
+      db, backend, fetchImpl: fakeBackend().fetchImpl, env: ENV, logger: quietLogger(),
+    });
+
+    // Twenty-eight failures with one cause are one problem; the first is the
+    // one not yet coloured by what the failure did to the next attempt.
+    expect(summary.firstError).toBe('failure 1');
+    expect(summary.failed).toBe(3);   // one per blob on the row
+  });
+});
+
+describe('WorkerCallError', () => {
+  it.each([[404], [401], [403]])('treats %i as something only a person can fix', (status) => {
+    expect(new WorkerCallError(status, '/presign/put', 'x').isConfiguration).toBe(true);
+  });
+
+  it.each([[500], [502], [429]])('treats %i as worth retrying', (status) => {
+    expect(new WorkerCallError(status, '/presign/put', 'x').isConfiguration).toBe(false);
   });
 });
