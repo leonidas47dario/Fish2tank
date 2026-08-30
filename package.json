@@ -36,6 +36,7 @@
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",
     "dexie": "^4.0.10",
+    "dexie-cloud-addon": "^4.4.14",
     "dexie-react-hooks": "^1.1.7",
     "fflate": "^0.8.3",
     "react": "^18.3.1",

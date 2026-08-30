@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import { fileURLToPath, URL } from 'node:url';
+import { cloudDatabaseUrlFor, databaseNameFor, deploymentFor } from './src/data/environment';
 
 // Project Pages serves from /<repo>/, so the base path has to be baked in at
 // build time. Left as '/' for dev and for any host that serves from the root
@@ -31,6 +32,14 @@ export default defineConfig({
   define: {
     __BUILD_ID__: JSON.stringify(buildId),
     __BUILT_AT__: JSON.stringify(builtAt),
+    // BUG-04: staging and production share an origin, so they shared one
+    // IndexedDB. The rule lives in src/data/environment.ts so it is testable.
+    __DB_NAME__: JSON.stringify(databaseNameFor(base)),
+    // Spec 005: which cloud database, and which tier the logs should name.
+    // Not secret - the URL ships in the bundle by design and the database
+    // whitelists origins. Secrets live in Dexie Cloud Manager.
+    __CLOUD_DB_URL__: JSON.stringify(cloudDatabaseUrlFor(base)),
+    __DEPLOYMENT__: JSON.stringify(deploymentFor(base)),
   },
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },

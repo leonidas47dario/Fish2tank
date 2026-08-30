@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Spec 005 probe: what does first login do to existing rows?</title>
+    <style>
+      body { font: 13px/1.5 ui-monospace, monospace; background: #0b1d2a; color: #d7e3ea;
+             margin: 0; padding: 16px; }
+      h1 { font-size: 15px; margin: 0 0 12px; color: #5ee0c0; }
+      button { font: inherit; background: #14364a; color: #d7e3ea; border: 1px solid #3ba3d0;
+               border-radius: 6px; padding: 6px 12px; margin: 0 6px 6px 0; cursor: pointer; }
+      button:disabled { opacity: .4; cursor: default; }
+      #log { white-space: pre-wrap; margin-top: 12px; }
+      .ok { color: #5ee0c0; } .bad { color: #ff8a7a; } .dim { color: #7b98a8; }
+    </style>
+  </head>
+  <body>
+    <h1>Spec 005 / plan 005b task 1 &mdash; first-login row census</h1>
+    <div id="controls">
+      <button id="demo">Login: demo user</button>
+      <button id="otp">Login: email OTP</button>
+      <button id="google">Login: Google</button>
+      <button id="census">Re-count now</button>
+    </div>
+    <div id="log"></div>
+    <script type="module" src="./probe.ts"></script>
+  </body>
+</html>

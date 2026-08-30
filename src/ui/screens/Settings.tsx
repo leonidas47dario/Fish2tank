@@ -12,6 +12,7 @@ import { SCENES, THEMES, useTheme } from '@/theme/ThemeProvider';
 import { BUILD_ID, BUILT_AT } from '@/build-info';
 import { db } from '@/data/db';
 import { LOCAL_PROFILE_ID, setDisplayName, updateSettings } from '@/data/profile';
+import AccountPanel from '@/ui/components/AccountPanel';
 import { importInventoryFile } from '@/data/import-service';
 import { exportArchive } from '@/data/portability/export';
 import { importArchive } from '@/data/portability/import';
@@ -36,17 +37,9 @@ export default function Settings() {
       <section className="card stack">
         <h2>Profile</h2>
         <p className="muted small">
-          Kept on this device. Nothing here is shared or published.
+          Follows your account across devices once you sign in. Never shared or published.
         </p>
-        <label className="stack">
-          <span className="xs muted">Display name</span>
-          <input
-            type="text"
-            value={profile?.displayName ?? ''}
-            placeholder="Unnamed keeper"
-            onChange={(e) => void setDisplayName(e.target.value)}
-          />
-        </label>
+        <DisplayNameField saved={profile?.displayName ?? ''} />
         <label className="stack">
           <span className="xs muted">Currency for new prices</span>
           <select
@@ -114,19 +107,81 @@ export default function Settings() {
         </p>
       </section>
 
+      <AccountPanel />
       <InventoryImport />
       <BackupPanel />
       <BuildStamp />
 
       <section className="card">
         <h2>Privacy</h2>
+        {/*
+          Rewritten for spec 005. The old text promised "no account, no server",
+          which stopped being true the moment sync shipped. A privacy notice
+          that overclaims is worse than none, because it is the one paragraph
+          someone actually relies on.
+        */}
+        <p className="small muted">
+          Signed out, everything lives on this device and nothing leaves it. Signed in, your
+          records sync to a private space only your account can read, and photos still never
+          leave the device that took them.
+        </p>
         <p className="small muted" style={{ marginBottom: 0 }}>
-          Everything lives on this device. There is no account, no server and no sharing in this build.
-          Store and home locations are never published, and no public profile, map or trading feature
-          exists.
+          Store and home locations are never published, and no public profile, map or trading
+          feature exists.
         </p>
       </section>
     </div>
+  );
+}
+
+/**
+ * The display name, saved when you leave the field rather than as you type.
+ *
+ * It used to persist on every keystroke. That was harmless while the profile
+ * was device-local and stops being harmless the moment it syncs: typing a name
+ * became one mutation per character on the single record most likely to be
+ * edited from two devices, against a free tier that allows 50 sync operations
+ * per five minutes. Saving on blur makes it one.
+ *
+ * `draft` is cleared after saving so a change arriving from another device is
+ * not shadowed by a stale local value.
+ */
+function DisplayNameField({ saved }: { saved: string }) {
+  const [draft, setDraft] = useState<string>();
+  const [problem, setProblem] = useState<string>();
+
+  async function commit() {
+    if (draft === undefined || draft === saved) {
+      setDraft(undefined);
+      return;
+    }
+    try {
+      await setDisplayName(draft);
+      setProblem(undefined);
+    } catch (cause) {
+      // A name that silently failed to save is a small lie the UI would keep
+      // telling, because the input would still show what you typed.
+      console.error('[profile] could not save display name', cause);
+      setProblem('Could not save that name.');
+    }
+    setDraft(undefined);
+  }
+
+  return (
+    <label className="stack">
+      <span className="xs muted">Display name</span>
+      <input
+        type="text"
+        value={draft ?? saved}
+        placeholder="Unnamed keeper"
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={() => void commit()}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') e.currentTarget.blur();
+        }}
+      />
+      {problem ? <span className="xs" role="alert">{problem}</span> : null}
+    </label>
   );
 }
 

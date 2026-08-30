@@ -41,12 +41,20 @@ etl/**/*.js
 # the repository inside itself. .claude/skills/ IS tracked, deliberately.
 .claude/worktrees/
 
-# Dexie Cloud API client credentials. `dexie-cloud.key` holds a client secret
-# that can administer the database - delete tables, read every realm - so it
-# must never reach this public repo (NFR-10). `dexie-cloud.json` is NOT ignored:
-# it carries only the public database URL, which ships in the client bundle
-# anyway, and committing it is what lets a fresh checkout know where to sync.
+# Dexie Cloud CLI state. `dexie-cloud.key` holds a client secret that can
+# administer the database - delete tables, read every realm - so it must never
+# reach this public repo (NFR-10).
+#
+# `dexie-cloud.json` was deliberately left tracked when there was one database,
+# on the reasoning that its URL is public and committing it tells a fresh
+# checkout where to sync. That reasoning expired. There are now three databases
+# (scratch, uat, production), the URL a build should use is committed source in
+# `src/data/environment.ts` where it is chosen per deployment and tested, and
+# `npx dexie-cloud connect` REWRITES this file every time you switch. Tracked,
+# it would sit permanently dirty and one careless `git add -A` would point
+# production at scratch. It is machine state, not configuration.
 dexie-cloud.key
+dexie-cloud.json
 
 # Stray screenshots from browser-driven verification.
 catalog-tiles.png
