@@ -130,7 +130,31 @@ export interface NameCheckable {
   speciesId: string;
   commonName: string;
   scientificName?: string;
+  /**
+   * A name a person chose and a second person approved, rather than one
+   * derived from a vendor listing title. See CURATED_EXEMPT below.
+   */
+  curated?: boolean;
 }
+
+/**
+ * The one rule a curated name is exempt from, and why only this one.
+ *
+ * `has-digit` exists because vendor titles produce "2 inch", "6 Pack" and
+ * stock codes, and a derivation cannot tell those from a name. That reasoning
+ * does not reach a name a keeper typed and a reviewer approved - and it is
+ * wrong for the exact fish this catalog is most likely to be missing, because
+ * L-numbers (L083, L046) are the standing designation for the many undescribed
+ * Loricariids that have no binomial at all. Refusing every digit would refuse
+ * the whole class.
+ *
+ * Nothing else is waived. "Tank Bred" is still not a species name however it
+ * got here, a two-letter fragment is still a fragment, and an entry with no
+ * binomial and no usable common name is still unidentifiable. Those rules
+ * catch what a human reviewer plausibly misses; this one catches what only a
+ * parser does.
+ */
+const CURATED_EXEMPT: ReadonlySet<ProblemCode> = new Set<ProblemCode>(['has-digit']);
 
 /**
  * Is this string usable as a species display name, ignoring the rest of the
@@ -150,6 +174,21 @@ export function isUsableName(name: string): boolean {
  * vocabulary that is definitely not taxonomy. See NON_TAXONOMIC on why this is
  * a net rather than a proof.
  */
+/**
+ * Can anybody tell what this species is?
+ *
+ * A binomial is enough on its own; so is a usable common name. Having neither
+ * is the `no-identity` problem. This is the single answer to that question -
+ * findProblems and the shipped-catalog test both call it, because two places
+ * re-deriving it is exactly how a rule and its test drift apart.
+ */
+export function isIdentifiable(e: NameCheckable): boolean {
+  if (e.scientificName) return true;
+  return nameProblems(e.commonName)
+    .filter((p) => !(e.curated && CURATED_EXEMPT.has(p.code)))
+    .length === 0;
+}
+
 export function isUsableBinomial(name: string): boolean {
   return binomialProblems(name).length === 0;
 }
@@ -256,6 +295,7 @@ export function findProblems(entries: readonly NameCheckable[]): Problem[] {
 
   for (const e of entries) {
     for (const p of nameProblems(e.commonName)) {
+      if (e.curated && CURATED_EXEMPT.has(p.code)) continue;
       problems.push({ speciesId: e.speciesId, value: e.commonName, ...p });
     }
 
@@ -281,7 +321,9 @@ export function findProblems(entries: readonly NameCheckable[]): Problem[] {
 
     // A species with no binomial AND no real common name cannot be identified
     // by anyone. The binomial fallback is acceptable; having neither is not.
-    if (!e.scientificName && nameProblems(e.commonName).length > 0) {
+    // Read through the same exemption, or a curated L-number would be waved
+    // past has-digit only to be failed here for the identical reason.
+    if (!isIdentifiable(e)) {
       problems.push({
         speciesId: e.speciesId,
         code: 'no-identity',

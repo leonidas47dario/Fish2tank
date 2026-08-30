@@ -65,7 +65,12 @@ export function ScrollMemory() {
 
     let frame = 0;
     let abandoned = false;
-    const events = ['wheel', 'touchstart', 'keydown'] as const;
+    /*
+     * A scrollbar drag is a deliberate scroll that fires none of wheel,
+     * touchstart or keydown, so without the pointer events the hold below
+     * would fight a mouse user for the rest of the budget.
+     */
+    const events = ['wheel', 'touchstart', 'keydown', 'pointerdown', 'mousedown'] as const;
     const surrender = () => { abandoned = true; };
 
     if (target) {
@@ -74,12 +79,28 @@ export function ScrollMemory() {
          is worse than one that forgot where you were. Any input wins. */
       for (const e of events) window.addEventListener(e, surrender, { passive: true, once: true });
 
+      /*
+       * HOLDS the position for the whole budget rather than stopping at the
+       * first frame that reaches it.
+       *
+       * Reaching the target once is not the same as staying there. A record
+       * page fills in from seven live queries, and when a panel ABOVE the
+       * restored position grows, Chrome's scroll anchoring shifts the page
+       * down by exactly that much to keep the visible content still - which is
+       * the right instinct and the wrong outcome here, because it is fighting
+       * a restore rather than a reader. Measured on a specimen record: land on
+       * 794, settle at 947, every time.
+       *
+       * Stopping early cannot fix that, since the shift happens after the last
+       * frame the old loop ran. So it keeps re-asserting, and the surrender
+       * listeners above are what stop it being a fight - any real input from
+       * the reader wins immediately.
+       */
       const deadline = performance.now() + RESTORE_TIMEOUT_MS;
       const tryRestore = () => {
         if (abandoned) return;
-        window.scrollTo(0, target);
-        const reached = Math.abs(window.scrollY - target) < 2;
-        if (!reached && performance.now() < deadline) frame = requestAnimationFrame(tryRestore);
+        if (Math.abs(window.scrollY - target) >= 2) window.scrollTo(0, target);
+        if (performance.now() < deadline) frame = requestAnimationFrame(tryRestore);
       };
       frame = requestAnimationFrame(tryRestore);
     } else {

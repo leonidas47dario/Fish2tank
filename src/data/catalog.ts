@@ -58,6 +58,12 @@ export interface CatalogSpecies {
    * means nobody said, which is not a claim that it is freshwater.
    */
   waterType?: WaterType;
+  /**
+   * A name a keeper submitted and a reviewer approved, rather than one derived
+   * from a vendor listing. Read by the quality gate, and worth saying on the
+   * card: this entry has a person behind it, not a source document.
+   */
+  curated?: boolean;
 }
 
 interface CatalogMart {
@@ -88,6 +94,34 @@ export function portraitAsset(speciesId: string): string | undefined {
 }
 
 export const CATALOG_BY_SPECIES = new Map(CATALOG.species.map((s) => [s.speciesId, s]));
+
+/**
+ * Present a locally-submitted species as a catalog entry the UI can render.
+ *
+ * A species a keeper typed in is not in catalog.json, so every lookup keyed on
+ * CATALOG_BY_SPECIES misses it and the record it belongs to renders as though
+ * the fish had no identity at all. This adapts the local row into the same
+ * shape, with every sourced field deliberately absent: there is no adult size,
+ * no aggression rating, no portrait and no water type, because nobody has
+ * sourced them. The card's own "not enough data" handling then tells the truth
+ * rather than a shape full of zeroes doing it badly.
+ */
+export function catalogShapeForLocal(species: {
+  id: string; commonName: string; scientificName?: string; aliases?: string[];
+}): CatalogSpecies {
+  return {
+    speciesId: species.id,
+    commonName: species.commonName,
+    scientificName: species.scientificName,
+    aliases: species.aliases ?? [],
+    predationTags: [],
+  };
+}
+
+/** Whether an id belongs to a species this keeper added rather than the catalog. */
+export function isUserSubmittedId(speciesId: string): boolean {
+  return speciesId.startsWith('sp_user_');
+}
 
 /** What the user has done with this species. Everything here is personal. */
 export interface CatalogUserState {

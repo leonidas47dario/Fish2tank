@@ -29,10 +29,13 @@ import {
   moveHolding,
   recordDeath,
   recordPrice,
+  removeHolding,
   recordStoreLabel,
   revealSpecimen,
   searchSpecies,
+  submitUserSpecies,
   upsertAquarium,
+  userSubmittedSpecies,
   upsertSpecies,
 } from './repositories';
 import { SPECIES_CATALOG, CATALOG_BY_ID } from './seed/species-catalog';
@@ -1012,18 +1015,73 @@ describe('deleting a catch', () => {
     expect(await db.blobs.get(shot.originalBlobKey!)).toBeDefined();
   });
 
-  it('refuses when the fish is in one of your tanks', async () => {
-    // Tank history is not the catch's to delete - principle 3.
+  /**
+   * This used to refuse. It was the right rule about the data and the wrong
+   * one about the person: clearing a record that should not exist meant first
+   * staging a departure that never happened. The cascade is now stated rather
+   * than prevented, and these are the two halves of "stated" - the plan names
+   * the tanks before anything happens, and the delete actually empties them.
+   */
+  it('names the tanks a delete would empty, before it happens', async () => {
     const { specimen } = await aFullCatch();
-    await db.holdings.add({
-      id: newId('hold'), specimenId: specimen.id, speciesId: 'sp_jaguar_cichlid',
-      quantity: 1, openingBalance: false, acquiredOn: '2026-08-01', createdAt: '2026-08-01T00:00:00.000Z',
-    } as never);
+    await db.aquariums.add(seventyFive());
+    const { holding } = await createOpeningBalanceHolding(
+      { aquariumId: 'tank_75g', specimenId: specimen.id, speciesId: 'sp_jaguar_cichlid',
+        rawLabel: 'Jaguar', kind: 'individual', openingQuantity: 1 },
+      db,
+    );
+    expect(holding).toBeDefined();
+
+    const plan = await planDeleteCatch(specimen.id, db);
+    expect(plan.allowed).toBe(true);
+    expect(plan.holdings).toBe(1);
+    // Named, not counted: a number is something to accept on faith.
+    expect(plan.inTanks).toEqual(['75G']);
+    // Nothing removed by planning it.
+    expect(await db.holdings.get(holding.id)).toBeDefined();
+  });
+
+  it('removes the fish from the tank along with the catch', async () => {
+    const { specimen } = await aFullCatch();
+    await db.aquariums.add(seventyFive());
+    const { holding } = await createOpeningBalanceHolding(
+      { aquariumId: 'tank_75g', specimenId: specimen.id, speciesId: 'sp_jaguar_cichlid',
+        rawLabel: 'Jaguar', kind: 'individual', openingQuantity: 1 },
+      db,
+    );
 
     const result = await deleteCatch(specimen.id, db);
-    expect(result.allowed).toBe(false);
-    expect(result.reason).toMatch(/tank/i);
-    expect(await db.specimens.get(specimen.id)).toBeDefined();
+    expect(result.allowed).toBe(true);
+    expect(await db.specimens.get(specimen.id)).toBeUndefined();
+
+    // The holding and everything that placed or counted it go too - a residency
+    // pointing at a holding that no longer exists is a fish half-in a tank.
+    expect(await db.holdings.get(holding.id)).toBeUndefined();
+    expect(await db.residencies.where('holdingId').equals(holding.id).count()).toBe(0);
+    expect(await db.lifeEvents.where('holdingId').equals(holding.id).count()).toBe(0);
+    // And the tank itself is untouched.
+    expect(await db.aquariums.get('tank_75g')).toBeDefined();
+  });
+
+  it('leaves another fish in the same tank alone', async () => {
+    const { specimen } = await aFullCatch();
+    await db.aquariums.add(seventyFive());
+    const mine = await createOpeningBalanceHolding(
+      { aquariumId: 'tank_75g', specimenId: specimen.id, speciesId: 'sp_jaguar_cichlid',
+        rawLabel: 'Jaguar', kind: 'individual', openingQuantity: 1 },
+      db,
+    );
+    const neighbour = await createOpeningBalanceHolding(
+      { aquariumId: 'tank_75g', speciesId: 'sp_neon_tetra', rawLabel: 'Neon Tetra',
+        kind: 'group', openingQuantity: 6 },
+      db,
+    );
+
+    await deleteCatch(specimen.id, db);
+
+    expect(await db.holdings.get(mine.holding.id)).toBeUndefined();
+    expect(await db.holdings.get(neighbour.holding.id)).toBeDefined();
+    expect(await db.residencies.where('holdingId').equals(neighbour.holding.id).count()).toBe(1);
   });
 
   it('remembers the deletion, so a seeded catch cannot come back', async () => {
@@ -1199,5 +1257,161 @@ describe('adding, retiring and deleting tanks', () => {
     await clearTankPhoto(tank.id, db);
     expect((await db.aquariums.get(tank.id))!.photoMediaId).toBeUndefined();
     expect(await db.deletedRecords.get(mediaId)).toMatchObject({ kind: 'media' });
+  });
+});
+
+describe('logging a species the catalog does not have', () => {
+  async function draft() {
+    return createCatchDraft({ files: [photo()], clientKey: `k_${crypto.randomUUID()}` }, db);
+  }
+
+  it('creates a species of its own, marked as the keeper\'s and not the catalog\'s', async () => {
+    const d = await draft();
+    const species = await submitUserSpecies({ specimenId: d.specimen.id, label: '  Sailfin Pleco L083  ' }, db);
+
+    expect(species.commonName).toBe('Sailfin Pleco L083');   // trimmed
+    expect(species.origin).toBe('user-submitted');
+    expect(species.submission).toMatchObject({
+      label: 'Sailfin Pleco L083',
+      specimenId: d.specimen.id,
+    });
+    expect(await db.species.get(species.id)).toBeDefined();
+  });
+
+  it('links the specimen to it, provisionally rather than confirmed', async () => {
+    const d = await draft();
+    const species = await submitUserSpecies({ specimenId: d.specimen.id, label: 'Sailfin Pleco L083' }, db);
+
+    const after = await db.specimens.get(d.specimen.id);
+    expect(after!.speciesId).toBe(species.id);
+    // Confirming would mean "this is that catalog species", and there is none.
+    expect(after!.identityStatus).toBe('provisional');
+    expect(after!.rawLabel).toBe('Sailfin Pleco L083');
+  });
+
+  it('records the assertion so the identity trail explains itself', async () => {
+    const d = await draft();
+    await submitUserSpecies({ specimenId: d.specimen.id, label: 'Sailfin Pleco L083' }, db);
+
+    const [latest] = await identityHistory(d.specimen.id, db);
+    expect(latest!.candidateRawText).toBe('Sailfin Pleco L083');
+    expect(latest!.source).toBe('user');
+    expect(latest!.note).toMatch(/not in the catalog/i);
+  });
+
+  /**
+   * The point of reusing: two of the same unlisted fish should become one
+   * species with two specimens, which is what makes it worth reviewing.
+   */
+  it('reuses the species when the same name is logged again', async () => {
+    const a = await draft();
+    const b = await draft();
+    const first = await submitUserSpecies({ specimenId: a.specimen.id, label: 'Sailfin Pleco L083' }, db);
+    const second = await submitUserSpecies({ specimenId: b.specimen.id, label: '  sailfin pleco l083 ' }, db);
+
+    expect(second.id).toBe(first.id);
+    expect(await db.species.filter((s) => s.origin === 'user-submitted').count()).toBe(1);
+    expect((await db.specimens.where('speciesId').equals(first.id).toArray()).length).toBe(2);
+  });
+
+  it('never touches a catalog species with the same name', async () => {
+    const d = await draft();
+    const catalogNeon = await db.species.get('sp_neon_tetra');
+    expect(catalogNeon).toBeDefined();
+
+    await submitUserSpecies({ specimenId: d.specimen.id, label: catalogNeon!.commonName }, db);
+
+    // A new user-submitted row, and the catalog's own row left exactly as it was.
+    expect(await db.species.get('sp_neon_tetra')).toEqual(catalogNeon);
+    const mine = await userSubmittedSpecies(db);
+    expect(mine).toHaveLength(1);
+    expect(mine[0]!.id).not.toBe('sp_neon_tetra');
+  });
+
+  it('refuses a blank name', async () => {
+    const d = await draft();
+    await expect(submitUserSpecies({ specimenId: d.specimen.id, label: '   ' }, db))
+      .rejects.toThrow(/needs a name/i);
+  });
+
+  it('lists only the keeper\'s own species, newest first', async () => {
+    const a = await draft();
+    const b = await draft();
+    await submitUserSpecies({ specimenId: a.specimen.id, label: 'Older Fish' }, db);
+    await new Promise((r) => setTimeout(r, 5));
+    await submitUserSpecies({ specimenId: b.specimen.id, label: 'Newer Fish' }, db);
+
+    const mine = await userSubmittedSpecies(db);
+    expect(mine.map((s) => s.commonName)).toEqual(['Newer Fish', 'Older Fish']);
+    // The 2,000-odd seeded catalog species are not in this list.
+    expect(mine.every((s) => s.origin === 'user-submitted')).toBe(true);
+  });
+});
+
+describe('taking a fish out of a tank without killing it', () => {
+  async function stocked(qty = 6) {
+    await db.aquariums.add(seventyFive());
+    return createOpeningBalanceHolding(
+      { aquariumId: 'tank_75g', speciesId: 'sp_neon_tetra', rawLabel: 'Neon Tetra', kind: 'group', openingQuantity: qty },
+      db,
+    );
+  }
+
+  it('removes the holding and everything that placed or counted it', async () => {
+    const { holding } = await stocked();
+    const result = await removeHolding(holding.id, db);
+
+    expect(result.wasInTanks).toEqual(['75G']);
+    expect(await db.holdings.get(holding.id)).toBeUndefined();
+    expect(await db.residencies.where('holdingId').equals(holding.id).count()).toBe(0);
+    expect(await db.lifeEvents.where('holdingId').equals(holding.id).count()).toBe(0);
+  });
+
+  /**
+   * The whole reason this exists. recordDeath was the only way to empty a
+   * slot, so "I rehomed them" had to be filed as a death - a false entry in
+   * Fish Heaven that then blocked deleting the catch, because a memorial is
+   * deliberately permanent.
+   */
+  it('writes no memorial, because nothing died', async () => {
+    const { holding } = await stocked();
+    const before = await db.memorials.count();
+    await removeHolding(holding.id, db);
+    expect(await db.memorials.count()).toBe(before);
+  });
+
+  it('leaves the specimen, its encounter and its photos alone', async () => {
+    const a = await createCatchDraft({ files: [photo()], clientKey: `k_${crypto.randomUUID()}` }, db);
+    await db.aquariums.add(seventyFive());
+    const { holding } = await createOpeningBalanceHolding(
+      { aquariumId: 'tank_75g', specimenId: a.specimen.id, speciesId: 'sp_neon_tetra',
+        rawLabel: 'Neon Tetra', kind: 'individual', openingQuantity: 1 },
+      db,
+    );
+
+    await removeHolding(holding.id, db);
+
+    // The catch happened. Removing it from a tank is not a claim that it did not.
+    expect(await db.specimens.get(a.specimen.id)).toBeDefined();
+    expect(await db.encounters.where('specimenId').equals(a.specimen.id).count()).toBe(1);
+    expect(await db.media.where('specimenIds').equals(a.specimen.id).count()).toBe(1);
+  });
+
+  it('leaves the tank and its other residents alone', async () => {
+    const { holding } = await stocked();
+    const other = await createOpeningBalanceHolding(
+      { aquariumId: 'tank_75g', speciesId: 'sp_jaguar_cichlid', rawLabel: 'Jaguar', kind: 'individual', openingQuantity: 1 },
+      db,
+    );
+
+    await removeHolding(holding.id, db);
+
+    expect(await db.aquariums.get('tank_75g')).toBeDefined();
+    expect(await db.holdings.get(other.holding.id)).toBeDefined();
+    expect(await db.residencies.where('holdingId').equals(other.holding.id).count()).toBe(1);
+  });
+
+  it('refuses an id that is not a holding', async () => {
+    await expect(removeHolding('hold_nope', db)).rejects.toThrow(/unknown holding/i);
   });
 });

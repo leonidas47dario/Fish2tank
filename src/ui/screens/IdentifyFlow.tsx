@@ -24,7 +24,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { blobFor, db } from '@/data/db';
 import { CATALOG } from '@/data/catalog';
 import { canShareFiles, identifyFromText, isConfident, shareForLens, type Candidate } from '@/data/identify';
-import { assertIdentity, recordStoreLabel, revealSpecimen } from '@/data/repositories';
+import { assertIdentity, revealSpecimen, submitUserSpecies } from '@/data/repositories';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useCatalogCard, useIsFirstOfSpecies, useSpecimenMedia } from '../hooks';
 import type { RevealOutcome } from '@/data/repositories';
@@ -116,21 +116,23 @@ export default function IdentifyFlow() {
   /**
    * The escape for a fish the catalog does not contain.
    *
-   * Writes the store's wording to rawLabel and leaves identityStatus
-   * `provisional`. Deliberately does NOT reveal: Discovery needs a speciesId
-   * to look up market evidence, and there is none.
+   * Records the keeper's wording as its own `user-submitted` species and
+   * leaves identityStatus `provisional`. Deliberately does NOT reveal:
+   * Discovery reads market evidence for a species, and a species nobody sells
+   * under this name has none - a ceremony over an empty result would be a
+   * worse answer than going straight to the record.
    */
-  async function onRecordStoreLabel(label: string) {
+  async function onLogAsIs(label: string) {
     if (!specimenId) return;
     setBusy(true);
     setError(undefined);
     try {
-      await recordStoreLabel(specimenId, label);
+      await submitUserSpecies({ specimenId, label });
       navigate(`/specimen/${specimenId}`, { replace: true });
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);
-      console.error('[identify] could not record the store label', { specimenId, label, error: message });
-      setError('Could not save that label.');
+      console.error('[identify] could not log the species', { specimenId, label, error: message });
+      setError('Could not save that name.');
     } finally {
       setBusy(false);
     }
@@ -225,33 +227,6 @@ export default function IdentifyFlow() {
 
       {error && <p className="warn">{error}</p>}
 
-      {/* The one way past this screen without a catalog match.
-​
-          Not a skip. The catalog holds 2,178 species and a shop will sell one
-          it has never heard of, so refusing every unmatched fish would strand
-          a real catch on a screen with no exit. What it asks for is the store
-          label, verbatim, recorded as `provisional` - the weaker of two
-          identifications, and displayed as weaker on the record. */}
-      {query.trim() && candidates.length === 0 && (
-        <div className="stack">
-          <p className="empty" style={{ marginBottom: 0 }}>
-            Nothing in the catalog matches that.
-          </p>
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => void onRecordStoreLabel(query.trim())}
-          >
-            Record it as &ldquo;{query.trim()}&rdquo;
-          </button>
-          <p className="xs muted">
-            Keeps the store&apos;s wording exactly, and marks the identity provisional rather than
-            confirmed. If the species turns up in the catalog later, you can set it properly from
-            the record.
-          </p>
-        </div>
-      )}
-
       {candidates.length > 0 && (
         <>
           {/* FR-I04: ordering is the only confidence signal. No percentages. */}
@@ -281,6 +256,43 @@ export default function IdentifyFlow() {
             ))}
           </ul>
         </>
+      )}
+
+      {/* The way past this screen without a catalog match.
+​
+          THIS USED TO BE GATED ON `candidates.length === 0`, which is why it
+          came and went. The search returns partial word-overlap matches, so
+          typing a fish the catalog has never heard of frequently surfaces one
+          bad hit - and one bad hit was enough to remove the only exit, leaving
+          a real catch stranded on a screen whose matches were all wrong. It is
+          now offered whenever there is something to log, sitting below the
+          matches so a genuine one still leads.
+
+          Not a skip. The catalog holds 2,178 species and a shop will sell one
+          it has never heard of. What this records is the keeper's wording,
+          verbatim, as its own species marked `user-submitted`, with the
+          identity `provisional` - the weaker of the two, and displayed as
+          weaker on the record. */}
+      {query.trim() && (
+        <div className="stack identify__asis">
+          <p className="xs muted" style={{ marginBottom: 0 }}>
+            {candidates.length > 0
+              ? 'None of these it?'
+              : 'Nothing in the catalog matches that.'}
+          </p>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => void onLogAsIs(query.trim())}
+          >
+            Log it as &ldquo;{query.trim()}&rdquo;
+          </button>
+          <p className="xs muted">
+            Keeps your wording exactly and marks the identity provisional rather than confirmed.
+            It becomes a species of your own, so the next one you catch can join it — and it goes
+            forward for review, which is how the shared catalog gets the fish it is missing.
+          </p>
+        </div>
       )}
     </div>
   );
