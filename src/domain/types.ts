@@ -74,6 +74,16 @@ export interface UserSettings {
   reducedMotion: boolean;
   /** FR-P01: the currency new price observations are recorded in. */
   currency: CurrencyCode;
+  /**
+   * Spec 014: how often photos sync on their own, in minutes. 0 is off.
+   *
+   * Optional so no migration is needed - a profile written before this
+   * existed reads DEFAULT_SYNC_INTERVAL_MINUTES. Account-level rather than
+   * per-device, alongside `currency`, because a sync cadence is about how the
+   * collection is kept; `muted` is the counter-example and stays local
+   * because it is about the room a device is in.
+   */
+  photoSyncMinutes?: number;
 }
 
 export interface User {

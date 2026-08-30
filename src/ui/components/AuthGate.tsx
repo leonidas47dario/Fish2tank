@@ -17,16 +17,38 @@
  * Rendered by us rather than by flipping the addon's `requireAuth`, whose
  * dialog is unstyled and would arrive in the middle of the app's own visual
  * language. A gate we draw is a gate we can explain.
+ *
+ * Spec 013 adds one explicit exception - developer mode - so the deployed
+ * builds can be driven without a Google account. It is not a secret and does
+ * not pretend to be; see `data/dev-mode.ts`. What matters here is that it is
+ * never silent: the banner rides above every route for as long as it is on.
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useObservable } from 'dexie-react-hooks';
 import { db } from '@/data/db';
+import { DEVELOPER_MODE_EVENT, enterDeveloperMode, isDeveloperMode } from '@/data/dev-mode';
+import DeveloperBanner from './DeveloperBanner';
 import { FishIcon, GoogleLogoIcon } from './Icons';
 
 export default function AuthGate({ children }: { children: React.ReactNode }) {
   const user = useObservable(db.cloud.currentUser);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string>();
+  const [developer, setDeveloper] = useState(isDeveloperMode);
+
+  // Entering and leaving happen from two different subtrees (the gate below,
+  // the banner above), so both go through the window event rather than lifting
+  // state neither of them owns.
+  useEffect(() => {
+    const sync = () => setDeveloper(isDeveloperMode());
+    window.addEventListener(DEVELOPER_MODE_EVENT, sync);
+    // `storage` covers a second tab in the same browser.
+    window.addEventListener('storage', sync);
+    return () => {
+      window.removeEventListener(DEVELOPER_MODE_EVENT, sync);
+      window.removeEventListener('storage', sync);
+    };
+  }, []);
 
   // `undefined` means the observable has not emitted yet, which is a different
   // thing from "signed out" and must not flash the gate at someone who is
@@ -34,6 +56,17 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
   if (user === undefined) return null;
 
   if (user.isLoggedIn) return <>{children}</>;
+
+  // Signed out but let in on purpose. The banner is not optional - it is the
+  // whole reason this exception is allowed to exist.
+  if (developer) {
+    return (
+      <>
+        <DeveloperBanner />
+        {children}
+      </>
+    );
+  }
 
   async function signIn() {
     setBusy(true);
@@ -72,7 +105,70 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
           You only need to do this once on each device. After that it works with no signal,
           which matters in a fish shop.
         </p>
+
+        <DeveloperEntry />
       </div>
     </main>
+  );
+}
+
+/**
+ * The way in for automated checks - spec 013.
+ *
+ * Closed by default and worded flatly, because it must not read as a second
+ * way to open your collection competing with the button above it. It is not:
+ * it opens an empty, signed-out app on this device and unlocks nothing that
+ * lives anywhere else.
+ */
+function DeveloperEntry() {
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState('');
+  const [wrong, setWrong] = useState(false);
+  const [checking, setChecking] = useState(false);
+
+  async function submit(event: React.FormEvent) {
+    event.preventDefault();
+    setChecking(true);
+    setWrong(false);
+    // enterDeveloperMode raises the event the gate is listening for, so a
+    // match re-renders this component straight out of existence.
+    if (!(await enterDeveloperMode(value))) setWrong(true);
+    setChecking(false);
+  }
+
+  if (!open) {
+    return (
+      <button type="button" className="gate__dev" onClick={() => setOpen(true)}>
+        Developer mode
+      </button>
+    );
+  }
+
+  return (
+    <form className="stack gate__devform" onSubmit={(e) => void submit(e)}>
+      <label className="stack">
+        <span className="xs muted">Developer passphrase</span>
+        <input
+          type="password"
+          autoComplete="off"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          aria-invalid={wrong || undefined}
+          autoFocus
+        />
+      </label>
+      <button type="submit" disabled={checking || value.length === 0}>
+        {checking ? 'Checking…' : 'Open without an account'}
+      </button>
+      {wrong ? (
+        <p className="xs warn" role="alert" style={{ marginBottom: 0 }}>
+          That passphrase does not match. Nothing has changed.
+        </p>
+      ) : null}
+      <p className="xs muted" style={{ marginBottom: 0 }}>
+        Opens this device signed out, with an empty collection. It does not sign you in
+        and cannot reach anybody's records or photos.
+      </p>
+    </form>
   );
 }

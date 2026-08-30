@@ -9,6 +9,7 @@
  */
 import { db } from '@/data/db';
 import { CLOUD_DATABASE_URL, DEPLOYMENT, MEDIA_WORKER_URL } from '@/build-info';
+import { sweepOrphanedBlobsQuietly, type BlobSweep } from '../blob-sweep';
 import { runDownloadQueue, runUploadQueue, type TransferSummary } from './media-queue';
 import { createWorkerBackend } from './worker-backend';
 import type { SyncEnvironment } from './backend';
@@ -20,6 +21,8 @@ export interface MediaSyncResult {
   blocked?: MediaSyncBlocker;
   upload?: TransferSummary;
   download?: TransferSummary;
+  /** BUG-06: bytes collected because nothing references them any more. */
+  sweep?: BlobSweep;
 }
 
 /**
@@ -74,6 +77,11 @@ export async function runMediaSync(): Promise<MediaSyncResult> {
   const upload = await runUploadQueue(deps);
   const download = await runDownloadQueue(deps);
 
-  console.info('[sync] media run complete', { ...env, upload, download });
-  return { upload, download };
+  // BUG-06, spec 012. At the end of the run, when records and bytes have just
+  // been reconciled - which is the moment a delete that arrived from another
+  // device has left a blob here with nothing pointing at it.
+  const sweep = await sweepOrphanedBlobsQuietly(db);
+
+  console.info('[sync] media run complete', { ...env, upload, download, sweep });
+  return { upload, download, sweep };
 }
