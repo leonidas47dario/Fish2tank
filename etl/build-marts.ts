@@ -17,7 +17,9 @@ import { DuckDBInstance } from '@duckdb/node-api';
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { deriveCommonName } from './normalize/derive-species';
 import { findProblems, isUsableName, summarise } from '@/data/seed/catalog-quality';
-import { NOT_A_SPECIES, OVERRIDE_BY_ID, SPECIES_SYNONYMS, SYNONYM_IDS } from '@/data/seed/species-overrides';
+import {
+  CANONICAL_BY_SYNONYM, NOT_A_SPECIES, OVERRIDE_BY_ID, SPECIES_SYNONYMS, SYNONYM_IDS,
+} from '@/data/seed/species-overrides';
 import { traitsFor, type OrganismKind, type WaterZone } from '@/data/seed/taxonomy';
 import type { WaterType } from '@/domain/types';
 import { loadCareBackfill, type CareRecord } from './care/backfill';
@@ -243,7 +245,31 @@ async function main() {
   const careBackfill = loadCareBackfill();
   const careStats = { species: 0, fields: {} as Record<string, number> };
 
-  const species: CatalogEntry[] = rows.getRowObjects()
+  const warehouseRows = rows.getRowObjects();
+
+  /**
+   * The names a dropped synonym was searchable under, kept on the survivor.
+   *
+   * Dropping the row used to drop its binomial with it. That is fine for a
+   * typo nobody types, but spec 008 folds real superseded combinations -
+   * `Brachydanio rerio`, `Puntius tetrazona`, `Corydoras adolfoi` - and those
+   * are exactly what a keeper reads off a shop tag and types into the search
+   * box. Losing them would fix a duplicate by creating a dead end.
+   *
+   * So the old binomial and its aliases move onto the canonical row, where
+   * identifyFromText already searches aliases. The merge then costs the user
+   * nothing: the same query still finds the fish, and finds one of it.
+   */
+  const inheritedAliases = new Map<string, string[]>();
+  for (const r of warehouseRows) {
+    const id = String(r.species_id);
+    const canonical = CANONICAL_BY_SYNONYM.get(id);
+    if (!canonical) continue;
+    const carried = [nn(r.scientific_name), ...split(r.aliases)].filter(Boolean) as string[];
+    inheritedAliases.set(canonical, [...(inheritedAliases.get(canonical) ?? []), ...carried]);
+  }
+
+  const species: CatalogEntry[] = warehouseRows
     // Vendor typos minted the same fish two or three times over. Dropping the
     // non-canonical record here is what stops three "Blue Discus" cards.
     .filter((r) => !SYNONYM_IDS.has(String(r.species_id)))
@@ -252,7 +278,8 @@ async function main() {
     const attribution = nn(r.img_attribution);
     const speciesId = String(r.species_id);
     const scientificName = nn(r.scientific_name);
-    const aliases = split(r.aliases);
+    const aliases = [...new Set([...split(r.aliases), ...(inheritedAliases.get(speciesId) ?? [])])]
+      .filter((a) => a !== scientificName);
     const traits = traitsFor(scientificName);
     const cared = applyCareBackfill(
       {

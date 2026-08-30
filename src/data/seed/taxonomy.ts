@@ -183,6 +183,45 @@ export const FAMILY_TRAITS: Record<string, FamilyTraits> = {
   Ranidae: { kind: 'amphibian', note: 'True frogs; largely semi-aquatic.' },
   Carettochelyidae: { kind: 'reptile', zone: 'all-levels', note: 'Pig-nosed turtle; fully aquatic.' },
   Trionychidae: { kind: 'reptile', zone: 'bottom', note: 'Softshell turtles; bury in the substrate.' },
+
+  // --- Derived 2026-08-30 by `npm run genera:classify` (spec 009, BUG-03) ---
+  // Kind only, and no zone. Walking Wikipedia's taxonomy templates upward
+  // establishes what an animal IS with near-certainty; it says nothing about
+  // where in the water column it sits, and this module's rule is that an
+  // unsourced zone stays absent rather than becoming a guess.
+  ...derived('fish', [
+    'Acanthuridae', 'Anomalopidae', 'Antennariidae', 'Anthiadidae', 'Apogonidae',
+    'Balistidae', 'Blenniidae', 'Bothidae', 'Callionymidae', 'Centriscidae',
+    'Chaenopsidae', 'Chaetodontidae', 'Cirrhitidae', 'Dactylopteridae', 'Diodontidae',
+    'Enoplosidae', 'Ephippidae', 'Epinephelidae', 'Gobiesocidae', 'Grammatidae',
+    'Grammistidae', 'Haemulidae', 'Hemiscylliidae', 'Heterodontidae', 'Holocentridae',
+    'Labridae', 'Liopropomatidae', 'Malacanthidae', 'Microcanthinae', 'Monacanthidae',
+    'Monocentridae', 'Mullidae', 'Nemipteridae', 'Ogcocephalidae', 'Opistognathidae',
+    'Ostraciidae', 'Pegasidae', 'Plesiopidae', 'Pomacanthidae', 'Pomacentridae',
+    'Priacanthidae', 'Pseudochromidae', 'Scorpaenidae', 'Siganidae', 'Sternopygidae',
+    'Synanceiidae', 'Syngnathidae', 'Urotrygonidae', 'Zanclidae',
+  ]),
+  ...derived('invertebrate', [
+    'Acroporidae', 'Actiniidae', 'Agariciidae', 'Aglajidae', 'Alcyoniidae', 'Alpheidae',
+    'Aplysiidae', 'Archasteridae', 'Cardiidae', 'Cerithiidae', 'Cidaridae',
+    'Columbellidae', 'Cucumariidae', 'Cypraeidae', 'Dendrophylliidae', 'Diadematidae',
+    'Diogenidae', 'Diploastreidae', 'Discosomidae', 'Echinasteridae', 'Enoplometopidae',
+    'Euphylliidae', 'Faviidae', 'Fissurellidae', 'Fungiidae', 'Galatheidae',
+    'Goniasteridae', 'Haliotidae', 'Helioporidae', 'Heteractidae', 'Hexabranchidae',
+    'Hippolytidae', 'Holothuriidae', 'Inachidae', 'Limidae', 'Limulidae', 'Lobophylliidae',
+    'Lysmatidae', 'Margaritidae', 'Merulinidae', 'Mithracidae', 'Octopodidae',
+    'Odontodactylidae', 'Ophidiasteridae', 'Ophiocomidae', 'Oreasteridae', 'Percnidae',
+    'Plerogyridae', 'Plesiastreidae', 'Plexauridae', 'Pocilloporidae', 'Porcellanidae',
+    'Rhynchocinetidae', 'Ricordeidae', 'Sabellidae', 'Serpulidae', 'Spongiodermidae',
+    'Stenopodidae', 'Stichodactylidae', 'Stichopodidae', 'Strombidae', 'Tegulidae',
+    'Tetillidae', 'Thoridae', 'Trochidae', 'Tubiporidae', 'Turbinidae', 'Ulmaridae',
+    'Xeniidae', 'Zoanthidae',
+  ]),
+  ...derived('plant', [
+    'Acoraceae', 'Cannaceae', 'Equisetaceae', 'Malvaceae', 'Marantaceae', 'Nelumbonaceae',
+    'Poaceae', 'Saururaceae', 'Typhaceae',
+  ]),
+
 };
 
 // --- helpers ---------------------------------------------------------------
@@ -197,6 +236,15 @@ function bottom(kind: OrganismKind, note: string, f: string[]) { return fill(kin
 function mid(kind: OrganismKind, note: string, f: string[]) { return fill(kind, 'mid', note, f); }
 function top(kind: OrganismKind, note: string, f: string[]) { return fill(kind, 'top', note, f); }
 function allLevels(kind: OrganismKind, note: string, f: string[]) { return fill(kind, 'all-levels', note, f); }
+/**
+ * A family classified from taxonomy alone: kind known, zone deliberately not.
+ *
+ * Separate from `fill` so the diff shows at a glance which families carry a
+ * sourced water-column habit and which only carry a kingdom-level fact.
+ */
+function derived(kind: OrganismKind, f: string[]) {
+  return fill(kind, undefined, 'Kind derived from Wikipedia taxonomy (npm run genera:classify); water-column habit not sourced.', f);
+}
 function plants(f: string[]) {
   return fill('plant', undefined, 'Aquatic or marginal plant; position in the tank is a planting decision, not a trait.', f);
 }
@@ -395,6 +443,135 @@ export const GENUS_FAMILY: Record<string, string> = {
   Xenopus: 'Pipidae', Xiphophorus: 'Poeciliidae', Yaoshania: 'Gastromyzontidae',
   Yasuhikotakia: 'Botiidae', Zephyranthes: 'Amaryllidaceae', Zoogoneticus: 'Goodeidae',
   Zungaro: 'Pimelodidae',
+
+  // --- Derived 2026-08-30 by `npm run genera:classify` (spec 009, BUG-03) ---
+  // 368 genera the hand-compiled table never saw, almost all reef stock that
+  // arrived with a saltwater vendor. Genus -> family walked from Wikipedia's
+  // taxonomy templates, which is structured data rather than prose.
+  Abudefduf: 'Pomacentridae', Acanthastrea: 'Lobophylliidae', Acanthemblemaria: 'Chaenopsidae',
+  Acanthochromis: 'Pomacentridae', Acanthostracion: 'Ostraciidae', Acanthurus: 'Acanthuridae',
+  Acantopsis: 'Cobitidae', Acorus: 'Acoraceae', Acreichthys: 'Monacanthidae',
+  Acropora: 'Acroporidae', Aeoliscus: 'Centriscidae', Aequidens: 'Cichlidae',
+  Allogalathea: 'Galatheidae', Alpheus: 'Alpheidae', Altolamprologus: 'Cichlidae',
+  Amblyeleotris: 'Gobiidae', Amblyglyphidodon: 'Pomacentridae', Amblygobius: 'Gobiidae',
+  Amphiprion: 'Pomacentridae', Anampses: 'Labridae', Ancylomenes: 'Palaemonidae',
+  Anisotremus: 'Haemulidae', Anomalops: 'Anomalopidae', Antennarius: 'Antennariidae',
+  Aphyosemion: 'Nothobranchiidae', Apogon: 'Apogonidae', Apogonichthyoides: 'Apogonidae',
+  Apogonichthys: 'Apogonidae', Apolemichthys: 'Pomacanthidae', Archaster: 'Archasteridae',
+  Archocentrus: 'Cichlidae', Arothron: 'Tetraodontidae', Assessor: 'Plesiopidae',
+  Astraea: 'Turbinidae', Astropyga: 'Diadematidae', Atrosalarias: 'Blenniidae',
+  Aurelia: 'Ulmaridae', Balistapus: 'Balistidae', Balistes: 'Balistidae',
+  Balistoides: 'Balistidae', Belonepterygion: 'Plesiopidae', Bispira: 'Sabellidae',
+  Blastomussa: 'Plerogyridae', Blenniella: 'Blenniidae', Bodianus: 'Labridae',
+  Bothus: 'Bothidae', Brochis: 'Callichthyidae', Buccochromis: 'Cichlidae',
+  Caesio: 'Lutjanidae', Calcinus: 'Diogenidae', Calloplesiops: 'Plesiopidae',
+  Campanula: 'Campanulaceae', Camposcia: 'Inachidae', Canna: 'Cannaceae',
+  Cantherhines: 'Monacanthidae', Canthigaster: 'Tetraodontidae', Caracanthus: 'Scorpaenidae',
+  Carettochelys: 'Carettochelyidae', Catalaphyllia: 'Euphylliidae',
+  Centropyge: 'Pomacanthidae', Cephalopholis: 'Epinephelidae', Cerithium: 'Cerithiidae',
+  Cetoscarus: 'Labridae', Chaenopsis: 'Chaenopsidae', Chaetodermis: 'Monacanthidae',
+  Chaetodon: 'Chaetodontidae', Chaetodontoplus: 'Pomacanthidae', Cheilinus: 'Labridae',
+  Cheilodipterus: 'Apogonidae', Chelidonura: 'Aglajidae', Chelmon: 'Chaetodontidae',
+  Chelonodon: 'Tetraodontidae', Chilomycterus: 'Diodontidae', Chiloscyllium: 'Hemiscylliidae',
+  Choerodon: 'Labridae', Choridactylus: 'Synanceiidae', Chromis: 'Pomacentridae',
+  Chrysiptera: 'Pomacentridae', Ciliopagurus: 'Diogenidae', Cinachyra: 'Tetillidae',
+  Cirrhilabrus: 'Labridae', Cirrhitichthys: 'Cirrhitidae', Cirrhitops: 'Cirrhitidae',
+  Cirripectes: 'Blenniidae', Cleidopus: 'Monocentridae', Clibanarius: 'Diogenidae',
+  Colochirus: 'Cucumariidae', Congrogadus: 'Pseudochromidae', Conomurex: 'Strombidae',
+  Coradion: 'Chaetodontidae', Coris: 'Labridae', Coryphopterus: 'Gobiidae',
+  Cromileptes: 'Epinephelidae', Crossosalarias: 'Blenniidae', Cryptocentrus: 'Gobiidae',
+  Ctenochaetus: 'Acanthuridae', Ctenogobiops: 'Gobiidae', Cynarina: 'Lobophylliidae',
+  Cyperus: 'Cyperaceae', Cypho: 'Pseudochromidae', Cypraea: 'Cypraeidae',
+  Cyprinocirrhites: 'Cirrhitidae', Dactyloptena: 'Dactylopteridae',
+  Dactylopus: 'Callionymidae', Dardanus: 'Diogenidae', Dascyllus: 'Pomacentridae',
+  Dendrochirus: 'Scorpaenidae', Diademichthys: 'Gobiesocidae', Dianema: 'Callichthyidae',
+  Diodogorgia: 'Spongiodermidae', Diodon: 'Diodontidae', Diploastrea: 'Diploastreidae',
+  Dolabella: 'Aplysiidae', Doryrhamphus: 'Syngnathidae', Duncanopsammia: 'Dendrophylliidae',
+  Dunckerocampus: 'Syngnathidae', Echidna: 'Muraenidae', Echinaster: 'Echinasteridae',
+  Echinophyllia: 'Lobophylliidae', Echinothrix: 'Diadematidae', Ecsenius: 'Blenniidae',
+  Egeria: 'Hydrocharitaceae', Eigenmannia: 'Sternopygidae', Ekemblemaria: 'Chaenopsidae',
+  Elacatinus: 'Gobiidae', Enchelycore: 'Muraenidae', Enoplometopus: 'Enoplometopidae',
+  Enoplosus: 'Enoplosidae', Entacmaea: 'Actiniidae', Equetus: 'Sciaenidae',
+  Equisetum: 'Equisetaceae', Eucidaris: 'Cidaridae', Euphyllia: 'Euphylliidae',
+  Eurypegasus: 'Pegasidae', Eviota: 'Gobiidae', Exallias: 'Blenniidae', Favia: 'Faviidae',
+  Favites: 'Merulinidae', Forcipiger: 'Chaetodontidae', Fowleria: 'Apogonidae',
+  Fromia: 'Goniasteridae', Fungia: 'Fungiidae', Galaxea: 'Euphylliidae',
+  Gambusia: 'Poeciliidae', Gasteropelecus: 'Gasteropelecidae', Genicanthus: 'Pomacanthidae',
+  Gnathophyllum: 'Palaemonidae', Gobiodon: 'Gobiidae', Gobiopsis: 'Gobiidae',
+  Gomphosus: 'Labridae', Goniodiscaster: 'Oreasteridae', Gramma: 'Grammatidae',
+  Grammistes: 'Grammistidae', Gymnomuraena: 'Muraenidae', Halichoeres: 'Labridae',
+  Haliotis: 'Haliotidae', Heliofungia: 'Fungiidae', Heliopora: 'Helioporidae',
+  Hemiscyllium: 'Hemiscylliidae', Hemitaurichthys: 'Chaetodontidae',
+  Heniochus: 'Chaetodontidae', Heteractis: 'Heteractidae', Heterodontus: 'Heterodontidae',
+  Heteropriacanthus: 'Priacanthidae', Hexabranchus: 'Hexabranchidae', Hibiscus: 'Malvaceae',
+  Hippocampus: 'Syngnathidae', Hippopus: 'Cardiidae', Histrio: 'Antennariidae',
+  Holacanthus: 'Pomacanthidae', Hologymnosus: 'Labridae', Holothuria: 'Holothuriidae',
+  Homophyllia: 'Lobophylliidae', Hoplolatilus: 'Malacanthidae', Hottonia: 'Primulaceae',
+  Houttuynia: 'Saururaceae', Hydnophora: 'Merulinidae', Hydrocleys: 'Alismataceae',
+  Hymenocallis: 'Amaryllidaceae', Hymenocera: 'Palaemonidae', Hypsoblennius: 'Blenniidae',
+  Hypsypops: 'Pomacentridae', Iconaster: 'Goniasteridae', Isaurus: 'Zoanthidae',
+  Istigobius: 'Gobiidae', Koumansetta: 'Gobiidae', Labracinus: 'Pseudochromidae',
+  Labroides: 'Labridae', Lactoria: 'Ostraciidae', Larabicus: 'Labridae',
+  Leander: 'Palaemonidae', Leptastrea: 'Faviidae', Leptoseris: 'Agariciidae', Lima: 'Limidae',
+  Limulus: 'Limulidae', Linckia: 'Ophidiasteridae', Liopropoma: 'Liopropomatidae',
+  Lobophyllia: 'Lobophylliidae', Lotilia: 'Gobiidae', Luzonichthys: 'Anthiadidae',
+  Lysmata: 'Lysmatidae', Lythrypnus: 'Gobiidae', Macrodactyla: 'Actiniidae',
+  Macropharyngodon: 'Labridae', Manonichthys: 'Pseudochromidae', Margarites: 'Margaritidae',
+  Megathura: 'Fissurellidae', Meiacanthus: 'Blenniidae', Melichthys: 'Balistidae',
+  Merulina: 'Merulinidae', Microcanthus: 'Microcanthinae', Micromussa: 'Lobophylliidae',
+  Microspathodon: 'Pomacentridae', Mimulus: 'Phrymaceae', Mirolabrichthys: 'Anthiadidae',
+  Mithraculus: 'Mithracidae', Monetaria: 'Cypraeidae', Montipora: 'Acroporidae',
+  Muraena: 'Muraenidae', Myriophyllum: 'Haloragaceae', Myripristis: 'Holocentridae',
+  Mystus: 'Bagridae', Nardoa: 'Ophidiasteridae', Naso: 'Acanthuridae',
+  Nelumbo: 'Nelumbonaceae', Nemanthias: 'Anthiadidae', Nemateleotris: 'Gobiidae',
+  Neocirrhites: 'Cirrhitidae', Neoglyphidodon: 'Pomacentridae', Neoniphon: 'Holocentridae',
+  Neopetrolisthes: 'Porcellanidae', Neopomacentrus: 'Pomacentridae', Nerita: 'Neritidae',
+  Nomorhamphus: 'Zenarchopteridae', Novaculichthys: 'Labridae', Octopus: 'Octopodidae',
+  Odontanthias: 'Anthiadidae', Odontodactylus: 'Odontodactylidae', Odonus: 'Balistidae',
+  Ogcocephalus: 'Ogcocephalidae', Ogilbyina: 'Pseudochromidae', Omobranchus: 'Blenniidae',
+  Ophioblennius: 'Blenniidae', Ophiocoma: 'Ophiocomidae', Ophiomastix: 'Ophiocomidae',
+  Opistognathus: 'Opistognathidae', Orontium: 'Araceae', Ostorhinchus: 'Apogonidae',
+  Ostracion: 'Ostraciidae', Otopharynx: 'Cichlidae', Oxycirrhites: 'Cirrhitidae',
+  Paguristes: 'Diogenidae', Paracanthurus: 'Acanthuridae', Paracentropyge: 'Pomacanthidae',
+  Paracheilinus: 'Labridae', Paracirrhites: 'Cirrhitidae', Paragobiodon: 'Gobiidae',
+  Paraplesiops: 'Plesiopidae', Parioglossus: 'Gobiidae', Parupeneus: 'Mullidae',
+  Pavona: 'Agariciidae', Pentacta: 'Cucumariidae', Pentapodus: 'Nemipteridae',
+  Percnon: 'Percnidae', Periclimenes: 'Palaemonidae', Pervagor: 'Monacanthidae',
+  Petrolisthes: 'Porcellanidae', Phalaris: 'Poaceae', Philodendron: 'Araceae',
+  Physostegia: 'Lamiaceae', Pictichromis: 'Pseudochromidae', Pictocolumbella: 'Columbellidae',
+  Pilsbryoconcha: 'Unionidae', Platax: 'Ephippidae', Plectorhinchus: 'Haemulidae',
+  Plectranthias: 'Anthiadidae', Plectropomus: 'Epinephelidae', Plerogyra: 'Plerogyridae',
+  Plesiastrea: 'Plesiastreidae', Pocillopora: 'Pocilloporidae', Pogonoperca: 'Grammistidae',
+  Pomacanthus: 'Pomacanthidae', Pomacentrus: 'Pomacentridae', Pontederia: 'Pontederiaceae',
+  Porcellionides: 'Porcellionidae', Premnas: 'Pomacentridae', Priolepis: 'Gobiidae',
+  Prognathodes: 'Chaetodontidae', Protomyzon: 'Gastromyzontidae', Protoreaster: 'Oreasteridae',
+  Protula: 'Serpulidae', Pseudanthias: 'Anthiadidae', Pseudechidna: 'Muraenidae',
+  Pseudobalistes: 'Balistidae', Pseudocheilinops: 'Labridae', Pseudocheilinus: 'Labridae',
+  Pseudochromis: 'Pseudochromidae', Pseudocolochirus: 'Cucumariidae', Pseudodax: 'Labridae',
+  Pseudojuloides: 'Labridae', Pseudoplesiops: 'Pseudochromidae', Pseudotropheus: 'Cichlidae',
+  Pterapogon: 'Apogonidae', Ptereleotris: 'Gobiidae', Pterois: 'Scorpaenidae',
+  Pygoplites: 'Pomacanthidae', Rachoviscus: 'Acestrorhamphidae', Rhinecanthus: 'Balistidae',
+  Rhinomuraena: 'Muraenidae', Rhinopias: 'Scorpaenidae', Rhodactis: 'Discosomidae',
+  Rhynchocinetes: 'Rhynchocinetidae', Ricordea: 'Ricordeidae', Salarias: 'Blenniidae',
+  Sarcophyton: 'Alcyoniidae', Sargocentron: 'Holocentridae', Saron: 'Hippolytidae',
+  Saururus: 'Saururaceae', Scartella: 'Blenniidae', Scolopsis: 'Nemipteridae',
+  Selene: 'Carangidae', Selenotoca: 'Scatophagidae', Seriatopora: 'Pocilloporidae',
+  Serranocirrhitus: 'Anthiadidae', Serranus: 'Serranidae', Siganus: 'Siganidae',
+  Signigobius: 'Gobiidae', Sinularia: 'Alcyoniidae', Sparisoma: 'Labridae',
+  Sphaeramia: 'Apogonidae', Spirobranchus: 'Serpulidae', Steatocranus: 'Cichlidae',
+  Stenopus: 'Stenopodidae', Stenorhynchus: 'Inachidae', Stichodactyla: 'Stichodactylidae',
+  Stichopus: 'Stichopodidae', Stonogobiops: 'Gobiidae', Stylophora: 'Pocilloporidae',
+  Sufflamen: 'Balistidae', Swiftia: 'Plexauridae', Synchiropus: 'Callionymidae',
+  Taenianotus: 'Scorpaenidae', Taeniura: 'Dasyatidae', Tectus: 'Tegulidae',
+  Telmatherina: 'Telmatherinidae', Thalassoma: 'Labridae', Thalia: 'Marantaceae',
+  Thor: 'Thoridae', Tigrigobius: 'Gobiidae', Trachyphyllia: 'Merulinidae',
+  Tridacna: 'Cardiidae', Trimma: 'Gobiidae', Trochus: 'Trochidae', Tropheus: 'Cichlidae',
+  Tubipora: 'Tubiporidae', Tulbaghia: 'Amaryllidaceae', Turbo: 'Turbinidae',
+  Typha: 'Typhaceae', Urotrygon: 'Urotrygonidae', Valenciennea: 'Gobiidae',
+  Variola: 'Epinephelidae', Viviparus: 'Viviparidae', Wetmorella: 'Labridae',
+  Xanthichthys: 'Balistidae', Xenia: 'Xeniidae', Zanclus: 'Zanclidae',
+  Zebrasoma: 'Acanthuridae', Zoramia: 'Apogonidae',
+
 };
 
 /**
