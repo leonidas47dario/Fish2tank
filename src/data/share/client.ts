@@ -190,7 +190,7 @@ export async function publishTank(
   await recordShare(aquariumId, {
     token,
     publishedAt: snapshot.publishedAt,
-    fingerprint: fingerprintOf(snapshot),
+    fingerprint: fingerprintOf(snapshot, loaded.aquarium.photoMediaId),
     photoIncluded: Boolean(tankPhotoBlobKey),
   }, database);
 
@@ -250,6 +250,40 @@ export async function revokeTank(aquariumId: Id, deps: ShareDeps = {}): Promise<
 
   await forgetShare(aquariumId, database);
   console.info('[share] revoke -> ok', { ...identity, token: share.token });
+}
+
+/**
+ * What the tank looks like right now, in the two terms `needsRepublish` reads.
+ *
+ * One function so the share sheet's "is this page current?" line and the
+ * automatic republisher's "should I write?" decision cannot answer the same
+ * question differently. They did briefly, and the difference was invisible:
+ * the sheet built its fingerprint without the photo while publish built one
+ * with it, so any shared tank with a photo read as permanently stale.
+ */
+export async function currentShareState(
+  aquariumId: Id,
+  database: Fish2TankDB = defaultDb,
+): Promise<{ fingerprint: string; hasPhoto: boolean } | undefined> {
+  const loaded = await loadTankResidents(aquariumId, database);
+  if (!loaded) return undefined;
+
+  const snapshot = buildSnapshot({
+    aquarium: loaded.aquarium,
+    residents: loaded.residents,
+    // Excluded from the fingerprint by design - see fingerprintOf. These four
+    // are placeholders for a snapshot that is never published.
+    tankPhotoBlobKey: undefined,
+    token: '',
+    publishedAt: '',
+    buildId: '',
+    owner: '',
+  });
+
+  return {
+    fingerprint: fingerprintOf(snapshot, loaded.aquarium.photoMediaId),
+    hasPhoto: Boolean(loaded.aquarium.photoMediaId),
+  };
 }
 
 /** Whether R2 already holds this blob. Absent is a normal answer, not an error. */

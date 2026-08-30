@@ -8,7 +8,7 @@
  * list breaks loudly the moment the projection stops being a projection.
  */
 import { describe, expect, it } from 'vitest';
-import { buildSnapshot, fingerprintOf, toPublic } from './snapshot';
+import { buildSnapshot, fingerprintOf, needsRepublish, toPublic } from './snapshot';
 import type { Aquarium } from '@/domain/types';
 import type { TankResident } from '@/domain/tank-stats';
 
@@ -141,7 +141,27 @@ describe('fingerprintOf', () => {
     expect(fingerprintOf(renamed)).not.toBe(fingerprintOf(before));
 
     const photographed = buildSnapshot({ ...base, tankPhotoBlobKey: 'blob_x' });
-    expect(fingerprintOf(photographed)).not.toBe(fingerprintOf(before));
+    expect(fingerprintOf(photographed, 'media_1')).not.toBe(fingerprintOf(before));
+  });
+
+  /**
+   * The bug this pins down: keying on the blob key compares a content question
+   * against a sync-state answer. A tank whose photo has not finished uploading
+   * publishes without the key, so on the next tick the fingerprint would
+   * differ from itself and the republisher would write forever.
+   */
+  it('does not change when only the photo\'s SYNC STATE differs', () => {
+    const notYetUploaded = buildSnapshot({ ...base, tankPhotoBlobKey: undefined });
+    const uploaded = buildSnapshot({ ...base, tankPhotoBlobKey: 'blob_x' });
+
+    expect(fingerprintOf(uploaded, 'media_1')).toBe(fingerprintOf(notYetUploaded, 'media_1'));
+  });
+
+  it('changes when the photo itself is replaced', () => {
+    const snap = buildSnapshot({ ...base, tankPhotoBlobKey: undefined });
+
+    expect(fingerprintOf(snap, 'media_2')).not.toBe(fingerprintOf(snap, 'media_1'));
+    expect(fingerprintOf(snap, undefined)).not.toBe(fingerprintOf(snap, 'media_1'));
   });
 
   it('does not change for an edit no guest can see', () => {
@@ -160,6 +180,38 @@ describe('fingerprintOf', () => {
   it('is stable across calls, or the republisher would loop', () => {
     const snap = buildSnapshot({ ...base, tankPhotoBlobKey: undefined });
     expect(fingerprintOf(snap)).toBe(fingerprintOf(snap));
+  });
+});
+
+describe('needsRepublish', () => {
+  const published = { fingerprint: 'fp-1', photoIncluded: true };
+
+  it('says no when nothing a guest sees has moved', () => {
+    expect(needsRepublish(published, { fingerprint: 'fp-1', hasPhoto: true })).toBe(false);
+  });
+
+  it('says yes when the content changed', () => {
+    expect(needsRepublish(published, { fingerprint: 'fp-2', hasPhoto: true })).toBe(true);
+  });
+
+  /**
+   * The photo finishing its upload changes nothing about the tank, so the
+   * fingerprint cannot see it. Without this clause a shared tank whose photo
+   * was still syncing would never show that photo to a guest until somebody
+   * pressed the button by hand.
+   */
+  it('says yes when the photo has arrived since the last publish', () => {
+    expect(needsRepublish(
+      { fingerprint: 'fp-1', photoIncluded: false },
+      { fingerprint: 'fp-1', hasPhoto: true },
+    )).toBe(true);
+  });
+
+  it('says no for a tank that simply has no photo', () => {
+    expect(needsRepublish(
+      { fingerprint: 'fp-1', photoIncluded: false },
+      { fingerprint: 'fp-1', hasPhoto: false },
+    )).toBe(false);
   });
 });
 

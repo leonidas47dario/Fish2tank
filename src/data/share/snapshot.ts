@@ -155,18 +155,56 @@ function collectBlobKeys(snapshot: SharedSnapshot): string[] {
  *
  * The automatic republisher compares this against the published copy's, so
  * that an edit a guest cannot see - renaming a holding's private note, say -
- * does not spend a write. What it covers is exactly what `buildSnapshot`
- * publishes, minus the three fields that change on every publish by
- * definition: `token`, `publishedAt` and `buildId`. Including those would make
- * every fingerprint differ from every other and the comparison pointless.
+ * does not spend a write. It covers what `buildSnapshot` publishes, minus the
+ * three fields that change on every publish by definition (`token`,
+ * `publishedAt`, `buildId`), which would otherwise make every fingerprint
+ * differ from every other and the comparison pointless.
+ *
+ * THE PHOTO IS KEYED BY ITS MEDIA ID, NOT ITS BLOB KEY, and the distinction
+ * cost a bug before it was noticed. `tank.photoBlobKey` is present only when
+ * the bytes had reached R2 at publish time, so a fingerprint built from it
+ * compares a *content* question against a *sync-state* answer: a tank whose
+ * photo had not yet uploaded would read as changed on every single tick,
+ * forever. The media id is a fact about the tank and settles.
+ *
+ * That leaves "the photo finished syncing after we published" outside this
+ * function, which is correct - it is not a content change. `needsRepublish`
+ * owns that case.
  *
  * 64 bits of FNV-1a, as two 32-bit halves. Not cryptographic and does not need
  * to be - nobody is attacking it, and the consequence of the ~1-in-10^19
  * collision is one skipped republish, not a wrong page.
  */
-export function fingerprintOf(snapshot: SharedSnapshot): string {
-  const material = JSON.stringify([snapshot.tank, snapshot.residents, snapshot.stats]);
+export function fingerprintOf(snapshot: SharedSnapshot, photoMediaId?: string): string {
+  const material = JSON.stringify([
+    snapshot.tank.name,
+    snapshot.tank.kind,
+    snapshot.tank.volume ?? null,
+    photoMediaId ?? null,
+    snapshot.residents,
+    snapshot.stats,
+  ]);
   return `${fnv1a(material, 0x811c9dc5)}${fnv1a(material, 0x01000193)}`;
+}
+
+/**
+ * Whether the published page is behind the tank.
+ *
+ * Two independent reasons, and both are needed:
+ *
+ *   1. The content changed - a fish in or out, a rename, a new volume.
+ *   2. The tank has a photo that the published page does not, because the
+ *      bytes had not reached R2 last time. Nothing about the tank changes when
+ *      that upload finally lands, so the fingerprint cannot see it, and
+ *      without this clause the photo would never appear for guests until
+ *      somebody pressed the button by hand.
+ */
+export function needsRepublish(
+  published: { fingerprint: string; photoIncluded: boolean },
+  current: { fingerprint: string; hasPhoto: boolean },
+): boolean {
+  if (current.fingerprint !== published.fingerprint) return true;
+  return current.hasPhoto && !published.photoIncluded;
 }
 
 function fnv1a(input: string, seed: number): string {
