@@ -14,7 +14,7 @@
 import { describe, expect, it } from 'vitest';
 import catalogJson from './marts/catalog.json';
 import {
-  findProblems, isUsableBinomial, isUsableName, summarise, type NameCheckable,
+  findProblems, isIdentifiable, isUsableBinomial, isUsableName, summarise, type NameCheckable,
 } from './catalog-quality';
 import { NOT_A_SPECIES, SPECIES_OVERRIDES } from './species-overrides';
 
@@ -37,8 +37,54 @@ describe('the shipped catalog', () => {
   });
 
   it('gives every species something to be identified by', () => {
-    const nameless = species.filter((s) => !s.scientificName && !isUsableName(s.commonName));
+    // Asks the module rather than re-deriving the rule here: a keeper-promoted
+    // L-number has no binomial and a digit in its name, and whether that counts
+    // is a decision that must have exactly one home.
+    const nameless = species.filter((s) => !isIdentifiable(s));
     expect(nameless.map((s) => s.speciesId)).toEqual([]);
+  });
+});
+
+/**
+ * The exemption a keeper-promoted species gets, and everything it does not.
+ *
+ * This is the one place a rule is deliberately relaxed, so it is worth pinning
+ * down precisely how far - a `curated` flag that waived everything would turn
+ * the review CLI into a way around the quality gate rather than a way into the
+ * catalog.
+ */
+describe('curated (keeper-promoted) species', () => {
+  const entry = (over: Partial<NameCheckable> = {}): NameCheckable => ({
+    speciesId: 'sp_user_x', commonName: 'Sailfin Pleco L083', curated: true, ...over,
+  });
+
+  it('allows an L-number, which a derived name may never contain', () => {
+    expect(findProblems([entry()])).toEqual([]);
+    // The identical name, derived rather than curated, is still rejected.
+    expect(findProblems([entry({ curated: false })]).map((p) => p.code)).toContain('has-digit');
+  });
+
+  it('counts an L-number as an identity, with no binomial at all', () => {
+    expect(isIdentifiable(entry())).toBe(true);
+    expect(isIdentifiable(entry({ curated: false }))).toBe(false);
+  });
+
+  it('still rejects trade vocabulary', () => {
+    const problems = findProblems([entry({ commonName: 'Zebra Pleco Tank Bred' })]);
+    expect(problems.map((p) => p.code)).toContain('trade-junk');
+  });
+
+  it('still rejects a name too short to be one', () => {
+    expect(findProblems([entry({ commonName: 'ab' })]).length).toBeGreaterThan(0);
+  });
+
+  it('does not leak the exemption to its neighbours in the same catalog', () => {
+    const problems = findProblems([
+      entry(),
+      { speciesId: 'sp_derived', commonName: 'Tetra 6 Pack' },
+    ]);
+    expect(problems.every((p) => p.speciesId === 'sp_derived')).toBe(true);
+    expect(problems.length).toBeGreaterThan(0);
   });
 });
 

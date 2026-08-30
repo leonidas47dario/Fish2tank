@@ -39,6 +39,7 @@ import { evaluateAllTanks, type CandidateInput, type ResidentInput, type TankInp
 import { computeDiscoveryTier } from '@/engine/rarity/discovery-tier';
 import { scarcityFor } from './market';
 import { db, newId, nowIso, today, type Fish2TankDB } from './db';
+import { loadProfile } from './profile';
 
 type DB = Fish2TankDB;
 
@@ -345,6 +346,88 @@ export async function recordStoreLabel(
   console.info('[identify] recorded store label', { specimenId, label: text, status: 'provisional' });
 }
 
+/**
+ * Log a species the catalog does not have, as its own record.
+ *
+ * WHY THIS IS A SPECIES AND NOT JUST A LABEL. recordStoreLabel() writes the
+ * keeper's wording onto the specimen and stops there, which keeps the catch but
+ * loses the fish: two Congo tetras logged a week apart stay two unrelated
+ * strings, they never appear in the catalog, and nobody downstream can tell a
+ * species the catalog is missing from a typo. Giving the submission a real
+ * Species row is what makes it countable, correctable, and reviewable.
+ *
+ * WHAT IT IS NOT. It is not a catalog entry. `origin` says `user-submitted`,
+ * the identity assertion stays `provisional`, and no care profile is invented -
+ * one person's reading of a store tag is not a source. The review CLI
+ * (`npm run species:review`) is the only path from here into the shipped
+ * catalog, and a human decides there.
+ *
+ * IDEMPOTENT ON THE LABEL. Submitting the same wording twice reuses the
+ * existing row rather than making a second one, so a keeper who logs three of
+ * the same unlisted fish gets one species with three specimens - which is the
+ * thing that makes it worth reviewing.
+ */
+export async function submitUserSpecies(
+  input: { specimenId: Id; label: string; scientificName?: string; note?: string },
+  database: DB = db,
+): Promise<Species> {
+  const label = input.label.trim();
+  if (!label) throw new Error('A species needs a name.');
+  const scientificName = input.scientificName?.trim() || undefined;
+  const note = input.note?.trim() || undefined;
+
+  const at = nowIso();
+  const key = label.toLowerCase();
+
+  const existing = (await database.species.toArray()).find(
+    (sp) => sp.origin === 'user-submitted' && sp.commonName.trim().toLowerCase() === key,
+  );
+
+  const species: Species = existing ?? {
+    id: newId('sp_user'),
+    commonName: label,
+    scientificName,
+    aliases: [],
+    createdAt: at,
+    origin: 'user-submitted',
+    submission: { label, specimenId: input.specimenId, submittedAt: at, note },
+  };
+
+  await database.transaction(
+    'rw',
+    [database.species, database.specimens, database.identifications],
+    async () => {
+      if (!existing) await database.species.add(species);
+
+      // Provisional, never user-confirmed: confirming means "this is that
+      // catalog species", and there is no catalog species to mean.
+      await assertIdentity(
+        {
+          specimenId: input.specimenId,
+          speciesId: species.id,
+          rawText: label,
+          source: 'user',
+          status: 'provisional',
+          note: note ?? 'Not in the catalog. Logged as the keeper named it.',
+        },
+        database,
+      );
+      await database.specimens.update(input.specimenId, { rawLabel: label, updatedAt: at });
+    },
+  );
+
+  console.info('[identify] logged a species the catalog lacks', {
+    speciesId: species.id, label, reusedExisting: Boolean(existing),
+  });
+  return species;
+}
+
+/** Every species this keeper added themselves, newest first. */
+export async function userSubmittedSpecies(database: DB = db): Promise<Species[]> {
+  const all = await database.species.filter((s) => s.origin === 'user-submitted').toArray();
+  return all.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
 /** Full identification history for a specimen, newest first (FR-I06, NFR-09). */
 export async function identityHistory(specimenId: Id, database: DB = db): Promise<IdentificationAssertion[]> {
   const all = await database.identifications.where('specimenId').equals(specimenId).toArray();
@@ -378,6 +461,11 @@ export interface RecordPriceInput {
  * Repeat sightings therefore accumulate rather than overwrite.
  */
 export async function recordPrice(input: RecordPriceInput, database: DB = db): Promise<PriceObservation> {
+  // FR-P01 / spec 005 FR-A04: an unstated currency is the keeper's own, not USD.
+  // price-fit.ts excludes observations on currency mismatch, so a wrong default
+  // silently discards evidence instead of failing visibly.
+  const currency = input.currency ?? (await loadProfile(database)).settings.currency;
+
   const observation: PriceObservation = {
     id: newId('price'),
     specimenId: input.specimenId,
@@ -387,7 +475,7 @@ export async function recordPrice(input: RecordPriceInput, database: DB = db): P
     askingPrice: input.askingPrice,
     memberPrice: input.memberPrice,
     paidPrice: input.paidPrice,
-    currency: input.currency ?? 'USD',
+    currency,
     basis: input.basis ?? 'each',
     packageQuantity: input.packageQuantity ?? 1,
     observedSize: input.observedSize,
@@ -921,6 +1009,55 @@ export async function adjustHoldingQuantity(
   return event;
 }
 
+/**
+ * Take a holding out of a tank without claiming the fish died.
+ *
+ * WHY THIS HAD TO EXIST. The only two ways to empty a slot were moveHolding,
+ * which needs somewhere to move it to, and recordDeath, which writes a
+ * memorial. So "I rehomed these", "I sold them" and "I typed this in twice"
+ * all had to be recorded as a death - a false entry in Fish Heaven, and one
+ * that then blocked deleting the catch record, because a memorial is
+ * deliberately permanent. Removing a row and mourning a fish are different
+ * acts and now have different functions.
+ *
+ * WHAT IT REMOVES. The holding, the residencies that place it in a tank, and
+ * the life events that count it. Those rows exist only to describe this
+ * holding; leaving any of them would leave a fish half-in a tank. The
+ * specimen, its encounter and its photos are NOT touched - the catch happened,
+ * and this is not a claim that it did not.
+ *
+ * Returns what it removed, so a caller can say so rather than reporting a
+ * silent success.
+ */
+export async function removeHolding(
+  holdingId: Id,
+  database: DB = db,
+): Promise<{ residencies: number; lifeEvents: number; wasInTanks: string[] }> {
+  const holding = await database.holdings.get(holdingId);
+  if (!holding) throw new Error(`Unknown holding ${holdingId}`);
+
+  const residencies = await database.residencies.where('holdingId').equals(holdingId).toArray();
+  const events = await database.lifeEvents.where('holdingId').equals(holdingId).toArray();
+  const tanks = await database.aquariums.toArray();
+  const wasInTanks = [...new Set(residencies.map((r) => r.aquariumId))]
+    .map((id) => tanks.find((t) => t.id === id)?.name ?? id);
+
+  await database.transaction(
+    'rw',
+    [database.holdings, database.residencies, database.lifeEvents],
+    async () => {
+      await database.residencies.bulkDelete(residencies.map((r) => r.id));
+      await database.lifeEvents.bulkDelete(events.map((e) => e.id));
+      await database.holdings.delete(holdingId);
+    },
+  );
+
+  console.info('[stock] holding removed', {
+    holdingId, residencies: residencies.length, lifeEvents: events.length, wasInTanks,
+  });
+  return { residencies: residencies.length, lifeEvents: events.length, wasInTanks };
+}
+
 /** FR-T03: close the current interval, open the next, log the move. */
 export async function moveHolding(
   holdingId: Id,
@@ -1205,6 +1342,10 @@ export interface DeleteCatchPlan {
   assessments: number;
   reveals: number;
   identifications: number;
+  /** Holdings removed with it, because deleting the catch removes the fish. */
+  holdings: number;
+  /** Tanks it is currently in, by name, so the confirmation can say where. */
+  inTanks: string[];
 }
 
 /**
@@ -1229,6 +1370,18 @@ export async function planDeleteCatch(specimenId: Id, database: DB = db): Promis
 
   const shared = allMedia.filter((m) => m.specimenIds.filter((s) => s !== specimenId).length > 0);
 
+  // Named, not counted: "also removes it from 2 tanks" is a number to accept
+  // on faith, "also removes it from Deep Sea Collector" is a fact to check.
+  const tanks = await database.aquariums.toArray();
+  const residencies = holdings.length
+    ? (await database.residencies.toArray()).filter(
+        (r) => holdings.some((h) => h.id === r.holdingId) && !r.endDate,
+      )
+    : [];
+  const inTanks = [...new Set(residencies.map((r) => r.aquariumId))]
+    .map((id) => tanks.find((t) => t.id === id)?.name ?? id)
+    .sort((a, b) => a.localeCompare(b));
+
   const plan: DeleteCatchPlan = {
     allowed: true,
     encounters: encounters.length,
@@ -1238,26 +1391,26 @@ export async function planDeleteCatch(specimenId: Id, database: DB = db): Promis
     assessments: assessments.length,
     reveals: reveals.length,
     identifications: ids.length,
+    holdings: holdings.length,
+    inTanks,
   };
 
-  /**
-   * A fish you actually keep is not a catch you can delete.
+  /*
+   * A fish in a tank is deleted WITH its tank rows, not refused.
    *
-   * The holding, its dated residencies and its lifecycle events are tank
-   * history, and principle 3 is that the app never rewrites that - "a fish that
-   * dies stays in the tank history it lived through". Deleting the specimen
-   * underneath a holding would either orphan those rows or quietly destroy
-   * them, and neither is something a delete button should do silently. So it
-   * refuses and says where to go instead.
+   * This used to refuse: the holding and its residencies are tank history, and
+   * the app does not rewrite history. The rule was right about the data and
+   * wrong about the person. Deleting a catch is how you remove a record that
+   * should not exist - test data, a duplicate, a fish you never actually had -
+   * and telling someone to go to the tank, find the fish and retire it first
+   * made them stage a departure that never happened, just to clear a row. It
+   * also left a memorial behind, which then blocked the delete a second time.
+   *
+   * So the cascade is stated instead of prevented: the plan carries the
+   * holding count and the tanks by name, the confirmation reads them out, and
+   * a person decides with the consequence in front of them. What it must never
+   * be is silent, which is why `inTanks` exists rather than a bare number.
    */
-  if (holdings.length > 0) {
-    return {
-      ...plan,
-      allowed: false,
-      reason: 'This fish is in one of your tanks, so its catch record is part of that tank\'s history. '
-        + 'Remove it from the tank first if it is no longer there.',
-    };
-  }
   if (memorials.length > 0) {
     return {
       ...plan,
@@ -1296,6 +1449,18 @@ export async function deleteCatch(specimenId: Id, database: DB = db): Promise<De
   const encounterIds = new Set(encounters.map((e) => e.id));
   const media = await database.media.where('specimenIds').equals(specimenId).toArray();
   const drafts = (await database.draftKeys.toArray()).filter((d) => d.specimenId === specimenId);
+
+  /*
+   * The tank rows go first, in their own transaction.
+   *
+   * removeHolding owns what a holding is made of - the residencies that place
+   * it and the life events that count it - and duplicating that list here is
+   * how the two drift apart the next time a table joins them. It runs before
+   * the specimen is deleted so that a failure leaves the catch intact and
+   * re-runnable, rather than a fish in a tank whose specimen no longer exists.
+   */
+  const holdings = await database.holdings.where('specimenId').equals(specimenId).toArray();
+  for (const h of holdings) await removeHolding(h.id, database);
 
   // Price rows tied to this catch, plus any that point at an encounter about to
   // disappear - a dangling encounterId would outlive the thing it names.

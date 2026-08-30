@@ -124,6 +124,33 @@ the same command on an earlier path in the same session. Expect to be blocked
 part-way through with the tree in an inconsistent state.
 </details>
 
+### If `promote` still exists on the remote
+
+Deleting the branch in step 5 fails in some sessions (see the note there), so
+the next promotion finds a `promote` ref pointing at the *last* promotion and
+the push in step 4 is rejected as non-fast-forward.
+
+**Do not reach for ancestry to decide whether it is safe to replace.**
+`git merge-base --is-ancestor origin/promote origin/main` reports NO even when
+the branch is a spent leftover, because the promotion squashed - which is the
+same false divergence this whole document exists to work around. Compare
+**trees**, exactly as in step 1:
+
+```bash
+git diff --stat origin/main origin/promote --
+```
+
+Empty means its tree is already on `main`: it is last promotion's leftover and
+carries nothing. Replace it with a lease pinned to the commit you just
+verified, so the push fails rather than clobbers if it is not what you verified:
+
+```bash
+git push --force-with-lease=refs/heads/promote:<that sha> -u origin promote
+```
+
+A **non-empty** diff means someone built a promote branch that never merged.
+Stop and find out what it is before touching it.
+
 ## Step 4 — PR and squash-merge
 
 A `cannot lock ref` error mentioning an existing `refs/remotes/origin/promote/*`
@@ -181,6 +208,13 @@ Then delete the promote branch and the feature branch:
 ```bash
 gh api -X DELETE repos/leonidas47dario/Fish2tank/git/refs/heads/promote
 ```
+
+**This deletion is best-effort, and has failed twice.** A `git push` of a ref
+deletion through the agent proxy dies with `send-pack: unexpected disconnect
+while reading sideband packet`, and retrying does not help. It leaves nothing
+wrong with the promotion - `main` is already correct - but the surviving branch
+blocks the *next* promotion's push, so if it will not go, say so rather than
+recording it as cosmetic, and handle it per step 3 next time.
 
 Finally confirm the production deploy, since a green PR is not a green site:
 

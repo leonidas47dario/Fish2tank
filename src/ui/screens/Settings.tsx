@@ -7,18 +7,56 @@
  * ship from first release, not later.
  */
 import { useState } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
 import { SCENES, THEMES, useTheme } from '@/theme/ThemeProvider';
 import { BUILD_ID, BUILT_AT } from '@/build-info';
 import { db } from '@/data/db';
+import { LOCAL_PROFILE_ID, setDisplayName, updateSettings } from '@/data/profile';
 import { importInventoryFile } from '@/data/import-service';
 import type { ImportResult } from '@/data/seed/inventory-import';
+
+/** Spec 005 FR-A04. Enough to cover where Ryan actually buys fish. */
+const CURRENCIES = ['USD', 'CAD', 'EUR', 'GBP', 'AUD', 'JPY'];
 
 export default function Settings() {
   const { theme, setTheme, scene, setScene, reducedMotion, setReducedMotion, muted, setMuted } = useTheme();
 
+  // A plain read, not loadProfile(): a live query re-runs whenever `users`
+  // changes, and loadProfile() writes on first call, so using it here would put
+  // a write inside a query observing the table it writes to. ThemeProvider has
+  // already created the row by the time this screen renders.
+  const profile = useLiveQuery(() => db.users.get(LOCAL_PROFILE_ID));
+
   return (
     <div className="stack">
       <header><h1>Settings</h1></header>
+
+      <section className="card stack">
+        <h2>Profile</h2>
+        <p className="muted small">
+          Kept on this device. Nothing here is shared or published.
+        </p>
+        <label className="stack">
+          <span className="xs muted">Display name</span>
+          <input
+            type="text"
+            value={profile?.displayName ?? ''}
+            placeholder="Unnamed keeper"
+            onChange={(e) => void setDisplayName(e.target.value)}
+          />
+        </label>
+        <label className="stack">
+          <span className="xs muted">Currency for new prices</span>
+          <select
+            value={profile?.settings.currency ?? 'USD'}
+            onChange={(e) => void updateSettings({ currency: e.target.value })}
+          >
+            {CURRENCIES.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+        </label>
+      </section>
 
       <section className="card stack">
         <h2>App theme</h2>
