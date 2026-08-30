@@ -16,7 +16,9 @@ import catalogJson from './marts/catalog.json';
 import {
   findProblems, isIdentifiable, isUsableBinomial, isUsableName, summarise, type NameCheckable,
 } from './catalog-quality';
-import { NOT_A_SPECIES, SPECIES_OVERRIDES } from './species-overrides';
+import {
+  CANONICAL_BY_SYNONYM, NOT_A_SPECIES, OVERRIDE_BY_ID, SPECIES_OVERRIDES,
+} from './species-overrides';
 
 const species = catalogJson.species as NameCheckable[];
 
@@ -168,8 +170,30 @@ describe('species overrides', () => {
   it('actually applies — every override reached the mart', () => {
     // An override for a speciesId that no longer exists is dead weight and,
     // worse, hides the fact that the species it was meant to fix has gone.
+    //
+    // "Reached the mart" includes reaching it through a merge (spec 008). An
+    // override written for a row that later folded into another is not dead:
+    // OVERRIDE_BY_ID transfers it to the survivor, which is what keeps
+    // sp_corydoras_adolfoi's researched "Adolfo's Catfish" on the row that
+    // replaced it instead of falling back to "Adolfo S Hoplisoma". The guard
+    // still fails for an override that reached NOTHING, which is the case it
+    // was written for.
     const ids = new Set(species.map((s) => s.speciesId));
-    const orphans = SPECIES_OVERRIDES.filter((o) => !ids.has(o.speciesId));
+    const orphans = SPECIES_OVERRIDES.filter((o) => {
+      if (ids.has(o.speciesId)) return false;
+      const canonical = CANONICAL_BY_SYNONYM.get(o.speciesId);
+      return !(canonical && ids.has(canonical));
+    });
     expect(orphans.map((o) => o.speciesId)).toEqual([]);
+  });
+
+  it('lands a folded override on the row that survived', () => {
+    // The other half of the rule above: transferred is only acceptable if it
+    // actually arrives. Anything else is the same dead weight wearing a merge.
+    for (const o of SPECIES_OVERRIDES) {
+      const canonical = CANONICAL_BY_SYNONYM.get(o.speciesId);
+      if (!canonical) continue;
+      expect(OVERRIDE_BY_ID.get(canonical)?.commonName).toBeDefined();
+    }
   });
 });

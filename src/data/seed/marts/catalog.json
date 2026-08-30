@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "builtAt": "2026-08-29T19:31:05.412Z",
+  "builtAt": "2026-08-30T05:01:15.566Z",
   "species": [
     {
       "speciesId": "sp_gymnarchus_niloticus",
@@ -83,9 +83,7 @@
       "speciesId": "sp_acropora_caroliniana",
       "commonName": "Acropora Caroliniana",
       "scientificName": "Acropora caroliniana",
-      "aliases": [
-        "Acropora caroliniana"
-      ],
+      "aliases": [],
       "predationTags": [],
       "waterType": "marine",
       "sourceLabel": "Discovered from vendor listings - no care profile yet"
@@ -94,9 +92,7 @@
       "speciesId": "sp_acropora_echinata",
       "commonName": "Acropora Echinata",
       "scientificName": "Acropora echinata",
-      "aliases": [
-        "Acropora echinata"
-      ],
+      "aliases": [],
       "predationTags": [],
       "waterType": "marine",
       "sourceLabel": "Discovered from vendor listings - no care profile yet"
@@ -105,9 +101,7 @@
       "speciesId": "sp_acropora_efflorescens",
       "commonName": "Acropora Efflorescens",
       "scientificName": "Acropora efflorescens",
-      "aliases": [
-        "Acropora efflorescens"
-      ],
+      "aliases": [],
       "predationTags": [],
       "waterType": "marine",
       "sourceLabel": "Discovered from vendor listings - no care profile yet"
@@ -116,9 +110,7 @@
       "speciesId": "sp_acropora_formosa",
       "commonName": "Acropora Formosa",
       "scientificName": "Acropora formosa",
-      "aliases": [
-        "Acropora formosa"
-      ],
+      "aliases": [],
       "predationTags": [],
       "waterType": "marine",
       "sourceLabel": "Discovered from vendor listings - no care profile yet"
@@ -127,9 +119,7 @@
       "speciesId": "sp_acropora_granulosa",
       "commonName": "Acropora Granulosa",
       "scientificName": "Acropora granulosa",
-      "aliases": [
-        "Acropora granulosa"
-      ],
+      "aliases": [],
       "predationTags": [],
       "waterType": "marine",
       "sourceLabel": "Discovered from vendor listings - no care profile yet"
@@ -138,9 +128,7 @@
       "speciesId": "sp_acropora_nana",
       "commonName": "Acropora Nana",
       "scientificName": "Acropora nana",
-      "aliases": [
-        "Acropora nana"
-      ],
+      "aliases": [],
       "predationTags": [],
       "waterType": "marine",
       "sourceLabel": "Discovered from vendor listings - no care profile yet"
@@ -149,9 +137,7 @@
       "speciesId": "sp_acropora_nobilis",
       "commonName": "Acropora Nobilis",
       "scientificName": "Acropora nobilis",
-      "aliases": [
-        "Acropora nobilis"
-      ],
+      "aliases": [],
       "predationTags": [],
       "waterType": "marine",
       "sourceLabel": "Discovered from vendor listings - no care profile yet"
@@ -160,9 +146,7 @@
       "speciesId": "sp_acropora_plana",
       "commonName": "Acropora Plana",
       "scientificName": "Acropora plana",
-      "aliases": [
-        "Acropora plana"
-      ],
+      "aliases": [],
       "predationTags": [],
       "waterType": "marine",
       "sourceLabel": "Discovered from vendor listings - no care profile yet"
@@ -171,9 +155,7 @@
       "speciesId": "sp_acropora_tenuis",
       "commonName": "Acropora Tenuis",
       "scientificName": "Acropora tenuis",
-      "aliases": [
-        "Acropora tenuis"
-      ],
+      "aliases": [],
       "predationTags": [],
       "waterType": "marine",
       "sourceLabel": "Discovered from vendor listings - no care profile yet"
@@ -182,9 +164,7 @@
       "speciesId": "sp_acropora_valida",
       "commonName": "Acropora Valida",
       "scientificName": "Acropora valida",
-      "aliases": [
-        "Acropora valida"
-      ],
+      "aliases": [],
       "predationTags": [],
       "waterType": "marine",
       "sourceLabel": "Discovered from vendor listings - no care profile yet"
@@ -212,43 +192,14 @@
       "sourceLabel": "Discovered from vendor listings - no care profile yet"
     },
     {
-      "speciesId": "sp_corydoras_adolfoi",
-      "commonName": "Adolfo's Catfish",
-      "scientificName": "Corydoras adolfoi",
-      "aliases": [
-        "Adolfo's AKA Orange Burst Cory Catfish (Corydoras adolfoi), TANK-BRED!!!",
-        "Adolfoi Cory Catfish (Corydoras adolfoi)"
-      ],
-      "family": "Callichthyidae",
-      "organismKind": "fish",
-      "habitatNote": "Suckermouth and armoured catfishes; rasp and forage on the substrate.",
-      "waterZone": "bottom",
-      "adultSizeIn": 2.2,
-      "predationTags": [],
-      "waterType": "freshwater",
-      "sourceLabel": "Backfilled from cited sources - each value links to the sentence it came from",
-      "careSources": {
-        "adultSizeIn": {
-          "source": "wikipedia",
-          "url": "https://en.wikipedia.org/wiki/Adolfo's_catfish"
-        }
-      },
-      "portrait": {
-        "url": "https://upload.wikimedia.org/wikipedia/commons/0/0b/Corydoras-adolfoi-alone.jpg",
-        "provenance": "wikimedia",
-        "license": "CC BY-SA 4.0",
-        "artist": "Corydoras-adolfoi",
-        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Corydoras-adolfoi-alone.jpg",
-        "width": 1272,
-        "height": 827
-      }
-    },
-    {
       "speciesId": "sp_hoplisoma_adolfoi",
-      "commonName": "Adolfo S Hoplisoma",
+      "commonName": "Adolfo's Catfish",
       "scientificName": "Hoplisoma adolfoi",
       "aliases": [
-        "Adolfo's Hoplisoma (Hoplisoma adolfoi)"
+        "Adolfo's Hoplisoma (Hoplisoma adolfoi)",
+        "Corydoras adolfoi",
+        "Adolfo's AKA Orange Burst Cory Catfish (Corydoras adolfoi), TANK-BRED!!!",
+        "Adolfoi Cory Catfish (Corydoras adolfoi)"
       ],
       "family": "Callichthyidae",
       "organismKind": "fish",
@@ -1263,44 +1214,6 @@
       }
     },
     {
-      "speciesId": "sp_pangasius_hypophthalmus",
-      "commonName": "Albino Iridescent Shark",
-      "scientificName": "Pangasius hypophthalmus",
-      "aliases": [
-        "Albino Iridescent Shark (Pangasius hypophthalmus)",
-        "Short Body Albino Iridescent Shark (Pangasius hypophthalmus)"
-      ],
-      "family": "Pangasiidae",
-      "organismKind": "fish",
-      "habitatNote": "Shark catfishes; free-swimming, unlike most catfish.",
-      "waterZone": "mid",
-      "adultSizeIn": 51.2,
-      "tempMinC": 22,
-      "tempMaxC": 26,
-      "predationTags": [],
-      "waterType": "freshwater",
-      "sourceLabel": "Backfilled from cited sources - each value links to the sentence it came from",
-      "careSources": {
-        "adultSizeIn": {
-          "source": "wikipedia",
-          "url": "https://en.wikipedia.org/wiki/Iridescent_shark"
-        },
-        "tempC": {
-          "source": "wikipedia",
-          "url": "https://en.wikipedia.org/wiki/Iridescent_shark"
-        }
-      },
-      "portrait": {
-        "url": "https://upload.wikimedia.org/wikipedia/commons/0/07/Iridescent_shark.jpg",
-        "provenance": "wikimedia",
-        "license": "CC BY-SA 3.0",
-        "artist": "User:Melanochromis",
-        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Iridescent_shark.jpg",
-        "width": 1234,
-        "height": 837
-      }
-    },
-    {
       "speciesId": "sp_labeotropheus_fuelleborni",
       "commonName": "Albino Katale Island",
       "scientificName": "Labeotropheus fuelleborni",
@@ -1541,7 +1454,10 @@
       "aliases": [
         "Albino Sailfin Pleco (Pterygoplichthys gibbiceps)",
         "Albino Sailfin Pleco (Pterygoplichthys gibbiceps), Tank-Bred",
-        "Sailfin Plecostomus"
+        "Sailfin Plecostomus",
+        "Glyptoperichthys gibbiceps",
+        "Albino Sailfin Pleco (Glyptoperichthys gibbiceps)",
+        "Albino Short Body Sailfin Pleco (Glyptoperichthys gibbiceps)"
       ],
       "family": "Loricariidae",
       "organismKind": "fish",
@@ -2443,9 +2359,7 @@
       "speciesId": "sp_anubias_coffeefolia",
       "commonName": "Anubias Coffeefolia",
       "scientificName": "Anubias coffeefolia",
-      "aliases": [
-        "Anubias coffeefolia"
-      ],
+      "aliases": [],
       "family": "Araceae",
       "organismKind": "plant",
       "habitatNote": "Aquatic or marginal plant; position in the tank is a planting decision, not a trait.",
@@ -2502,9 +2416,7 @@
       "speciesId": "sp_anubias_hastifolia",
       "commonName": "Anubias Hastifolia",
       "scientificName": "Anubias hastifolia",
-      "aliases": [
-        "Anubias hastifolia"
-      ],
+      "aliases": [],
       "family": "Araceae",
       "organismKind": "plant",
       "habitatNote": "Aquatic or marginal plant; position in the tank is a planting decision, not a trait.",
@@ -2539,7 +2451,6 @@
       "scientificName": "Anubias nana",
       "aliases": [
         "Dwarf Anubias (Anubias nana) Bare Root - 2 to 5 inches tall",
-        "Anubias nana",
         "Anubias nana on Driftwood"
       ],
       "family": "Araceae",
@@ -3278,7 +3189,9 @@
       "commonName": "Atabapo Butterfly Pleco",
       "scientificName": "Dekeyseria picta",
       "aliases": [
-        "L052 Atabapo Butterfly Pleco (Dekeyseria picta)"
+        "L052 Atabapo Butterfly Pleco (Dekeyseria picta)",
+        "Dekeyseria brachyura",
+        "L168 Butterfly Pleco (Dekeyseria brachyura)"
       ],
       "family": "Loricariidae",
       "organismKind": "fish",
@@ -3791,7 +3704,6 @@
       "scientificName": "Bacopa caroliniana",
       "aliases": [
         "Lemon Bacopa (Bacopa caroliniana)",
-        "Bacopa caroliniana",
         "Mint AKA Lemon Bacopa (Bacopa caroliniana) Tissue Culture"
       ],
       "family": "Plantaginaceae",
@@ -3856,48 +3768,8 @@
       "scientificName": "Balantiocheilos melanopterus",
       "aliases": [
         "Bala Shark (Balantiocheilos melanopterus)",
-        "Bala Shark (Balantiocheilos melanopterus) Tank Bred"
-      ],
-      "family": "Cyprinidae",
-      "organismKind": "fish",
-      "habitatNote": "Carps, barbs, danios and rasboras; open-water shoalers.",
-      "waterZone": "mid",
-      "adultSizeIn": 13.8,
-      "aggression": "peaceful",
-      "tempMinC": 22,
-      "tempMaxC": 28,
-      "predationTags": [],
-      "waterType": "freshwater",
-      "sourceLabel": "Backfilled from cited sources - each value links to the sentence it came from",
-      "careSources": {
-        "adultSizeIn": {
-          "source": "wikipedia",
-          "url": "https://en.wikipedia.org/wiki/Bala_shark"
-        },
-        "aggression": {
-          "source": "wikipedia",
-          "url": "https://en.wikipedia.org/wiki/Bala_shark"
-        },
-        "tempC": {
-          "source": "wikipedia",
-          "url": "https://en.wikipedia.org/wiki/Bala_shark"
-        }
-      },
-      "portrait": {
-        "url": "https://upload.wikimedia.org/wikipedia/commons/c/c3/Balantiocheilos_melanopterus_-_Karlsruhe_Zoo_02.jpg",
-        "provenance": "wikimedia",
-        "license": "CC BY-SA 3.0",
-        "artist": "H. Zell",
-        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Balantiocheilos_melanopterus_-_Karlsruhe_Zoo_02.jpg",
-        "width": 6000,
-        "height": 3432
-      }
-    },
-    {
-      "speciesId": "sp_balantiocheilus_melanopterus",
-      "commonName": "Bala Shark",
-      "scientificName": "Balantiocheilus melanopterus",
-      "aliases": [
+        "Bala Shark (Balantiocheilos melanopterus) Tank Bred",
+        "Balantiocheilus melanopterus",
         "Bala Shark",
         "Bala Shark (Balantiocheilus melanopterus)"
       ],
@@ -4344,97 +4216,16 @@
     },
     {
       "speciesId": "sp_barbodes_semifasciolatus",
-      "commonName": "Barb",
+      "commonName": "Gold Barb",
       "scientificName": "Barbodes semifasciolatus",
       "aliases": [
         "Gold Barb (Barbodes semifasciolatus)",
-        "Schuberti Barb (Barbodes semifasciolatus var. schuberti) – Tank-Bred"
-      ],
-      "family": "Cyprinidae",
-      "organismKind": "fish",
-      "habitatNote": "Carps, barbs, danios and rasboras; open-water shoalers.",
-      "waterZone": "mid",
-      "adultSizeIn": 2.8,
-      "aggression": "semi-aggressive",
-      "predationTags": [],
-      "waterType": "freshwater",
-      "sourceLabel": "Backfilled from cited sources - each value links to the sentence it came from",
-      "careSources": {
-        "adultSizeIn": {
-          "source": "wikipedia",
-          "url": "https://en.wikipedia.org/wiki/Gold_barb"
-        },
-        "aggression": {
-          "source": "wikipedia",
-          "url": "https://en.wikipedia.org/wiki/Gold_barb"
-        }
-      },
-      "portrait": {
-        "url": "https://upload.wikimedia.org/wikipedia/commons/9/9a/Puntius_semifasciolatus.png",
-        "provenance": "wikimedia",
-        "license": "CC BY 3.0",
-        "artist": "Nguyen DInh Tao",
-        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Puntius_semifasciolatus.png",
-        "width": 600,
-        "height": 306
-      }
-    },
-    {
-      "speciesId": "sp_puntius_tetrazona",
-      "commonName": "Tiger Barb",
-      "scientificName": "Puntius tetrazona",
-      "aliases": [
-        "Filamentosa Barb",
-        "GloFish®, Sunburst Orange® Barb",
-        "GloFish®, Starfire Red® Barb",
-        "GloFish®, Galactic Purple® Barb",
-        "GloFish®, Electric Green® Barb",
-        "Tiger Barb",
-        "Platinum Longfin Tiger Barb (Puntius tetrazona)",
-        "Green Longfin Balloon Tiger Barb (Puntius tetrazona)"
-      ],
-      "family": "Cyprinidae",
-      "organismKind": "fish",
-      "habitatNote": "Carps, barbs, danios and rasboras; open-water shoalers.",
-      "waterZone": "mid",
-      "adultSizeIn": 5.12,
-      "aggression": "semi-aggressive",
-      "tempMinC": 25,
-      "tempMaxC": 27.8,
-      "predationTags": [],
-      "waterType": "freshwater",
-      "sourceLabel": "Backfilled from cited sources - each value links to the sentence it came from",
-      "careSources": {
-        "adultSizeIn": {
-          "source": "wikipedia",
-          "url": "https://en.wikipedia.org/wiki/Tiger_barb"
-        },
-        "aggression": {
-          "source": "wikipedia",
-          "url": "https://en.wikipedia.org/wiki/Tiger_barb"
-        },
-        "tempC": {
-          "source": "wikipedia",
-          "url": "https://en.wikipedia.org/wiki/Tiger_barb"
-        }
-      },
-      "portrait": {
-        "url": "https://upload.wikimedia.org/wikipedia/commons/b/b8/Tiger_barb_fish.jpg",
-        "provenance": "wikimedia",
-        "license": "CC BY-SA 4.0",
-        "artist": "Editor General of Wiki",
-        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Tiger_barb_fish.jpg",
-        "width": 4128,
-        "height": 2322
-      }
-    },
-    {
-      "speciesId": "sp_puntius_sachsii",
-      "commonName": "Gold Barb",
-      "scientificName": "Puntius sachsii",
-      "aliases": [
+        "Schuberti Barb (Barbodes semifasciolatus var. schuberti) – Tank-Bred",
+        "Puntius sachsii",
         "Gold Barb (Puntius sachsii)",
-        "Goldfinned Barb"
+        "Goldfinned Barb",
+        "Puntius semifasciolatus",
+        "Gold Barb (Puntius semifasciolatus) – Tank Bred"
       ],
       "family": "Cyprinidae",
       "organismKind": "fish",
@@ -4596,7 +4387,12 @@
       "commonName": "Barred Silver Dollar",
       "scientificName": "Myloplus schomburgkii",
       "aliases": [
-        "Black Barred Silver Dollar (Myloplus schomburgkii)"
+        "Black Barred Silver Dollar (Myloplus schomburgkii)",
+        "Myleus schomburgkii",
+        "Thin Bar Silver Dollar (Myleus schomburgkii)",
+        "Blackberry Silver Dollar (Myleus schomburgkii sp)",
+        "Wide Bar Silver Dollar (Myleus schomburgkii)",
+        "Black Bar Silver Dollar"
       ],
       "family": "Serrasalmidae",
       "organismKind": "fish",
@@ -7245,48 +7041,6 @@
         "attributionUrl": "https://commons.wikimedia.org/wiki/File:Paracyprichromis_Nigripinnis-2.JPG",
         "width": 3008,
         "height": 2000
-      }
-    },
-    {
-      "speciesId": "sp_carassius_auratus_auratus",
-      "commonName": "Blue Oranda Goldfish",
-      "scientificName": "Carassius auratus auratus",
-      "aliases": [
-        "Blue Oranda Goldfish (Carassius auratus auratus), Tank-Raised!!! - Aquatic Arts"
-      ],
-      "family": "Cyprinidae",
-      "organismKind": "fish",
-      "habitatNote": "Carps, barbs, danios and rasboras; open-water shoalers.",
-      "waterZone": "mid",
-      "adultSizeIn": 16,
-      "minVolumeGal": 10,
-      "tempMinC": 20,
-      "tempMaxC": 22,
-      "predationTags": [],
-      "waterType": "freshwater",
-      "sourceLabel": "Backfilled from cited sources - each value links to the sentence it came from",
-      "careSources": {
-        "adultSizeIn": {
-          "source": "wikipedia",
-          "url": "https://en.wikipedia.org/wiki/Goldfish"
-        },
-        "minVolumeGal": {
-          "source": "wikipedia",
-          "url": "https://en.wikipedia.org/wiki/Goldfish"
-        },
-        "tempC": {
-          "source": "wikipedia",
-          "url": "https://en.wikipedia.org/wiki/Goldfish"
-        }
-      },
-      "portrait": {
-        "url": "https://upload.wikimedia.org/wikipedia/commons/6/65/Gold_fish1.jpg",
-        "provenance": "wikimedia",
-        "license": "CC BY-SA 3.0",
-        "artist": "לינה אבוגוש",
-        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Gold_fish1.jpg",
-        "width": 1717,
-        "height": 1121
       }
     },
     {
@@ -10131,47 +9885,8 @@
       "scientificName": "Rohanella titteya",
       "aliases": [
         "Albino Longfin Cherry Barb (Rohanella titteya)",
-        "Albino Cherry Barb (Rohanella titteya)"
-      ],
-      "family": "Cyprinidae",
-      "organismKind": "fish",
-      "habitatNote": "Carps, barbs, danios and rasboras; open-water shoalers.",
-      "waterZone": "mid",
-      "adultSizeIn": 1.97,
-      "aggression": "peaceful",
-      "tempMinC": 22.8,
-      "tempMaxC": 27.2,
-      "predationTags": [],
-      "waterType": "freshwater",
-      "sourceLabel": "Backfilled from cited sources - each value links to the sentence it came from",
-      "careSources": {
-        "adultSizeIn": {
-          "source": "wikipedia",
-          "url": "https://en.wikipedia.org/wiki/Cherry_barb"
-        },
-        "aggression": {
-          "source": "wikipedia",
-          "url": "https://en.wikipedia.org/wiki/Cherry_barb"
-        },
-        "tempC": {
-          "source": "wikipedia",
-          "url": "https://en.wikipedia.org/wiki/Cherry_barb"
-        }
-      },
-      "portrait": {
-        "url": "https://upload.wikimedia.org/wikipedia/commons/1/1f/Male_Cherry_Barb_700.jpg",
-        "provenance": "wikimedia",
-        "license": "CC BY-SA 3.0",
-        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Male_Cherry_Barb_700.jpg",
-        "width": 700,
-        "height": 370
-      }
-    },
-    {
-      "speciesId": "sp_puntius_titteya",
-      "commonName": "Cherry Barb",
-      "scientificName": "Puntius titteya",
-      "aliases": [
+        "Albino Cherry Barb (Rohanella titteya)",
+        "Puntius titteya",
         "Longfin Cherry Barb (Puntius titteya) – Tank-Bred",
         "Cherry Barb (Puntius titteya), Tank-Bred",
         "Albino Cherry Barb (Puntius titteya “Albino”) – Tank Bred",
@@ -12889,7 +12604,9 @@
       "scientificName": "Synodontis multipunctatus",
       "aliases": [
         "Multipunctatus",
-        "Cuckoo Synodontis"
+        "Cuckoo Synodontis",
+        "Synodontis multipunctata",
+        "Cuckoo Catfish (Synodontis multipunctata), Tank-Bred"
       ],
       "family": "Mochokidae",
       "organismKind": "fish",
@@ -12904,42 +12621,6 @@
       "waterType": "freshwater",
       "sourceLabel": "Wikipedia: Synodontis multipunctatus — PLACEHOLDER source",
       "sourceUrl": "https://en.wikipedia.org/wiki/Synodontis_multipunctatus",
-      "portrait": {
-        "url": "https://upload.wikimedia.org/wikipedia/commons/d/de/Synodontis-multipunctatus.jpg",
-        "provenance": "wikimedia",
-        "license": "CC BY 2.0",
-        "artist": "Mario Rubio García",
-        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Synodontis-multipunctatus.jpg",
-        "width": 2790,
-        "height": 1048
-      }
-    },
-    {
-      "speciesId": "sp_synodontis_multipunctata",
-      "commonName": "Cuckoo Catfish",
-      "scientificName": "Synodontis multipunctata",
-      "aliases": [
-        "Cuckoo Catfish (Synodontis multipunctata), Tank-Bred"
-      ],
-      "family": "Mochokidae",
-      "organismKind": "fish",
-      "habitatNote": "Benthic catfishes; feed on or near the bottom.",
-      "waterZone": "bottom",
-      "adultSizeIn": 10.8,
-      "aggression": "aggressive",
-      "predationTags": [],
-      "waterType": "freshwater",
-      "sourceLabel": "Backfilled from cited sources - each value links to the sentence it came from",
-      "careSources": {
-        "adultSizeIn": {
-          "source": "wikipedia",
-          "url": "https://en.wikipedia.org/wiki/Synodontis_multipunctatus"
-        },
-        "aggression": {
-          "source": "wikipedia",
-          "url": "https://en.wikipedia.org/wiki/Synodontis_multipunctatus"
-        }
-      },
       "portrait": {
         "url": "https://upload.wikimedia.org/wikipedia/commons/d/de/Synodontis-multipunctatus.jpg",
         "provenance": "wikimedia",
@@ -13165,37 +12846,8 @@
         "GloFish®, Galactic Purple® Danio",
         "GloFish®, Cosmic Blue® Danio",
         "GloFish®, Starfire Red® Danio",
-        "GloFish® Danio Packs"
-      ],
-      "family": "Danionidae",
-      "organismKind": "fish",
-      "habitatNote": "Carps, barbs, danios and rasboras; open-water shoalers.",
-      "waterZone": "mid",
-      "adultSizeIn": 2,
-      "predationTags": [],
-      "waterType": "freshwater",
-      "sourceLabel": "Backfilled from cited sources - each value links to the sentence it came from",
-      "careSources": {
-        "adultSizeIn": {
-          "source": "wikipedia",
-          "url": "https://en.wikipedia.org/wiki/Zebrafish"
-        }
-      },
-      "portrait": {
-        "url": "https://upload.wikimedia.org/wikipedia/commons/a/ac/Zebrafisch.jpg",
-        "provenance": "wikimedia",
-        "license": "Copyrighted free use",
-        "artist": "Azul",
-        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Zebrafisch.jpg",
-        "width": 820,
-        "height": 392
-      }
-    },
-    {
-      "speciesId": "sp_brachydanio_rerio",
-      "commonName": "Danio",
-      "scientificName": "Brachydanio rerio",
-      "aliases": [
+        "GloFish® Danio Packs",
+        "Brachydanio rerio",
         "Longfin Leopard Danio (Brachydanio rerio 'frankei'), Locally Bred!",
         "Longfin Golden Zebra Danio (Brachydanio rerio) - Tank Bred"
       ],
@@ -13742,7 +13394,23 @@
         "Golden / Yellow Checkerboard Pigeon Discus (Symphysodon aequifasciatus)",
         "Golden Sunrise Discus (Symphysodon aequifasciatus)",
         "Tiger Turquoise Discus (Symphysodon aequifasciatus)",
-        "Wild Green Discus (Symphysodon aequifasciatus)"
+        "Wild Green Discus (Symphysodon aequifasciatus)",
+        "Symphysodon aequifasciata",
+        "Assorted Discus (Symphysodon aequifasciata)",
+        "Blue Diamond Discus (Symphysodon aequifasciata)",
+        "Apricot Discus (Symphysodon aequifasciata)",
+        "Alenquer Discus (Symphysodon aequifasciata)",
+        "Wild Royal Discus (Symphysodon aequifasciata)",
+        "Wild Alenquer Red Discus (Symphysodon aequifasciata)",
+        "Wild Brown Discus (Symphysodon aequifasciata)",
+        "Blue Scorpion Snakeskin Discus (Symphysodon aequifasciata)",
+        "Symphysodon aequifaciatus",
+        "Blue Diamond Discus (Symphysodon aequifaciatus)",
+        "Blue Face Heckel Discus (Symphysodon aequifaciatus)",
+        "White Butterfly Discus (Symphysodon aequifaciatus)",
+        "Eruption Leopard Snakeskin Discus (Symphysodon aequifaciatus)",
+        "Red Spotted Leopard Discus (Symphysodon aequifaciatus)",
+        "Blue Turquoise Discus (Symphysodon aequifaciatus)"
       ],
       "family": "Cichlidae",
       "organismKind": "fish",
@@ -16001,7 +15669,9 @@
       "commonName": "Farlowella Whiptail Catfish",
       "scientificName": "Sturisomatichthys panamensis",
       "aliases": [
-        "Royal Farlowella Whiptail Catfish (Sturisomatichthys panamensis) 1-1.5”"
+        "Royal Farlowella Whiptail Catfish (Sturisomatichthys panamensis) 1-1.5”",
+        "Sturisoma panamense",
+        "Royal Farlowella (Sturisoma panamense) aka Whiptail Catfish - Tank-Bred!"
       ],
       "family": "Loricariidae",
       "organismKind": "fish",
@@ -18731,42 +18401,6 @@
       "sourceLabel": "Discovered from vendor listings - no care profile yet"
     },
     {
-      "speciesId": "sp_puntius_semifasciolatus",
-      "commonName": "Gold Barb",
-      "scientificName": "Puntius semifasciolatus",
-      "aliases": [
-        "Gold Barb (Puntius semifasciolatus) – Tank Bred"
-      ],
-      "family": "Cyprinidae",
-      "organismKind": "fish",
-      "habitatNote": "Carps, barbs, danios and rasboras; open-water shoalers.",
-      "waterZone": "mid",
-      "adultSizeIn": 2.76,
-      "aggression": "semi-aggressive",
-      "predationTags": [],
-      "waterType": "freshwater",
-      "sourceLabel": "Backfilled from cited sources - each value links to the sentence it came from",
-      "careSources": {
-        "adultSizeIn": {
-          "source": "wikipedia",
-          "url": "https://en.wikipedia.org/wiki/Gold_barb"
-        },
-        "aggression": {
-          "source": "wikipedia",
-          "url": "https://en.wikipedia.org/wiki/Gold_barb"
-        }
-      },
-      "portrait": {
-        "url": "https://upload.wikimedia.org/wikipedia/commons/9/9a/Puntius_semifasciolatus.png",
-        "provenance": "wikimedia",
-        "license": "CC BY 3.0",
-        "artist": "Nguyen DInh Tao",
-        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Puntius_semifasciolatus.png",
-        "width": 600,
-        "height": 306
-      }
-    },
-    {
       "speciesId": "sp_amatitlania_nanolutea",
       "commonName": "Gold Convict Cichlid",
       "scientificName": "Amatitlania nanolutea",
@@ -19600,7 +19234,9 @@
         "Shubunkin",
         "Broadtail Ryukin Goldfish (Carassius auratus)",
         "Chocolate Pom Pom Goldfish",
-        "Black Moor Goldfish"
+        "Black Moor Goldfish",
+        "Carassius auratus auratus",
+        "Blue Oranda Goldfish (Carassius auratus auratus), Tank-Raised!!! - Aquatic Arts"
       ],
       "family": "Cyprinidae",
       "organismKind": "fish",
@@ -19714,7 +19350,12 @@
         "Opaline Gourami (Trichopodus trichopterus) Tank Bred",
         "Gold Gourami (Trichopodus trichopterus 'Gold') - Tank Bred",
         "Blue Gourami (Trichopodus trichopterus) - Tank Bred",
-        "Lavender Gourami (Trichopodus trichopterus) Tank Bred"
+        "Lavender Gourami (Trichopodus trichopterus) Tank Bred",
+        "Trichogaster trichopterus",
+        "Blue Gourami",
+        "Gold Gourami\n(Trichogaster trichopterus)",
+        "Gold Gourami",
+        "Opaline Gourami"
       ],
       "family": "Osphronemidae",
       "organismKind": "fish",
@@ -19911,40 +19552,6 @@
         "attributionUrl": "https://commons.wikimedia.org/wiki/File:Giant_Gourami_(Singapore,_River_Wonders).jpg",
         "width": 3918,
         "height": 2388
-      }
-    },
-    {
-      "speciesId": "sp_trichogaster_trichopterus",
-      "commonName": "Three Spot Gourami",
-      "scientificName": "Trichogaster trichopterus",
-      "aliases": [
-        "Blue Gourami",
-        "Gold Gourami\n(Trichogaster trichopterus)",
-        "Gold Gourami",
-        "Opaline Gourami"
-      ],
-      "family": "Osphronemidae",
-      "organismKind": "fish",
-      "habitatNote": "Labyrinth fishes; breathe air at the surface but feed throughout.",
-      "waterZone": "all-levels",
-      "adultSizeIn": 5.9,
-      "predationTags": [],
-      "waterType": "freshwater",
-      "sourceLabel": "Backfilled from cited sources - each value links to the sentence it came from",
-      "careSources": {
-        "adultSizeIn": {
-          "source": "wikipedia",
-          "url": "https://en.wikipedia.org/wiki/Three_spot_gourami"
-        }
-      },
-      "portrait": {
-        "url": "https://upload.wikimedia.org/wikipedia/commons/c/c5/Trichogster_trichopterus_13.jpg",
-        "provenance": "wikimedia",
-        "license": "CC BY-SA 3.0",
-        "artist": "Gourami Watcher",
-        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Trichogster_trichopterus_13.jpg",
-        "width": 1875,
-        "height": 1412
       }
     },
     {
@@ -21675,48 +21282,13 @@
       }
     },
     {
-      "speciesId": "sp_tetraodon_palembangensis",
-      "commonName": "Humpback Dragon",
-      "scientificName": "Tetraodon palembangensis",
-      "aliases": [
-        "Humpback Dragon AKA Band Puffer (Tetraodon palembangensis)"
-      ],
-      "family": "Tetraodontidae",
-      "organismKind": "fish",
-      "habitatNote": "Puffers; deliberate mid-water swimmers.",
-      "waterZone": "mid",
-      "adultSizeIn": 7.6,
-      "tempMinC": 24,
-      "tempMaxC": 28,
-      "predationTags": [],
-      "waterType": "freshwater",
-      "sourceLabel": "Backfilled from cited sources - each value links to the sentence it came from",
-      "careSources": {
-        "adultSizeIn": {
-          "source": "wikipedia",
-          "url": "https://en.wikipedia.org/wiki/Pao_palembangensis"
-        },
-        "tempC": {
-          "source": "wikipedia",
-          "url": "https://en.wikipedia.org/wiki/Pao_palembangensis"
-        }
-      },
-      "portrait": {
-        "url": "https://upload.wikimedia.org/wikipedia/commons/6/6d/Pao_palembangensis_263839701.jpg",
-        "provenance": "wikimedia",
-        "license": "CC BY-SA 4.0",
-        "artist": "Abu Hamas",
-        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Pao_palembangensis_263839701.jpg",
-        "width": 1800,
-        "height": 1800
-      }
-    },
-    {
       "speciesId": "sp_pao_palembangensis",
       "commonName": "Humpback Dragon Puffer",
       "scientificName": "Pao palembangensis",
       "aliases": [
-        "Thai Humpback Dragon Puffer (Pao palembangensis)"
+        "Thai Humpback Dragon Puffer (Pao palembangensis)",
+        "Tetraodon palembangensis",
+        "Humpback Dragon AKA Band Puffer (Tetraodon palembangensis)"
       ],
       "family": "Tetraodontidae",
       "organismKind": "fish",
@@ -21878,9 +21450,7 @@
       "speciesId": "sp_hygrophila_araguaia",
       "commonName": "Hygrophila Araguaia",
       "scientificName": "Hygrophila araguaia",
-      "aliases": [
-        "Hygrophila araguaia"
-      ],
+      "aliases": [],
       "family": "Acanthaceae",
       "organismKind": "plant",
       "habitatNote": "Aquatic or marginal plant; position in the tank is a planting decision, not a trait.",
@@ -22295,7 +21865,10 @@
       "scientificName": "Pangasianodon hypophthalmus",
       "aliases": [
         "Iridescent Shark (Pangasianodon hypophthalmus)",
-        "Translucent Short Body Iridescent Shark (Pangasianodon hypophthalmus)"
+        "Translucent Short Body Iridescent Shark (Pangasianodon hypophthalmus)",
+        "Pangasius hypophthalmus",
+        "Albino Iridescent Shark (Pangasius hypophthalmus)",
+        "Short Body Albino Iridescent Shark (Pangasius hypophthalmus)"
       ],
       "family": "Pangasiidae",
       "organismKind": "fish",
@@ -23416,30 +22989,6 @@
       "predationTags": [],
       "waterType": "marine",
       "sourceLabel": "Discovered from vendor listings - no care profile yet"
-    },
-    {
-      "speciesId": "sp_dekeyseria_brachyura",
-      "commonName": "L Butterfly Pleco",
-      "scientificName": "Dekeyseria brachyura",
-      "aliases": [
-        "L168 Butterfly Pleco (Dekeyseria brachyura)"
-      ],
-      "family": "Loricariidae",
-      "organismKind": "fish",
-      "habitatNote": "Suckermouth and armoured catfishes; rasp and forage on the substrate.",
-      "waterZone": "bottom",
-      "predationTags": [],
-      "waterType": "freshwater",
-      "sourceLabel": "Discovered from vendor listings - no care profile yet",
-      "portrait": {
-        "url": "https://upload.wikimedia.org/wikipedia/commons/a/ac/Dekeyseria_picta.jpg",
-        "provenance": "wikimedia",
-        "license": "CC BY 4.0",
-        "artist": "Alberto Alcalá",
-        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Dekeyseria_picta.jpg",
-        "width": 847,
-        "height": 1024
-      }
     },
     {
       "speciesId": "sp_ancistomus_snethlageae",
@@ -25191,43 +24740,6 @@
       "predationTags": [],
       "waterType": "marine",
       "sourceLabel": "Discovered from vendor listings - no care profile yet"
-    },
-    {
-      "speciesId": "sp_hoplisoma_panda",
-      "commonName": "Longfin Panda Corydoras",
-      "scientificName": "Hoplisoma panda",
-      "aliases": [
-        "Longfin Panda Corydoras (Hoplisoma panda)"
-      ],
-      "family": "Callichthyidae",
-      "organismKind": "fish",
-      "habitatNote": "Suckermouth and armoured catfishes; rasp and forage on the substrate.",
-      "waterZone": "bottom",
-      "adultSizeIn": 2.1,
-      "tempMinC": 16,
-      "tempMaxC": 28,
-      "predationTags": [],
-      "waterType": "freshwater",
-      "sourceLabel": "Backfilled from cited sources - each value links to the sentence it came from",
-      "careSources": {
-        "adultSizeIn": {
-          "source": "wikipedia",
-          "url": "https://en.wikipedia.org/wiki/Hoplisoma_panda"
-        },
-        "tempC": {
-          "source": "wikipedia",
-          "url": "https://en.wikipedia.org/wiki/Hoplisoma_panda"
-        }
-      },
-      "portrait": {
-        "url": "https://upload.wikimedia.org/wikipedia/commons/d/d4/Panda_Corydoras.jpg",
-        "provenance": "wikimedia",
-        "license": "CC BY-SA 3.0",
-        "artist": "Chronotopian",
-        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Panda_Corydoras.jpg",
-        "width": 3213,
-        "height": 2142
-      }
     },
     {
       "speciesId": "sp_prognathodes_aculeatus",
@@ -28973,7 +28485,9 @@
       "commonName": "Panda Cory",
       "scientificName": "Corydoras panda",
       "aliases": [
-        "Panda Corydoras"
+        "Panda Corydoras",
+        "Hoplisoma panda",
+        "Longfin Panda Corydoras (Hoplisoma panda)"
       ],
       "family": "Callichthyidae",
       "organismKind": "fish",
@@ -32840,7 +32354,10 @@
       "commonName": "Red Glass Barb",
       "scientificName": "Pethia conchonius",
       "aliases": [
-        "Red Glass Barb (Pethia conchonius) – Tank-Bred"
+        "Red Glass Barb (Pethia conchonius) – Tank-Bred",
+        "Puntius conchonius",
+        "Rosy Barb (Puntius conchonius) – Tank Bred",
+        "Rosy Barb, Male"
       ],
       "family": "Cyprinidae",
       "organismKind": "fish",
@@ -33976,44 +33493,6 @@
       "sourceLabel": "Discovered from vendor listings - no care profile yet"
     },
     {
-      "speciesId": "sp_botia_modesta",
-      "commonName": "Redtail Botia Loach",
-      "scientificName": "Botia modesta",
-      "aliases": [
-        "Redtail Botia Loach",
-        "Blue Botia (Botia modesta ) 1.5\"-2\""
-      ],
-      "family": "Botiidae",
-      "organismKind": "fish",
-      "habitatNote": "Loaches and hillstream suckers; substrate- and rock-dwelling.",
-      "waterZone": "bottom",
-      "adultSizeIn": 9.8,
-      "tempMinC": 26,
-      "tempMaxC": 30,
-      "predationTags": [],
-      "waterType": "freshwater",
-      "sourceLabel": "Backfilled from cited sources - each value links to the sentence it came from",
-      "careSources": {
-        "adultSizeIn": {
-          "source": "wikipedia",
-          "url": "https://en.wikipedia.org/wiki/Yasuhikotakia_modesta"
-        },
-        "tempC": {
-          "source": "wikipedia",
-          "url": "https://en.wikipedia.org/wiki/Yasuhikotakia_modesta"
-        }
-      },
-      "portrait": {
-        "url": "https://upload.wikimedia.org/wikipedia/commons/8/8e/Yasuhikotakia_modesta.jpg",
-        "provenance": "wikimedia",
-        "license": "CC BY-SA 3.0",
-        "artist": "Lerdsuwa",
-        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Yasuhikotakia_modesta.jpg",
-        "width": 1700,
-        "height": 1133
-      }
-    },
-    {
       "speciesId": "sp_pseudacanthicus_leopardus",
       "commonName": "Redtail Leopard Pleco",
       "scientificName": "Pseudacanthicus leopardus",
@@ -34666,49 +34145,6 @@
       }
     },
     {
-      "speciesId": "sp_puntius_conchonius",
-      "commonName": "Rosy Barb",
-      "scientificName": "Puntius conchonius",
-      "aliases": [
-        "Rosy Barb (Puntius conchonius) – Tank Bred",
-        "Rosy Barb, Male"
-      ],
-      "family": "Cyprinidae",
-      "organismKind": "fish",
-      "habitatNote": "Carps, barbs, danios and rasboras; open-water shoalers.",
-      "waterZone": "mid",
-      "adultSizeIn": 6,
-      "aggression": "peaceful",
-      "tempMinC": 17.8,
-      "tempMaxC": 22.2,
-      "predationTags": [],
-      "waterType": "freshwater",
-      "sourceLabel": "Backfilled from cited sources - each value links to the sentence it came from",
-      "careSources": {
-        "adultSizeIn": {
-          "source": "wikipedia",
-          "url": "https://en.wikipedia.org/wiki/Rosy_barb"
-        },
-        "aggression": {
-          "source": "wikipedia",
-          "url": "https://en.wikipedia.org/wiki/Rosy_barb"
-        },
-        "tempC": {
-          "source": "wikipedia",
-          "url": "https://en.wikipedia.org/wiki/Rosy_barb"
-        }
-      },
-      "portrait": {
-        "url": "https://upload.wikimedia.org/wikipedia/commons/2/27/Rosy_barb_friends.jpg",
-        "provenance": "wikimedia",
-        "license": "CC BY-SA 4.0",
-        "artist": "The Great Mule of Eupatoria",
-        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Rosy_barb_friends.jpg",
-        "width": 698,
-        "height": 421
-      }
-    },
-    {
       "speciesId": "sp_rhodeus_ocellatus_ocellatus",
       "commonName": "Rosy Bitterling",
       "scientificName": "Rhodeus ocellatus ocellatus",
@@ -34828,36 +34264,6 @@
       "predationTags": [],
       "waterType": "freshwater",
       "sourceLabel": "Discovered from vendor listings - no care profile yet"
-    },
-    {
-      "speciesId": "sp_sturisoma_panamense",
-      "commonName": "Royal Farlowella",
-      "scientificName": "Sturisoma panamense",
-      "aliases": [
-        "Royal Farlowella (Sturisoma panamense) aka Whiptail Catfish - Tank-Bred!"
-      ],
-      "family": "Loricariidae",
-      "organismKind": "fish",
-      "habitatNote": "Suckermouth and armoured catfishes; rasp and forage on the substrate.",
-      "waterZone": "bottom",
-      "adultSizeIn": 10.2,
-      "predationTags": [],
-      "waterType": "freshwater",
-      "sourceLabel": "Backfilled from cited sources - each value links to the sentence it came from",
-      "careSources": {
-        "adultSizeIn": {
-          "source": "wikipedia",
-          "url": "https://en.wikipedia.org/wiki/Sturisomatichthys_panamensis"
-        }
-      },
-      "portrait": {
-        "url": "https://upload.wikimedia.org/wikipedia/commons/b/be/Sturisoma_panamense_2.jpg",
-        "provenance": "wikimedia",
-        "license": "CC BY-SA 2.5",
-        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Sturisoma_panamense_2.jpg",
-        "width": 1000,
-        "height": 426
-      }
     },
     {
       "speciesId": "sp_paracheilinus_angulatus",
@@ -35749,9 +35155,7 @@
       "speciesId": "sp_sagittaria_montevidensis",
       "commonName": "Sagittaria Montevidensis",
       "scientificName": "Sagittaria montevidensis",
-      "aliases": [
-        "Sagittaria montevidensis"
-      ],
+      "aliases": [],
       "family": "Alismataceae",
       "organismKind": "plant",
       "habitatNote": "Aquatic or marginal plant; position in the tank is a planting decision, not a trait.",
@@ -35865,43 +35269,6 @@
         "attributionUrl": "https://www.inaturalist.org/observations/336808703",
         "width": 2048,
         "height": 1458
-      }
-    },
-    {
-      "speciesId": "sp_glyptoperichthys_gibbiceps",
-      "commonName": "Sailfin Pleco",
-      "scientificName": "Glyptoperichthys gibbiceps",
-      "aliases": [
-        "Albino Sailfin Pleco (Glyptoperichthys gibbiceps)",
-        "Albino Short Body Sailfin Pleco (Glyptoperichthys gibbiceps)"
-      ],
-      "family": "Loricariidae",
-      "organismKind": "fish",
-      "habitatNote": "Suckermouth and armoured catfishes; rasp and forage on the substrate.",
-      "waterZone": "bottom",
-      "adultSizeIn": 24,
-      "aggression": "peaceful",
-      "predationTags": [],
-      "waterType": "freshwater",
-      "sourceLabel": "Backfilled from cited sources - each value links to the sentence it came from",
-      "careSources": {
-        "adultSizeIn": {
-          "source": "wikipedia",
-          "url": "https://en.wikipedia.org/wiki/Pterygoplichthys_gibbiceps"
-        },
-        "aggression": {
-          "source": "wikipedia",
-          "url": "https://en.wikipedia.org/wiki/Pterygoplichthys_gibbiceps"
-        }
-      },
-      "portrait": {
-        "url": "https://upload.wikimedia.org/wikipedia/commons/c/cb/Pterygoplichthys_gibbiceps_in_Botanic_garden_Teplice_%281%29.JPG",
-        "provenance": "wikimedia",
-        "license": "CC BY 3.0",
-        "artist": "Chmee2",
-        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Pterygoplichthys_gibbiceps_in_Botanic_garden_Teplice_(1).JPG",
-        "width": 4752,
-        "height": 3168
       }
     },
     {
@@ -37131,37 +36498,8 @@
       "commonName": "Siamese Algae Eater",
       "scientificName": "Crossocheilus oblongus",
       "aliases": [
-        "Siamese Algae Eater (Crossocheilus oblongus)"
-      ],
-      "family": "Cyprinidae",
-      "organismKind": "fish",
-      "habitatNote": "Carps, barbs, danios and rasboras; open-water shoalers.",
-      "waterZone": "mid",
-      "adultSizeIn": 6,
-      "predationTags": [],
-      "waterType": "freshwater",
-      "sourceLabel": "Backfilled from cited sources - each value links to the sentence it came from",
-      "careSources": {
-        "adultSizeIn": {
-          "source": "wikipedia",
-          "url": "https://en.wikipedia.org/wiki/Siamese_algae-eater"
-        }
-      },
-      "portrait": {
-        "url": "https://upload.wikimedia.org/wikipedia/commons/4/4c/Crossocheilus_siamensis_by_Ark.jpg",
-        "provenance": "wikimedia",
-        "license": "CC BY 3.0",
-        "artist": "User:Ark pl wiki",
-        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Crossocheilus_siamensis_by_Ark.jpg",
-        "width": 2121,
-        "height": 850
-      }
-    },
-    {
-      "speciesId": "sp_crossocheilus_siamensis",
-      "commonName": "Siamese Algae Eater",
-      "scientificName": "Crossocheilus siamensis",
-      "aliases": [
+        "Siamese Algae Eater (Crossocheilus oblongus)",
+        "Crossocheilus siamensis",
         "Siamese Algae Eater (Crossocheilus siamensis), Tank-Bred",
         "Siamese Algae Eater"
       ],
@@ -37423,46 +36761,6 @@
         "attributionUrl": "https://commons.wikimedia.org/wiki/File:Paraneetroplus_argenteus.jpg",
         "width": 2048,
         "height": 1536
-      }
-    },
-    {
-      "speciesId": "sp_myleus_schomburgkii",
-      "commonName": "Silver Dollar",
-      "scientificName": "Myleus schomburgkii",
-      "aliases": [
-        "Thin Bar Silver Dollar (Myleus schomburgkii)",
-        "Blackberry Silver Dollar (Myleus schomburgkii sp)",
-        "Wide Bar Silver Dollar (Myleus schomburgkii)",
-        "Black Bar Silver Dollar"
-      ],
-      "family": "Serrasalmidae",
-      "organismKind": "fish",
-      "habitatNote": "Characins; open-water shoalers.",
-      "waterZone": "mid",
-      "adultSizeIn": 15.7,
-      "tempMinC": 23,
-      "tempMaxC": 27,
-      "predationTags": [],
-      "waterType": "freshwater",
-      "sourceLabel": "Backfilled from cited sources - each value links to the sentence it came from",
-      "careSources": {
-        "adultSizeIn": {
-          "source": "wikipedia",
-          "url": "https://en.wikipedia.org/wiki/Myloplus_schomburgkii"
-        },
-        "tempC": {
-          "source": "wikipedia",
-          "url": "https://en.wikipedia.org/wiki/Myloplus_schomburgkii"
-        }
-      },
-      "portrait": {
-        "url": "https://upload.wikimedia.org/wikipedia/commons/8/82/Myleus_schomburgkii.jpg",
-        "provenance": "wikimedia",
-        "license": "Public domain",
-        "artist": "Ltshears",
-        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Myleus_schomburgkii.jpg",
-        "width": 1412,
-        "height": 1024
       }
     },
     {
@@ -37919,7 +37217,9 @@
       "scientificName": "Giuris margaritacea",
       "aliases": [
         "Snakehead gudgeon",
-        "Spangled Gudgeon"
+        "Spangled Gudgeon",
+        "Giuris margaritaceus",
+        "Snakehead Gudgeon (Giuris margaritaceus) 7-8”"
       ],
       "family": "Eleotridae",
       "organismKind": "fish",
@@ -37937,37 +37237,6 @@
       "waterType": "freshwater",
       "sourceLabel": "Wikipedia: Giuris margaritacea — PLACEHOLDER source",
       "sourceUrl": "https://en.wikipedia.org/wiki/Giuris_margaritacea",
-      "portrait": {
-        "url": "https://upload.wikimedia.org/wikipedia/commons/e/ee/Bugwan%2C_Hypseleotris_agilis_Herre_1927_by_P._Bravo.jpg",
-        "provenance": "wikimedia",
-        "license": "Public domain",
-        "artist": "Albert William Herre",
-        "attributionUrl": "https://commons.wikimedia.org/wiki/File:Bugwan,_Hypseleotris_agilis_Herre_1927_by_P._Bravo.jpg",
-        "width": 603,
-        "height": 290
-      }
-    },
-    {
-      "speciesId": "sp_giuris_margaritaceus",
-      "commonName": "Snakehead Gudgeon",
-      "scientificName": "Giuris margaritaceus",
-      "aliases": [
-        "Snakehead Gudgeon (Giuris margaritaceus) 7-8”"
-      ],
-      "family": "Eleotridae",
-      "organismKind": "fish",
-      "habitatNote": "Gobies and sleepers; perch on the substrate, most lack a swim bladder.",
-      "waterZone": "bottom",
-      "adultSizeIn": 11.4,
-      "predationTags": [],
-      "waterType": "freshwater",
-      "sourceLabel": "Backfilled from cited sources - each value links to the sentence it came from",
-      "careSources": {
-        "adultSizeIn": {
-          "source": "wikipedia",
-          "url": "https://en.wikipedia.org/wiki/Giuris_margaritaceus"
-        }
-      },
       "portrait": {
         "url": "https://upload.wikimedia.org/wikipedia/commons/e/ee/Bugwan%2C_Hypseleotris_agilis_Herre_1927_by_P._Bravo.jpg",
         "provenance": "wikimedia",
@@ -40080,7 +39349,19 @@
         "Orange Swordtail (Xiphophorus hellerii) – Locally Bred",
         "Premium Assorted Swordtails (Xiphophorus hellerii) - Tank Bred",
         "Kohaku Koi Swordtail (Xiphophorus hellerii) – Tank-Bred",
-        "Albino Kohaku Koi Lyretail Swordtail\n(Xiphophorus hellerii)"
+        "Albino Kohaku Koi Lyretail Swordtail\n(Xiphophorus hellerii)",
+        "Xiphophorus helleri",
+        "Koi Sanke Swordtail (Xiphophorus helleri), Tank-Bred",
+        "Albino Koi Kohaku Swordtail (Xiphophorus helleri), Tank-Bred",
+        "Hi Fin Red Eye Blood Red Lyretail Swordtail (Xiphophorus helleri), Tank-Bred",
+        "Hi Fin Tancho Kohaku Swordtail (Xiphophorus helleri), Tank-Bred",
+        "Black Tail Koi Kohaku Swordtail (Xiphophorus helleri), Tank-Bred",
+        "Red Eye Blood Red Hi Fin Swordtail (Xiphophorus helleri) - Tank-Bred!",
+        "Green Swordtail (Xiphophorus helleri) Tank-Bred!",
+        "Red Lyretail Swordtail",
+        "Xiphophorus helleri hybrid",
+        "Simpson's Hi Fin Lyretail Swordtail (Xiphophorus helleri hybrid) - Tank-Bred!",
+        "Hamburger Swordtail (Xiphophorus helleri hybrid) Tank-Bred!"
       ],
       "family": "Poeciliidae",
       "organismKind": "fish",
@@ -41589,7 +40870,16 @@
         "Albino Tiger Barb (Puntigrus tetrazona), Tank-Bred",
         "Golden Jade Tiger Barb (Puntigrus tetrazona)",
         "Platinum Green Tiger Barb (Puntigrus tetrazona) – Tank Bred",
-        "Albino Tiger Barb (Puntigrus tetrazona)"
+        "Albino Tiger Barb (Puntigrus tetrazona)",
+        "Puntius tetrazona",
+        "Filamentosa Barb",
+        "GloFish®, Sunburst Orange® Barb",
+        "GloFish®, Starfire Red® Barb",
+        "GloFish®, Galactic Purple® Barb",
+        "GloFish®, Electric Green® Barb",
+        "Tiger Barb",
+        "Platinum Longfin Tiger Barb (Puntius tetrazona)",
+        "Green Longfin Balloon Tiger Barb (Puntius tetrazona)"
       ],
       "family": "Cyprinidae",
       "organismKind": "fish",
@@ -45190,7 +44480,10 @@
       "commonName": "Yellowtail Blue Botia",
       "scientificName": "Yasuhikotakia modesta",
       "aliases": [
-        "Yellowtail Blue Botia (Yasuhikotakia modesta)"
+        "Yellowtail Blue Botia (Yasuhikotakia modesta)",
+        "Botia modesta",
+        "Redtail Botia Loach",
+        "Blue Botia (Botia modesta ) 1.5\"-2\""
       ],
       "family": "Botiidae",
       "organismKind": "fish",
