@@ -7,7 +7,7 @@
  * ship from first release, not later.
  */
 import { useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
+import { useLiveQuery, useObservable } from 'dexie-react-hooks';
 import { SCENES, THEMES, useTheme } from '@/theme/ThemeProvider';
 import { BUILD_ID, BUILT_AT } from '@/build-info';
 import { db } from '@/data/db';
@@ -16,6 +16,7 @@ import AccountPanel from '@/ui/components/AccountPanel';
 import { importInventoryFile } from '@/data/import-service';
 import { exportArchive } from '@/data/portability/export';
 import { importArchive } from '@/data/portability/import';
+import { eraseEverything } from '@/data/portability/erase';
 import type { ImportResult } from '@/data/seed/inventory-import';
 
 /** Spec 005 FR-A04. Enough to cover where Ryan actually buys fish. */
@@ -110,6 +111,7 @@ export default function Settings() {
       <AccountPanel />
       <InventoryImport />
       <BackupPanel />
+      <ErasePanel />
       <BuildStamp />
 
       <section className="card">
@@ -326,6 +328,135 @@ function BackupPanel() {
         Restoring adds to what is here and never deletes it. Importing the same file twice is
         safe. An archive that does not match its own manifest is refused whole.
       </p>
+
+      {note ? <p className="small">{note}</p> : null}
+      {problem ? <p className="small" role="alert">{problem}</p> : null}
+    </section>
+  );
+}
+
+/**
+ * Erase everything, so a keeper can restore a clean copy over an empty app.
+ *
+ * THE BACKUP IS NOT OPTIONAL AND NOT A CHECKBOX. The archive is written first,
+ * as step one of the flow, and a failed or cancelled export stops the whole
+ * thing. Asking someone to confirm they have a backup is asking them to
+ * remember; taking one is not.
+ *
+ * THREE STEPS, NOT ONE BUTTON. Backup, then consent, then erase. The consent
+ * step asks for the word ERASE rather than offering a second button, because
+ * the cost of a mis-tap here is the entire collection and the only honest
+ * defence is making the action impossible to perform by accident.
+ *
+ * IT SAYS WHAT IT WILL REACH. Signed in, this is not a local reset: the
+ * deletions sync, so the account is emptied on every device. Signed out it is
+ * this browser only. Those are very different acts and the text changes to
+ * match rather than describing the safer one.
+ */
+function ErasePanel() {
+  const user = useObservable(db.cloud.currentUser);
+  const signedIn = Boolean(user?.isLoggedIn);
+
+  const [stage, setStage] = useState<'idle' | 'confirming' | 'working'>('idle');
+  const [typed, setTyped] = useState('');
+  const [backup, setBackup] = useState<string>();
+  const [note, setNote] = useState<string>();
+  const [problem, setProblem] = useState<string>();
+
+  function reset() {
+    setStage('idle');
+    setTyped('');
+    setBackup(undefined);
+  }
+
+  /** Step one. Nothing is destroyed until this has actually produced a file. */
+  async function backupThenConfirm() {
+    setStage('working');
+    setNote(undefined);
+    setProblem(undefined);
+    try {
+      const { blob, filename, manifest } = await exportArchive(db, { appBuild: BUILD_ID });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+      const rows = Object.values(manifest.tables).reduce((n, v) => n + v, 0);
+      setBackup(`${filename} (${rows} records, ${manifest.media.count} media files)`);
+      setStage('confirming');
+    } catch (err) {
+      console.error('[erase] refusing: the backup failed', err);
+      setProblem(`Backup failed, so nothing was erased: ${String(err)}`);
+      setStage('idle');
+    }
+  }
+
+  /** Step three. Step two is the keeper typing the word. */
+  async function erase() {
+    setStage('working');
+    try {
+      const result = await eraseEverything(db);
+      setNote(
+        `Erased ${result.total} records${result.userSpeciesRemoved > 0
+          ? `, including ${result.userSpeciesRemoved} species you added`
+          : ''}. Restore your backup to bring a collection back.`,
+      );
+      reset();
+    } catch (err) {
+      // A half-erase is the dangerous outcome: some of the collection is gone
+      // and the screen must not imply the rest is safe.
+      console.error('[erase] failed part way through', err);
+      setProblem(
+        `Erase failed part way through: ${String(err)}. Some records may be gone. `
+        + 'Restore the backup that was just saved.',
+      );
+      setStage('idle');
+    }
+  }
+
+  return (
+    <section className="card stack">
+      <h2>Erase everything</h2>
+      <p className="muted small">
+        {signedIn
+          ? 'Empties your whole collection from this device and from your account, on every '
+            + 'device signed into it. A backup is saved first, and restoring it is the only way back.'
+          : 'Empties your whole collection from this browser. A backup is saved first, and '
+            + 'restoring it is the only way back.'}
+      </p>
+
+      {stage !== 'confirming' ? (
+        <button
+          type="button"
+          onClick={() => void backupThenConfirm()}
+          disabled={stage === 'working'}
+        >
+          {stage === 'working' ? 'Saving your backup…' : 'Back up, then erase everything'}
+        </button>
+      ) : (
+        <div className="stack">
+          <p className="small" role="alert">
+            Backup saved: <strong>{backup}</strong>
+          </p>
+          <p className="small">
+            {signedIn
+              ? 'This will delete every record in your account, everywhere. '
+              : 'This will delete every record in this browser. '}
+            Type <strong>ERASE</strong> to confirm.
+          </p>
+          <input
+            aria-label="Type ERASE to confirm"
+            value={typed}
+            onChange={(e) => setTyped(e.target.value)}
+            autoComplete="off"
+          />
+          <button type="button" onClick={() => void erase()} disabled={typed.trim() !== 'ERASE'}>
+            Erase everything now
+          </button>
+          <button type="button" onClick={reset}>Cancel</button>
+        </div>
+      )}
 
       {note ? <p className="small">{note}</p> : null}
       {problem ? <p className="small" role="alert">{problem}</p> : null}
