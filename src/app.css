@@ -1469,7 +1469,10 @@ summary.factor::-webkit-details-marker { display: none; }
  */
 .profile {
   position: fixed;
-  top: calc(var(--space-3) + env(safe-area-inset-top));
+  /* --devbar-height is set only while developer mode's banner is on screen
+     (spec 013), and is measured by it rather than assumed. Absent, this is
+     the original position exactly. */
+  top: calc(var(--space-3) + env(safe-area-inset-top) + var(--devbar-height, 0px));
   right: var(--space-4);
   z-index: 9;
 
@@ -1523,4 +1526,52 @@ summary.factor::-webkit-details-marker { display: none; }
   display: inline-flex; align-items: center; justify-content: center;
   gap: var(--space-2);
   width: 100%;
+}
+
+/*
+ * Developer mode (spec 013). Understated at the gate, loud once you are in.
+ *
+ * The entry point is a text button rather than a second filled button: it must
+ * not read as an alternative way to open your collection, because it is not
+ * one - it opens an empty signed-out app on this device.
+ */
+.gate__dev {
+  background: none;
+  border: 0;
+  padding: var(--space-2);
+  color: var(--color-muted);
+  font-size: var(--size-xs);
+  text-decoration: underline;
+  width: auto;
+}
+.gate__devform { width: 100%; text-align: left; }
+
+/*
+ * The banner. Caution rather than danger: nothing is broken, but the device is
+ * in a state where what you add survives nothing. The icon carries the state
+ * as well as the colour does, which the colour alone would not (NFR-06).
+ */
+.devbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface-raised);
+  border-bottom: 2px solid var(--color-caution);
+  color: var(--color-caution);
+}
+.devbar__text {
+  margin: 0;
+  flex: 1;
+  font-size: var(--size-xs);
+  color: var(--color-text);
+}
+.devbar__exit {
+  width: auto;
+  flex: none;
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--size-xs);
 }
