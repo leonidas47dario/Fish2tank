@@ -17,10 +17,11 @@ import { DuckDBInstance } from '@duckdb/node-api';
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { deriveCommonName } from './normalize/derive-species';
 import { findProblems, isUsableName, summarise } from '@/data/seed/catalog-quality';
-import { OVERRIDE_BY_ID, SPECIES_SYNONYMS, SYNONYM_IDS } from '@/data/seed/species-overrides';
+import { NOT_A_SPECIES, OVERRIDE_BY_ID, SPECIES_SYNONYMS, SYNONYM_IDS } from '@/data/seed/species-overrides';
 import { traitsFor, type OrganismKind, type WaterZone } from '@/data/seed/taxonomy';
 import type { WaterType } from '@/domain/types';
 import { loadCareBackfill, type CareRecord } from './care/backfill';
+import { loadPromotedSpecies } from './community/promoted';
 
 const WAREHOUSE = 'warehouse';
 const OUT_DIR = 'src/data/seed/marts';
@@ -44,6 +45,8 @@ export interface CatalogEntry {
    * and excludes them from every specific filter. See normalize/water-type.ts.
    */
   waterType?: WaterType;
+  /** Promoted from a keeper's submission after review. See community/promoted.ts. */
+  curated?: boolean;
   sourceLabel?: string;
   sourceUrl?: string;
   /**
@@ -312,6 +315,35 @@ async function main() {
     };
   });
 
+  /**
+   * Species promoted from keeper submissions, folded in last.
+   *
+   * Appended rather than merged: a promoted species by definition has no
+   * warehouse row to merge with. A name already in the catalog is skipped
+   * rather than duplicated - the review CLI's gate flags those, but this is
+   * the check that actually holds, because the file is hand-editable.
+   */
+  const promoted = loadPromotedSpecies();
+  const knownNames = new Set(species.map((sp) => sp.commonName.trim().toLowerCase()));
+  const knownIds = new Set(species.map((sp) => sp.speciesId));
+  let promotedAdded = 0;
+  for (const p of promoted) {
+    const key = p.commonName.trim().toLowerCase();
+    if (knownIds.has(p.speciesId) || knownNames.has(key)) continue;
+    knownIds.add(p.speciesId);
+    knownNames.add(key);
+    species.push({
+      speciesId: p.speciesId,
+      commonName: p.commonName,
+      ...(p.scientificName ? { scientificName: p.scientificName } : {}),
+      aliases: p.aliases ?? [],
+      predationTags: [],
+      sourceLabel: 'Submitted by a keeper',
+      curated: true,
+    });
+    promotedAdded++;
+  }
+
   const mart: CatalogMart = {
     schemaVersion: 2,
     builtAt: new Date().toISOString(),
@@ -322,6 +354,9 @@ async function main() {
   const withArt = species.filter((s) => s.portrait).length;
   console.log('─── marts ───');
   console.log(`  species          ${species.length}`);
+  if (promoted.length > 0) {
+    console.log(`  from keepers     ${promotedAdded}  (${promoted.length - promotedAdded} already present)`);
+  }
   console.log(`  with a portrait  ${withArt}  (${Math.round((withArt / species.length) * 100)}%)`);
   console.log(`  without          ${species.length - withArt}`);
 
@@ -371,6 +406,8 @@ async function main() {
   console.log(`    not recorded              ${String(untyped).padStart(4)}  (${Math.round((untyped / species.length) * 100)}%)`);
   console.log(`\n  dropped ${SPECIES_SYNONYMS.length} duplicate species minted by vendor typos`);
   for (const s of SPECIES_SYNONYMS) console.log(`      ${s.speciesId} -> ${s.canonicalId}`);
+  console.log(`  dropped ${NOT_A_SPECIES.length} minted entries that are not species at all`);
+  for (const s of NOT_A_SPECIES) console.log(`      ${s.speciesId}  (from "${s.mintedFrom}")`);
 
   console.log('\n  naming');
   console.log(`    from the warehouse as-is  ${species.length - naming.rederived - naming.overridden - naming.fellBack}`);

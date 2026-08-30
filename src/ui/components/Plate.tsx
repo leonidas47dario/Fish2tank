@@ -32,12 +32,27 @@ import { FishIcon, ImageBrokenIcon } from './Icons';
  * Extracted from the card component because three screens need the same
  * answer, and the last time two of them derived it separately they drifted.
  */
-export function useCardArt(card: CatalogCard): { art: CardArt; ownUrl?: string } {
-  const pref = useLiveQuery(
+export function useCardArt(
+  card: CatalogCard,
+  /**
+   * Ignore the stored preference and use this instead.
+   *
+   * For the reveal, which forces `portrait`. Everywhere else your own photo
+   * wins by default (principle P3, "the exact specimen matters") and that is
+   * right - but the reveal is unlocking the SPECIES in the catalog, so the
+   * catalog's picture is the subject. Showing the snapshot you just took makes
+   * the ceremony a slideshow of a photo you have already seen.
+   *
+   * resolveCardArt still falls back to your own photo when no portrait is
+   * bundled, which is 1,167 of 2,178 species.
+   */
+  override?: { artSource: 'own' | 'portrait' },
+): { art: CardArt; ownUrl?: string } {
+  const stored = useLiveQuery(
     () => db.cardPrefs.get(card.species.speciesId),
     [card.species.speciesId],
   );
-  const art = resolveCardArt(card, pref);
+  const art = resolveCardArt(card, override ?? stored);
 
   // Your own photos live in IndexedDB as bytes. The query yields the blob and
   // useBlobUrl owns the URL, so a scroll through the catalog cannot leak one

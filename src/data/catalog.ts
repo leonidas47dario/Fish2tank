@@ -58,6 +58,12 @@ export interface CatalogSpecies {
    * means nobody said, which is not a claim that it is freshwater.
    */
   waterType?: WaterType;
+  /**
+   * A name a keeper submitted and a reviewer approved, rather than one derived
+   * from a vendor listing. Read by the quality gate, and worth saying on the
+   * card: this entry has a person behind it, not a source document.
+   */
+  curated?: boolean;
 }
 
 interface CatalogMart {
@@ -88,6 +94,34 @@ export function portraitAsset(speciesId: string): string | undefined {
 }
 
 export const CATALOG_BY_SPECIES = new Map(CATALOG.species.map((s) => [s.speciesId, s]));
+
+/**
+ * Present a locally-submitted species as a catalog entry the UI can render.
+ *
+ * A species a keeper typed in is not in catalog.json, so every lookup keyed on
+ * CATALOG_BY_SPECIES misses it and the record it belongs to renders as though
+ * the fish had no identity at all. This adapts the local row into the same
+ * shape, with every sourced field deliberately absent: there is no adult size,
+ * no aggression rating, no portrait and no water type, because nobody has
+ * sourced them. The card's own "not enough data" handling then tells the truth
+ * rather than a shape full of zeroes doing it badly.
+ */
+export function catalogShapeForLocal(species: {
+  id: string; commonName: string; scientificName?: string; aliases?: string[];
+}): CatalogSpecies {
+  return {
+    speciesId: species.id,
+    commonName: species.commonName,
+    scientificName: species.scientificName,
+    aliases: species.aliases ?? [],
+    predationTags: [],
+  };
+}
+
+/** Whether an id belongs to a species this keeper added rather than the catalog. */
+export function isUserSubmittedId(speciesId: string): boolean {
+  return speciesId.startsWith('sp_user_');
+}
 
 /** What the user has done with this species. Everything here is personal. */
 export interface CatalogUserState {
@@ -194,6 +228,49 @@ export function marketAndScarcity(speciesId: string) {
   const market = marketFor(speciesId);
   const scarcity = scarcityFor(speciesId);
   return { market, scarcityBand: scarcity.available ? scarcity.band : undefined };
+}
+
+/** The stored rows a card is derived from. Whoever has them can build one. */
+export interface CatalogCardRows {
+  specimens: Array<{ id: Id; identityStatus: string; golden?: unknown }>;
+  holdings: Array<{ id: Id }>;
+  /** Holding ids that still hold live fish and sit in an open tank. */
+  keptHoldingIds: Set<Id>;
+  snapshots: Array<{ tier: CatalogUserState['tier'] }>;
+  ownPhotoMediaIds: Id[];
+  onDreamList: boolean;
+}
+
+/**
+ * Assemble a card from stored rows.
+ *
+ * A pure function rather than a hook because the two screens that need a card
+ * fetch different amounts around it - the species page already has these rows
+ * for other reasons, and re-querying them behind a hook would double its work.
+ * Extracting the ASSEMBLY and leaving the fetching to the caller keeps one
+ * definition of what a card means without imposing one way of loading it.
+ *
+ * Worth keeping shared: Plate.tsx records that the last time two screens
+ * derived card art separately, they drifted.
+ */
+export function buildCatalogCard(species: CatalogSpecies, rows: CatalogCardRows): CatalogCard {
+  const confirmed = rows.specimens.filter((s) => s.identityStatus === 'user-confirmed');
+  const { market, scarcityBand } = marketAndScarcity(species.speciesId);
+  return {
+    species,
+    user: {
+      ...ownership(confirmed.length, rows.holdings.length),
+      currentlyKept: rows.holdings.some((h) => rows.keptHoldingIds.has(h.id)),
+      specimenCount: rows.specimens.length,
+      tier: rows.snapshots[0]?.tier,
+      golden: rows.specimens.some((s) => Boolean(s.golden)),
+      onDreamList: rows.onDreamList,
+      ownPhotoMediaIds: rows.ownPhotoMediaIds,
+    },
+    market,
+    price: cardPrice(market),
+    scarcityBand,
+  };
 }
 
 /**

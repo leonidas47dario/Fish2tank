@@ -106,6 +106,34 @@ export interface Place {
 // Species and species profile
 // ---------------------------------------------------------------------------
 
+/**
+ * Where a species record came from.
+ *
+ * Absent means the shipped catalog, which is every species the app seeds. A
+ * `user-submitted` row is one a keeper typed in because the catalog had no
+ * match, and it is deliberately NOT the same thing: it carries one person's
+ * reading of a store tag, with no source behind it. The distinction is what
+ * lets the app show it honestly and lets the review CLI find it.
+ */
+export type SpeciesOrigin = 'catalog' | 'user-submitted';
+
+/**
+ * The evidence behind a user-submitted species, kept so somebody can judge it.
+ *
+ * A submission without this is unreviewable - "Congo tetra" alone does not say
+ * whether it was read off a tag, guessed, or mistyped. Every field here exists
+ * to be shown to a human deciding whether it belongs in the shared catalog.
+ */
+export interface SpeciesSubmission {
+  /** Exactly what the keeper typed, never cleaned up. */
+  label: string;
+  /** The specimen it was logged from, so the photo can be looked at. */
+  specimenId?: Id;
+  submittedAt: Instant;
+  /** Anything the keeper added about where the name came from. */
+  note?: string;
+}
+
 export interface Species {
   id: Id;
   commonName: string;
@@ -115,6 +143,10 @@ export interface Species {
   morph?: string;
   locality?: string;
   createdAt: Instant;
+  /** Absent means the shipped catalog. See SpeciesOrigin. */
+  origin?: SpeciesOrigin;
+  /** Present only on a user-submitted row. */
+  submission?: SpeciesSubmission;
 }
 
 export type AggressionRating = 'peaceful' | 'semi-aggressive' | 'aggressive' | 'highly-aggressive';
@@ -303,17 +335,29 @@ export interface PriceObservation {
 
 export type DiscoveryTier = 'familiar' | 'uncommon' | 'rare' | 'epic' | 'legendary';
 
+/**
+ * What a reveal awarded, by component.
+ *
+ * As of formula v0.3.0 a new snapshot carries `marketScarcity` and nothing
+ * else. The other four are OPTIONAL rather than deleted because snapshots are
+ * immutable by requirement (FR-R05: "tuning never rewrites a historical reveal
+ * snapshot"), so v0.2.0 records on the device still carry all five and still
+ * have to render. Read the keys a snapshot actually has; never assume the set.
+ */
 export interface RarityComponentBreakdown {
-  firstConfirmedSpecies: number;
-  dreamListHit: number;
-  personalEncounterScarcity: number;
-  exceptionalSpecimen: number;
   /**
    * Contribution from how hard the fish is to source from the tracked
-   * vendors. Added in formula v0.2.0 at the product owner's direction; see
-   * discovery-tier.ts for the PRD note.
+   * vendors. The entire score as of v0.2.0 -> v0.3.0; see discovery-tier.ts.
    */
   marketScarcity: number;
+  /** Retired in v0.3.0. Present on v0.1.0 and v0.2.0 snapshots. */
+  firstConfirmedSpecies?: number;
+  /** Retired in v0.3.0. Present on v0.1.0 and v0.2.0 snapshots. */
+  dreamListHit?: number;
+  /** Retired in v0.3.0. Present on v0.1.0 and v0.2.0 snapshots. */
+  personalEncounterScarcity?: number;
+  /** Retired in v0.3.0. Present on v0.1.0 and v0.2.0 snapshots. */
+  exceptionalSpecimen?: number;
 }
 
 /**

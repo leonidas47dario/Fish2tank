@@ -262,7 +262,61 @@ export const OVERRIDE_BY_ID: ReadonlyMap<string, SpeciesOverride> = new Map(
   SPECIES_OVERRIDES.map((o) => [o.speciesId, o]),
 );
 
-/** Ids that must not appear in the shipped catalog. */
-export const SYNONYM_IDS: ReadonlySet<string> = new Set(
-  SPECIES_SYNONYMS.map((s) => s.speciesId),
-);
+export interface NotASpecies {
+  /** The id to drop. */
+  speciesId: string;
+  /** The text the matcher mistook for a binomial. */
+  mintedFrom: string;
+  reason: string;
+}
+
+/**
+ * Minted species that are not species at all.
+ *
+ * DIFFERENT FROM SPECIES_SYNONYMS, which is about real fish recorded twice
+ * under a misspelling. These are not fish. Both arrived the same way: the
+ * matcher reads parenthesised text in a vendor title as a scientific name -
+ * correct almost always, since "Jaguar Cichlid (Parachromis managuensis)" is
+ * the house style everywhere - and these two listings put something else in
+ * the parens.
+ *
+ * The gate that now stops this is isUsableBinomial() in catalog-quality.ts,
+ * and the build fails if either of these reappears. They are still listed
+ * here because the gate rejects the NAME while the warehouse still holds the
+ * ROW, and dropping the row is what keeps them off the catalog screen.
+ *
+ * Neither loses anything that counts. The Red Wolf Fish listing is from J4
+ * Flowerhorns, which is not a qualifying witness store, so it contributed
+ * nothing to any scarcity rating; after the rebuild it is reported as
+ * unmatched, which is the honest destination for a listing whose species
+ * cannot be resolved.
+ */
+export const NOT_A_SPECIES: NotASpecies[] = [
+  {
+    speciesId: 'sp_roofvissen_fotografie',
+    mintedFrom: 'Red Wolf Fish ( Roofvissen fotografie ) 4"',
+    reason:
+      'A photo credit, not a binomial. "Roofvissen fotografie" is Dutch for "predatory fish photography". '
+      + 'The fish itself is Erythrinus erythrinus, already in the catalog as sp_erythrinus_erythrinus '
+      + '("Rainbow Wolf Fish"), which is sold under both names - so this was also a duplicate.',
+  },
+  {
+    speciesId: 'sp_fish_food',
+    mintedFrom: 'Fish food',
+    reason:
+      'Not an animal. Its eight aliases are all food products - Hikari wafers, CarniSticks, Vibra-Bites. '
+      + 'Carried by Imperial Tropicals, which IS a witness store, so under Discovery v0.3.0 it was rateable '
+      + 'and scored an epic tier.',
+  },
+];
+
+/**
+ * Ids that must not appear in the shipped catalog.
+ *
+ * Both reasons for removal, in one set, because every consumer wants the same
+ * answer: is this id allowed in the catalog?
+ */
+export const SYNONYM_IDS: ReadonlySet<string> = new Set([
+  ...SPECIES_SYNONYMS.map((s) => s.speciesId),
+  ...NOT_A_SPECIES.map((s) => s.speciesId),
+]);
