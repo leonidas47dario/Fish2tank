@@ -257,13 +257,28 @@ line cannot disagree with the list underneath it. With no name set the
 greeting reads "Welcome back.", because an empty `displayName` is the default
 state and nothing forces you to fill it.
 
-### FR-A05 - An account is not a gate
+### ~~FR-A05 - An account is not a gate~~ (reversed by spec 010)
 
-Dexie Cloud is configured with `requireAuth: false`. The app must work
-completely while logged out, exactly as it does today. Signing in is how you
-*keep* your collection across devices, not how you are permitted to open it.
-This preserves FR-O01 and PRD 2.2, which require the product to be private and
-complete for one person.
+> ~~Dexie Cloud is configured with `requireAuth: false`. The app must work
+> completely while logged out, exactly as it does today. Signing in is how you
+> *keep* your collection across devices, not how you are permitted to open it.
+> This preserves FR-O01 and PRD 2.2, which require the product to be private and
+> complete for one person.~~
+
+**Reversed on 2026-08-30 by [spec 010](010-account-required-and-the-profile-affordance.md),
+after Ryan used the shipped build.** Kept rather than deleted, because the
+argument above is a good one and a future reader should see what was traded
+away.
+
+What it missed is what a logged-out device does now that sync exists: it works
+perfectly while silently accumulating catches and photos somewhere that will
+not survive the device. The lost-phone case this feature exists to prevent was
+the default state, and it looked healthy.
+
+`requireAuth: false` **remains set on the addon**. The gate is rendered by the
+app instead, and it tests for a cached identity rather than for a network, so
+a device that has signed in once still works offline in a fish shop. See spec
+010 FR-A09.
 
 ### FR-A06 - Cutover, in two releases
 
@@ -399,8 +414,11 @@ whether this feature proceeds. Filed as a backlog item in its own right.
    with thumbnails visible before originals finish downloading.
 3. An original downloaded on device B is byte-identical to the original
    captured on device A.
-4. The app remains fully usable logged out, with no feature gated behind an
-   account.
+4. ~~The app remains fully usable logged out, with no feature gated behind an
+   account.~~ **Reversed by spec 010 FR-A09.** Replaced by: a device that has
+   signed in once remains fully usable *offline*, indefinitely, with no feature
+   gated behind connectivity. Only a device that has never signed in is
+   stopped.
 5. Theme, scene, currency and reduced motion follow the account; mute does
    not.
 6. No `syncState` reaches a synced value without a post-upload verification
