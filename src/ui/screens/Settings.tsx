@@ -5,19 +5,30 @@
  * (7.6): the same Panther has to be comparable across all three territories,
  * and switching must change nothing but appearance. Mute and reduced motion
  * ship from first release, not later.
+ *
+ * SPEC 017 REORDERED THIS SCREEN. It had grown to nine cards in the order they
+ * were built, which put Account fifth and Backup seventh - the two things a
+ * keeper opens Settings to find. It is now five: Account (who you are, whether
+ * you are syncing, and what currency your prices read in), Theme (everything
+ * about how it looks), Your data (backup, restore, erase, together because
+ * erase is only safe next to backup), Privacy, and Build.
+ *
+ * Two sections were removed rather than moved. Profile held a display-name
+ * field and the currency picker; the name now comes from the signed-in
+ * account and the currency moved into Account. Import inventory was the last
+ * caller of the spreadsheet importer, and deleting it also closes BUG-07,
+ * whose only reachable path was re-importing an edited sheet.
  */
 import { useState } from 'react';
 import { useLiveQuery, useObservable } from 'dexie-react-hooks';
-import { SCENES, THEMES, useTheme } from '@/theme/ThemeProvider';
+import { SCENES, THEMES, useTheme, type SceneId, type ThemeId } from '@/theme/ThemeProvider';
 import { BUILD_ID, BUILT_AT } from '@/build-info';
 import { db } from '@/data/db';
-import { LOCAL_PROFILE_ID, setDisplayName, updateSettings } from '@/data/profile';
+import { LOCAL_PROFILE_ID, updateSettings } from '@/data/profile';
 import AccountPanel from '@/ui/components/AccountPanel';
-import { importInventoryFile } from '@/data/import-service';
 import { exportArchive } from '@/data/portability/export';
 import { importArchive } from '@/data/portability/import';
 import { eraseEverything } from '@/data/portability/erase';
-import type { ImportResult } from '@/data/seed/inventory-import';
 
 /** Spec 005 FR-A04. Enough to cover where Ryan actually buys fish. */
 const CURRENCIES = ['USD', 'CAD', 'EUR', 'GBP', 'AUD', 'JPY'];
@@ -35,12 +46,13 @@ export default function Settings() {
     <div className="stack">
       <header><h1>Settings</h1></header>
 
-      <section className="card stack">
-        <h2>Profile</h2>
-        <p className="muted small">
-          Follows your account across devices once you sign in. Never shared or published.
-        </p>
-        <DisplayNameField saved={profile?.displayName ?? ''} />
+      {/*
+        Spec 017. Account first, because "am I signed in and is my collection
+        safe" is the question this screen exists to answer; everything else is
+        preference. The currency picker rides inside it rather than justifying
+        a section of its own.
+      */}
+      <AccountPanel>
         <label className="stack">
           <span className="xs muted">Currency for new prices</span>
           <select
@@ -52,67 +64,16 @@ export default function Settings() {
             ))}
           </select>
         </label>
-      </section>
+      </AccountPanel>
 
-      <section className="card stack">
-        <h2>App theme</h2>
-        <p className="muted small">
-          A comparison tool, not a finished decision. The records, the verdicts and the scores are identical
-          in all three.
-        </p>
-        {THEMES.map((t) => (
-          <label key={t.id} className="row" style={{ cursor: 'pointer', color: 'var(--color-text)' }}>
-            <input
-              type="radio" name="theme" value={t.id} checked={theme === t.id}
-              onChange={() => setTheme(t.id)} style={{ width: 'auto' }}
-            />
-            <span>
-              <strong>{t.name}</strong><br />
-              <span className="xs muted">{t.blurb}</span>
-            </span>
-          </label>
-        ))}
-      </section>
+      <ThemePanel
+        theme={theme} setTheme={setTheme}
+        scene={scene} setScene={setScene}
+        reducedMotion={reducedMotion} setReducedMotion={setReducedMotion}
+        muted={muted} setMuted={setMuted}
+      />
 
-      <section className="card stack">
-        <h2>Aquarium scene</h2>
-        <p className="muted small">
-          A surround for the media window. The original photo or video is never replaced or altered.
-        </p>
-        {SCENES.map((s) => (
-          <label key={s.id} className="row" style={{ cursor: 'pointer', color: 'var(--color-text)' }}>
-            <input
-              type="radio" name="scene" value={s.id} checked={scene === s.id}
-              onChange={() => setScene(s.id)} style={{ width: 'auto' }}
-            />
-            <span>
-              <strong>{s.name}</strong><br />
-              <span className="xs muted">{s.blurb}</span>
-            </span>
-          </label>
-        ))}
-      </section>
-
-      <section className="card stack">
-        <h2>Motion and sound</h2>
-        <label className="row" style={{ cursor: 'pointer', color: 'var(--color-text)' }}>
-          <input type="checkbox" checked={reducedMotion} onChange={(e) => setReducedMotion(e.target.checked)} style={{ width: 'auto' }} />
-          Reduce motion
-        </label>
-        <label className="row" style={{ cursor: 'pointer', color: 'var(--color-text)' }}>
-          <input type="checkbox" checked={muted} onChange={(e) => setMuted(e.target.checked)} style={{ width: 'auto' }} />
-          Mute everything
-        </label>
-        <p className="xs muted" style={{ marginBottom: 0 }}>
-          Reveals stay skippable whatever these are set to.
-        </p>
-      </section>
-
-      <AccountPanel />
-      <InventoryImport />
-      <BackupPanel />
-      <ErasePanel />
-      <BuildStamp />
+      <DataPanel />
 
       <section className="card">
         <h2>Privacy</h2>
@@ -132,114 +93,104 @@ export default function Settings() {
           feature exists.
         </p>
       </section>
+
+      <BuildStamp />
     </div>
   );
 }
 
 /**
- * The display name, saved when you leave the field rather than as you type.
+ * Everything that changes how the app looks and feels, in one card.
  *
- * It used to persist on every keystroke. That was harmless while the profile
- * was device-local and stops being harmless the moment it syncs: typing a name
- * became one mutation per character on the single record most likely to be
- * edited from two devices, against a free tier that allows 50 sync operations
- * per five minutes. Saving on blur makes it one.
+ * Spec 017. This was three sections - App theme, Aquarium scene, Motion and
+ * sound - which between them pushed Account and Backup below the fold on a
+ * phone. They are one concern (appearance) and one decision session, so they
+ * are one card with three headings rather than three cards with one each.
  *
- * `draft` is cleared after saving so a change arriving from another device is
- * not shadowed by a stale local value.
+ * The radio groups keep their `name` attributes, which is what makes each set
+ * behave as one group now that they share a fieldset-less card.
  */
-function DisplayNameField({ saved }: { saved: string }) {
-  const [draft, setDraft] = useState<string>();
-  const [problem, setProblem] = useState<string>();
-
-  async function commit() {
-    if (draft === undefined || draft === saved) {
-      setDraft(undefined);
-      return;
-    }
-    try {
-      await setDisplayName(draft);
-      setProblem(undefined);
-    } catch (cause) {
-      // A name that silently failed to save is a small lie the UI would keep
-      // telling, because the input would still show what you typed.
-      console.error('[profile] could not save display name', cause);
-      setProblem('Could not save that name.');
-    }
-    setDraft(undefined);
-  }
-
+function ThemePanel({
+  theme, setTheme, scene, setScene, reducedMotion, setReducedMotion, muted, setMuted,
+}: {
+  theme: ThemeId;
+  setTheme: (id: ThemeId) => void;
+  scene: SceneId;
+  setScene: (id: SceneId) => void;
+  reducedMotion: boolean;
+  setReducedMotion: (on: boolean) => void;
+  muted: boolean;
+  setMuted: (on: boolean) => void;
+}) {
   return (
-    <label className="stack">
-      <span className="xs muted">Display name</span>
-      <input
-        type="text"
-        value={draft ?? saved}
-        placeholder="Unnamed keeper"
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={() => void commit()}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') e.currentTarget.blur();
-        }}
-      />
-      {problem ? <span className="xs" role="alert">{problem}</span> : null}
-    </label>
+    <section className="card stack">
+      <h2>Theme</h2>
+
+      <h3 className="small">Appearance</h3>
+      <p className="muted small">
+        A comparison tool, not a finished decision. The records, the verdicts and the scores are identical
+        in all three.
+      </p>
+      {THEMES.map((t) => (
+        <label key={t.id} className="row" style={{ cursor: 'pointer', color: 'var(--color-text)' }}>
+          <input
+            type="radio" name="theme" value={t.id} checked={theme === t.id}
+            onChange={() => setTheme(t.id)} style={{ width: 'auto' }}
+          />
+          <span>
+            <strong>{t.name}</strong><br />
+            <span className="xs muted">{t.blurb}</span>
+          </span>
+        </label>
+      ))}
+
+      <h3 className="small">Aquarium scene</h3>
+      <p className="muted small">
+        A surround for the media window. The original photo or video is never replaced or altered.
+      </p>
+      {SCENES.map((s) => (
+        <label key={s.id} className="row" style={{ cursor: 'pointer', color: 'var(--color-text)' }}>
+          <input
+            type="radio" name="scene" value={s.id} checked={scene === s.id}
+            onChange={() => setScene(s.id)} style={{ width: 'auto' }}
+          />
+          <span>
+            <strong>{s.name}</strong><br />
+            <span className="xs muted">{s.blurb}</span>
+          </span>
+        </label>
+      ))}
+
+      <h3 className="small">Motion and sound</h3>
+      <label className="row" style={{ cursor: 'pointer', color: 'var(--color-text)' }}>
+        <input type="checkbox" checked={reducedMotion} onChange={(e) => setReducedMotion(e.target.checked)} style={{ width: 'auto' }} />
+        Reduce motion
+      </label>
+      <label className="row" style={{ cursor: 'pointer', color: 'var(--color-text)' }}>
+        <input type="checkbox" checked={muted} onChange={(e) => setMuted(e.target.checked)} style={{ width: 'auto' }} />
+        Mute everything
+      </label>
+      <p className="xs muted" style={{ marginBottom: 0 }}>
+        Reveals stay skippable whatever these are set to.
+      </p>
+    </section>
   );
 }
 
-/** FR-O03: bring the existing 61-row inventory in as opening balances. */
-function InventoryImport() {
-  const [result, setResult] = useState<ImportResult | undefined>();
-  const [error, setError] = useState<string | undefined>();
-  const [busy, setBusy] = useState(false);
-
-  async function onFile(file: File | undefined) {
-    if (!file) return;
-    setError(undefined);
-    setBusy(true);
-    try {
-      setResult(await importInventoryFile(file));
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not read that file.');
-    } finally {
-      setBusy(false);
-    }
-  }
-
+/**
+ * Backup, restore and erase, together, because they are one decision.
+ *
+ * Spec 017. Erase is only safe because backup is right above it, and restore
+ * is the only thing that makes erase reversible. Splitting them across two
+ * cards separated by other settings hid that relationship; a keeper looking
+ * for "how do I start over" had to find two sections to do it safely.
+ */
+function DataPanel() {
   return (
     <section className="card stack">
-      <h2>Import inventory</h2>
-      <p className="muted small">
-        Load the Fish Inventory sheet — the <code>.xlsx</code> directly, or a CSV export. Raw labels are
-        kept exactly as written, unclear IDs stay unclear, and no arrival dates are invented.
-      </p>
-      <input
-        type="file"
-        accept=".xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        disabled={busy}
-        onChange={(e) => void onFile(e.target.files?.[0])}
-      />
-      {busy && <p className="small muted">Reading…</p>}
-      {error && <p className="warn">{error}</p>}
-      {result && (
-        <>
-          <p className="small">
-            Imported {result.holdings.length} rows into {result.aquariums.length} enclosures.
-            {' '}{result.report.filter((r) => r.identity === 'unresolved').length} still need a species confirmed.
-          </p>
-          <details>
-            <summary className="small" style={{ cursor: 'pointer' }}>Row-by-row report</summary>
-            <ul className="list xs" style={{ marginTop: 'var(--space-3)' }}>
-              {result.report.map((r) => (
-                <li key={r.holdingId}>
-                  {r.row}. {r.tank} — {r.label} ×{r.quantity}{' '}
-                  <span className="muted">({r.identity})</span>
-                </li>
-              ))}
-            </ul>
-          </details>
-        </>
-      )}
+      <h2>Your data</h2>
+      <BackupPanel />
+      <ErasePanel />
     </section>
   );
 }
@@ -300,10 +251,10 @@ function BackupPanel() {
   }
 
   return (
-    <section className="card stack">
-      <h2>Backup</h2>
+    <div className="stack">
+      <h3 className="small">Backup</h3>
       <p className="muted small">
-        Every record and every photo, in one file. This is currently the only copy of your
+        Every record and every photo, in one file. Signed out, this is the only copy of your
         collection that lives anywhere but this browser.
       </p>
 
@@ -331,7 +282,7 @@ function BackupPanel() {
 
       {note ? <p className="small">{note}</p> : null}
       {problem ? <p className="small" role="alert">{problem}</p> : null}
-    </section>
+    </div>
   );
 }
 
@@ -416,8 +367,8 @@ function ErasePanel() {
   }
 
   return (
-    <section className="card stack">
-      <h2>Erase everything</h2>
+    <div className="stack">
+      <h3 className="small">Erase everything</h3>
       <p className="muted small">
         {signedIn
           ? 'Empties your whole collection from this device and from your account, on every '
@@ -460,7 +411,7 @@ function ErasePanel() {
 
       {note ? <p className="small">{note}</p> : null}
       {problem ? <p className="small" role="alert">{problem}</p> : null}
-    </section>
+    </div>
   );
 }
 
