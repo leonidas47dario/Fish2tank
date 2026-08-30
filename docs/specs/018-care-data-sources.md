@@ -214,11 +214,104 @@ that species.
 5. Keep one source per *field*, not per profile — `careSources` already works
    this way, and mixed provenance is the normal case here.
 
+## Revision 2: stacking sources, and what each one is actually worth
+
+> Not gonna be commercial, just personal use. Cant we scrape multiple sites?
+> To improve coverage?
+
+**Personal, non-commercial use settles the FishBase question — CC-BY-NC is
+fine.** And yes, stacking sources is the right instinct. The useful question is
+not *can we* but *what does each additional one actually add*, because a source
+that overlaps SeriouslyFish adds nothing but request volume.
+
+### What is actually in the gap
+
+Of the 958 freshwater fish, SeriouslyFish misses **508**. That gap is not
+evenly spread — it is two clusters:
+
+| Cluster | Species | Share of gap |
+|---|---|---|
+| **Catfish families** (Loricariidae 65, Callichthyidae 16, Mochokidae 9, Pimelodidae 8, …) | **137** | **27.0%** |
+| **Cichlidae** (Crenicichla, Cichla, Geophagus, …) | **109** | **21.5%** |
+| Both together | **246** | **48.4%** |
+| Everything else — a long tail across 30+ families | 262 | 51.6% |
+
+So **two specialist sites would address nearly half the remaining gap**, and
+the rest is a genuine long tail where each additional source buys much less.
+That is the shape of the answer: two more sources are worth a lot, six are
+not.
+
+### Permission, checked per host — and it is not uniform
+
+| Source | `User-agent: *` | Signals | Verdict |
+|---|---|---|---|
+| **SeriouslyFish** | allow all but `/wp-admin/` | — | ✅ crawl politely |
+| **FishBase** | allow; `Crawl-delay: 10`; deny `/cgi-bin/` | CC-BY-NC | ✅ now fine (non-commercial) |
+| **aqua-fish.net** | allow content paths | — | ✅ crawl politely |
+| **FishLore** | allow profiles; deny forum machinery | — | ✅ profile pages only |
+| **PlanetCatfish** | `Allow: /` | `search=yes, ai-train=no, use=reference` — and **`ClaudeBot: Disallow: /`** | ⚠️ owner's call |
+| **Cichlidae.com** | `Allow: /` | same, **`ClaudeBot: Disallow: /`** | ⚠️ owner's call |
+| **The Aquarium Wiki** | **`Disallow: /`** | content is CC-BY-SA | ❌ no crawling |
+
+Three findings worth stating plainly:
+
+1. **The two sites that would close half the gap are exactly the two carrying
+   a `ClaudeBot: Disallow` signal.** Their `*` rule allows a general crawler
+   and their content signal says `use=reference`, which is what an ETL run by
+   the keeper for personal reference is — and `ai-train=no`, which this is
+   not. But they have named Anthropic's crawler specifically, and a scraper
+   written by Claude against those two hosts deserves an explicit decision
+   from the repo owner rather than being assumed in. **Not blocked — flagged.**
+2. **The Aquarium Wiki disallows all crawlers** (`User-agent: * / Disallow:
+   /`), despite its content being CC-BY-SA 3.0. A licence permitting reuse and
+   a site permitting crawling are two different permissions, and this site
+   grants the first and refuses the second. Off the table for automation.
+3. **`aquariumwiki.com` is a parked domain for sale** and redirects to
+   HugeDomains; the real wiki is `theaquariumwiki.com`. The robots.txt at the
+   parked host describes the parking page, not the wiki. Recorded because it
+   nearly produced a permission finding for the wrong site.
+
+### Recommended stack, in order of marginal gain
+
+1. **SeriouslyFish** — 450 of 958 (47.0%), and the only source that moves
+   `minVolumeGal` and `aggression` at all.
+2. **FishBase** — size, temperature and pH across essentially all remaining
+   real fish. No husbandry fields, so it never touches min volume or
+   aggression.
+3. **PlanetCatfish** — up to 137 of the gap (27%), *pending the decision in
+   finding 1*.
+4. **A cichlid source** — up to 109 of the gap (21.5%), same caveat.
+5. **aqua-fish.net / FishLore** — the long tail. Measure their freshwater
+   coverage before building either; on this evidence each is worth far less
+   than the four above and may be mostly overlap.
+
+**Stop after the point where a source stops paying.** The 262-species tail
+across 30+ families is where "not enough data" should simply remain the honest
+answer.
+
+### One rule that must survive multiple sources
+
+`careSources` is already keyed **per field**, which is what makes stacking
+safe: adult size can come from FishBase while minimum volume comes from
+SeriouslyFish, and each cites its own origin. Two things follow, and both are
+easy to get wrong under time pressure:
+
+- **First source to supply a field wins, and later sources must not silently
+  overwrite it.** Otherwise the last crawl to run decides the data.
+- **Never merge two sources into one averaged number.** A midpoint between two
+  cited values is a third value nobody published, which is inventing a number
+  with two citations attached (P6). Where sources disagree materially, keep
+  the higher-quality one and record the conflict.
+
 ## Open questions for the product owner
 
-1. **Is the app ever going to be commercial?** It decides whether FishBase is
-   usable at all.
-2. **Is 21% husbandry coverage worth a scraper**, or is the better move to
+1. ~~Is the app ever going to be commercial?~~ **Answered: no, personal use.**
+   FishBase is therefore usable.
+2. **PlanetCatfish and Cichlidae.com carry a `ClaudeBot: Disallow` signal**
+   while allowing general crawlers under `use=reference`. Do you want a
+   crawler built for those two hosts? They are worth ~48% of the remaining
+   gap. Your call, not mine to assume.
+3. **Is 21% husbandry coverage worth a scraper**, or is the better move to
    accept "not enough data" more visibly and let keepers fill values in
    themselves?
 3. **Should a keeper be able to override a sourced value** with their own
