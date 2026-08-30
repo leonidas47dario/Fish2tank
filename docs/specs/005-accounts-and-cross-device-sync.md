@@ -33,6 +33,8 @@ Decisions taken during design, each one Ryan's:
 | Architecture | Rent the sync engine, own the media pipeline |
 | Reduced motion | Account-level, follows the person |
 | Data boundary | "only sync personal, user generated data, and not ETL data" |
+| User id format (2026-08-30) | Email address, not opaque. Opaque was recommended and declined. |
+| Environments (2026-08-30) | Three cloud databases: scratch, uat, production |
 
 The username-and-password request was **withdrawn during design**, not
 overridden. Presented with the true cost (owning password hashing, guess-rate
@@ -90,7 +92,7 @@ free-tier terms move and the choice turns entirely on them.
 | Provider | Free tier | Beyond free | Verdict |
 |---|---|---|---|
 | Cloudflare R2 | 10 GB storage, 1M Class A ops, 10M Class B ops per month, egress always $0 | $0.015/GB-month | **Chosen for media.** 10 GB is ~2,800 Panther-sized originals; $10 buys ~666 GB. Zero egress means a new device pulling the whole library costs nothing. |
-| Dexie Cloud | 3 production users, 100 MB storage | €3/month per 25 seats, storage $0.05/GB | **Chosen for records.** Syncs the Dexie database this app already runs on. |
+| Dexie Cloud | 3 production users, 10 databases, 100 MB storage split 25 MB object + 75 MB blob | €0.12/user/month (the same thing as €3/25 seats), object storage €2/extra GB/month, blob storage €0.05/extra GB/month | **Chosen for records.** Syncs the Dexie database this app already runs on. |
 | Cloudflare Workers | 100k requests/day | $5/month | **Chosen for the auth broker and signed URLs.** |
 | Supabase | 500 MB database, 1 GB storage | $25/month | **Rejected.** Free projects pause after 7 days of inactivity and need a manual dashboard unpause. An app opened on weekends would find a sleeping database. |
 | Firebase | Auth is free and generous | Storage egress $0.12/GB | **Rejected.** Egress billing punishes exactly the operation this feature exists to perform: a new device downloading everything. |
@@ -123,31 +125,56 @@ resurface on another.
 
 `blobs` is excluded because it is the megabytes, and they go to R2.
 
-### FR-A02 - Identity: the Worker as broker
+### FR-A02 - Identity: Dexie Cloud brokers Google, the Worker only guards R2
 
-One login, one identity, two consumers.
+**Rewritten 2026-08-30.** The original design routed Google sign-in through a
+Worker `/auth` route, because the Dexie Cloud token exchange needs a
+`client_secret` that must never ship in a client bundle. That is no longer
+true, and the previous version of this section is preserved in git history.
+
+Dexie Cloud now has native social login and **acts as the OAuth proxy itself**.
+The client ID and secret are configured per database in Dexie Cloud Manager,
+the provider callback is `https://<db-id>.dexie.cloud/oauth/callback/google`,
+and the app calls `db.cloud.login({ provider: 'google' })`. Provider tokens
+never reach the client; only Dexie Cloud tokens are issued. There is no
+callback route to write.
 
 ```
-App  --Google/Apple Sign-In-->  ID token
+App  --db.cloud.login({provider:'google'})-->  Dexie Cloud  --OAuth-->  Google
+  |                                                 |
+  |<---------------- Dexie Cloud access token ------'
   |
-  '--> Worker /auth  --verify against provider JWKS-->  trusted `sub`
-          |
-          |--> exchange for a Dexie Cloud token (client_credentials + claims.sub)
-          '--> issue a short-lived app session used for media requests
+  '--> Worker /media/*  --GET /token/validate-->  Dexie Cloud confirms the token
+          '--> presigned R2 PUT/GET scoped to users/{userId}/
 ```
 
-Dexie Cloud documents `fetchTokens` for precisely this, and it requires a
-server side because the exchange needs a `client_secret` that must never ship
-in a client bundle. A Worker is needed for R2 signed URLs regardless, so this
-adds one route rather than a component.
+The Worker still has to know who is asking for a media URL. It learns that
+from the Dexie Cloud access token, which is readable client-side. Verified
+against the shipped type definitions rather than the prose docs, because the
+documentation does not mention it:
 
-This is what makes **NFR-10** true for the first time: secrets live in Worker
-environment bindings, and every media URL is authenticated and time-limited.
+```ts
+export interface UserLogin {
+    userId?: string;
+    accessToken?: string;
+    accessTokenExpiration?: Date;
+    ...
+}
+```
 
-Dexie Cloud reportedly added native Google/Apple sign-in in January 2026,
-which could remove the token exchange. Treat that as a simplification to
-evaluate during implementation, not a dependency: the broker is still required
-for the Worker to know who is requesting a media URL.
+The Worker validates it with `GET https://<db-id>.dexie.cloud/token/validate`.
+**There is no JWKS endpoint**, so this is a network round trip rather than an
+offline signature check. Cache it for the token's lifetime; do not verify
+per request.
+
+Consequences worth stating, because they are the reason to prefer this:
+
+- **No secret ever passes through the build, the bundle, or an agent.** The
+  Google secret lives in Dexie Cloud Manager, the R2 keys in Worker bindings
+  set by hand. NFR-10 is satisfied by construction rather than by discipline.
+- **One component fewer.** The Worker shrinks to R2 presigning plus token
+  validation.
+- **Sign in with Apple stays deferred** at 99 USD/year, unchanged.
 
 ### FR-A03 - Media transfer
 
@@ -165,6 +192,13 @@ separation is what makes the feature survivable.
   failure mode.
 - **Priority order:** thumbnails, then previews, then originals. A new tablet
   is usable in seconds and complete in the background.
+  **This ordering currently has nothing to order (found 2026-08-30).** Every
+  `media` row carries only `originalBlobKey`; no thumbnail or preview is ever
+  generated, and nothing in the capture path resizes anything. `detachFiles`
+  is `await f.blob.arrayBuffer()` and `setTankPhoto` stores that buffer
+  unchanged. So a new device would have to pull full originals before showing
+  a single image. Deriving the variants is a prerequisite for this bullet
+  being true, and is tracked in the backlog rather than smuggled in here.
 - **NFR-03 holds.** Originals are uploaded byte-identical and never rewritten.
   Storing a copy elsewhere does not alter the original.
 
@@ -174,6 +208,17 @@ One live `User` row, `id` set to the Dexie Cloud user id so it is stable
 across devices, synced like any other personal record. Settings move out of
 `localStorage` into it, which is what makes preferences follow the person
 rather than only the data.
+
+**The Dexie Cloud user id is the email address, by decision (2026-08-30.)**
+Manager offers email, opaque (hashed) or provider-specific ids. Opaque was
+recommended and declined; Ryan's call, recorded because a reader will
+otherwise assume it was an oversight. It is not a correctness problem and it
+does not weaken multi-tenancy: realms isolate users from each other regardless
+of what the key looks like. What it costs is privacy, since the address then
+appears in realm ids, `owner` fields and R2 object paths (`users/<email>/...`),
+and portability, since changing email orphans the identity. Both are
+acceptable at this scale. The setting is not safely changeable once records
+exist, so it is fixed from here.
 
 | Account-level (synced) | Device-level (stays in `localStorage`) |
 |---|---|
@@ -236,10 +281,40 @@ synced. Every schema change must land before sync is switched on.
 expected to claim rows created while unauthenticated into the user's private
 realm and push them up.
 
-**That expectation is the single largest risk in this spec.** If it behaves
-differently than documented, the 61-row inventory and the Panther either
-duplicate or vanish. It is verified against an exported copy of the real
-database before it is ever run against the real one. No exceptions.
+**That expectation was the single largest risk in this spec. It was measured
+on 2026-08-30 and it holds.**
+
+An exported copy of the real database (138 rows: the 61-row inventory, six
+tanks, the Panther and its encounter, media, identifications and price
+observations) was loaded into a cloud-enabled but logged-out IndexedDB against
+the scratch database, counted, logged in, and counted again.
+
+| | Rows |
+|---|---|
+| Local, before login | 138 |
+| Local, after login and sync | 138 |
+| **Independently exported from the server afterwards** | **138** |
+
+The server count matters more than the local one. A local census that does not
+change is exactly the DW_SYNC failure this repo already paid for: a status
+field reporting success while the data sits somewhere else. So the cloud
+database was dumped through the CLI, which never consults the browser.
+
+Ownership was correct too. Every one of the 138 rows came back owned by and
+realmed to the logged-in user:
+
+```
+owner counts: {'<user>': 138, 'rlm-public': 1}
+```
+
+And the data boundary in FR-A01 held without any special handling:
+`species`, `speciesProfiles`, `blobs`, `draftKeys` and `deletedRecords` appear
+nowhere in the server export. That is acceptance criterion 10, verified rather
+than asserted.
+
+Release 2 may therefore proceed on the documented behaviour. The harness that
+produced these numbers lives in `probe/` and is re-runnable; the fixture it
+reads is real personal data and is deliberately not committed.
 
 **Media backfill** is a separate resumable job that walks local `blobs` and
 uploads them, restartable from where it stopped, never deleting a local

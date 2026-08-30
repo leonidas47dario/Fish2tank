@@ -72,6 +72,7 @@ warehouse, which nothing in the PRD anticipated.
 | FR-R12 | A caught fish's card can show either the reference portrait or the keeper's own photo | Built — `src/data/catalog.ts` (`resolveCardArt`), species-detail art toggle |
 | FR-R13 | A kept-but-never-caught fish counts as "in your collection" (card in colour) and can receive a photo directly, without a store encounter | Built this session — PR #8. `ownership()` in `src/data/catalog.ts`, `ensureSpecimenForHolding` / `addPhotos` in `repositories.ts`. |
 | FR-R14 | UAT branch/environment as a review gate before promoting to the production site | Built — `.github/workflows/deploy.yml`, PR #12 promotion flow |
+| FR-A08 | Derive a thumbnail and a preview from each captured original, so a new device can show something before megabytes finish downloading | **Not built.** Found 2026-08-30 while implementing spec 005. Every `media` row carries only `originalBlobKey`; nothing in the capture path resizes anything (`detachFiles` is `await f.blob.arrayBuffer()`, `setTankPhoto` stores that buffer unchanged at `repositories.ts:1554`). Spec 005 FR-A03 promises the sync queue prioritises "thumbnails, then previews, then originals", and that ordering currently has nothing to order. Blocks that bullet from being true, and makes a fresh device pull full originals before rendering a single image. NFR-03 still applies: derive alongside the original, never rewrite it. |
 
 ---
 

@@ -152,8 +152,14 @@ export class Fish2TankDB extends Dexie {
   cardPrefs!: EntityTable<CardPref, 'speciesId'>;
   deletedRecords!: EntityTable<DeletedRecord, 'id'>;
 
-  constructor(name = 'fish2tank') {
-    super(name);
+  /**
+   * @param addons Dexie addons to install, empty by default so the offline app
+   *   is unchanged. This is the seam NFR-12 asks for: spec 005 plugs
+   *   `dexie-cloud-addon` in here, and nothing else in the app has to know.
+   *   Passed at construction because Dexie can only take addons there.
+   */
+  constructor(name = 'fish2tank', addons: Array<(db: Dexie) => void> = []) {
+    super(name, { addons });
     this.version(1).stores({
       users: 'id',
       places: 'id, name, isFavorite',

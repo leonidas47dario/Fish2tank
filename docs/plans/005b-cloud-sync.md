@@ -1,36 +1,39 @@
 # Cloud sync implementation plan (spec 005, Release 2)
 
-**Status: partially built, blocked on credentials.**
+**Status (2026-08-30): unblocked. Provisioned, and the largest risk is
+measured and clear.**
 
 Read this section before anything else in the file.
 
-## The blocker, stated plainly
+## What changed
 
-Release 2 cannot be finished by an agent working alone. It needs three
-third-party accounts, and each one ties to Ryan's identity, his email, and in
-Cloudflare's case a payment method. Creating accounts in someone's name on
-external services is not a thing to do unilaterally, so this plan stops at the
-boundary where credentials are required and does the work on the near side of
-it.
+This plan previously stopped at a credentials boundary and refused to write
+the records-sync tasks on top of an unverified assumption. Both conditions are
+gone.
 
-What that means concretely: **nothing in this release makes data appear on a
-second device yet.** The pieces that move bytes exist and are tested against a
-fake backend. They have never spoken to a real one.
+**Provisioning is done.** Ryan created everything on 2026-08-29 and 30. Three
+Dexie Cloud databases, deliberately not two, because uat and production deploy
+to the same origin and therefore share one IndexedDB namespace (BUG-04):
 
-## What Ryan has to do (about 20 minutes, once)
+| Database | Role |
+|---|---|
+| `https://z84eopr5r.dexie.cloud` | scratch |
+| `https://zblsiza99.dexie.cloud` | uat |
+| `https://zecprrllc.dexie.cloud` | production |
 
-1. **Cloudflare account** (free). Enable R2, create a bucket named
-   `fish2tank-media`. R2 asks for a card on file even on the free tier; the
-   first 10 GB and all egress are still free.
-2. **Dexie Cloud database.** Run `npx dexie-cloud create`. It writes
-   `dexie-cloud.key`, which contains a client secret and must never be
-   committed. `.gitignore` already needs a line for it; this plan adds one.
-3. **Google OAuth client.** A Google Cloud project, an OAuth 2.0 Web client,
-   with `https://leonidas47dario.github.io` as an authorised origin.
+All three have Google configured in Dexie Cloud Manager and their app origins
+whitelisted. Cloudflare R2 is enabled on account
+`4c73038eafb05b96ed7125aeeca9cfff` with `fish2tank-media-uat` and
+`fish2tank-media-prod`, both private.
 
-Then hand over: the Dexie Cloud database URL, the R2 bucket name and an API
-token, and the Google client ID. Secrets go into Worker environment bindings
-and GitHub Actions secrets, never into the bundle (NFR-10).
+**Task 1 is answered, with numbers.** 138 real rows, loaded logged-out, still
+138 after login, and 138 confirmed by an independent server-side export, all
+owned by the logged-in user. See spec 005 FR-A06 for the full census. The
+harness is in `probe/`.
+
+**No secret reaches this repo or an agent.** The Google client secret lives in
+Dexie Cloud Manager; the R2 keys go into Worker bindings by hand. That is what
+the FR-A02 rewrite bought.
 
 **Sign in with Apple is deferred and should stay deferred.** It requires the
 Apple Developer Program at **99 USD per year**, verified against Apple's own
@@ -38,18 +41,31 @@ enrolment page on 2026-08-29. That breaks the standing $0 ceiling for a second
 sign-in button nobody has asked for twice. Google is free. Apple is purely
 additive later if it ever earns its keep.
 
-## Why the records half is not built
+**Sign in with Apple is deferred and should stay deferred.** It requires the
+Apple Developer Program at **99 USD per year**, verified against Apple's own
+enrolment page on 2026-08-29. That breaks the standing $0 ceiling for a second
+sign-in button nobody has asked for twice. Google is free. Apple is purely
+additive later if it ever earns its keep.
 
-Spec 005 FR-A06 names the single largest risk: whether Dexie Cloud claims rows
-created while logged out into the user's private realm on first login. If it
-does not behave as documented, the 61-row inventory and the Panther either
-duplicate or vanish.
+## Why the records half was not built, and why it can be now
 
-That is an empirical question about a service this repo has never talked to.
-Writing a detailed task list on top of an unverified assumption would be
-planning theatre. So the records sync is deliberately absent here, and the
-first task after credentials exist is not "wire up Dexie Cloud" but **"export
-Ryan's real database and find out what first login actually does to it."**
+Spec 005 FR-A06 named the single largest risk: whether Dexie Cloud claims rows
+created while logged out into the user's private realm on first login. Writing
+a detailed task list on top of an unverified assumption would have been
+planning theatre, so the records sync was deliberately absent.
+
+It has now been measured against the real 138-row database and it behaves as
+documented, including the FR-A01 data boundary, which held with no special
+handling. The tasks below can therefore be written as actual steps.
+
+One operational detail found while doing it: **demo users must be declared
+server-side before `grant_type: 'demo'` works.** An undeclared demo login
+returns `403` from `/token` and the login promise never settles. Declare them
+with a JSON file and `npx dexie-cloud import`:
+
+```json
+{ "demoUsers": { "probe@demo.local": {} } }
+```
 
 ## Why the media half *is* built
 
@@ -105,24 +121,43 @@ signature must retry; a download must land bytes identical to what went up.
 
 ---
 
-## The remaining tasks, for when credentials exist
+## The remaining tasks
 
-Written as intentions rather than bite-sized steps on purpose, because the
-first one can change the shape of the rest.
+In dependency order. Task 1 is struck through because it is done; it is left
+here so the sequence still reads.
 
-1. **Find out what Dexie Cloud actually does on first login.** Export a copy
-   of Ryan's real database, point a scratch Dexie Cloud database at it, log
-   in, and count every row before and after. Nothing else proceeds until this
-   is answered with numbers.
-2. **The Worker.** One route to broker Google identity into a Dexie Cloud
-   token, one to mint presigned R2 URLs scoped to `users/{sub}/`. Secrets in
-   bindings.
-3. **Wire the real backend** into the existing `MediaBackend` seam.
-4. **Turn on the addon** with `requireAuth: false`, `unsyncedTables` set per
-   spec 005 FR-A01, and separate cloud databases for uat and production.
-5. **Sync status in Settings**: last successful sync, pending count, failed
+1. ~~**Find out what Dexie Cloud actually does on first login.**~~ Done
+   2026-08-30. 138 rows in, 138 rows out, 138 on the server, all correctly
+   owned. Harness in `probe/`.
+
+2. **Fix BUG-04, with a warning to Ryan before it ships.** Separate the uat and
+   production IndexedDB databases. This must land before sync, because Dexie's
+   own documentation says migrations cannot be performed consistently once a
+   table is synced. It makes UAT open empty: correct, necessary, and alarming
+   if unannounced.
+
+3. **Turn on the addon.** `requireAuth: false` so the app stays usable logged
+   out (FR-A05), `unsyncedTables` exactly as FR-A01 lists, and a different
+   database URL per environment. `Fish2TankDB` now takes addons as a
+   constructor argument, which is the only source change the probe needed.
+
+4. **Sign-in UI.** A single "Sign in with Google" affordance calling
+   `db.cloud.login({ provider: 'google' })`. No callback route, no custom GUI
+   unless the addon's default proves unusable.
+
+5. **The Worker.** One concern only now, not two: presigned R2 PUT/GET scoped
+   to `users/{userId}/`, with callers authenticated by validating their Dexie
+   Cloud access token against `GET /token/validate`. Cache validations for the
+   token lifetime; there is no JWKS to verify offline.
+
+6. **Wire the real backend** into the existing `MediaBackend` seam. The queue,
+   its retry and resume behaviour, and its refusal to mark anything synced
+   without a post-upload HEAD are already built and tested against a fake.
+
+7. **Sync status in Settings**: last successful sync, pending count, failed
    items with reasons. Logs that cannot be read on a phone are not
    diagnostics.
-6. **Fix BUG-04 first, with warning.** Separating the uat and production
-   IndexedDB databases makes UAT open empty. Correct, necessary before sync,
-   and alarming if unannounced.
+
+**Not in this plan, but a prerequisite for FR-A03's priority ordering to mean
+anything:** nothing generates thumbnails or previews, so there is currently
+only one variant to transfer. Tracked in the backlog.
