@@ -1,0 +1,17 @@
+{
+  "rules": [
+    {
+      "allowed": {
+        "origins": [
+          "https://leonidas47dario.github.io",
+          "http://localhost:5199",
+          "http://localhost:5173"
+        ],
+        "methods": ["GET", "PUT", "HEAD"],
+        "headers": ["content-type"]
+      },
+      "exposeHeaders": ["etag", "content-length"],
+      "maxAgeSeconds": 86400
+    }
+  ]
+}

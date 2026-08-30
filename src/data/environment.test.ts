@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
   CLOUD_DATABASES,
+  MEDIA_WORKERS,
   PRODUCTION_DB_NAME,
   UNSYNCED_TABLES,
   cloudDatabaseUrlFor,
   databaseNameFor,
   deploymentFor,
+  mediaWorkerUrlFor,
 } from './environment';
 
 const PROD = '/Fish2tank/';
@@ -80,5 +82,27 @@ describe('UNSYNCED_TABLES', () => {
       'species',
       'speciesProfiles',
     ]);
+  });
+});
+
+describe('mediaWorkerUrlFor', () => {
+  it('gives each real deployment its own Worker', () => {
+    expect(mediaWorkerUrlFor(PROD)).toBe(MEDIA_WORKERS.production);
+    expect(mediaWorkerUrlFor(UAT)).toBe(MEDIA_WORKERS.staging);
+    expect(MEDIA_WORKERS.production).not.toBe(MEDIA_WORKERS.staging);
+  });
+
+  it('leaves an unrecognised build with no Worker rather than the wrong one', () => {
+    // A dev build syncs records to scratch, and the uat Worker only accepts
+    // tokens whose audience is the uat database. Pointing dev at it would fail
+    // with a confusing 401; empty means the UI can say "not configured".
+    expect(mediaWorkerUrlFor('/')).toBe('');
+    expect(mediaWorkerUrlFor('/preview/')).toBe('');
+  });
+
+  it('never points a Worker at the wrong tier', () => {
+    // The uat Worker validates against the uat database, prod against prod.
+    expect(MEDIA_WORKERS.staging).toContain('uat');
+    expect(MEDIA_WORKERS.production).toContain('prod');
   });
 });

@@ -2,7 +2,9 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import { fileURLToPath, URL } from 'node:url';
-import { cloudDatabaseUrlFor, databaseNameFor, deploymentFor } from './src/data/environment';
+import {
+  cloudDatabaseUrlFor, databaseNameFor, deploymentFor, mediaWorkerUrlFor,
+} from './src/data/environment';
 
 // Project Pages serves from /<repo>/, so the base path has to be baked in at
 // build time. Left as '/' for dev and for any host that serves from the root
@@ -40,6 +42,9 @@ export default defineConfig({
     // whitelists origins. Secrets live in Dexie Cloud Manager.
     __CLOUD_DB_URL__: JSON.stringify(cloudDatabaseUrlFor(base)),
     __DEPLOYMENT__: JSON.stringify(deploymentFor(base)),
+    // Empty for an unrecognised build: media sync is off rather than aimed
+    // at a Worker that would reject its tokens. See environment.ts.
+    __MEDIA_WORKER_URL__: JSON.stringify(mediaWorkerUrlFor(base)),
   },
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },

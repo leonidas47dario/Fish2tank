@@ -38,6 +38,8 @@ export { PlusIcon } from '@phosphor-icons/react/dist/csr/Plus';
 export { ArrowsClockwiseIcon } from '@phosphor-icons/react/dist/csr/ArrowsClockwise';
 export { XIcon } from '@phosphor-icons/react/dist/csr/X';
 export { CheckIcon } from '@phosphor-icons/react/dist/csr/Check';
+export { UserCircleIcon } from '@phosphor-icons/react/dist/csr/UserCircle';
+export { GoogleLogoIcon } from '@phosphor-icons/react/dist/csr/GoogleLogo';
 
 /**
  * The one stroke weight, everywhere.

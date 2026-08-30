@@ -17,8 +17,12 @@
 import dexieCloud from 'dexie-cloud-addon';
 import { Fish2TankDB } from '@/data/db';
 
-/** Scratch. Never uat, never production. */
-const DATABASE_URL = 'https://z84eopr5r.dexie.cloud';
+/**
+ * Scratch by default. `?db=<url>` targets another, which is how the media
+ * round trip is exercised against uat. Never defaults to production.
+ */
+const DATABASE_URL =
+  new URLSearchParams(location.search).get('db') ?? 'https://z84eopr5r.dexie.cloud';
 
 /**
  * FR-A01's data boundary. `species`/`speciesProfiles` ship in the bundle and

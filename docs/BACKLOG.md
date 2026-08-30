@@ -16,8 +16,9 @@ Every number below was checked against the actual repo at commit `1fe5134`
 
 ## Bugs
 
-None open. Everything filed here has been closed; the record of what
-broke and how it was found is kept below.
+| ID | Summary | Repro | Where |
+|---|---|---|---|
+| BUG-06 | Deleting a photo on a device that never had the bytes deletes the record everywhere | Sync records to a second device (media rows travel, `blobs` do not, per FR-A01). On that second device, replace or clear a tank photo, or delete the tank. The `media` row is deleted and **syncs**, while the accompanying `blobs.delete` is a local no-op because the bytes were never there. The photo disappears from the first device too, and its bytes are stranded in that device's `blobs` table with nothing referencing them. Found 2026-08-30 while explaining why photos do not appear on a second device; not the thing Ryan hit, but real. Four call sites, all legitimate user deletions, none of them wrong on a device that holds the bytes. Needs a rule for deleting media you do not have locally - most likely refuse, or tombstone and let the holding device do it. | `src/data/repositories.ts:1531`, `:1614`, `:1637`, `:1808` |
 
 ### Resolved this session
 
@@ -73,6 +74,8 @@ warehouse, which nothing in the PRD anticipated.
 | FR-R13 | A kept-but-never-caught fish counts as "in your collection" (card in colour) and can receive a photo directly, without a store encounter | Built this session — PR #8. `ownership()` in `src/data/catalog.ts`, `ensureSpecimenForHolding` / `addPhotos` in `repositories.ts`. |
 | FR-R14 | UAT branch/environment as a review gate before promoting to the production site | Built — `.github/workflows/deploy.yml`, PR #12 promotion flow |
 | FR-A08 | Derive a thumbnail and a preview from each captured original, so a new device can show something before megabytes finish downloading | **Not built.** Found 2026-08-30 while implementing spec 005. Every `media` row carries only `originalBlobKey`; nothing in the capture path resizes anything (`detachFiles` is `await f.blob.arrayBuffer()`, `setTankPhoto` stores that buffer unchanged at `repositories.ts:1554`). Spec 005 FR-A03 promises the sync queue prioritises "thumbnails, then previews, then originals", and that ordering currently has nothing to order. Blocks that bullet from being true, and makes a fresh device pull full originals before rendering a single image. NFR-03 still applies: derive alongside the original, never rewrite it. |
+| FR-A09 | An account is required: no route renders without one, but the gate tests for a cached identity rather than a network, so a device that has signed in once keeps working offline | Built — spec 010, `src/ui/components/AuthGate.tsx`. Reverses FR-A05. |
+| FR-A10 | A profile affordance in the top right of every screen, reaching Settings in one tap and naming who is signed in | Built — spec 010, `src/ui/components/ProfileButton.tsx` |
 
 ---
 

@@ -18,6 +18,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useObservable } from 'dexie-react-hooks';
 import { db } from '@/data/db';
 import { CLOUD_DATABASE_URL, DEPLOYMENT } from '@/build-info';
+import { mediaSyncBlocker, runMediaSync, type MediaSyncResult } from '@/data/sync/media-sync';
 
 /** Human wording for each sync phase. The raw enum is shown alongside. */
 const PHASE_TEXT: Record<string, string> = {
@@ -89,8 +90,8 @@ export default function AccountPanel() {
             Signed in as <strong>{user?.name || user?.email || user?.userId}</strong>
           </p>
           <p className="xs muted">
-            Your records sync to every device you sign in on. Photos still stay on the
-            device that took them, until media sync ships.
+            Your records sync to every device you sign in on. Photos travel separately,
+            below, because they are megabytes rather than kilobytes.
           </p>
           <button type="button" onClick={() => void signOut()} disabled={Boolean(busy)}>
             {busy === 'out' ? 'Signing out…' : 'Sign out'}
@@ -146,6 +147,71 @@ export default function AccountPanel() {
           Account licence is {syncState.license}. Records are safe on this device but are not syncing.
         </p>
       ) : null}
+
+      {signedIn ? <MediaSyncRow /> : null}
     </section>
+  );
+}
+
+/**
+ * Photos, which travel separately from records (FR-A01, FR-A03).
+ *
+ * Its own row because the two really are different guarantees, and conflating
+ * them is how someone concludes their photos are backed up when only the
+ * records are. Runs on demand rather than automatically for now: the first
+ * upload of a whole library is a deliberate act, not something to start
+ * unasked on a phone.
+ */
+function MediaSyncRow() {
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<MediaSyncResult>();
+  const blocker = mediaSyncBlocker();
+
+  const explanation: Record<string, string> = {
+    'not-configured': 'Photo sync is not set up for this build.',
+    'signed-out': 'Sign in to sync photos.',
+    offline: 'Offline. Photos will sync when you have a connection.',
+  };
+
+  async function run() {
+    setBusy(true);
+    try {
+      setResult(await runMediaSync());
+    } catch (cause) {
+      console.error('[sync] media run failed', cause);
+      setResult(undefined);
+    }
+    setBusy(false);
+  }
+
+  const moved = (result?.upload?.uploaded ?? 0) + (result?.download?.downloaded ?? 0);
+  const failed = (result?.upload?.failed ?? 0) + (result?.download?.failed ?? 0);
+
+  return (
+    <>
+      <hr />
+      <p className="small" style={{ marginBottom: 0 }}>Photos</p>
+      {blocker ? (
+        <p className="xs muted">{explanation[blocker]}</p>
+      ) : (
+        <>
+          <button type="button" onClick={() => void run()} disabled={busy}>
+            {busy ? 'Syncing photos…' : 'Sync photos now'}
+          </button>
+          {result ? (
+            <p className="xs muted" style={{ marginBottom: 0 }}>
+              {`${result.upload?.uploaded ?? 0} up, ${result.download?.downloaded ?? 0} down`}
+              {failed > 0 ? `, ${failed} failed` : ''}
+              {moved === 0 && failed === 0 ? ' — nothing to move' : ''}
+            </p>
+          ) : null}
+          {failed > 0 ? (
+            <p className="xs" role="alert" style={{ marginBottom: 0 }}>
+              Some photos did not transfer. They stay on this device and will be retried.
+            </p>
+          ) : null}
+        </>
+      )}
+    </>
   );
 }

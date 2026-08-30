@@ -59,3 +59,9 @@ dexie-cloud.json
 # Stray screenshots from browser-driven verification.
 catalog-tiles.png
 reveal.png
+
+# Local-only Worker secrets for `wrangler dev`. Never real credentials.
+worker/.dev.vars
+
+# Wrangler local cache, regenerated on every run.
+worker/.wrangler/

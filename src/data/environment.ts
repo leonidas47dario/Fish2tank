@@ -79,6 +79,28 @@ export function cloudDatabaseUrlFor(base: string): string {
   return CLOUD_DATABASES[deploymentFor(base)];
 }
 
+// --- The media Worker (spec 005 FR-A03) ------------------------------------
+
+/**
+ * The deployed media Worker per deployment, or `''` for none.
+ *
+ * `other` is deliberately empty rather than pointing somewhere. A dev build
+ * syncs records to the SCRATCH cloud database, and the uat Worker only accepts
+ * tokens whose audience is the uat database - so aiming dev at it would fail
+ * with a confusing 401 rather than an honest "not configured". Media sync is
+ * therefore off in dev, and the UI says so instead of appearing broken.
+ */
+export const MEDIA_WORKERS = {
+  production: 'https://fish2tank-media-prod.leonidas47dario.workers.dev',
+  staging: 'https://fish2tank-media-uat.leonidas47dario.workers.dev',
+  other: '',
+} as const satisfies Record<Deployment, string>;
+
+/** Where to ask for signed media URLs. Empty string means media sync is off. */
+export function mediaWorkerUrlFor(base: string): string {
+  return MEDIA_WORKERS[deploymentFor(base)];
+}
+
 /**
  * FR-A01's data boundary: what never leaves the device.
  *
