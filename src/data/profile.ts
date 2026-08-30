@@ -132,13 +132,13 @@ export async function updateSettings(
   return { ...current, settings: { ...current.settings, ...patch } };
 }
 
-/** Sets the display name, creating the profile first if needed. */
-export async function setDisplayName(
-  displayName: string,
-  database: Fish2TankDB = db,
-): Promise<User> {
-  const current = await loadProfile(database);
-  if (current.displayName === displayName) return current;
-  await patchProfile({ displayName }, database);
-  return { ...current, displayName };
-}
+/*
+ * `setDisplayName` was removed in spec 017 along with the Settings field that
+ * was its only caller. The greeting now reads the signed-in account's name and
+ * falls back to `displayName` for anyone who set one before the field went, so
+ * the stored property is still read - it is just no longer writable from the
+ * app. Restore this function alongside any future "choose a nickname" control
+ * rather than reaching for `patchProfile` directly; the guard against writing
+ * an unchanged value is the part worth keeping (one mutation per keystroke on
+ * a synced record is what it existed to prevent).
+ */
