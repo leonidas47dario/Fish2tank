@@ -4,7 +4,8 @@ import { Fish2TankDB } from '../db';
 import type { Media } from '@/domain/types';
 import { objectKeyFor, type MediaBackend, type ObjectHead, type SyncEnvironment } from './backend';
 import { createSyncLogger } from './sync-log';
-import { runDownloadQueue, runUploadQueue, transferOrder } from './media-queue';
+import { photoSyncWork, runDownloadQueue, runUploadQueue, transferOrder } from './media-queue';
+import { WorkerCallError } from './worker-backend';
 
 const ENV: SyncEnvironment = {
   account: 'acct_1',
@@ -106,6 +107,91 @@ describe('transferOrder', () => {
   it('omits derivatives that were never generated', () => {
     const media = { originalBlobKey: 'o' } as Media;
     expect(transferOrder(media)).toEqual(['o']);
+  });
+});
+
+/**
+ * What the automatic trigger watches - spec 014.
+ *
+ * These are the cases that decide whether a device ever notices it has work,
+ * so they are written from the point of view of the device receiving records
+ * rather than the one sending them.
+ */
+describe('photoSyncWork', () => {
+  /** A row as it arrives from another device: already `synced`, no bytes. */
+  async function arriveFromElsewhere(id: string, keys: { original: string; preview?: string }) {
+    await db.media.put({
+      id,
+      kind: 'photo',
+      specimenIds: [],
+      originalBlobKey: keys.original,
+      originalBytes: 900,
+      previewBlobKey: keys.preview,
+      mimeType: 'image/jpeg',
+      capturedAt: '2026-08-29T00:00:00.000Z',
+      syncState: 'synced',
+    } as Media);
+  }
+
+  it('is zero on a device that holds everything it names', async () => {
+    await seedMedia({ syncState: 'synced' });
+    expect(await photoSyncWork(db)).toEqual({ pending: 0, missing: 0 });
+  });
+
+  it('counts a row this device still owes bytes for', async () => {
+    await seedMedia({ syncState: 'local-draft' });
+    expect(await photoSyncWork(db)).toEqual({ pending: 1, missing: 0 });
+  });
+
+  it('counts every blob a row names that this device does not hold', async () => {
+    // The receiving device: the record arrived, the megabytes did not.
+    await arriveFromElsewhere('med_remote', { original: 'blob_far', preview: 'blob_far_prev' });
+    expect(await photoSyncWork(db)).toEqual({ pending: 0, missing: 2 });
+  });
+
+  it('notices a REPLACED photo, which a row count cannot', async () => {
+    /*
+     * The case that motivated this. Replacing a tank photo deletes one media
+     * row and adds another in the same transaction, so a device receiving that
+     * pair sees the row count it already had. `syncState` does not help
+     * either: the row arrives `synced`, because that flag describes the
+     * SENDING device's obligation.
+     *
+     * Both of the old signals are asserted here explicitly, so that if anyone
+     * ever reaches for them again the reason they were not enough is written
+     * down next to the numbers.
+     */
+    await arriveFromElsewhere('med_a', { original: 'blob_a' });
+    const before = {
+      total: await db.media.count(),
+      pending: (await photoSyncWork(db)).pending,
+    };
+
+    await db.transaction('rw', db.media, async () => {
+      await db.media.delete('med_a');
+      await arriveFromElsewhere('med_b', { original: 'blob_b' });
+    });
+
+    const after = {
+      total: await db.media.count(),
+      pending: (await photoSyncWork(db)).pending,
+    };
+    expect(after).toEqual(before);          // row count and pending both unmoved
+    expect((await photoSyncWork(db)).missing).toBe(1);  // and yet there is work
+  });
+
+  it('falls back to zero once the download queue has done its job', async () => {
+    // A settled device must stop asking, or the trigger becomes a loop.
+    await arriveFromElsewhere('med_remote', { original: 'blob_far' });
+    await db.blobs.put({
+      key: 'blob_far', data: new ArrayBuffer(10), bytes: 10,
+      mimeType: 'image/jpeg', storedAt: '2026-08-29T00:00:00.000Z',
+    });
+    expect(await photoSyncWork(db)).toEqual({ pending: 0, missing: 0 });
+  });
+
+  it('is zero on an empty database rather than undefined', async () => {
+    expect(await photoSyncWork(db)).toEqual({ pending: 0, missing: 0 });
   });
 });
 
@@ -313,5 +399,92 @@ describe('the default fetch', () => {
     } finally {
       vi.unstubAllGlobals();
     }
+  });
+});
+
+/**
+ * The failure that cost an hour on 2026-08-30.
+ *
+ * Production's media Worker had never been deployed. Its workers.dev URL
+ * answered Cloudflare's own "no Worker here" - a plain-text `error code: 1042`
+ * with a 404, not a response from this app - so every photo failed, and the
+ * account panel said they "will be retried". Every retry failed identically
+ * while the screen kept promising the next one would not.
+ *
+ * The counts were right and the conclusion drawn from them was wrong, so these
+ * pin the reason travelling with the counts.
+ */
+describe('a failure that retrying cannot fix', () => {
+  /** A backend whose presign calls 404, the way an undeployed Worker does. */
+  function undeployedBackend(message = '/presign/put failed: 404 Not Found'): MediaBackend {
+    const fail = () => { throw new WorkerCallError(404, '/presign/put', message); };
+    return { presignPut: fail, presignGet: fail, head: fail };
+  }
+
+  it('marks a 404 from the Worker as a configuration fault', async () => {
+    await seedMedia();
+    const summary = await runUploadQueue({
+      db, backend: undeployedBackend(), fetchImpl: fakeBackend().fetchImpl,
+      env: ENV, logger: quietLogger(),
+    });
+
+    expect(summary.failed).toBeGreaterThan(0);
+    expect(summary.configurationFault).toBe(true);
+    // And the verbatim reason, for whoever has to fix it.
+    expect(summary.firstError).toMatch(/404/);
+  });
+
+  it('leaves the photo retryable, because the bytes are still the only copy', async () => {
+    await seedMedia();
+    await runUploadQueue({
+      db, backend: undeployedBackend(), fetchImpl: fakeBackend().fetchImpl,
+      env: ENV, logger: quietLogger(),
+    });
+
+    expect((await db.media.get('med_1'))!.syncState).toBe('retry-required');
+    expect(await db.blobs.get('blob_orig')).toBeDefined();
+  });
+
+  /**
+   * A rejected PUT is a different animal: the Worker answered, signed a URL,
+   * and the upload itself failed. That genuinely may work next time, and must
+   * not be reported as somebody's deployment mistake.
+   */
+  it('does not call an ordinary upload failure a configuration fault', async () => {
+    await seedMedia();
+    const fake = fakeBackend();
+    fake.rejectPuts(500);
+    const summary = await runUploadQueue({ db, ...fake, env: ENV, logger: quietLogger() });
+
+    expect(summary.failed).toBeGreaterThan(0);
+    expect(summary.configurationFault).toBeFalsy();
+  });
+
+  it('keeps the first reason, not the last', async () => {
+    await seedMedia();
+    let n = 0;
+    const backend: MediaBackend = {
+      presignPut: () => { throw new WorkerCallError(404, '/presign/put', `failure ${++n}`); },
+      presignGet: async (key) => ({ url: `https://fake/get/${key}`, expiresAt: 'later' }),
+      head: async () => undefined,
+    };
+    const summary = await runUploadQueue({
+      db, backend, fetchImpl: fakeBackend().fetchImpl, env: ENV, logger: quietLogger(),
+    });
+
+    // Twenty-eight failures with one cause are one problem; the first is the
+    // one not yet coloured by what the failure did to the next attempt.
+    expect(summary.firstError).toBe('failure 1');
+    expect(summary.failed).toBe(3);   // one per blob on the row
+  });
+});
+
+describe('WorkerCallError', () => {
+  it.each([[404], [401], [403]])('treats %i as something only a person can fix', (status) => {
+    expect(new WorkerCallError(status, '/presign/put', 'x').isConfiguration).toBe(true);
+  });
+
+  it.each([[500], [502], [429]])('treats %i as worth retrying', (status) => {
+    expect(new WorkerCallError(status, '/presign/put', 'x').isConfiguration).toBe(false);
   });
 });

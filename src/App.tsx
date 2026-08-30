@@ -11,6 +11,7 @@ import Journal from './ui/screens/Journal';
 import SpecimenDetail from './ui/screens/SpecimenDetail';
 import Settings from './ui/screens/Settings';
 import AuthGate from './ui/components/AuthGate';
+import AutoMediaSync from './ui/components/AutoMediaSync';
 import ProfileButton from './ui/components/ProfileButton';
 import {
   CameraIcon, DropIcon, HouseIcon, NotePencilIcon, SquaresFourIcon,
@@ -38,6 +39,9 @@ export default function App() {
     // in once keeps working in a fish shop with no signal.
     <AuthGate>
       <ScrollMemory />
+      {/* Spec 014: photos sync without being asked. Renders nothing; it is
+          here so the effects live and die with the app shell. */}
+      <AutoMediaSync />
       {/* FR-A10: the one control that used to be seven cards down Settings. */}
       <ProfileButton />
       <main className="app">

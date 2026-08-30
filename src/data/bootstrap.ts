@@ -34,6 +34,7 @@
 import { db } from './db';
 import { SPECIES_CATALOG } from './seed/species-catalog';
 import { upsertSpecies } from './repositories';
+import { sweepOrphanedBlobsQuietly } from './blob-sweep';
 
 // Tanks and store live in their own module so plain-tsx tooling can read them
 // without pulling in a Vite-only `?raw` CSV import. Re-exported here because
@@ -53,6 +54,13 @@ export function bootstrap(): Promise<void> {
     if ((await db.species.count()) === 0) {
       for (const entry of SPECIES_CATALOG) await upsertSpecies(entry.species, entry.profile);
     }
+
+    // BUG-06, spec 012. Deliberately NOT awaited: collecting bytes nothing
+    // references is housekeeping, and nobody should wait behind it to see
+    // their tanks. It reads last session's records, so a deletion that
+    // arrives from another device mid-session is collected on the next
+    // start-up or at the end of the next media sync, whichever comes first.
+    void sweepOrphanedBlobsQuietly();
   })();
   return started;
 }

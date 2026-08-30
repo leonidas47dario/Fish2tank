@@ -15,10 +15,16 @@
  * zero.
  */
 import { useEffect, useRef, useState } from 'react';
-import { useObservable } from 'dexie-react-hooks';
+import { useLiveQuery, useObservable } from 'dexie-react-hooks';
 import { db } from '@/data/db';
 import { CLOUD_DATABASE_URL, DEPLOYMENT } from '@/build-info';
+import { LOCAL_PROFILE_ID, updateSettings } from '@/data/profile';
+import {
+  DEFAULT_SYNC_INTERVAL_MINUTES,
+  SYNC_INTERVAL_CHOICES,
+} from '@/data/sync/auto-sync';
 import { mediaSyncBlocker, runMediaSync, type MediaSyncResult } from '@/data/sync/media-sync';
+import { autoSync, useAutoSyncState } from '@/ui/useAutoMediaSync';
 
 /** Human wording for each sync phase. The raw enum is shown alongside. */
 const PHASE_TEXT: Record<string, string> = {
@@ -158,14 +164,38 @@ export default function AccountPanel() {
  *
  * Its own row because the two really are different guarantees, and conflating
  * them is how someone concludes their photos are backed up when only the
- * records are. Runs on demand rather than automatically for now: the first
- * upload of a whole library is a deliberate act, not something to start
- * unasked on a phone.
+ * records are.
+ *
+ * It used to say runs happen on demand only, because "the first upload of a
+ * whole library is a deliberate act". That was a good reason about the FIRST
+ * upload and never a reason for the second photo, or the two hundredth, to sit
+ * on one device until somebody remembered this button. Spec 014 made it
+ * automatic; the button stays, because pressing it is how you find out whether
+ * a deployment finally landed.
  */
+/**
+ * How a cadence reads to a person.
+ *
+ * "Every 180 minutes" is arithmetic; "Every 3 hours" is a sentence. Every
+ * choice also says "and when photos change", because that half never stops -
+ * turning the timer off does not turn syncing off, and a picker that implied
+ * otherwise would be the more dangerous reading.
+ */
+function intervalLabel(minutes: number): string {
+  if (minutes === 0) return 'Only when photos change';
+  const every = minutes < 60
+    ? `Every ${minutes} minutes`
+    : minutes === 60 ? 'Every hour' : `Every ${minutes / 60} hours`;
+  return `${every}, and when photos change`;
+}
+
 function MediaSyncRow() {
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<MediaSyncResult>();
   const blocker = mediaSyncBlocker();
+  const auto = useAutoSyncState();
+  const profile = useLiveQuery(() => db.users.get(LOCAL_PROFILE_ID));
+  const minutes = profile?.settings.photoSyncMinutes ?? DEFAULT_SYNC_INTERVAL_MINUTES;
 
   const explanation: Record<string, string> = {
     'not-configured': 'Photo sync is not set up for this build.',
@@ -175,6 +205,10 @@ function MediaSyncRow() {
 
   async function run() {
     setBusy(true);
+    // Pressing the button is the deliberate act that says "try again anyway",
+    // so it clears a pause before running rather than after: if the Worker is
+    // now there, the automatic loop should start again with it.
+    autoSync().resume();
     try {
       setResult(await runMediaSync());
     } catch (cause) {
@@ -186,6 +220,21 @@ function MediaSyncRow() {
 
   const moved = (result?.upload?.uploaded ?? 0) + (result?.download?.downloaded ?? 0);
   const failed = (result?.upload?.failed ?? 0) + (result?.download?.failed ?? 0);
+
+  /*
+   * A failure nobody can wait out.
+   *
+   * On 2026-08-30 every photo on production failed because production's media
+   * Worker had never been deployed - the URL answered Cloudflare's own "no
+   * Worker here", not ours - and this panel said they "will be retried". Every
+   * retry failed identically, and the screen kept promising the next one
+   * would not. Saying which kind of failure it was is the difference between
+   * an hour spent looking for a photo bug and a one-line answer.
+   */
+  const misconfigured = Boolean(
+    result?.upload?.configurationFault || result?.download?.configurationFault,
+  );
+  const firstError = result?.upload?.firstError ?? result?.download?.firstError;
 
   return (
     <>
@@ -205,9 +254,44 @@ function MediaSyncRow() {
               {moved === 0 && failed === 0 ? ' — nothing to move' : ''}
             </p>
           ) : null}
+          <label className="stack">
+            <span className="xs muted">Sync photos automatically</span>
+            <select
+              value={minutes}
+              onChange={(e) => void updateSettings({ photoSyncMinutes: Number(e.target.value) })}
+            >
+              {SYNC_INTERVAL_CHOICES.map((m) => (
+                <option key={m} value={m}>{intervalLabel(m)}</option>
+              ))}
+            </select>
+          </label>
+          <p className="xs muted" style={{ marginBottom: 0 }}>
+            {auto.paused ? (
+              <>
+                Automatic sync is paused: photo storage is not reachable, so a schedule would
+                only fail on a timer. Press the button above once it is set up.
+              </>
+            ) : auto.lastRunAt ? (
+              <>Last automatic run {new Date(auto.lastRunAt).toLocaleTimeString()} ({auto.lastReason}).</>
+            ) : (
+              <>No automatic run yet this session.</>
+            )}
+          </p>
           {failed > 0 ? (
-            <p className="xs" role="alert" style={{ marginBottom: 0 }}>
-              Some photos did not transfer. They stay on this device and will be retried.
+            <p className="xs warn" role="alert" style={{ marginBottom: 0 }}>
+              {misconfigured ? (
+                <>
+                  Photo storage is not reachable for this build, so retrying will not help until
+                  it is set up. Your photos are safe on this device and nothing has been lost.
+                </>
+              ) : (
+                <>Some photos did not transfer. They stay on this device and will be retried.</>
+              )}
+              {/* The verbatim reason, small and last. Useless to most readers
+                  and the only thing that matters to whoever fixes it. */}
+              {firstError && (
+                <span className="faint data" style={{ display: 'block' }}>{firstError}</span>
+              )}
             </p>
           ) : null}
         </>
