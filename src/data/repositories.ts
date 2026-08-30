@@ -805,6 +805,13 @@ export async function acquireSpecimen(
  * verbatim (FR-O05).
  *
  * Idempotent: a holding that already has a specimen returns it untouched.
+ *
+ * Spec 019 made this reachable by one tap on a row in "Your fish", where it
+ * used to need a deliberate photo upload, so it now says what it did and
+ * checks that it did it. The failure it checks for is the quiet one: if the
+ * link back to the holding is not written, the caller navigates to a real
+ * record while the holding still reads "no photo yet", and the next tap mints
+ * another orphan.
  */
 export async function ensureSpecimenForHolding(holdingId: Id, database: DB = db): Promise<Specimen> {
   const holding = await database.holdings.get(holdingId);
@@ -812,7 +819,12 @@ export async function ensureSpecimenForHolding(holdingId: Id, database: DB = db)
 
   if (holding.specimenId) {
     const existing = await database.specimens.get(holding.specimenId);
-    if (existing) return existing;
+    if (existing) {
+      console.info('[mint] specimen for holding', {
+        holdingId, speciesId: holding.speciesId, specimenId: existing.id, outcome: 'existing',
+      });
+      return existing;
+    }
   }
 
   const at = nowIso();
@@ -829,6 +841,23 @@ export async function ensureSpecimenForHolding(holdingId: Id, database: DB = db)
   await database.transaction('rw', [database.specimens, database.holdings], async () => {
     await database.specimens.add(specimen);
     await database.holdings.update(holdingId, { specimenId: specimen.id });
+  });
+
+  // Read it back rather than trust the write. An update that matched nothing
+  // resolves happily, and every symptom of that lands somewhere else later.
+  const linked = await database.holdings.get(holdingId);
+  if (linked?.specimenId !== specimen.id) {
+    console.error('[mint] specimen for holding FAILED', {
+      holdingId, specimenId: specimen.id, linkedTo: linked?.specimenId ?? null, outcome: 'not-linked',
+    });
+    throw new Error(
+      `Minted ${specimen.id} for holding ${holdingId}, but the holding's specimenId is ` +
+      `${linked?.specimenId ?? 'still unset'}. Refusing to report a mint that did not land.`,
+    );
+  }
+
+  console.info('[mint] specimen for holding', {
+    holdingId, speciesId: holding.speciesId, specimenId: specimen.id, outcome: 'minted',
   });
 
   if (holding.speciesId) {
