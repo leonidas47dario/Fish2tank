@@ -30,7 +30,8 @@
     "contrast": "node scripts/contrast-audit.mjs",
     "shots": "node scripts/review-shots.mjs",
     "plates": "node scripts/derive-plates.mjs",
-    "synonyms:propose": "tsx etl/propose-synonyms.ts"
+    "synonyms:propose": "tsx etl/propose-synonyms.ts",
+    "genera:classify": "tsx etl/classify-genera.ts"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",
