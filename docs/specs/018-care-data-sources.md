@@ -112,16 +112,102 @@ remain the answer for those** (FR-E05). That is correct behaviour, not a gap
 to be filled with a plausible-looking number — filling it is exactly how the
 current placeholder problem started.
 
+## Revision: freshwater first, which changes the order
+
+> We would want to prioritize the fresh water fish fyi
+
+Re-measured with that scope, and it changes the recommendation rather than
+just narrowing it.
+
+**The catalog holds 958 freshwater fish** (plus 144 plants, 102 inverts, 4
+amphibians, 2 reptiles and 31 unclassified freshwater rows) out of 2,155.
+
+### The existing data is already concentrated where it matters
+
+Every figure roughly doubles when the marine long tail is set aside:
+
+| Field | Whole catalog | **Freshwater fish** |
+|---|---|---|
+| `adultSizeIn` | 31.0% | **60.5%** |
+| `aggression` | 9.2% | **18.7%** |
+| `tempMinC` | 9.6% | **18.2%** |
+| `minVolumeGal` | 4.2% | **8.4%** |
+| `phMin` / `social` | 0% | **0%** |
+| all four present | 3.4% | **6.8%** (65 species) |
+| none of the four | 68.2% | **38.5%** (369 species) |
+
+Still bad — 369 freshwater fish with nothing, pH at zero — but a far smaller
+hole than the whole-catalog view suggests.
+
+### SeriouslyFish is a freshwater site, and it shows
+
+Against freshwater fish its coverage more than doubles:
+
+| | Species | Share of 958 |
+|---|---|---|
+| Exact SeriouslyFish page | **450** | **47.0%** |
+| Genus covered, that species not | 283 | 29.5% |
+| No scientific name to match on | **0** | — |
+
+Zero freshwater fish lack a binomial, so matching is clean rather than fuzzy.
+
+**Projected coverage after a SeriouslyFish ingest of those 450:**
+
+| Field | Now | After | Change |
+|---|---|---|---|
+| `adultSizeIn` | 60.5% | **74.2%** | +131 |
+| `minVolumeGal` | 8.4% | **49.5%** | **+394 (≈6×)** |
+| `aggression` | 18.7% | **52.3%** | +322 |
+| `tempMinC` | 18.2% | **52.5%** | +329 |
+| `phMin` | 0% | **47.0%** | +450, from nothing |
+
+### So the order flips
+
+Against the whole catalog FishBase was the obvious first move, on raw
+coverage. **Against freshwater fish, SeriouslyFish goes first**, for one
+reason: it is the only evaluated source that moves `minVolumeGal` and
+`aggression` at all, and those are the two fields the compatibility engine
+runs on and the two the curated 47 currently fake with hobbyist consensus. It
+takes them from 8% and 19% to roughly half the freshwater catalog.
+
+FishBase becomes the **second** pass — size, temperature and pH for the ~50%
+SeriouslyFish does not reach — and its lack of husbandry fields matters much
+less once SeriouslyFish has covered half of them.
+
+### Sampled, not assumed
+
+Three matched species that currently have **no** minimum volume were fetched
+(3s apart, contactable UA). Extracted from *Parambassis ranga*:
+
+```
+Maximum Standard Length : 3.2″ (8cm)
+Water Conditions        : Temperature 68-86°F (20-30°C), pH …
+```
+
+Both units are given, which removes a whole class of conversion error. The
+minimum-volume heading is **`Aquarium Size`**, not `Maintenance` — worth
+recording, because the obvious guess is wrong.
+
+### The 283 genus-only matches are a trap, not an opportunity
+
+It is tempting to fill a species from a congener's page. That is inventing a
+number (P6) wearing a citation, and it is how the current placeholder problem
+started. Either leave them at "not enough data", or — if they are ever used —
+label them explicitly as genus-level and never let them read as measured for
+that species.
+
 ## Recommended shape
 
-1. **FishBase first**, for the scientific fields at high coverage — max
-   length, temperature, pH, water type. Biggest coverage win per unit of work,
-   and it replaces Wikipedia as the taxonomy/size source with a better one.
-2. **SeriouslyFish second**, for the husbandry fields FishBase cannot give —
-   tank volume and temperament — accepting ~21% coverage and reporting it
-   honestly in the UI.
-3. **aqua-fish.net third**, as an additional husbandry source to raise that
-   percentage; count its coverage before committing to it.
+*Revised by the freshwater scoping above.*
+
+1. **SeriouslyFish first, scoped to the 958 freshwater fish.** 450 exact
+   matches, and the only source that moves minimum volume and aggression —
+   from 8% and 19% to about half the freshwater catalog, with pH going from
+   nothing to 47%.
+2. **FishBase second**, for size, temperature and pH across the ~50%
+   SeriouslyFish does not reach, replacing Wikipedia as the size source.
+3. **aqua-fish.net third**, to lift the husbandry percentage further; count
+   its freshwater coverage before committing to it.
 4. **Retire the `PLACEHOLDER` label per field as it is genuinely replaced**,
    so the 47 curated profiles stop carrying an unsourced min-volume behind a
    Wikipedia citation.
