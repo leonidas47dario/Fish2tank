@@ -12,6 +12,7 @@ declare const __BUILT_AT__: string;
 declare const __DB_NAME__: string;
 declare const __CLOUD_DB_URL__: string;
 declare const __DEPLOYMENT__: string;
+declare const __MEDIA_WORKER_URL__: string;
 
 export const BUILD_ID: string = typeof __BUILD_ID__ === 'string' ? __BUILD_ID__ : 'dev';
 export const BUILT_AT: string = typeof __BUILT_AT__ === 'string' ? __BUILT_AT__ : '';
@@ -40,3 +41,12 @@ export const DEPLOYMENT: string =
  */
 export const CLOUD_DATABASE_URL: string =
   typeof __CLOUD_DB_URL__ === 'string' ? __CLOUD_DB_URL__ : CLOUD_DATABASES.other;
+
+/**
+ * The media Worker for this build, or `''` when media sync is not configured.
+ *
+ * Empty is a real, expected state (dev builds), not a failure. Callers check
+ * it rather than constructing a backend that would 401 on every request.
+ */
+export const MEDIA_WORKER_URL: string =
+  typeof __MEDIA_WORKER_URL__ === 'string' ? __MEDIA_WORKER_URL__ : '';
