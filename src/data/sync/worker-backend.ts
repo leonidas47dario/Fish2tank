@@ -43,7 +43,9 @@ function blobKeyFrom(key: string, account: string): string {
 }
 
 export function createWorkerBackend(options: WorkerBackendOptions): MediaBackend {
-  const doFetch = options.fetchImpl ?? fetch;
+  // Bound to the global: see the note in media-queue.ts. A bare `fetch`
+  // reference called through a variable is an Illegal invocation.
+  const doFetch = options.fetchImpl ?? ((...args: Parameters<typeof fetch>) => globalThis.fetch(...args));
   const base = options.workerUrl.replace(/\/+$/, '');
 
   async function call(route: string, blobKey: string): Promise<unknown> {

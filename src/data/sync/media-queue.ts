@@ -44,6 +44,17 @@ export interface TransferSummary {
  * gigabytes. Ordering is a product decision, not an implementation detail,
  * which is why it is one named function instead of an inline sort.
  */
+/**
+ * The browser's fetch, bound to the global.
+ *
+ * `fetch` captured into a variable and then called as a METHOD - which is what
+ * `deps.fetchImpl(...)` is - arrives with `this` set to the deps object, and
+ * the browser refuses: "Failed to execute 'fetch' on 'Window': Illegal
+ * invocation". It cost 28 consecutive upload failures on UAT, and no test saw
+ * it because every test injects a fake and never touches this default.
+ */
+const boundFetch: typeof fetch = (...args) => globalThis.fetch(...args);
+
 export function transferOrder(media: Media): string[] {
   return [media.thumbnailBlobKey, media.previewBlobKey, media.originalBlobKey]
     .filter((k): k is string => Boolean(k));
@@ -118,7 +129,7 @@ async function uploadOne(
  * verifies again. Nothing is double-counted and nothing is lost.
  */
 export async function runUploadQueue(deps: MediaSyncDeps): Promise<TransferSummary> {
-  const fetchImpl = deps.fetchImpl ?? fetch;
+  const fetchImpl = deps.fetchImpl ?? boundFetch;
   const log = deps.logger ?? createSyncLogger(deps.env);
   const resolved = { db: deps.db, backend: deps.backend, env: deps.env, fetchImpl };
 
@@ -159,7 +170,7 @@ export async function runUploadQueue(deps: MediaSyncDeps): Promise<TransferSumma
  * are written locally, so a truncated download cannot masquerade as a photo.
  */
 export async function runDownloadQueue(deps: MediaSyncDeps): Promise<TransferSummary> {
-  const fetchImpl = deps.fetchImpl ?? fetch;
+  const fetchImpl = deps.fetchImpl ?? boundFetch;
   const log = deps.logger ?? createSyncLogger(deps.env);
 
   log.runStarted('media download');
