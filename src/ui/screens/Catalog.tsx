@@ -26,9 +26,11 @@ import { useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/data/db';
 import {
-  CATALOG, cardPrice, marketAndScarcity, ownership, portraitAsset, type CatalogCard,
+  CATALOG, cardPrice, marketAndScarcity, ownership, portraitAsset, pricesBySpecies,
+  type CatalogCard,
 } from '@/data/catalog';
 import { MARKET_INDEX } from '@/data/market';
+import { loadProfile } from '@/data/profile';
 import { deriveQuantity } from '@/domain/holdings';
 import type { AggressionRating, WaterType } from '@/domain/types';
 import type { OrganismKind, WaterZone } from '@/data/seed/taxonomy';
@@ -170,11 +172,17 @@ export default function Catalog() {
   const [salinity, setSalinity] = useState<SalinityFilter>('freshwater');
 
   const cards = useLiveQuery(async (): Promise<CatalogCard[]> => {
-    const [specimens, snapshots, holdings, lifeEvents, residencies, dream, media] = await Promise.all([
-      db.specimens.toArray(), db.raritySnapshots.toArray(), db.holdings.toArray(),
-      db.lifeEvents.toArray(), db.residencies.toArray(), db.dreamList.toArray(), db.media.toArray(),
-    ]);
+    const [specimens, snapshots, holdings, lifeEvents, residencies, dream, media, prices, profile] =
+      await Promise.all([
+        db.specimens.toArray(), db.raritySnapshots.toArray(), db.holdings.toArray(),
+        db.lifeEvents.toArray(), db.residencies.toArray(), db.dreamList.toArray(), db.media.toArray(),
+        // One read of the whole table, grouped once, rather than a query per
+        // species: this builds 2,176 cards on every change.
+        db.priceObservations.toArray(), loadProfile(),
+      ]);
     const dreamed = new Set(dream.map((d) => d.speciesId));
+    const ownPrices = pricesBySpecies(prices);
+    const currency = profile.settings.currency;
 
     return CATALOG.species.map((species) => {
       const mine = specimens.filter((s) => s.speciesId === species.speciesId);
@@ -193,7 +201,10 @@ export default function Catalog() {
         .map((m) => m.id);
 
       const tiers = snapshots.filter((s) => s.speciesId === species.speciesId);
-      const { market, scarcityBand } = marketAndScarcity(species.speciesId);
+      const { market, scarcityBand } = marketAndScarcity(species.speciesId, {
+        prices: ownPrices.get(species.speciesId) ?? [],
+        currency,
+      });
 
       // Size the price to the fish you actually saw, not the pooled median.
       const observedSize = undefined;

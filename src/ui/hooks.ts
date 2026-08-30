@@ -2,11 +2,13 @@ import { useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { blobFor, db } from '@/data/db';
 import {
-  buildCatalogCard, CATALOG_BY_SPECIES, cardPrice, catalogShapeForLocal, portraitAsset,
+  buildCatalogCard, CATALOG_BY_SPECIES, cardPrice, catalogShapeForLocal, marketAndScarcity,
+  portraitAsset, pricesBySpecies,
   type CatalogCard,
 } from '@/data/catalog';
-import { marketFor } from '@/data/market';
+
 import { deriveBadge, deriveQuantity } from '@/domain/holdings';
+import { loadProfile } from '@/data/profile';
 import { summariseTank, type TankResident } from '@/domain/tank-stats';
 import type { Aquarium, Id } from '@/domain/types';
 import { useBlobUrls } from './blob-url';
@@ -163,11 +165,15 @@ export function useTankResidents(aquariumId: string | undefined) {
     const aquarium = await db.aquariums.get(aquariumId);
     if (!aquarium) return undefined;
 
-    const [holdings, residencies, events, profiles] = await Promise.all([
+    const [holdings, residencies, events, profiles, prices, account] = await Promise.all([
       db.holdings.toArray(), db.residencies.toArray(), db.lifeEvents.toArray(),
       db.speciesProfiles.toArray(),
+      // A tank's estimated value counts the keeper's own logged prices too.
+      db.priceObservations.toArray(), loadProfile(),
     ]);
     const profileFor = new Map(profiles.map((p) => [p.speciesId, p]));
+    const ownPrices = pricesBySpecies(prices);
+    const currency = account.settings.currency;
 
     const residents = residencies
       .filter((r) => r.aquariumId === aquariumId && !r.endDate)
@@ -179,7 +185,9 @@ export function useTankResidents(aquariumId: string | undefined) {
 
         const entry = holding.speciesId ? CATALOG_BY_SPECIES.get(holding.speciesId) : undefined;
         const profile = holding.speciesId ? profileFor.get(holding.speciesId) : undefined;
-        const market = marketFor(holding.speciesId);
+        const market = holding.speciesId
+          ? marketAndScarcity(holding.speciesId, { prices: ownPrices.get(holding.speciesId) ?? [], currency }).market
+          : undefined;
 
         // Adult size and minimum volume come from the curated profile where
         // there is one, and the mart otherwise - the mart carries the care
@@ -221,11 +229,15 @@ export function useTankResidents(aquariumId: string | undefined) {
  */
 export function useTankSummaries() {
   return useLiveQuery(async () => {
-    const [aquariums, holdings, residencies, events, profiles, media] = await Promise.all([
-      db.aquariums.toArray(), db.holdings.toArray(), db.residencies.toArray(),
-      db.lifeEvents.toArray(), db.speciesProfiles.toArray(), db.media.toArray(),
-    ]);
+    const [aquariums, holdings, residencies, events, profiles, media, prices, account] =
+      await Promise.all([
+        db.aquariums.toArray(), db.holdings.toArray(), db.residencies.toArray(),
+        db.lifeEvents.toArray(), db.speciesProfiles.toArray(), db.media.toArray(),
+        db.priceObservations.toArray(), loadProfile(),
+      ]);
     const profileFor = new Map(profiles.map((p) => [p.speciesId, p]));
+    const ownPrices = pricesBySpecies(prices);
+    const currency = account.settings.currency;
     const mediaById = new Map(media.map((m) => [m.id, m]));
 
     return Promise.all(aquariums.map(async (aquarium) => {
@@ -248,7 +260,12 @@ export function useTankSummaries() {
             adultSizeIn,
             aggression: profile?.aggression ?? (entry?.aggression as TankResident['aggression']),
             waterZone: entry?.waterZone,
-            unitPrice: cardPrice(marketFor(holding.speciesId), adultSizeIn),
+            unitPrice: cardPrice(
+              holding.speciesId
+                ? marketAndScarcity(holding.speciesId, { prices: ownPrices.get(holding.speciesId) ?? [], currency }).market
+                : undefined,
+              adultSizeIn,
+            ),
           }];
         });
 

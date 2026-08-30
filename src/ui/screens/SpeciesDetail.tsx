@@ -31,6 +31,8 @@ import {
   type CareField, type CatalogCard, type CatalogSpecies,
 } from '@/data/catalog';
 import { deriveQuantity } from '@/domain/holdings';
+import { loadProfile } from '@/data/profile';
+import { isBlended } from '@/engine/pricing/own-prices';
 import { formatVolume } from '@/domain/units';
 import { MarketPanel } from '../components/MarketPanel';
 import { OwnPhotoStrip } from '../components/OwnPhotoStrip';
@@ -84,18 +86,22 @@ export default function SpeciesDetail() {
 
   const data = useLiveQuery(async () => {
     if (!id) return undefined;
-    const [specimens, snapshots, holdings, lifeEvents, residencies, media, dream] = await Promise.all([
-      db.specimens.where('speciesId').equals(id).toArray(),
-      db.raritySnapshots.where('speciesId').equals(id).toArray(),
-      db.holdings.where('speciesId').equals(id).toArray(),
-      db.lifeEvents.toArray(), db.residencies.toArray(), db.media.toArray(),
-      db.dreamList.where('speciesId').equals(id).first(),
-    ]);
+    const [specimens, snapshots, holdings, lifeEvents, residencies, media, dream, prices, profile] =
+      await Promise.all([
+        db.specimens.where('speciesId').equals(id).toArray(),
+        db.raritySnapshots.where('speciesId').equals(id).toArray(),
+        db.holdings.where('speciesId').equals(id).toArray(),
+        db.lifeEvents.toArray(), db.residencies.toArray(), db.media.toArray(),
+        db.dreamList.where('speciesId').equals(id).first(),
+        db.priceObservations.where('speciesId').equals(id).toArray(),
+        loadProfile(),
+      ]);
     const aquariums = await db.aquariums.toArray();
     const ownPhotos = media
       .filter((m) => m.kind === 'photo' && m.specimenIds.some((sid) => specimens.some((s) => s.id === sid)))
       .sort((a, b) => b.capturedAt.localeCompare(a.capturedAt));
-    return { specimens, snapshots, holdings, lifeEvents, residencies, ownPhotos, dream, aquariums };
+    return { specimens, snapshots, holdings, lifeEvents, residencies, ownPhotos, dream, aquariums,
+      prices, currency: profile.settings.currency };
   }, [id]);
 
   const pref = useLiveQuery(() => (id ? db.cardPrefs.get(id) : undefined), [id]);
@@ -135,7 +141,7 @@ export default function SpeciesDetail() {
     if (deriveQuantity(h, data.lifeEvents) <= 0) return false;
     return data.residencies.some((r) => r.holdingId === h.id && !r.endDate);
   });
-  const { market, scarcityBand } = marketAndScarcity(id);
+  const { market, scarcityBand } = marketAndScarcity(id, { prices: data.prices, currency: data.currency });
 
   const card: CatalogCard = {
     species,
@@ -435,7 +441,7 @@ export default function SpeciesDetail() {
         )}
       </section>
 
-      <MarketPanel speciesId={id} />
+      <MarketPanel speciesId={id} blended={isBlended(market) ? market : undefined} />
 
       {/* --- Your specimens ---------------------------------------------- */}
       <section className="panel panel--flush">

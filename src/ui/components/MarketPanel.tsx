@@ -14,6 +14,7 @@
  * comparison the engine itself declines to make.
  */
 import type { LengthMeasurement } from '@/domain/types';
+import type { BlendedMarket } from '@/engine/pricing/own-prices';
 import { formatLength } from '@/domain/units';
 import {
   bandForSize, hasPriceEstimate, isStale, marketAgeDays, marketFor, MARKET_INDEX,
@@ -29,10 +30,19 @@ interface Props {
   observedSize?: LengthMeasurement;
   /** What the store is asking, for a like-for-like comparison. */
   yourPrice?: number;
+  /**
+   * The species' market with the keeper's own prices already blended in.
+   *
+   * Passed rather than looked up, because the blend needs a table read and
+   * this component is sync. A caller with nothing to add omits it and gets the
+   * vendor index, exactly as before.
+   */
+  blended?: BlendedMarket;
 }
 
-export function MarketPanel({ speciesId, observedSize, yourPrice }: Props) {
-  const stats = marketFor(speciesId);
+export function MarketPanel({ speciesId, observedSize, yourPrice, blended }: Props) {
+  const stats = blended ?? marketFor(speciesId);
+  const own = blended?.own;
   if (!stats) {
     return (
       <section className="panel">
@@ -71,6 +81,30 @@ export function MarketPanel({ speciesId, observedSize, yourPrice }: Props) {
           {stats.stores.length === 1 ? '' : 's'}
         </span>
       </div>
+
+      {/* Where the figure came from.
+​
+          A blended number must say it is blended. "$18" reads as the market's
+          verdict; "$18, and 3 of those points are your own records" is the
+          same number with its provenance attached, and the second is the only
+          honest way to put a keeper's own prices into a figure labelled
+          "market". `approximated` is surfaced too, because the pool is
+          rebuilt from published per-store medians rather than raw listings -
+          see own-prices.ts. */}
+      {own && own.points.length > 0 && (
+        <p className="xs faint" style={{ marginBottom: 'var(--space-2)' }}>
+          {own.basis === 'own-only'
+            ? <>Estimated from your own {own.points.length} price
+                {own.points.length === 1 ? '' : 's'} — no store listing matched this species.</>
+            : <>Includes your own {own.points.length} logged price
+                {own.points.length === 1 ? '' : 's'} alongside the store listings
+                {own.approximated ? ', pooled from each store’s published median' : ''}.</>}
+          {own.excluded.length > 0 && (
+            <> {own.excluded.length} of your record{own.excluded.length === 1 ? ' was' : 's were'} left
+              out as not comparable.</>
+          )}
+        </p>
+      )}
 
       {/* The size-matched comparison is the headline, not the pooled median. */}
       {estimated && band && (

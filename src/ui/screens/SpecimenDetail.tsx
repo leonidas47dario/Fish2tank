@@ -28,16 +28,17 @@ import {
   type DeleteCatchPlan,
 } from '@/data/repositories';
 import { deriveQuantity } from '@/domain/holdings';
+import { isBlended } from '@/engine/pricing/own-prices';
 import { evaluatePriceFit } from '@/engine/pricing/price-fit';
 import { COMPONENT_LABELS, LOCAL_RARITY_UNAVAILABLE } from '@/engine/rarity/discovery-tier';
 import { formatLength, formatVolume } from '@/domain/units';
 import type { Specimen, Species, Verdict } from '@/domain/types';
 import { useSpecimenMedia } from '../hooks';
-import { CATALOG_BY_SPECIES, portraitAsset, type CatalogSpecies } from '@/data/catalog';
+import { CATALOG_BY_SPECIES, marketAndScarcity, portraitAsset, type CatalogSpecies } from '@/data/catalog';
 import { IdentityBadge, TierBadge, VerdictBadge, ScarcityBadge } from '../components/Badges';
 import { FactorList, MissingInputsNotice } from '../components/FactorList';
 import { MarketPanel } from '../components/MarketPanel';
-import { bandForSize, marketFor, scarcityFor } from '@/data/market';
+import { bandForSize, scarcityFor } from '@/data/market';
 import { usePrefersReducedMotion } from '@/theme/ThemeProvider';
 import { CaretLeftIcon, CaretRightIcon } from '../components/Icons';
 
@@ -153,8 +154,23 @@ export default function SpecimenDetail() {
     }
   }
 
-  // Market context, auto-populated from the shipped index. No network call.
-  const marketStats = marketFor(specimen.speciesId);
+  /*
+   * Market context, with the keeper's own logged prices counted in - EXCEPT
+   * this catch's own.
+   *
+   * The panel below compares what you paid against the market, and a pool
+   * containing your own price is partly a comparison with itself: log $40 for
+   * a fish nobody else lists and the market obligingly agrees it is worth $40.
+   * evaluatePriceFit already excludes the subject for the same reason; this is
+   * the same rule applied to the same question one panel higher.
+   */
+  const otherOwnPrices = (allPricesForSpecies ?? []).filter((o) => o.specimenId !== id);
+  const marketStats = specimen.speciesId
+    ? marketAndScarcity(specimen.speciesId, {
+        prices: otherOwnPrices,
+        currency: prices?.[0]?.currency ?? 'USD',
+      }).market
+    : undefined;
   const marketScarcity = scarcityFor(specimen.speciesId);
   const marketBand = marketStats ? bandForSize(marketStats, latest?.observedSize) : undefined;
 
@@ -400,6 +416,7 @@ export default function SpecimenDetail() {
         speciesId={specimen.speciesId}
         observedSize={latest?.observedSize}
         yourPrice={price?.askingPrice}
+        blended={isBlended(marketStats) ? marketStats : undefined}
       />
 
       {/* --- Reveal (PRD 4.6) --------------------------------------------- */}
