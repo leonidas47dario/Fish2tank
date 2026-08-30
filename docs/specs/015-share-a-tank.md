@@ -42,10 +42,14 @@ narrow enough to describe in a paragraph.
 
 One object in R2: `shared/{token}.json`. The token is `crypto.randomUUID()`.
 
-The object holds both the frozen view of the tank *and* the list of photo keys
-the link may read. One object, deliberately: revocation is then a single delete
-with nothing left behind to garbage-collect, and there is no second file that
-can rot out of step with the first.
+The object holds both a point-in-time view of the tank *and* the list of photo
+keys the link may read. One object, deliberately: revocation is then a single
+delete with nothing left behind to garbage-collect, and there is no second file
+that can rot out of step with the first.
+
+Point-in-time, but not stale: the file is rewritten whenever the tank changes
+and the device is online. See the revision at the end for why that beat both a
+purely manual republish and a genuinely live read.
 
 The owner's account id is in that file and **is never sent to a guest**. The
 Worker reads it to know whose prefix to serve from, and strips it from the
@@ -57,8 +61,9 @@ photo keys, for the same reason.
 
 | Considered | Rejected because |
 |---|---|
-| **Live view of the real tank** | A guest's browser cannot read a private Dexie Cloud realm. Serving it would need a server holding the owner's credentials: a real backend, a running cost, and a new place an entire collection can leak from. |
-| **Dexie Cloud realm sharing** | Requires the guest to have an account, which is exactly what "anyone should be able to review the page" rules out. |
+| **Live view of the real tank** | Examined properly in the revision below, after the asker pushed back on it. Rejected on blast radius, not on feasibility. |
+| **Dexie Cloud's public realm (`rlm-public`)** | Genuinely exists and is readable by unauthenticated users, but it is public to *everyone* rather than to whoever holds a link, and it can only be written server-side. See the revision below. |
+| **Dexie Cloud realm sharing to a named member** | The recipient must accept an invitation and authenticate, so they need an account — exactly what "anyone should be able to review the page" rules out. The free tier is 3 production seats. |
 | **Everything in the URL fragment** | A tank's records would fit; photos would not. Text-only shares a tank with no fish in it. |
 | **Copy the photos to a public prefix** | Duplicates bytes that already exist, as the asker pointed out. It also creates a second lifecycle to keep in step with deletes and the blob sweep. |
 | **Publish downscaled derivatives** | A derivative is still a duplicate. Rejected on the same ground, with the cost recorded below rather than hidden. |
@@ -205,7 +210,9 @@ months, and it is why the refactor is in scope rather than a copy being made.
 
 ## Out of scope
 
-- **Live updates.** The snapshot is frozen until republished, by decision.
+- **A guest's page updating while they are looking at it.** Republishing
+  changes what the *next* load fetches. Pushing to an open page would need a
+  socket to a guest, which is a live connection per stranger.
 - **Guest catalog browsing.** A guest sees the shared tank and nothing else.
 - **Reporting hearts back to the owner.** It needs a write endpoint on a public
   link, which is an abuse and cost surface for a feature nobody asked for.
@@ -226,17 +233,23 @@ months, and it is why the refactor is in scope rather than a copy being made.
 5. A guest tapping a heart, or a fish, is prompted to sign in.
 6. After signing in, the guest lands back on the shared tank with the hearted
    species in their own Dream List.
-7. Stop sharing makes the URL 404, and photo requests under that token 403.
-8. A blob key not named in the manifest is refused even with a valid token.
-9. Publish fails loudly if the object is not present afterwards.
-10. The authenticated routes still reject an anonymous caller.
+7. Changing the tank while it is shared and the device is online rewrites the
+   published file without anybody pressing anything, and forty changes at once
+   cause one rewrite rather than forty.
+8. A change made offline is not lost: the manual button publishes it, and the
+   sheet says when the published copy is older than the tank.
+9. Stop sharing makes the URL 404, and photo requests under that token 403.
+10. A blob key not named in the manifest is refused even with a valid token.
+11. Publish fails loudly if the object is not present afterwards.
+12. The authenticated routes still reject an anonymous caller.
 
 ## Requirements claimed
 
 - **FR-S01** A tank can be published as a read-only page at an unguessable URL.
 - **FR-S02** The published page requires no account to view.
-- **FR-S03** The page shows the tank as it stood when published, and does not
-  change until republished.
+- **FR-S03** The published page tracks the tank. It is republished
+  automatically when the tank changes and the device is online, and can be
+  republished by hand for the changes that happened while it was not.
 - **FR-S04** Published photos are the existing objects, never copies.
 - **FR-S05** A link is revocable, and revocation withdraws the photos too.
 - **FR-S06** A guest hearting a fish is prompted to create an account, and the
@@ -247,3 +260,72 @@ months, and it is why the refactor is in scope rather than a copy being made.
 
 Touches FR-A03 (media), NFR-10 (short-lived signed URLs), NFR-12 (adapters),
 NFR-13 (a run that cannot be read afterwards did not happen).
+
+## Revision, 2026-08-30: why not a live pointer
+
+> would it make more sense if it's not a screenshot but a live pointer to my
+> tank? since I belive my tank already exists in my database... what are the
+> pro and cons?
+
+A fair challenge, and the first answer given to it during the brainstorm was
+wrong. It claimed a guest's browser "cannot read a private Dexie Cloud realm",
+which is true, and implied there was therefore no anonymous read at all, which
+is not.
+
+**Dexie Cloud does have anonymous read.** There is a built-in realm,
+`rlm-public`, and the documentation is explicit: "All users, also
+unauthenicated users, have visibility / sync access to it."
+
+It is still the wrong instrument here, for three reasons that are about shape
+rather than capability:
+
+1. **It is public to everyone, not to whoever holds a link.** There is no
+   per-token scoping on `rlm-public`. A tank placed in it syncs into the
+   IndexedDB of every visitor to the app. That is publishing, not sharing, and
+   one tank cannot be put there without joining the app's global public data.
+2. **It cannot be written from the app.** "Only the owner of the database has
+   permissions to mutate data in the public realm", populated through the REST
+   API — so a server-side credential is needed regardless.
+3. **It does not carry photos.** `blobs` is unsynced by design (FR-A01's data
+   boundary), so images stay in R2 behind per-user auth whatever the records do.
+
+Free-tier ceilings reinforce it rather than decide it: 3 production users, 10
+connections, 20 requests/second.
+
+### The real live option, and the real reason against it
+
+Stripped of the above, "live" means **a Worker holding a Dexie Cloud credential
+that reads the owner's realm on a guest's behalf**. That would work.
+
+It is rejected on **blast radius**. Today no single secret anywhere can read the
+whole collection: the Worker's R2 keys reach bytes only, and it cannot name a
+prefix without a user's own token. A live share would create exactly that
+secret and put it in an internet-facing Worker. The security-critical question
+would grow from "is this key in this list" to "does this request map to
+precisely the one tank it claims, and nothing else in the database" — a much
+harder thing to be sure of, guarding a much larger prize.
+
+Two lesser costs, recorded for completeness: a guest would see nothing when
+Dexie Cloud is unavailable, and every guest becomes a connection against a
+limit of ten.
+
+### What was adopted instead
+
+The asker's underlying worry was sound — a snapshot nobody remembers to
+republish shows a **wrong** inventory, and for sharing what is in a tank, wrong
+is worse than absent.
+
+So the file is rewritten automatically when the tank changes. This is not new
+machinery: spec 014 already established the pattern and the argument for it —
+**watch the data, not the callers** — with a `liveQuery` over the table rather
+than instrumenting the six call sites that write to it. Applied here, a change
+to this tank's holdings, residencies, life events or photo requests a
+republish, debounced, when the device is online and the tank is shared.
+
+The result is live in every sense a guest can detect (edits reach the next load
+within seconds) while the credential model does not move at all. A manual
+**Update what guests see** button remains, because edits made offline have to
+be flushed by something.
+
+Cost: one 4 KB R2 write per settled change, against a free allowance of 1
+million Class A operations a month.

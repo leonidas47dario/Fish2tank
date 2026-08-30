@@ -345,6 +345,46 @@ Pure refactor. No behaviour change, and the existing tests must pass untouched.
 
 ---
 
+### Task 9b: Republish when the tank changes
+
+**Files:** Create `src/data/share/auto-republish.ts`, `auto-republish.test.ts`;
+create `src/ui/useAutoRepublish.ts`; modify `src/App.tsx`
+
+Follows spec 014 exactly, including its reasoning. **Watch the data, not the
+callers**: there are at least eight functions that change what a tank contains
+(`stockTank`, `removeHolding`, `adjustHoldingQuantity`, `moveHolding`,
+`recordDeath`, `setTankPhoto`, `clearTankPhoto`, `deleteTank`), and a ninth
+added next month would silently stop republishing.
+
+- [ ] **Step 1: Write the failing test** for a pure `sharedTanksNeedingPublish`
+  helper: given share records and a per-tank content fingerprint, return the
+  tanks whose published fingerprint differs from their current one. Cases: a
+  tank not shared is never returned; a shared tank whose fingerprint is
+  unchanged is not returned; a changed one is; and a tank shared but never
+  fingerprinted (published by an older build) is returned once.
+- [ ] **Step 2: Run, watch it fail.**
+- [ ] **Step 3: Implement.** The fingerprint is a stable hash over exactly what
+  the snapshot publishes — residents, quantities, tank name, volume, photo key
+  — so an edit that changes nothing a guest can see does not spend a write.
+  Store it on `ShareRecord.fingerprint` at publish time.
+- [ ] **Step 4:** The scheduler: a `liveQuery` over `holdings`, `residencies`,
+  `lifeEvents`, `aquariums` and `media` requests a run; the run is **debounced
+  by 3 seconds and single-flight**, so importing forty fish is one write.
+  Skipped quietly when offline, signed out, not configured, or no tank is
+  shared — those are expected states, not faults, and each is logged once.
+- [ ] **Step 5:** A failed republish does **not** retry in a loop. It records
+  the failure on the share record, and the sheet says the published copy is
+  behind with a button to try again. Spec 011's lesson: an automatic retry
+  against something that cannot succeed fails silently, on a schedule, on
+  battery.
+- [ ] **Step 6:** Mount `useAutoRepublish()` in `App`, beside `AutoMediaSync`.
+- [ ] **Step 7: Green, and prove the debounce has teeth** — advance the clock
+  *during* an in-flight run and assert exactly one follow-up, which is the
+  mistake spec 014 recorded catching late.
+- [ ] **Step 8: Commit** `feat(share): a shared tank republishes itself`
+
+---
+
 ### Task 10: Verify it end to end
 
 - [ ] **Step 1:** `npm test` and `npm run typecheck` both clean.
@@ -358,8 +398,10 @@ Pure refactor. No behaviour change, and the existing tests must pass untouched.
   Confirm: the tank renders, the stats match, no gate appears, no console
   errors.
 - [ ] **Step 6:** Tap a heart → the sign-in prompt appears.
-- [ ] **Step 7:** Stop sharing → the same URL now says the link is off.
-- [ ] **Step 8:** Record every result, including anything that could not be
+- [ ] **Step 7:** Add a fish to the shared tank and reload the guest URL
+  without touching the share sheet. The new fish is there.
+- [ ] **Step 8:** Stop sharing → the same URL now says the link is off.
+- [ ] **Step 9:** Record every result, including anything that could not be
   verified in this environment and why, in the spec's **Verified** section.
 
 ---
@@ -384,7 +426,7 @@ Pure refactor. No behaviour change, and the existing tests must pass untouched.
 |---|---|
 | FR-S01 publish to an unguessable URL | 3, 4, 9 |
 | FR-S02 no account to view | 3 (public routes), 7 (route outside the gate) |
-| FR-S03 frozen until republished | 1 (snapshot), 9 (Update button) |
+| FR-S03 tracks the tank, republished automatically | 1 (snapshot), 9b (scheduler), 9 (manual button) |
 | FR-S04 photos are the existing objects | 3 (302 to presign), 4 (no copy made) |
 | FR-S05 revocable, photos withdrawn too | 3 (delete + membership check), 9 |
 | FR-S06 heart prompts sign-up and survives it | 6, 8 |
