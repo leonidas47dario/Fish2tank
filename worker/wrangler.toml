@@ -1,0 +1,38 @@
+# The media Worker (spec 005 FR-A03).
+#
+# Two environments, deliberately never sharing a bucket or a Dexie database.
+# Deploy with:
+#   npx wrangler deploy --env uat
+#   npx wrangler deploy --env production
+#
+# Secrets are NOT here and must never be. Set them per environment with:
+#   npx wrangler secret put R2_ACCESS_KEY_ID --env uat
+#   npx wrangler secret put R2_SECRET_ACCESS_KEY --env uat
+# and again for production. They are the R2 API token's S3 credentials.
+
+name = "fish2tank-media"
+main = "src/index.ts"
+compatibility_date = "2026-08-30"
+
+# No top-level vars on purpose. A Worker deployed without --env would otherwise
+# inherit a half-configured environment and quietly talk to the wrong tier.
+
+[env.uat]
+name = "fish2tank-media-uat"
+
+[env.uat.vars]
+DEXIE_DATABASE_URL = "https://zblsiza99.dexie.cloud"
+R2_BUCKET = "fish2tank-media-uat"
+R2_ACCOUNT_ID = "4c73038eafb05b96ed7125aeeca9cfff"
+ALLOWED_ORIGINS = "https://leonidas47dario.github.io,http://localhost:5199"
+ENVIRONMENT = "uat"
+
+[env.production]
+name = "fish2tank-media-prod"
+
+[env.production.vars]
+DEXIE_DATABASE_URL = "https://zecprrllc.dexie.cloud"
+R2_BUCKET = "fish2tank-media-prod"
+R2_ACCOUNT_ID = "4c73038eafb05b96ed7125aeeca9cfff"
+ALLOWED_ORIGINS = "https://leonidas47dario.github.io"
+ENVIRONMENT = "production"
