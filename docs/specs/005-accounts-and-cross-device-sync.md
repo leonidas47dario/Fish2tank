@@ -189,6 +189,29 @@ They are unreferenced anywhere in the codebase, and migrating unused fields
 into a synced schema means paying for them forever. `currency` is wired to the
 setting, fixing the hardcoded `'USD'`.
 
+### FR-A04a - The profile becomes visible on Home
+
+Added 2026-08-29, after Ryan reviewed Release 1 on UAT and said "not much
+going on in R1". He was right: the release stored a display name that nothing
+ever showed. Asked for verbatim:
+
+> "minor tweak, I want this to say 'Welcome USERNAME' and then also include
+> how many fish kept."
+
+Home's `h1` becomes the greeting, and the collection state that used to live
+there moves to the line directly below rather than being dropped. That
+distinction matters: the old code carried a comment explaining the `h1` was
+deliberately informative so a screen reader "should hear where the collection
+stands, not the word Home". It now hears the greeting and then the state, as
+the very next line.
+
+"Fish kept" is summed from the same `residents` the tank rows below are drawn
+from, which are already filtered to open residencies with a live quantity. So
+retired tanks and dead stock fall out without a separate rule, and the hero
+line cannot disagree with the list underneath it. With no name set the
+greeting reads "Welcome back.", because an empty `displayName` is the default
+state and nothing forces you to fill it.
+
 ### FR-A05 - An account is not a gate
 
 Dexie Cloud is configured with `requireAuth: false`. The app must work
