@@ -1270,6 +1270,9 @@ function IdentityPanel({ specimen, species }: {
   );
 }
 
+/** Sentinel for the "add one" row, which is not a place id. */
+const NEW_SHOP = '__new__';
+
 function PriceForm({ specimenId, speciesId, encounterId, marketEstimate, places }: {
   specimenId: string; speciesId?: string; encounterId?: string; marketEstimate?: number;
   /** Shops noted before, offered for reuse so the second visit is one tap. */
@@ -1277,27 +1280,56 @@ function PriceForm({ specimenId, speciesId, encounterId, marketEstimate, places 
 }) {
   const [asking, setAsking] = useState('');
   const [size, setSize] = useState('');
-  const [shop, setShop] = useState('');
+  const [shopId, setShopId] = useState('');
+  const [addingShop, setAddingShop] = useState(false);
+  const [newShop, setNewShop] = useState('');
   const [saving, setSaving] = useState(false);
+
+  // Same normalisation resolveShop uses, so what the form promises is what the
+  // write actually does.
+  const fold = (n: string) => n.trim().toLowerCase().replace(/\s+/g, ' ');
+  const matchedExisting = addingShop && newShop.trim()
+    ? places.find((pl) => fold(pl.name) === fold(newShop))
+    : undefined;
 
   async function save() {
     setSaving(true);
     const observedSize = size ? { value: Number(size), unit: 'in' as const, estimate: true } : undefined;
     if (encounterId && observedSize) await db.encounters.update(encounterId, { observedSize });
+    let recorded;
     if (asking) {
       // recordPrice still accepts memberPrice and paidPrice. The form stopped
       // asking; the store did not stop having member pricing, and a record
       // written before this change keeps its figure.
-      await recordPrice({
+      recorded = await recordPrice({
         specimenId, speciesId, encounterId,
         askingPrice: Number(asking),
         observedSize,
-        // Optional, and resolved to a Place - creating one the first time a
-        // name is used, reusing it every time after.
-        shopName: shop.trim() || undefined,
+        // A picked shop goes by id. A typed one goes by name and resolveShop
+        // creates it - or reuses the match the form warned about above.
+        ...(addingShop
+          ? { shopName: newShop.trim() || undefined }
+          : { placeId: shopId || undefined }),
       });
     }
-    setAsking(''); setSize(''); setShop('');
+    setAsking(''); setSize('');
+
+    /*
+     * The shop is deliberately NOT cleared. Recording two fish from one visit
+     * is the normal case, and re-picking the shop every time is the kind of
+     * small friction that stops people logging the second one.
+     *
+     * The id comes from the write, not from a lookup in `places`. That prop is
+     * a live query and has not necessarily refreshed by the time this runs, so
+     * searching it for the shop just created is a race that loses quietly -
+     * the picker would fall back to "Not noted" and the next record would go
+     * down shopless.
+     */
+    if (addingShop && recorded?.placeId) {
+      setShopId(recorded.placeId);
+      setAddingShop(false);
+      setNewShop('');
+    }
     setSaving(false);
   }
 
@@ -1320,26 +1352,57 @@ function PriceForm({ specimenId, speciesId, encounterId, marketEstimate, places 
         </div>
       </div>
 
-      {/* A free-typed name with a datalist, not a select.
+      {/* Pick a shop, or add one.
 ​
-          Nothing in the app could create a Place until now - the picker on the
-          edit form has always offered a list of one, whatever the seeder
-          wrote - so a dropdown would have been a dropdown of nothing. Typing
-          works on the first visit; the list makes the second visit a tap, and
-          a matching name reuses the shop rather than making a second one. */}
+          A datalist was the first attempt and it was the wrong shape: it looks
+          like a plain text box, so the shops you have already saved are
+          invisible until you start typing one - which is exactly when you no
+          longer need them. A select shows them, and native pickers on a phone
+          are a wheel rather than a dropdown, which is the better control for
+          standing in a shop one-handed.
+
+          Adding stays in the same control instead of behind a separate button.
+          Nothing in this app could create a Place at all until now, so "the
+          shop I am standing in is not on the list" is the common case, not the
+          edge one, and it should not cost a hunt for somewhere else to press. */}
       <div>
         <label htmlFor="shop">Shop <span className="faint">(optional)</span></label>
-        <input
+        <select
           id="shop"
-          list="known-shops"
-          value={shop}
-          onChange={(e) => setShop(e.target.value)}
-          placeholder="Aquarium Adventure"
-          autoComplete="off"
-        />
-        <datalist id="known-shops">
-          {places.map((p) => <option key={p.id} value={p.name} />)}
-        </datalist>
+          value={addingShop ? NEW_SHOP : shopId}
+          onChange={(e) => {
+            const v = e.target.value;
+            if (v === NEW_SHOP) { setAddingShop(true); setShopId(''); }
+            else { setAddingShop(false); setShopId(v); setNewShop(''); }
+          }}
+        >
+          <option value="">Not noted</option>
+          {places.map((pl) => <option key={pl.id} value={pl.id}>{pl.name}</option>)}
+          <option value={NEW_SHOP}>＋ Add a shop…</option>
+        </select>
+
+        {addingShop && (
+          <div style={{ marginTop: 'var(--space-2)' }}>
+            <label htmlFor="new-shop" className="visually-hidden">Name of the new shop</label>
+            <input
+              id="new-shop"
+              value={newShop}
+              onChange={(e) => setNewShop(e.target.value)}
+              placeholder="Old Town Aquarium"
+              autoComplete="off"
+              autoFocus
+            />
+            {/* Saying so beats silently folding it: a name that matches a shop
+                you already have will reuse it, and you should know that before
+                you press Record rather than wonder where the duplicate went. */}
+            {matchedExisting && (
+              <p className="xs faint" style={{ marginBottom: 0 }}>
+                Matches <strong>{matchedExisting.name}</strong>, which you already have. It will be
+                used rather than added twice.
+              </p>
+            )}
+          </div>
+        )}
       </div>
       <button type="button" onClick={() => void save()} disabled={saving || (!asking && !size)}>
         Record
