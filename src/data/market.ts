@@ -16,6 +16,7 @@ import {
 } from '@/engine/rarity/market-scarcity';
 import { STORE_CHANNELS } from './store-channels';
 import indexJson from './seed/marts/market-index.json';
+import { CANONICAL_BY_SYNONYM } from './seed/species-overrides';
 
 export interface MarketSizeBand {
   sizeIn: number;
@@ -71,9 +72,24 @@ export const STORE_NAMES: Record<string, string> = Object.fromEntries(
   MARKET_INDEX.sources.map((s) => [s.id, s.name]),
 );
 
+/**
+ * A species' market row, following a synonym fold.
+ *
+ * Spec 008 merged 20 species that were one fish under two names and rebuilt
+ * the index against the survivors, so all 25 folded ids are absent from it
+ * while all 25 canonicals are present. catalog.ts already redirects
+ * CATALOG_BY_SPECIES for exactly this, but the market lookup did not - so a
+ * record stored before the merge resolved its species and then found no
+ * listings, no price and no scarcity for a fish the index knows perfectly
+ * well under its other name.
+ *
+ * scarcityFor and every card price read through here, so folding once here
+ * fixes all of them.
+ */
 export function marketFor(speciesId: string | undefined): MarketSpeciesStats | undefined {
   if (!speciesId) return undefined;
-  return MARKET_INDEX.species[speciesId];
+  return MARKET_INDEX.species[speciesId]
+    ?? MARKET_INDEX.species[CANONICAL_BY_SYNONYM.get(speciesId) ?? ''];
 }
 
 /**

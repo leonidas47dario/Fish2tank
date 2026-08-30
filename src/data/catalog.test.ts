@@ -8,7 +8,7 @@ import {
   CANONICAL_BY_SYNONYM, OVERRIDE_BY_ID, SPECIES_OVERRIDES,
 } from './seed/species-overrides';
 import { identifyFromText } from './identify';
-import type { MarketSpeciesStats } from './market';
+import { MARKET_INDEX, marketFor, scarcityFor, type MarketSpeciesStats } from './market';
 import type { Species } from '@/domain/types';
 
 function species(over: Partial<CatalogSpecies> = {}): CatalogSpecies {
@@ -308,5 +308,39 @@ describe('what picking a species asserts (FR-I01, spec 007)', () => {
     // browser. "User confirmed" means "this is that catalog species", and there
     // is no catalog species to mean.
     expect(identityStatusFor('sp_user_0521cb3d')).toBe('provisional');
+  });
+});
+
+/**
+ * Spec 008 folded 20 species that were one fish under two names and rebuilt
+ * the index against the survivors. catalog.ts already redirected
+ * CATALOG_BY_SPECIES; the market lookup did not, so a record stored before the
+ * merge resolved its species and then found no listings, no price and no
+ * scarcity for a fish the index knows under its other name.
+ */
+describe('a species id that folded into another', () => {
+  const pairs = [...CANONICAL_BY_SYNONYM.entries()];
+
+  it('has folds to test, and none of them survive in the index', () => {
+    // Guards the cases below from passing vacuously if the merge is ever undone.
+    expect(pairs.length).toBeGreaterThan(0);
+    expect(pairs.filter(([folded]) => MARKET_INDEX.species[folded])).toEqual([]);
+  });
+
+  it('still finds the market, under the name that survived', () => {
+    for (const [folded, canonical] of pairs) {
+      expect(marketFor(folded)).toBe(MARKET_INDEX.species[canonical]);
+    }
+  });
+
+  it('still rates scarcity, rather than reporting no evidence', () => {
+    for (const [folded] of pairs) {
+      expect(scarcityFor(folded)).toEqual(scarcityFor(CANONICAL_BY_SYNONYM.get(folded)));
+    }
+  });
+
+  it('leaves an unknown id answering nothing', () => {
+    expect(marketFor('sp_not_a_species')).toBeUndefined();
+    expect(marketFor(undefined)).toBeUndefined();
   });
 });
