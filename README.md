@@ -19,7 +19,7 @@ npm run dev          # http://localhost:5173
 ```
 
 ```bash
-npm test             # 1,084 unit + integration tests across 62 files
+npm test             # 1,097 unit + integration tests across 63 files
 npm run build        # type-check, bundle, generate the service worker
 npm run preview      # serve the production build on :4173
 
