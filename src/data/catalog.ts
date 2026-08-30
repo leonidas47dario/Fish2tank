@@ -9,6 +9,7 @@
 import type { CurrencyCode, Id, PriceObservation, WaterType } from '@/domain/types';
 import type { OrganismKind, WaterZone } from './seed/taxonomy';
 import catalogJson from './seed/marts/catalog.json';
+import { CANONICAL_BY_SYNONYM } from './seed/species-overrides';
 import { marketFor, scarcityFor, bandForSize, MARKET_INDEX } from './market';
 import { blendOwnPrices } from '@/engine/pricing/own-prices';
 import type { MarketSpeciesStats } from './market';
@@ -94,7 +95,24 @@ export function portraitAsset(speciesId: string): string | undefined {
   return BUNDLED_PORTRAITS[`./seed/assets/portraits/${speciesId}.jpg`];
 }
 
+/**
+ * Species by id, INCLUDING the ids that folded into one (spec 008).
+ *
+ * A merge drops the non-canonical row from the mart, and a specimen recorded
+ * before that merge still points at the dropped id. Without an entry for it,
+ * every lookup here misses and a real, correctly-identified fish renders as
+ * though it had no species at all - the app would appear to have forgotten a
+ * catch because a taxonomist moved a genus.
+ *
+ * So each folded id is also a key, pointing at the row that survived. Callers
+ * need no redirect logic and cannot forget to apply one, which matters because
+ * there are a dozen of them and only some would have been found in review.
+ */
 export const CATALOG_BY_SPECIES = new Map(CATALOG.species.map((s) => [s.speciesId, s]));
+for (const [folded, canonical] of CANONICAL_BY_SYNONYM) {
+  const row = CATALOG_BY_SPECIES.get(canonical);
+  if (row && !CATALOG_BY_SPECIES.has(folded)) CATALOG_BY_SPECIES.set(folded, row);
+}
 
 /**
  * Present a locally-submitted species as a catalog entry the UI can render.
