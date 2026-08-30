@@ -87,9 +87,9 @@ export default function AccountPanel({ children }: { children?: ReactNode }) {
   const phase = syncState?.phase ?? 'initial';
 
   return (
-    <section className="card stack">
-      <h2>Account</h2>
-
+    // Spec 018: the card and the "Account" heading belong to the collapsible
+    // section this now renders inside, so this is a plain stack.
+    <div className="stack">
       {signedIn ? (
         <>
           <p className="small" style={{ marginBottom: 0 }}>
@@ -163,7 +163,7 @@ export default function AccountPanel({ children }: { children?: ReactNode }) {
       ) : null}
 
       {signedIn ? <MediaSyncRow /> : null}
-    </section>
+    </div>
   );
 }
 

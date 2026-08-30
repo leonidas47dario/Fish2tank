@@ -19,13 +19,18 @@
  * caller of the spreadsheet importer, and deleting it also closes BUG-07,
  * whose only reachable path was re-importing an edited sheet.
  */
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useLiveQuery, useObservable } from 'dexie-react-hooks';
-import { SCENES, THEMES, useTheme, type SceneId, type ThemeId } from '@/theme/ThemeProvider';
+import {
+  SCENES, THEMES, useTheme, usePrefersReducedMotion, type SceneId, type ThemeId,
+} from '@/theme/ThemeProvider';
 import { BUILD_ID, BUILT_AT } from '@/build-info';
 import { db } from '@/data/db';
 import { LOCAL_PROFILE_ID, updateSettings } from '@/data/profile';
 import AccountPanel from '@/ui/components/AccountPanel';
+import CollapsibleSection from '@/ui/components/CollapsibleSection';
+import SettingsNav from '@/ui/components/SettingsNav';
+import { SETTINGS_SECTIONS, initiallyOpen, sectionDomId } from './settings-sections';
 import { exportArchive } from '@/data/portability/export';
 import { importArchive } from '@/data/portability/import';
 import { eraseEverything } from '@/data/portability/erase';
@@ -54,17 +59,49 @@ export default function Settings() {
   // a write inside a query observing the table it writes to. ThemeProvider has
   // already created the row by the time this screen renders.
   const profile = useLiveQuery(() => db.users.get(LOCAL_PROFILE_ID));
+  const reduced = usePrefersReducedMotion();
 
-  return (
-    <div className="stack">
-      <header><h1>Settings</h1></header>
+  // Spec 018. A set rather than one id: these are independent disclosures, not
+  // an accordion. Opening Theme to compare two of them should not fold away
+  // the sync status you opened Settings to read in the first place.
+  const [open, setOpen] = useState<ReadonlySet<string>>(() => new Set(initiallyOpen()));
 
-      {/*
-        Spec 017. Account first, because "am I signed in and is my collection
-        safe" is the question this screen exists to answer; everything else is
-        preference. The currency picker rides inside it rather than justifying
-        a section of its own.
-      */}
+  const setOpenFor = (id: string, isOpen: boolean) => setOpen((was) => {
+    const next = new Set(was);
+    if (isOpen) next.add(id);
+    else next.delete(id);
+    return next;
+  });
+
+  /*
+   * Expand first, then scroll. A collapsed target is a 48px strip, so
+   * scrolling to it and expanding afterwards lands the viewport in the wrong
+   * place and the section grows away underneath. The rAF waits for React to
+   * commit the open state so the element has its full height to scroll to.
+   */
+  const jumpTo = (id: string) => {
+    setOpenFor(id, true);
+    requestAnimationFrame(() => {
+      document.getElementById(sectionDomId(id))?.scrollIntoView({
+        behavior: reduced ? 'auto' : 'smooth',
+        block: 'start',
+      });
+    });
+  };
+
+  /*
+   * Section id to its contents. The sections themselves are rendered by
+   * walking SETTINGS_SECTIONS, so the nav and the panels come from one list
+   * and a section cannot exist in one and not the other. A missing entry here
+   * renders an empty card rather than throwing, which is the right failure for
+   * a settings screen: you can still reach everything else.
+   *
+   * Spec 017 fixed the order. Account first, because "am I signed in and is my
+   * collection safe" is the question this screen exists to answer; the
+   * currency picker rides inside it rather than justifying a section.
+   */
+  const content: Record<string, ReactNode> = {
+    account: (
       <AccountPanel>
         <label className="stack">
           <span className="xs muted">Currency for new prices</span>
@@ -78,23 +115,23 @@ export default function Settings() {
           </select>
         </label>
       </AccountPanel>
-
+    ),
+    theme: (
       <ThemePanel
         theme={theme} setTheme={setTheme}
         scene={scene} setScene={setScene}
         reducedMotion={reducedMotion} setReducedMotion={setReducedMotion}
         muted={muted} setMuted={setMuted}
       />
-
-      <DataPanel />
-
-      <section className="card">
-        <h2>Privacy</h2>
+    ),
+    data: <DataPanel />,
+    privacy: (
+      <>
         {/*
-          Rewritten for spec 005. The old text promised "no account, no server",
-          which stopped being true the moment sync shipped. A privacy notice
-          that overclaims is worse than none, because it is the one paragraph
-          someone actually relies on.
+          Rewritten for spec 005. The old text promised "no account, no
+          server", which stopped being true the moment sync shipped. A privacy
+          notice that overclaims is worse than none, because it is the one
+          paragraph someone actually relies on.
         */}
         <p className="small muted">
           Signed out, everything lives on this device and nothing leaves it. Signed in, your
@@ -105,9 +142,32 @@ export default function Settings() {
           Store and home locations are never published, and no public profile, map or trading
           feature exists.
         </p>
-      </section>
+      </>
+    ),
+    build: <BuildStamp />,
+  };
 
-      <BuildStamp />
+  return (
+    <div className="stack">
+      <header><h1>Settings</h1></header>
+
+      <div className="settings-layout">
+        <SettingsNav onJump={jumpTo} />
+
+        <div className="stack settings-panels">
+          {SETTINGS_SECTIONS.map((section) => (
+            <CollapsibleSection
+              key={section.id}
+              id={sectionDomId(section.id)}
+              label={section.label}
+              open={open.has(section.id)}
+              onToggle={(isOpen) => setOpenFor(section.id, isOpen)}
+            >
+              {content[section.id]}
+            </CollapsibleSection>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -136,9 +196,7 @@ function ThemePanel({
   setMuted: (on: boolean) => void;
 }) {
   return (
-    <section className="card stack">
-      <h2>Theme</h2>
-
+    <div className="stack">
       <h3 className="small">Appearance</h3>
       <p className="muted small">
         A comparison tool, not a finished decision. The records, the verdicts and the scores are identical
@@ -186,7 +244,7 @@ function ThemePanel({
       <p className="xs muted" style={{ marginBottom: 0 }}>
         Reveals stay skippable whatever these are set to.
       </p>
-    </section>
+    </div>
   );
 }
 
@@ -200,11 +258,10 @@ function ThemePanel({
  */
 function DataPanel() {
   return (
-    <section className="card stack">
-      <h2>Your data</h2>
+    <div className="stack">
       <BackupPanel />
       <ErasePanel />
-    </section>
+    </div>
   );
 }
 
@@ -466,8 +523,7 @@ function BuildStamp() {
   }
 
   return (
-    <section className="card stack">
-      <h2>Build</h2>
+    <div className="stack">
       <p className="muted small" style={{ marginBottom: 0 }}>
         Offline support means this device can keep running an older build than the one deployed. If
         something looks unfixed, check this first.
@@ -482,6 +538,6 @@ function BuildStamp() {
       <p className="xs muted" style={{ marginBottom: 0 }}>
         Clears the cached copy of the app and reloads. Your catches, photos and tanks are untouched.
       </p>
-    </section>
+    </div>
   );
 }
