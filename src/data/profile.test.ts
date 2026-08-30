@@ -98,6 +98,73 @@ describe('setDisplayName', () => {
   });
 });
 
+/**
+ * Spec 005: the profile is the record most likely to be edited from two
+ * devices at once, so it is written with property-level `update()` rather than
+ * a whole-record `put()`. These lock the parts of that decision a unit test
+ * can see - the sync-merge behaviour itself belongs to Dexie Cloud.
+ */
+describe('profile writes are narrow and honest', () => {
+  it('does not write at all when the name has not changed', async () => {
+    await loadProfile(db);
+    await setDisplayName('Ryan', db);
+    const before = await db.users.get(LOCAL_PROFILE_ID);
+
+    let writes = 0;
+    db.users.hook('updating', () => {
+      writes += 1;
+    });
+    await setDisplayName('Ryan', db);
+
+    // A no-op keystroke must not become a sync mutation.
+    expect(writes).toBe(0);
+    expect(await db.users.get(LOCAL_PROFILE_ID)).toEqual(before);
+  });
+
+  it('does not write for an empty settings patch', async () => {
+    await loadProfile(db);
+    let writes = 0;
+    db.users.hook('updating', () => {
+      writes += 1;
+    });
+    await updateSettings({}, db);
+    expect(writes).toBe(0);
+  });
+
+  it('touches only the patched setting, leaving siblings alone', async () => {
+    await loadProfile(db);
+    await updateSettings({ currency: 'GBP' }, db);
+
+    let changed: unknown;
+    db.users.hook('updating', (mods) => {
+      changed = mods;
+    });
+    await updateSettings({ themeId: 'reef-noon' }, db);
+
+    // The whole point: the mutation names one property, so a second device's
+    // currency change is not carried along and overwritten.
+    expect(changed).toEqual({ 'settings.themeId': 'reef-noon' });
+    const after = await db.users.get(LOCAL_PROFILE_ID);
+    expect(after?.settings.currency).toBe('GBP');
+    expect(after?.settings.themeId).toBe('reef-noon');
+  });
+
+  it('recreates a deleted profile rather than losing the write', async () => {
+    await loadProfile(db);
+    await db.users.delete(LOCAL_PROFILE_ID);
+
+    // `loadProfile` recreates, so the write lands on a fresh row with defaults.
+    // Worth pinning: the throw inside patchProfile is a guard against the
+    // narrow race where the row disappears between the load and the update,
+    // NOT the path taken here, and a reader could easily assume otherwise.
+    await setDisplayName('Ryan', db);
+
+    const after = await db.users.get(LOCAL_PROFILE_ID);
+    expect(after?.displayName).toBe('Ryan');
+    expect(after?.settings).toEqual(DEFAULT_SETTINGS);
+  });
+});
+
 describe('recordPrice currency', () => {
   it('defaults to the profile currency rather than USD', async () => {
     await updateSettings({ currency: 'EUR' }, db);
