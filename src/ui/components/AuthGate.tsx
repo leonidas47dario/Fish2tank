@@ -25,16 +25,26 @@
  */
 import { useEffect, useState } from 'react';
 import { useObservable } from 'dexie-react-hooks';
+import { BUILD_ID } from '@/build-info';
 import { db } from '@/data/db';
 import { DEVELOPER_MODE_EVENT, enterDeveloperMode, isDeveloperMode } from '@/data/dev-mode';
+import { exportArchive } from '@/data/portability/export';
+import {
+  countPendingClaim,
+  discardLocalRecords,
+  tablesThisDeviceWouldPush,
+  type PendingClaim,
+} from '@/data/sync/joining-a-device';
 import DeveloperBanner from './DeveloperBanner';
 import { FishIcon, GoogleLogoIcon } from './Icons';
 
 export default function AuthGate({ children }: { children: React.ReactNode }) {
   const user = useObservable(db.cloud.currentUser);
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<'in' | 'replacing' | undefined>();
   const [problem, setProblem] = useState<string>();
   const [developer, setDeveloper] = useState(isDeveloperMode);
+  /** `undefined` until counted. See the reconcile panel below (spec 020). */
+  const [claim, setClaim] = useState<PendingClaim>();
 
   // Entering and leaving happen from two different subtrees (the gate below,
   // the banner above), so both go through the window event rather than lifting
@@ -49,6 +59,40 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
       window.removeEventListener('storage', sync);
     };
   }, []);
+
+  /**
+   * What this device would push over the account if it signed in right now.
+   *
+   * Spec 020 BUG-08. Counted before the login rather than after, because after
+   * is too late: the addon's first sync sends every local row of every
+   * not-yet-synced table as a whole-object upsert and the account's version of
+   * those keys never comes back.
+   *
+   * Almost always zero, and when it is, nothing below changes.
+   */
+  const signedOut = user !== undefined && !user.isLoggedIn;
+  useEffect(() => {
+    if (!signedOut) return;
+    let cancelled = false;
+    countPendingClaim(db, tablesThisDeviceWouldPush(db))
+      .then((counted) => {
+        if (cancelled) return;
+        setClaim(counted);
+        if (counted.total > 0) {
+          console.warn('[join] this device holds records the account has not seen', {
+            rows: counted.total, byTable: counted.byTable,
+          });
+        }
+      })
+      .catch((err) => {
+        // Not fatal, but not silent either: failing to count means the gate
+        // shows the plain button and the overwrite goes ahead unannounced.
+        console.error('[join] could not count what this device would push', err);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [signedOut]);
 
   // `undefined` means the observable has not emitted yet, which is a different
   // thing from "signed out" and must not flash the gate at someone who is
@@ -69,7 +113,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
   }
 
   async function signIn() {
-    setBusy(true);
+    setBusy('in');
     setProblem(undefined);
     try {
       await db.cloud.login({ provider: 'google' });
@@ -78,7 +122,45 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
       // their collection, so a failure here has to say what happened.
       console.error('[sync] sign-in failed', cause);
       setProblem(cause instanceof Error ? cause.message : String(cause));
-      setBusy(false);
+      setBusy(undefined);
+    }
+  }
+
+  /**
+   * Take the account's copy: back up, drop this device's records, then sign in.
+   *
+   * The order is the safety. The backup is a real downloaded file before
+   * anything is cleared, and a failed export aborts with nothing touched -
+   * because in the one case this is the wrong choice (this device holds the
+   * only copy) the archive is all that is left of it.
+   */
+  async function useAccountCopy() {
+    if (!claim) return;
+    setBusy('replacing');
+    setProblem(undefined);
+    try {
+      const { blob, filename, manifest } = await exportArchive(db, { appBuild: BUILD_ID });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+      const rows = Object.values(manifest.tables).reduce((n, v) => n + v, 0);
+      console.info('[join] backup written before discarding', {
+        filename, rows, media: manifest.media.count,
+      });
+
+      await discardLocalRecords(db, claim.tables);
+      setClaim({ byTable: {}, total: 0, tables: claim.tables });
+      await db.cloud.login({ provider: 'google' });
+    } catch (cause) {
+      console.error('[join] could not replace this device\'s copy', cause);
+      setProblem(
+        `${cause instanceof Error ? cause.message : String(cause)} `
+        + '- nothing was signed in. Your records on this device are as they were.',
+      );
+      setBusy(undefined);
     }
   }
 
@@ -87,15 +169,32 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
       <div className="gate__panel stack">
         <FishIcon size={44} weight="fill" aria-hidden="true" className="gate__mark" />
         <h1>Fish2Tank</h1>
-        <p className="muted">
-          Sign in to open your collection. Your catches, tanks and photos are tied to your
-          account so they survive a lost phone.
-        </p>
 
-        <button type="button" className="gate__button" onClick={() => void signIn()} disabled={busy}>
-          <GoogleLogoIcon size={20} weight="bold" aria-hidden="true" />
-          {busy ? 'Opening Google…' : 'Sign in with Google'}
-        </button>
+        {claim && claim.total > 0 ? (
+          <ReconcilePanel
+            claim={claim}
+            busy={busy}
+            onUseAccount={() => void useAccountCopy()}
+            onKeepDevice={() => void signIn()}
+          />
+        ) : (
+          <>
+            <p className="muted">
+              Sign in to open your collection. Your catches, tanks and photos are tied to your
+              account so they survive a lost phone.
+            </p>
+
+            <button
+              type="button"
+              className="gate__button"
+              onClick={() => void signIn()}
+              disabled={Boolean(busy)}
+            >
+              <GoogleLogoIcon size={20} weight="bold" aria-hidden="true" />
+              {busy ? 'Opening Google…' : 'Sign in with Google'}
+            </button>
+          </>
+        )}
 
         {problem ? (
           <p className="small" role="alert">{problem}</p>
@@ -109,6 +208,89 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
         <DeveloperEntry />
       </div>
     </main>
+  );
+}
+
+/** Table names as a keeper would say them. Anything unlisted reads as itself. */
+const RECORD_NAMES: Record<string, [one: string, many: string]> = {
+  aquariums: ['tank', 'tanks'],
+  holdings: ['fish', 'fish'],
+  specimens: ['catch', 'catches'],
+  encounters: ['encounter', 'encounters'],
+  media: ['photo record', 'photo records'],
+  places: ['place', 'places'],
+  residencies: ['tank placement', 'tank placements'],
+  lifeEvents: ['life event', 'life events'],
+  dreamList: ['dream list entry', 'dream list entries'],
+  users: ['profile', 'profile'],
+};
+
+function describe(table: string, rows: number): string {
+  const [one, many] = RECORD_NAMES[table] ?? [table, table];
+  return `${rows} ${rows === 1 ? one : many}`;
+}
+
+/**
+ * The choice a joining device has to be offered - spec 020 FR-A11.
+ *
+ * WHY THIS EXISTS AT ALL. Dexie Cloud's first sync after a login pushes every
+ * local row of every not-yet-synced table up as a whole-object upsert, and the
+ * account's version of any key it collides with is discarded without ever
+ * being shown. Six tanks, the seeded store and the profile all use hardcoded
+ * ids, so a device that predates sync overwrites those records on the account
+ * every single time it signs in. That is how tank edits have been going
+ * missing.
+ *
+ * WHY IT IS A QUESTION AND NOT A RULE. "Always take the account's copy" is
+ * what was asked for and it is wrong in exactly one case, which happens to be
+ * the case sync was built for: the first device to sign in holds the only copy
+ * and the account is empty. From here those two situations are identical, so
+ * this asks, defaults to the safe answer, and takes a backup either way.
+ */
+function ReconcilePanel({
+  claim, busy, onUseAccount, onKeepDevice,
+}: {
+  claim: PendingClaim;
+  busy: 'in' | 'replacing' | undefined;
+  onUseAccount: () => void;
+  onKeepDevice: () => void;
+}) {
+  const parts = Object.entries(claim.byTable)
+    .sort(([, a], [, b]) => b - a)
+    .map(([table, rows]) => describe(table, rows));
+
+  return (
+    <>
+      <p className="muted">
+        This device already holds <strong>{claim.total} records</strong> that have never
+        reached an account: {parts.join(', ')}. Signing in has to decide which copy is
+        the real one, so it is asking rather than guessing.
+      </p>
+
+      <button
+        type="button"
+        className="gate__button"
+        onClick={onUseAccount}
+        disabled={Boolean(busy)}
+      >
+        <GoogleLogoIcon size={20} weight="bold" aria-hidden="true" />
+        {busy === 'replacing' ? 'Backing up, then signing in…' : 'Use my account\'s copy'}
+      </button>
+      <p className="xs muted">
+        The usual answer on a phone, tablet or second browser. Saves a backup file of
+        what is here first, then replaces it with whatever your account holds. Photos
+        already on this device stay where they are.
+      </p>
+
+      <button type="button" onClick={onKeepDevice} disabled={Boolean(busy)}>
+        {busy === 'in' ? 'Opening Google…' : 'Keep what is on this device'}
+      </button>
+      <p className="xs muted" style={{ marginBottom: 0 }}>
+        Right only if this device has the collection and your account does not. These
+        records will be uploaded, and where the two disagree the account's version is
+        replaced and cannot be recovered.
+      </p>
+    </>
   );
 }
 
