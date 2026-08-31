@@ -307,8 +307,8 @@ function ResidentGrid({ residents, editing, allTanks, aquarium }: {
         {shown.map((r) => {
           const inner = (
             <>
-              {r.portraitUrl
-                ? <img className="tank-tile__art" src={r.portraitUrl} alt="" loading="lazy" />
+              {r.artUrl
+                ? <img className="tank-tile__art" src={r.artUrl} alt="" loading="lazy" />
                 : <span className="tank-tile__art tank-tile__art--empty" aria-hidden="true">◍</span>}
               <span className="tank-tile__body">
                 <strong>{r.commonName}</strong>

@@ -251,28 +251,48 @@ export type CardArt =
   | { kind: 'portrait'; src: string; credit: CatalogPortrait }
   | { kind: 'none' };
 
+/**
+ * Which picture to draw, given a species and a pool of your own photos.
+ *
+ * Split out from `resolveCardArt` in spec 021 so a tank tile can ask the same
+ * question over a NARROWER pool: the photos of one fish, not of every fish of
+ * that species. The tank grid used to ignore your photos entirely and always
+ * draw the reference portrait, which is the opposite of principle P3, and two
+ * fish of one species in two tanks are two faces rather than one.
+ *
+ * `species` is optional because a tank can hold a fish nobody has identified -
+ * the importer produces exactly that - and such a fish has no portrait to fall
+ * back to, only whatever you photographed.
+ */
+export function chooseArt(
+  species: Pick<CatalogSpecies, 'speciesId' | 'portrait'> | undefined,
+  ownMediaIds: Id[],
+  pref: { artSource: 'own' | 'portrait'; preferredMediaId?: Id } | undefined,
+): CardArt {
+  const wantsPortrait = pref?.artSource === 'portrait';
+
+  if (!wantsPortrait && ownMediaIds.length > 0) {
+    const chosen = pref?.preferredMediaId && ownMediaIds.includes(pref.preferredMediaId)
+      ? pref.preferredMediaId
+      : ownMediaIds[0]!;
+    return { kind: 'own', mediaId: chosen };
+  }
+
+  const src = species ? portraitAsset(species.speciesId) : undefined;
+  if (src && species?.portrait) {
+    return { kind: 'portrait', src, credit: species.portrait };
+  }
+  // Asked for the portrait but none is bundled: fall back to their own photo
+  // rather than showing a silhouette they can improve on.
+  if (ownMediaIds.length > 0) return { kind: 'own', mediaId: ownMediaIds[0]! };
+  return { kind: 'none' };
+}
+
 export function resolveCardArt(
   card: CatalogCard,
   pref: { artSource: 'own' | 'portrait'; preferredMediaId?: Id } | undefined,
 ): CardArt {
-  const own = card.user.ownPhotoMediaIds;
-  const wantsPortrait = pref?.artSource === 'portrait';
-
-  if (!wantsPortrait && own.length > 0) {
-    const chosen = pref?.preferredMediaId && own.includes(pref.preferredMediaId)
-      ? pref.preferredMediaId
-      : own[0]!;
-    return { kind: 'own', mediaId: chosen };
-  }
-
-  const src = portraitAsset(card.species.speciesId);
-  if (src && card.species.portrait) {
-    return { kind: 'portrait', src, credit: card.species.portrait };
-  }
-  // Asked for the portrait but none is bundled: fall back to their own photo
-  // rather than showing a silhouette they can improve on.
-  if (own.length > 0) return { kind: 'own', mediaId: own[0]! };
-  return { kind: 'none' };
+  return chooseArt(card.species, card.user.ownPhotoMediaIds, pref);
 }
 
 /**

@@ -195,6 +195,77 @@ export default function SpecimenDetail() {
   const identified = specimen.identityStatus === 'user-confirmed'
     || specimen.identityStatus === 'provisional';
 
+  /**
+   * Where this fish lives (PRD 4.8, spec 005), rendered on BOTH sides of the
+   * identity gate - which is why it is a variable rather than inline JSX.
+   *
+   * It used to be gated on `status !== 'resident'`, a wrong proxy for "is it in
+   * a tank", and spec 005 replaced that with the real question. It was then
+   * behind the identity seal, which is the bug spec 021 fixes: a fish you have
+   * not named yet still lives somewhere, and the seal's own reason does not
+   * reach this panel. Price, screening, Discovery and the story describe a
+   * SPECIES and have nothing to say without a name; a tank placement describes
+   * an animal. The inventory importer has always created residents with no
+   * species at all, so the model never required one either.
+   */
+  const placementPanel = (
+    <section className="panel">
+      <h2 className="sec-head">If it comes home</h2>
+
+      {placement === undefined ? (
+        <p className="panel__note" style={{ marginTop: 0 }}>Checking…</p>
+      ) : placed.length === 0 ? (
+        <>
+          <p className="panel__note" style={{ marginTop: 0 }}>
+            Nothing here needs to happen. A catch is documentation, not acquisition.
+          </p>
+          <div style={{ marginTop: 'var(--space-3)' }}>
+            {unplaced.length > 0 ? (
+              /* It already has a holding - imported, or minted when you
+                 added a photo - it is just not in a tank. Placing the
+                 holding it has beats minting a second one. */
+              <PlaceHolding
+                holdingId={unplaced[0]!.holding.id}
+                aquariums={aquariums ?? []}
+                defaultQuantity={latest?.quantitySeen}
+              />
+            ) : (
+              <BringHome
+                specimenId={id}
+                aquariums={aquariums ?? []}
+                defaultQuantity={latest?.quantitySeen}
+              />
+            )}
+          </div>
+        </>
+      ) : (
+        <>
+          <p className="panel__note" style={{ marginTop: 0 }}>
+            {placed.map((p) => `${p.aquarium!.name} (×${p.quantity})`).join(', ')}
+          </p>
+          {/* A holding lives in one tank, always - moveHolding closes one
+              residency before opening the next. So the same species in two
+              tanks is two holdings, which is exactly how the inventory
+              import already records it. */}
+          <details style={{ marginTop: 'var(--space-3)' }}>
+            <summary className="prompt__act" style={{ cursor: 'pointer' }}>
+              Also add to another tank
+            </summary>
+            <div style={{ marginTop: 'var(--space-3)' }}>
+              <StockAnotherTank
+                speciesId={specimen.speciesId}
+                rawLabel={specimen.nickname ?? specimen.rawLabel}
+                aquariums={(aquariums ?? []).filter(
+                  (t) => !placed.some((p) => p.aquarium!.id === t.id),
+                )}
+              />
+            </div>
+          </details>
+        </>
+      )}
+    </section>
+  );
+
   return (
     <div className="screen">
       <div className="topbar">
@@ -253,11 +324,12 @@ export default function SpecimenDetail() {
       {!identified ? (
         <>
           <IdentityPanel specimen={specimen} species={species} />
+          {placementPanel}
           <section className="panel">
             <p className="panel__note" style={{ marginTop: 0 }}>
-              The rest of this record opens once it has a label. Price, tank screening, Discovery
-              and the story all describe a species, so they have nothing to say until this one has
-              a name. Your photo and the draft are already saved.
+              Price, tank screening, Discovery and the story open once this has a label. They all
+              describe a species, so they have nothing to say until this one has a name. Where it
+              lives does not depend on that, so it is above. Your photo and the draft are saved.
             </p>
           </section>
           <DeleteCatch
@@ -502,67 +574,7 @@ export default function SpecimenDetail() {
         places={places ?? []}
       />
 
-      {/* --- Bring home (PRD 4.8, spec 005) ---------------------------------
-          This used to be gated on `status !== 'resident'`, which is a proxy
-          for "is it in a tank" and a wrong one: ensureSpecimenForHolding
-          stamps a photo-minted specimen `resident` at birth, so adding a photo
-          to a fish you already keep produced a record with the tank section
-          permanently hidden. Asks the real question now. */}
-      <section className="panel">
-        <h2 className="sec-head">If it comes home</h2>
-
-        {placement === undefined ? (
-          <p className="panel__note" style={{ marginTop: 0 }}>Checking…</p>
-        ) : placed.length === 0 ? (
-          <>
-            <p className="panel__note" style={{ marginTop: 0 }}>
-              Nothing here needs to happen. A catch is documentation, not acquisition.
-            </p>
-            <div style={{ marginTop: 'var(--space-3)' }}>
-              {unplaced.length > 0 ? (
-                /* It already has a holding - imported, or minted when you
-                   added a photo - it is just not in a tank. Placing the
-                   holding it has beats minting a second one. */
-                <PlaceHolding
-                  holdingId={unplaced[0]!.holding.id}
-                  aquariums={aquariums ?? []}
-                  defaultQuantity={latest?.quantitySeen}
-                />
-              ) : (
-                <BringHome
-                  specimenId={id}
-                  aquariums={aquariums ?? []}
-                  defaultQuantity={latest?.quantitySeen}
-                />
-              )}
-            </div>
-          </>
-        ) : (
-          <>
-            <p className="panel__note" style={{ marginTop: 0 }}>
-              {placed.map((p) => `${p.aquarium!.name} (×${p.quantity})`).join(', ')}
-            </p>
-            {/* A holding lives in one tank, always - moveHolding closes one
-                residency before opening the next. So the same species in two
-                tanks is two holdings, which is exactly how the inventory
-                import already records it. */}
-            <details style={{ marginTop: 'var(--space-3)' }}>
-              <summary className="prompt__act" style={{ cursor: 'pointer' }}>
-                Also add to another tank
-              </summary>
-              <div style={{ marginTop: 'var(--space-3)' }}>
-                <StockAnotherTank
-                  speciesId={specimen.speciesId}
-                  rawLabel={specimen.nickname ?? specimen.rawLabel}
-                  aquariums={(aquariums ?? []).filter(
-                    (t) => !placed.some((p) => p.aquarium!.id === t.id),
-                  )}
-                />
-              </div>
-            </details>
-          </>
-        )}
-      </section>
+      {placementPanel}
 
       {/* --- Delete. Last, and behind a confirmation that states the cost. -- */}
       <DeleteCatch

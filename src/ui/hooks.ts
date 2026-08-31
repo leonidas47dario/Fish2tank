@@ -3,14 +3,14 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { blobFor, db } from '@/data/db';
 import {
   buildCatalogCard, CATALOG_BY_SPECIES, cardPrice, catalogShapeForLocal, marketAndScarcity,
-  portraitAsset, pricesBySpecies, searchableSpecies,
+  chooseArt, pricesBySpecies, searchableSpecies,
   type CatalogCard, type CatalogSpecies,
 } from '@/data/catalog';
 
 import { deriveBadge, deriveQuantity } from '@/domain/holdings';
 import { loadProfile } from '@/data/profile';
 import { summariseTank, type TankResident } from '@/domain/tank-stats';
-import type { Aquarium, Id } from '@/domain/types';
+import type { Id } from '@/domain/types';
 import { useBlobUrls } from './blob-url';
 
 export function useSpecies(id?: Id) {
@@ -172,29 +172,50 @@ export function useSpecimenMedia(specimenId?: Id) {
  * One tank's residents, joined to everything the app knows about them.
  *
  * The join is the whole point: a holding on its own is a label and a number,
- * and the viewer needs a portrait, a water level, a temperament and a price.
+ * and the viewer needs a picture, a water level, a temperament and a price.
  * Anything the catalog cannot supply stays undefined and is counted as such
  * downstream - never defaulted, never dropped.
+ *
+ * The picture is the fish's own where it has one (spec 021). It used to be
+ * `portraitAsset(speciesId)` unconditionally, so a tank full of fish you had
+ * photographed drew a grid of stock images, which is the exact inversion of
+ * principle P3.
+ *
+ * Two passes, because your own photos are bytes in IndexedDB rather than URLs.
+ * The Dexie query picks the art and, where that art is yours, the blob behind
+ * it; `useBlobUrls` then owns the object URL. Minting the URL inside the query
+ * would leak one photo per write to any table it touches - see blob-url.ts,
+ * which exists because four hand-rolled versions of this got it wrong twice.
  */
 export function useTankResidents(aquariumId: string | undefined) {
-  return useLiveQuery(async (): Promise<{ aquarium: Aquarium; residents: TankResident[] } | undefined> => {
+  const raw = useLiveQuery(async () => {
     if (!aquariumId) return undefined;
     const aquarium = await db.aquariums.get(aquariumId);
     if (!aquarium) return undefined;
 
-    const [holdings, residencies, events, profiles, prices, account] = await Promise.all([
+    const [holdings, residencies, events, profiles, prices, account, allMedia, prefs] = await Promise.all([
       db.holdings.toArray(), db.residencies.toArray(), db.lifeEvents.toArray(),
       db.speciesProfiles.toArray(),
       // A tank's estimated value counts the keeper's own logged prices too.
       db.priceObservations.toArray(), loadProfile(),
+      db.media.toArray(), db.cardPrefs.toArray(),
     ]);
+    const prefFor = new Map(prefs.map((p) => [p.speciesId, p]));
+
+    /** This fish's own photos, newest first. Not the species' - see chooseArt. */
+    const photosOf = (specimenId: string | undefined) => (specimenId
+      ? allMedia
+        .filter((m) => m.kind === 'photo' && m.specimenIds.includes(specimenId))
+        .sort((a, b) => b.capturedAt.localeCompare(a.capturedAt))
+        .map((m) => m.id)
+      : []);
     const profileFor = new Map(profiles.map((p) => [p.speciesId, p]));
     const ownPrices = pricesBySpecies(prices);
     const currency = account.settings.currency;
 
     const residents = residencies
       .filter((r) => r.aquariumId === aquariumId && !r.endDate)
-      .flatMap((r): TankResident[] => {
+      .flatMap((r) => {
         const holding = holdings.find((h) => h.id === r.holdingId);
         if (!holding) return [];
         const quantity = deriveQuantity(holding, events);
@@ -216,25 +237,59 @@ export function useTankResidents(aquariumId: string | undefined) {
           ? (profile.minimumVolume.unit === 'l' ? profile.minimumVolume.value / 3.785411784 : profile.minimumVolume.value)
           : entry?.minVolumeGal;
 
+        const art = chooseArt(
+          entry,
+          photosOf(holding.specimenId),
+          holding.speciesId ? prefFor.get(holding.speciesId) : undefined,
+        );
+
         return [{
-          holding,
-          quantity,
-          speciesId: holding.speciesId,
-          commonName: entry?.commonName ?? holding.rawLabel ?? 'Unidentified',
-          scientificName: entry?.scientificName,
-          portraitUrl: holding.speciesId ? portraitAsset(holding.speciesId) : undefined,
-          adultSizeIn,
-          minVolumeGal,
-          aggression: profile?.aggression ?? (entry?.aggression as TankResident['aggression']),
-          waterZone: entry?.waterZone,
-          // The size-matched band where we have a size, the pooled median
-          // otherwise. Undefined when the index cannot price it at all.
-          unitPrice: cardPrice(market, adultSizeIn),
+          resident: {
+            holding,
+            quantity,
+            speciesId: holding.speciesId,
+            commonName: entry?.commonName ?? holding.rawLabel ?? 'Unidentified',
+            scientificName: entry?.scientificName,
+            artUrl: art.kind === 'portrait' ? art.src : undefined,
+            adultSizeIn,
+            minVolumeGal,
+            aggression: profile?.aggression ?? (entry?.aggression as TankResident['aggression']),
+            waterZone: entry?.waterZone,
+            // The size-matched band where we have a size, the pooled median
+            // otherwise. Undefined when the index cannot price it at all.
+            unitPrice: cardPrice(market, adultSizeIn),
+          } satisfies TankResident,
+          ownMediaId: art.kind === 'own' ? art.mediaId : undefined,
         }];
       });
 
-    return { aquarium, residents };
+    // Only the blobs actually going on screen, keyed by holding so two
+    // holdings sharing one specimen's photo each get their own URL.
+    const ownBlobs: Array<{ id: Id; blob: Blob }> = [];
+    for (const { resident, ownMediaId } of residents) {
+      if (!ownMediaId) continue;
+      const m = allMedia.find((x) => x.id === ownMediaId);
+      if (!m) continue;
+      const blob = blobFor(await db.blobs.get(m.originalBlobKey));
+      if (blob) ownBlobs.push({ id: resident.holding.id, blob });
+    }
+
+    return { aquarium, residents: residents.map((r) => r.resident), ownBlobs };
   }, [aquariumId]);
+
+  const urls = useBlobUrls(raw?.ownBlobs);
+
+  return useMemo(() => {
+    if (!raw) return undefined;
+    const byHolding = new Map(urls.map((u) => [u.id, u.url]));
+    return {
+      aquarium: raw.aquarium,
+      residents: raw.residents.map((r) => ({
+        ...r,
+        artUrl: byHolding.get(r.holding.id) ?? r.artUrl,
+      })),
+    };
+  }, [raw, urls]);
 }
 
 /**

@@ -23,7 +23,15 @@ export interface TankResident {
   speciesId?: string;
   commonName: string;
   scientificName?: string;
-  portraitUrl?: string;
+  /**
+   * The picture to draw for this resident: your own photo of this exact fish
+   * where there is one, the reference portrait otherwise.
+   *
+   * Named for what it is rather than where it came from. It was `portraitUrl`
+   * and always held the reference portrait, so a tank of fish you had
+   * photographed drew a grid of stock images (spec 021).
+   */
+  artUrl?: string;
   adultSizeIn?: number;
   minVolumeGal?: number;
   aggression?: AggressionRating;
