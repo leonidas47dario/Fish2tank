@@ -34,7 +34,7 @@ import { evaluatePriceFit } from '@/engine/pricing/price-fit';
 import { COMPONENT_LABELS, LOCAL_RARITY_UNAVAILABLE } from '@/engine/rarity/discovery-tier';
 import { formatLength, formatVolume } from '@/domain/units';
 import type { Specimen, Verdict } from '@/domain/types';
-import { useSearchableSpecies, useSpecimenMedia } from '../hooks';
+import { useSearchableSpecies } from '../hooks';
 import {
   CATALOG_BY_SPECIES, identityStatusFor, marketAndScarcity, portraitAsset, type CatalogSpecies,
 } from '@/data/catalog';
@@ -44,6 +44,7 @@ import { MarketPanel } from '../components/MarketPanel';
 import { bandForSize, scarcityFor } from '@/data/market';
 import { usePrefersReducedMotion } from '@/theme/ThemeProvider';
 import { CaretLeftIcon, CaretRightIcon } from '../components/Icons';
+import { CatchPhotos } from '../components/CatchPhotos';
 
 export default function SpecimenDetail() {
   const { id } = useParams<{ id: string }>();
@@ -80,7 +81,6 @@ export default function SpecimenDetail() {
   );
   const aquariums = useLiveQuery(() => db.aquariums.where('status').equals('active').toArray(), []);
   const places = useLiveQuery(() => db.places.toArray(), []);
-  const media = useSpecimenMedia(id);
 
   /**
    * Where this fish actually is, which is a question about residencies rather
@@ -205,21 +205,7 @@ export default function SpecimenDetail() {
       </div>
 
       {/* --- Media. Original, always (FR-J01, PRD 7.4) --------------------- */}
-      <div className="hero-plate">
-        <span className="plate">
-          {media?.[0]?.url ? (
-            media[0].media.kind === 'video' ? (
-              <video className="plate__img" src={media[0].url} controls playsInline muted={reducedMotion} />
-            ) : (
-              <img className="plate__img" src={media[0].url} alt={`Original capture of ${title}`} />
-            )
-          ) : (
-            <span className="plate__img plate__img--none">
-              <span className="plate__none-text">No media on this catch</span>
-            </span>
-          )}
-        </span>
-      </div>
+      <CatchPhotos specimenId={specimen.id} title={title} reducedMotion={reducedMotion} />
 
       <header className="pad">
         <h1 className="specimen-name">{title}</h1>
