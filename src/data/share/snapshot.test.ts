@@ -61,11 +61,15 @@ describe('buildSnapshot', () => {
   it('publishes exactly the allowed resident fields and nothing else', () => {
     const snap = buildSnapshot({ ...base, tankPhotoBlobKey: undefined });
 
+    // `photoBlobKey` joined this list deliberately in spec 026. It is a key,
+    // not bytes, and the Worker serves it only if it is also in
+    // `allowedBlobKeys` - which is asserted separately below.
     expect(Object.keys(snap.residents[0]!).sort()).toEqual([
       'adultSizeIn',
       'aggression',
       'commonName',
       'minVolumeGal',
+      'photoBlobKey',
       'quantity',
       'scientificName',
       'speciesId',
@@ -226,5 +230,70 @@ describe('the public projection', () => {
     // But everything a guest needs survives the stripping.
     expect(publicView.tank.photoBlobKey).toBe('blob_x');
     expect(publicView.residents).toHaveLength(1);
+  });
+});
+
+describe("the keeper's own photos (spec 026)", () => {
+  const keys = new Map([['h_1', 'blob_betta']]);
+
+  it('publishes a resident photo key AND puts it in the allowlist', () => {
+    // The two halves are what make the Worker able to serve it. A key on the
+    // page without a key in the allowlist is a torn image; the reverse is an
+    // object published for nothing.
+    const snap = buildSnapshot({ ...base, tankPhotoBlobKey: undefined, residentPhotoKeys: keys });
+
+    expect(snap.residents[0]!.photoBlobKey).toBe('blob_betta');
+    expect(snap.allowedBlobKeys).toContain('blob_betta');
+  });
+
+  it('allows the tank photo and every fish photo together, without duplicates', () => {
+    const snap = buildSnapshot({
+      ...base, tankPhotoBlobKey: 'blob_tank', residentPhotoKeys: keys,
+    });
+
+    expect(snap.allowedBlobKeys.sort()).toEqual(['blob_betta', 'blob_tank']);
+  });
+
+  it('leaves a fish with no published photo to its portrait', () => {
+    const snap = buildSnapshot({ ...base, tankPhotoBlobKey: undefined, residentPhotoKeys: new Map() });
+
+    expect(snap.residents[0]!.photoBlobKey).toBeUndefined();
+    expect(snap.allowedBlobKeys).toEqual([]);
+  });
+
+  it('does NOT let an unsynced fish photo change the fingerprint', () => {
+    // The trap fingerprintOf already documents for the tank photo, one field
+    // over. If a blob key reached the hash, a tank holding one photo that
+    // never uploads would republish on every tick, forever.
+    const withKey = buildSnapshot({ ...base, tankPhotoBlobKey: undefined, residentPhotoKeys: keys });
+    const withoutKey = buildSnapshot({
+      ...base, tankPhotoBlobKey: undefined, residentPhotoKeys: new Map(),
+    });
+
+    expect(fingerprintOf(withKey, undefined, ['m_1']))
+      .toBe(fingerprintOf(withoutKey, undefined, ['m_1']));
+  });
+
+  it('DOES change the fingerprint when a fish gains or swaps a photo', () => {
+    const snap = buildSnapshot({ ...base, tankPhotoBlobKey: undefined });
+
+    expect(fingerprintOf(snap, undefined, ['m_1'])).not.toBe(fingerprintOf(snap, undefined, []));
+    expect(fingerprintOf(snap, undefined, ['m_2'])).not.toBe(fingerprintOf(snap, undefined, ['m_1']));
+  });
+
+  it('republishes once a fish photo finishes uploading', () => {
+    // Nothing about the tank changed, so the fingerprint cannot see it - the
+    // same reason the tank photo needed its own clause.
+    expect(needsRepublish(
+      { fingerprint: 'same', photoIncluded: true, photoCount: 0 },
+      { fingerprint: 'same', hasPhoto: true, photoCount: 1 },
+    )).toBe(true);
+  });
+
+  it('does not republish when every photographed fish is already published', () => {
+    expect(needsRepublish(
+      { fingerprint: 'same', photoIncluded: true, photoCount: 2 },
+      { fingerprint: 'same', hasPhoto: true, photoCount: 2 },
+    )).toBe(false);
   });
 });

@@ -164,6 +164,13 @@ export interface ShareRecord {
    * so the sheet can say why guests see the fallback.
    */
   photoIncluded: boolean;
+  /**
+   * How many resident photos were actually published (spec 026). The exact
+   * analogue of `photoIncluded` one level down: the tank's own count of
+   * photographed fish is a content fact, this is how many of them had reached
+   * R2, and the gap is what tells the republisher an upload has since landed.
+   */
+  photoCount?: number;
   /** Why the last automatic republish failed, if it did. Cleared on success. */
   lastError?: string;
 }

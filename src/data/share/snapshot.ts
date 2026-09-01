@@ -45,6 +45,12 @@ export interface SharedResident {
   aggression?: AggressionRating;
   waterZone?: WaterZone;
   unitPrice?: number;
+  /**
+   * The keeper's own photograph of THIS fish, when there is one and it is in
+   * R2 (spec 026). Absent means the guest draws the bundled portrait, exactly
+   * as the owner's screen does for a fish nobody has photographed.
+   */
+  photoBlobKey?: string;
 }
 
 /** The tank itself. No id: a share is named by its token, not by a record. */
@@ -85,6 +91,12 @@ export interface SnapshotInput {
   residents: TankResident[];
   /** The blob key of the tank photo, when there is one AND it is in R2. */
   tankPhotoBlobKey: string | undefined;
+  /**
+   * Per-fish photo keys by holding id, same rule as the tank photo: present
+   * only when the object is confirmed in the bucket (spec 026). A holding
+   * absent from this map draws its portrait.
+   */
+  residentPhotoKeys?: ReadonlyMap<string, string>;
   token: string;
   publishedAt: string;
   buildId: string;
@@ -92,7 +104,9 @@ export interface SnapshotInput {
 }
 
 export function buildSnapshot(input: SnapshotInput): SharedSnapshot {
-  const { aquarium, residents, tankPhotoBlobKey, token, publishedAt, buildId, owner } = input;
+  const {
+    aquarium, residents, tankPhotoBlobKey, residentPhotoKeys, token, publishedAt, buildId, owner,
+  } = input;
 
   const tank: SharedTankInfo = {
     name: aquarium.name,
@@ -112,6 +126,7 @@ export function buildSnapshot(input: SnapshotInput): SharedSnapshot {
     aggression: r.aggression,
     waterZone: r.waterZone,
     unitPrice: r.unitPrice,
+    photoBlobKey: residentPhotoKeys?.get(r.holding.id),
   }));
 
   // Summarised from the ORIGINAL residents, not the projection: summariseTank
@@ -140,25 +155,28 @@ export function buildSnapshot(input: SnapshotInput): SharedSnapshot {
 /**
  * Every photo key the built view references.
  *
- * One key today, and that is now a DECISION rather than a fact about the data.
- * It used to be a fact: resident tiles rendered bundled stock portraits, so the
- * tank photo was the only private image a tank view could show. Spec 021 ended
- * that - a tile wears the keeper's own photograph when there is one, and on the
- * owner's screen it does.
+ * The tank photo AND every resident's own photograph (spec 026). Spec 023
+ * shipped portraits-only here, which contradicted the ask it was built from -
+ * "anyone should be able to review the page and see the exact same thing" -
+ * and the keeper reported it as a bug, correctly.
  *
- * The projection deliberately does not follow it there. `loadTankResidents`
- * hands back its photo choices separately, in `ownArt`, and this builder simply
- * does not read them: a shared page shows bundled portraits. Publishing one
- * photo of a tank is a thing the keeper asked for; publishing a photograph of
- * every fish in it is a different decision nobody has made, and it would
- * multiply a guest download already measured at 3.6 MB for a single original.
- * Filed as ENH-17 rather than assumed either way.
+ * THIS LIST IS THE SECURITY BOUNDARY. The Worker serves a photo only if its
+ * key is in here, so a key that reaches the page without reaching this list is
+ * a broken image, and a key in this list that the page never shows is an
+ * object published for no reason. Both are why rule 2 reads the keys back off
+ * the built snapshot rather than off the inputs.
  *
- * Kept as a list because the membership check in the Worker is what makes the
- * media route safe, and that check reads a list either way.
+ * The cost is real and is the reason spec 023 hesitated: each key is an
+ * untouched original, measured at 3.6 MB in spec 005, so a tank of twenty
+ * photographed fish is a large page. Tiles are `loading="lazy"`, so a guest
+ * pays only for what scrolls into view - and FR-A08 (derived thumbnails,
+ * still unbuilt) is what would make it cheap rather than merely deferred.
  */
 function collectBlobKeys(snapshot: SharedSnapshot): string[] {
-  const keys = [snapshot.tank.photoBlobKey].filter((k): k is string => Boolean(k));
+  const keys = [
+    snapshot.tank.photoBlobKey,
+    ...snapshot.residents.map((r) => r.photoBlobKey),
+  ].filter((k): k is string => Boolean(k));
   return [...new Set(keys)];
 }
 
@@ -183,17 +201,34 @@ function collectBlobKeys(snapshot: SharedSnapshot): string[] {
  * function, which is correct - it is not a content change. `needsRepublish`
  * owns that case.
  *
+ * SPEC 026 EXTENDED THE SAME TRAP AND THE SAME FIX. Residents now carry a
+ * `photoBlobKey`, which is a sync-state answer for exactly the same reason, so
+ * the resident list is hashed WITHOUT it and the fish's media ids are hashed
+ * instead. Hashing `snapshot.residents` wholesale here would have made every
+ * tank containing one unsynced fish photo republish forever - the bug this
+ * docstring already describes, reintroduced one field over.
+ *
  * 64 bits of FNV-1a, as two 32-bit halves. Not cryptographic and does not need
  * to be - nobody is attacking it, and the consequence of the ~1-in-10^19
  * collision is one skipped republish, not a wrong page.
  */
-export function fingerprintOf(snapshot: SharedSnapshot, photoMediaId?: string): string {
+export function fingerprintOf(
+  snapshot: SharedSnapshot,
+  photoMediaId?: string,
+  residentMediaIds?: readonly string[],
+): string {
+  // Content only. `photoBlobKey` is dropped for the reason above; everything
+  // else about a resident is a fact about the tank.
+  const residentsWithoutSyncState = snapshot.residents.map(
+    ({ photoBlobKey: _ignored, ...rest }) => rest,
+  );
   const material = JSON.stringify([
     snapshot.tank.name,
     snapshot.tank.kind,
     snapshot.tank.volume ?? null,
     photoMediaId ?? null,
-    snapshot.residents,
+    residentMediaIds ?? null,
+    residentsWithoutSyncState,
     snapshot.stats,
   ]);
   return `${fnv1a(material, 0x811c9dc5)}${fnv1a(material, 0x01000193)}`;
@@ -212,11 +247,17 @@ export function fingerprintOf(snapshot: SharedSnapshot, photoMediaId?: string): 
  *      somebody pressed the button by hand.
  */
 export function needsRepublish(
-  published: { fingerprint: string; photoIncluded: boolean },
-  current: { fingerprint: string; hasPhoto: boolean },
+  published: { fingerprint: string; photoIncluded: boolean; photoCount?: number },
+  current: { fingerprint: string; hasPhoto: boolean; photoCount?: number },
 ): boolean {
   if (current.fingerprint !== published.fingerprint) return true;
-  return current.hasPhoto && !published.photoIncluded;
+  if (current.hasPhoto && !published.photoIncluded) return true;
+  // Spec 026, clause 2 again, per fish: a resident's photo that finished
+  // uploading after the last publish changes nothing about the tank, so the
+  // fingerprint cannot see it either. Counting the keys actually published is
+  // enough - it only ever rises as uploads land, and a fish leaving the tank
+  // is a content change the fingerprint already caught.
+  return (current.photoCount ?? 0) > (published.photoCount ?? 0);
 }
 
 function fnv1a(input: string, seed: number): string {

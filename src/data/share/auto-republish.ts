@@ -34,6 +34,8 @@ export const DEBOUNCE_MS = 3_000;
 export interface CurrentState {
   fingerprint: string;
   hasPhoto: boolean;
+  /** Photographed fish in the tank (spec 026). */
+  photoCount?: number;
 }
 
 /**
