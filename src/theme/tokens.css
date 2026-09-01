@@ -20,6 +20,10 @@
   --color-canvas: #070f14;
   --color-surface: #0e1a22;
   --color-surface-raised: #16262f;
+  /* Spec 035: behind a sheet. Dark in every theme, including the light
+     ones - a scrim says "the thing behind is not available right now",
+     and a pale scrim on a pale page says nothing at all. */
+  --color-scrim: rgba(4, 12, 17, 0.62);
 
   /* Three text tiers, all AA on canvas: 17.37 / 8.75 / 5.92.
      Three, not two, because the app has three jobs for text - the thing you
@@ -202,6 +206,7 @@
   --color-canvas: #070f14;
   --color-surface: #0e1a22;
   --color-surface-raised: #16262f;
+  --color-scrim: rgba(4, 12, 17, 0.62);
 }
 
 /* ---------------------------------------------------------------------- */
@@ -217,6 +222,7 @@
   --color-canvas: #f2fbff;
   --color-surface: #ffffff;
   --color-surface-raised: #e8f6fe;
+  --color-scrim: rgba(4, 12, 17, 0.62);
   --color-text: #102b3d;
   --color-muted: #4d6c80;
   --color-faint: #587381;          /* 4.55:1 min across canvas/surface/raised */
@@ -263,6 +269,7 @@
   --color-canvas: #f4ece0;
   --color-surface: #fbf6ee;
   --color-surface-raised: #f0e5d4;
+  --color-scrim: rgba(4, 12, 17, 0.62);
   --color-text: #2b2216;
   --color-muted: #6b5b47;
   --color-faint: #746450;          /* 4.58:1 min */
