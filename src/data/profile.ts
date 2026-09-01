@@ -62,6 +62,34 @@ export function foldLegacySettings(raw: string | null | undefined): UserSettings
   };
 }
 
+/** The row a first run would create. Not stored by itself. */
+function blankProfile(legacyRaw?: string | null): User {
+  return {
+    id: LOCAL_PROFILE_ID,
+    displayName: '',
+    settings: foldLegacySettings(legacyRaw),
+    createdAt: nowIso(),
+  };
+}
+
+/**
+ * The profile as it stands, without creating one - spec 022, BUG-08.
+ *
+ * WHY A READ THAT WRITES NOTHING EXISTS. `users` is a synced table and
+ * `user_local` is a hardcoded primary key, so a row written here before anyone
+ * has signed in is a row that will be pushed over the account's real profile
+ * on the first sync. `ThemeProvider` mounts above the sign-in gate and needs a
+ * theme immediately, which used to mean every signed-out launch manufactured a
+ * default profile under a key the account already uses. Reading is enough for
+ * that; the row is created by the first deliberate settings change instead.
+ */
+export async function readProfile(
+  database: Fish2TankDB = db,
+  legacyRaw?: string | null,
+): Promise<User> {
+  return (await database.users.get(LOCAL_PROFILE_ID)) ?? blankProfile(legacyRaw);
+}
+
 /**
  * The profile, created on first call.
  *
@@ -76,12 +104,7 @@ export async function loadProfile(
   const existing = await database.users.get(LOCAL_PROFILE_ID);
   if (existing) return existing;
 
-  const created: User = {
-    id: LOCAL_PROFILE_ID,
-    displayName: '',
-    settings: foldLegacySettings(legacyRaw),
-    createdAt: nowIso(),
-  };
+  const created = blankProfile(legacyRaw);
   await database.users.put(created);
   console.info(
     `[profile] created ${LOCAL_PROFILE_ID} theme=${created.settings.themeId} ` +
@@ -132,13 +155,13 @@ export async function updateSettings(
   return { ...current, settings: { ...current.settings, ...patch } };
 }
 
-/** Sets the display name, creating the profile first if needed. */
-export async function setDisplayName(
-  displayName: string,
-  database: Fish2TankDB = db,
-): Promise<User> {
-  const current = await loadProfile(database);
-  if (current.displayName === displayName) return current;
-  await patchProfile({ displayName }, database);
-  return { ...current, displayName };
-}
+/*
+ * `setDisplayName` was removed in spec 017 along with the Settings field that
+ * was its only caller. The greeting now reads the signed-in account's name and
+ * falls back to `displayName` for anyone who set one before the field went, so
+ * the stored property is still read - it is just no longer writable from the
+ * app. Restore this function alongside any future "choose a nickname" control
+ * rather than reaching for `patchProfile` directly; the guard against writing
+ * an unchanged value is the part worth keeping (one mutation per keystroke on
+ * a synced record is what it existed to prevent).
+ */

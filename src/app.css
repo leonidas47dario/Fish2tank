@@ -330,6 +330,20 @@ fieldset { border: 0; padding: 0; margin: 0 0 var(--space-3); }
   box-shadow: inset 0 0 0 var(--border-width) color-mix(in srgb, var(--color-text) 10%, transparent);
   pointer-events: none;
 }
+/* The empty plate on a record IS the upload control (spec 020), so it needs
+   the button reset the class never had - a button brings its own font, border,
+   padding and min-height, none of which a plate wants. */
+.plate--action {
+  width: 100%;
+  padding: 0; border: 0; min-height: 0;
+  font: inherit; color: inherit;
+  cursor: pointer;
+}
+.plate--action .plate__none-text { border: var(--border-width) solid var(--color-border-control); }
+.plate--action:hover:not(:disabled) .plate__none-text {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
 .plate__img {
   display: block;
   width: 100%;
@@ -1231,6 +1245,15 @@ summary.factor::-webkit-details-marker { display: none; }
   border-color: var(--color-primary);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 45%, transparent);
 }
+.photo-strip__item video { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* The "add another" tile, last in the strip. Dashed so it reads as a slot to
+   fill rather than a picture that failed to load. */
+.photo-strip__item--add {
+  display: grid; place-items: center;
+  border-style: var(--divider-style, dashed);
+  color: var(--color-muted);
+}
+.photo-strip__item--add:hover:not(:disabled) { color: var(--color-primary); border-color: var(--color-primary); }
 
 /* --- Utility ------------------------------------------------------------ */
 .list { list-style: none; padding: 0; margin: 0; }
@@ -1575,3 +1598,261 @@ summary.factor::-webkit-details-marker { display: none; }
   padding: var(--space-1) var(--space-3);
   font-size: var(--size-xs);
 }
+
+/*
+ * A tank shared with a stranger (spec 023).
+ *
+ * The page has no bottom nav, so it needs its own bottom breathing room -
+ * without it the last card sits against the edge of the viewport on a phone.
+ */
+.sharedtank {
+  padding-bottom: var(--space-6);
+}
+.sharedtank__photo {
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  border-radius: var(--radius-card);
+  background: var(--color-surface-raised);
+}
+/* The pitch, at the bottom rather than the top: somebody arrives here for a
+   tank, not for the app, and the ask reads better after they have seen it. */
+.sharedtank__footer {
+  margin-top: var(--space-5);
+}
+
+/*
+ * The heart on a shared tile.
+ *
+ * Sits in the tile's own flow rather than floating over the portrait: an
+ * overlay on a 3:2 photo lands on the fish about a third of the time, and a
+ * control you cannot see is worse than one that costs a row.
+ */
+.tank-tile__heart {
+  width: auto;
+  align-self: flex-end;
+  margin: 0 var(--space-2) var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  background: transparent;
+  border: 1px solid var(--color-border-control);
+  border-radius: var(--radius-pill);
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--ease-standard),
+              border-color var(--duration-fast) var(--ease-standard);
+}
+.tank-tile__heart:hover { color: var(--color-danger-bright); border-color: var(--color-danger-bright); }
+/* Pressed is a fill AND a colour, so the state survives greyscale (NFR-06). */
+.tank-tile__heart[aria-pressed='true'] {
+  color: var(--color-danger-bright);
+  border-color: var(--color-danger-bright);
+}
+
+/*
+ * Sharing a tank (spec 023).
+ *
+ * The two card actions sit on one rule below the body, sharing the border the
+ * photo button already drew. The share control is sized to its content so the
+ * photo button keeps the width it had - the common action stays the big
+ * target, and sharing is the deliberate one.
+ */
+.tankcard__actions {
+  gap: 0;
+  align-items: stretch;
+  border-top: 1px solid var(--color-border);
+}
+/* `width: 100%` on the photo button is what it needed when it was the only
+   action; left alone it claims the whole line and wraps the share control
+   onto a second one. */
+.tankcard__actions .tankcard__photo-btn {
+  border-top: none;
+  width: auto;
+  flex: 1;
+}
+.tankcard__share {
+  width: auto;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border-radius: 0;
+  border-left: 1px solid var(--color-border);
+  color: var(--color-muted);
+}
+.tankcard__share[aria-expanded='true'] { color: var(--color-primary); }
+
+.sharesheet { margin-top: var(--space-2); }
+/* The URL is long and must be selectable in full, so it scrolls rather than
+   wrapping - a wrapped token is harder to read back to somebody. */
+.sharesheet__url {
+  font-size: var(--size-xs);
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+/* ======================================================================== */
+/* Settings: collapsible sections and a jump nav (spec 018)                 */
+/* ======================================================================== */
+
+/*
+ * THE APP'S FIRST WIDTH BREAKPOINT, and worth being deliberate about.
+ *
+ * Everything else in this app lives inside `--content-max` at every size
+ * (NFR-07, "iPhone portrait first, usable on desktop"). Settings is the only
+ * screen with a second column, so it is the only screen that widens - and it
+ * widens to `--settings-max`, which is the rail PLUS a content column still
+ * no wider than everywhere else. The settings themselves never get longer
+ * lines than the rest of the app; they just gain a rail to their left.
+ *
+ * `:has()` rather than a class on `.app`, because the shell does not know
+ * which route is mounted and should not have to.
+ */
+.settings-layout { display: block; }
+
+/*
+ * The nav. One DOM, two shapes: a sticky horizontal strip on a phone, a rail
+ * from 900px up. Sticky under nothing on a phone means it sits at the top of
+ * the scroll area, which is where a jump bar is useful.
+ */
+.settings-nav {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: var(--space-2) 0;
+  background: var(--color-canvas);
+}
+.settings-nav__list {
+  display: flex;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-x: auto;
+  /* Momentum scrolling without a visible bar eating 8px of a 44px chip. */
+  scrollbar-width: none;
+}
+.settings-nav__list::-webkit-scrollbar { display: none; }
+
+.settings-nav__item {
+  /* Not a `button` reset: the app's button styling is deliberate elsewhere,
+     so this opts out explicitly rather than inheriting a primary action. */
+  width: auto;
+  min-height: var(--tap-min);
+  padding: var(--space-2) var(--space-3);
+  white-space: nowrap;
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-pill);
+  color: var(--color-text);
+  font-size: var(--size-sm);
+  cursor: pointer;
+}
+
+/*
+ * The disclosure. `<details>` gives keyboard operation, the right screen
+ * reader announcement, and find-in-page that can open a closed section; the
+ * only work here is removing the default marker and drawing our own.
+ */
+.settings-section > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: var(--tap-min);
+  cursor: pointer;
+  list-style: none;
+}
+.settings-section > summary::-webkit-details-marker { display: none; }
+.settings-section > summary > h2 { margin: 0; }
+
+/* Drawn from a border rather than a glyph, so it does not depend on a font
+   having the character and does not shift baseline between themes. */
+.settings-section > summary::after {
+  content: '';
+  flex: none;
+  width: 0.6em;
+  height: 0.6em;
+  border-right: 2px solid var(--color-muted);
+  border-bottom: 2px solid var(--color-muted);
+  transform: rotate(45deg) translate(-0.12em, -0.12em);
+  transition: transform var(--duration-fast) ease;
+}
+.settings-section[open] > summary::after {
+  transform: rotate(225deg) translate(-0.12em, -0.12em);
+}
+[data-reduced-motion='true'] .settings-section > summary::after { transition: none; }
+
+/* The gap the `.stack` on the details itself would otherwise apply between
+   summary and body even when closed. */
+.settings-section:not([open]) { padding-bottom: var(--space-4); }
+.settings-section__body { margin-top: var(--space-4); }
+
+@media (min-width: 900px) {
+  .app:has(.settings-layout) { max-width: var(--settings-max); }
+
+  .settings-layout {
+    display: grid;
+    grid-template-columns: var(--settings-rail) minmax(0, 1fr);
+    gap: var(--space-5);
+    align-items: start;
+  }
+
+  .settings-nav {
+    top: var(--space-4);
+    padding: 0;
+    background: none;
+  }
+  .settings-nav__list {
+    flex-direction: column;
+    overflow-x: visible;
+  }
+  .settings-nav__item {
+    width: 100%;
+    text-align: left;
+  }
+}
+
+/* --- A shared tank's tile opens the fish (spec 025) --------------------- */
+
+/* The tile content became a button. It must not LOOK like one: the grid is a
+   wall of fish, and a border round every tile would read as a form. */
+.tank-tile__open {
+  display: block;
+  width: 100%;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  text-align: inherit;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.tank-tile__open:hover .tank-tile__art { opacity: 0.86; }
+
+/* The peek's values. Blurred to say "there is more here", never to protect:
+   every one of these is already in the public snapshot (spec 025). Hidden from
+   assistive tech at the call site rather than here, because a blurred number
+   read aloud is just a number - the offer below it is the real content. */
+.peek__row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-1) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+.peek__value {
+  filter: blur(var(--blur-peek));
+  /* Selecting blurred text would hand over the exact string, which makes the
+     invitation feel like a trick rather than an offer. */
+  user-select: none;
+}
+
+/* Under an engine without filter support the values would render sharp, which
+   gives away the tease rather than breaking anything. Dim them instead, the
+   same treatment a locked plate already uses. */
+@supports not (filter: blur(1px)) {
+  .peek__value { opacity: 0.35; }
+}
+
+.sharedtank__enter { align-self: flex-start; }

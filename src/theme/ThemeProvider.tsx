@@ -11,7 +11,7 @@
  */
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { db } from '@/data/db';
-import { loadProfile, updateSettings } from '@/data/profile';
+import { readProfile, updateSettings } from '@/data/profile';
 import type { UserSettings } from '@/domain/types';
 import { resolveSceneId, resolveThemeId } from './resolve';
 
@@ -88,10 +88,14 @@ function cachedRaw(): string | null {
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<Settings>(loadCache);
 
-  // The profile wins over the cache. On a first run it is also seeded from it.
+  // The profile wins over the cache, but only if there is one. This reads and
+  // never writes (spec 022): `user_local` is a hardcoded key in a synced table,
+  // and this component mounts above the sign-in gate, so creating the row here
+  // meant every signed-out launch queued a default profile to be pushed over
+  // the account's real one. The row is created by the first settings change.
   useEffect(() => {
     let cancelled = false;
-    loadProfile(db, cachedRaw())
+    readProfile(db, cachedRaw())
       .then((profile) => {
         if (cancelled) return;
         setSettings((s) => ({

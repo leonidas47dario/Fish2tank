@@ -6,7 +6,7 @@ import {
   LOCAL_PROFILE_ID,
   foldLegacySettings,
   loadProfile,
-  setDisplayName,
+  readProfile,
   updateSettings,
 } from './profile';
 import { recordPrice } from './repositories';
@@ -77,6 +77,34 @@ describe('loadProfile', () => {
   });
 });
 
+describe('readProfile', () => {
+  // Spec 020. `users` syncs and `user_local` is a hardcoded key, so a row
+  // written before anyone signs in is a row that gets pushed over the
+  // account's real profile on the first sync.
+  it('writes nothing when there is no profile yet', async () => {
+    const profile = await readProfile(db);
+
+    expect(profile.id).toBe(LOCAL_PROFILE_ID);
+    expect(profile.settings).toEqual(DEFAULT_SETTINGS);
+    expect(await db.users.count()).toBe(0);
+  });
+
+  it('folds legacy settings into what it hands back, still without storing them', async () => {
+    const profile = await readProfile(db, '{"theme":"expedition-fieldbook"}');
+
+    expect(profile.settings.themeId).toBe('expedition-fieldbook');
+    expect(await db.users.count()).toBe(0);
+  });
+
+  it('returns the stored row once there is one', async () => {
+    await loadProfile(db);
+    await updateSettings({ themeId: 'planted' }, db);
+
+    expect((await readProfile(db)).settings.themeId).toBe('planted');
+    expect(await db.users.count()).toBe(1);
+  });
+});
+
 describe('updateSettings', () => {
   it('patches one field without disturbing the others', async () => {
     await loadProfile(db);
@@ -92,15 +120,6 @@ describe('updateSettings', () => {
   });
 });
 
-describe('setDisplayName', () => {
-  it('stores the name without disturbing settings', async () => {
-    await updateSettings({ currency: 'CAD' }, db);
-    await setDisplayName('Ryan', db);
-    const profile = await loadProfile(db);
-    expect(profile.displayName).toBe('Ryan');
-    expect(profile.settings.currency).toBe('CAD');
-  });
-});
 
 /**
  * Spec 005: the profile is the record most likely to be edited from two
@@ -109,22 +128,6 @@ describe('setDisplayName', () => {
  * can see - the sync-merge behaviour itself belongs to Dexie Cloud.
  */
 describe('profile writes are narrow and honest', () => {
-  it('does not write at all when the name has not changed', async () => {
-    await loadProfile(db);
-    await setDisplayName('Ryan', db);
-    const before = await db.users.get(LOCAL_PROFILE_ID);
-
-    let writes = 0;
-    db.users.hook('updating', () => {
-      writes += 1;
-    });
-    await setDisplayName('Ryan', db);
-
-    // A no-op keystroke must not become a sync mutation.
-    expect(writes).toBe(0);
-    expect(await db.users.get(LOCAL_PROFILE_ID)).toEqual(before);
-  });
-
   it('does not write for an empty settings patch', async () => {
     await loadProfile(db);
     let writes = 0;
@@ -161,11 +164,11 @@ describe('profile writes are narrow and honest', () => {
     // Worth pinning: the throw inside patchProfile is a guard against the
     // narrow race where the row disappears between the load and the update,
     // NOT the path taken here, and a reader could easily assume otherwise.
-    await setDisplayName('Ryan', db);
+    await updateSettings({ currency: 'CAD' }, db);
 
     const after = await db.users.get(LOCAL_PROFILE_ID);
-    expect(after?.displayName).toBe('Ryan');
-    expect(after?.settings).toEqual(DEFAULT_SETTINGS);
+    expect(after?.settings.currency).toBe('CAD');
+    expect(after?.settings).toEqual({ ...DEFAULT_SETTINGS, currency: 'CAD' });
   });
 });
 

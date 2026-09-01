@@ -10,6 +10,10 @@
  * They are separate because they are used by different people at different
  * moments, and mixing them means a guest tapping around your tank can retire
  * a fish by accident.
+ *
+ * Since spec 023 the VIEW half lives in `components/tank/TankViewer.tsx`,
+ * because the public shared page renders the very same components. This file
+ * keeps everything that writes, and supplies what a tap should do.
  */
 import { useEffect, useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -24,10 +28,8 @@ import { CATALOG, type CatalogSpecies } from '@/data/catalog';
 import { identifyFromText } from '@/data/identify';
 import { formatVolume } from '@/domain/units';
 import type { Aquarium, StockingState } from '@/domain/types';
-import {
-  AGGRESSION_LABEL, forDisplay, summariseTank,
-  type TankResident, type TankStats,
-} from '@/domain/tank-stats';
+import { forDisplay, summariseTank, type TankResident, type TankStats } from '@/domain/tank-stats';
+import { TankViewer } from '../components/tank/TankViewer';
 import { useTankResidents } from '../hooks';
 
 export default function TankDetail() {
@@ -81,7 +83,7 @@ export default function TankDetail() {
 
       {editing && <TankProfile aquarium={aquarium} />}
 
-      <TankViewer
+      <OwnerTankView
         aquarium={aquarium}
         residents={residents}
         stats={stats}
@@ -96,263 +98,68 @@ export default function TankDetail() {
 
 // ── Viewer ───────────────────────────────────────────────────────────────
 
-function TankViewer({ aquarium, residents, stats, editing, allTanks }: {
+/**
+ * The dashboard, plus the two things only an owner may do to it.
+ *
+ * Every chart, the grid and the coverage note come from the shared viewer, so
+ * the keeper's screen and the public page cannot drift apart. What is added
+ * here is precisely the behaviour a guest must never have: a tile that opens
+ * the editor, a tile that adds a fish, and the panels those open.
+ */
+function OwnerTankView({ aquarium, residents, stats, editing, allTanks }: {
   aquarium: Aquarium;
   residents: TankResident[];
   stats: TankStats;
   editing: boolean;
   allTanks: Array<{ id: string; name: string }>;
 }) {
-  // An empty tank still needs its way in, or a new tank is a dead end.
-  if (stats.fish === 0) {
-    return (
-      <div className="stack">
-        <p className="empty">Nothing lives in {aquarium.name} yet.</p>
-        {editing && (
-          <ResidentGrid
-            residents={residents} editing={editing} allTanks={allTanks}
-            aquarium={aquarium}
-          />
-        )}
-      </div>
-    );
-  }
-
-  return (
-    <div className="stack">
-      <StatRow stats={stats} />
-      <WaterColumn stats={stats} />
-      <Temperament stats={stats} />
-      <GrowsInto residents={residents} />
-      <ResidentGrid
-        residents={residents} editing={editing} allTanks={allTanks}
-        aquarium={aquarium}
-      />
-      <Coverage stats={stats} />
-    </div>
-  );
-}
-
-/**
- * The headline numbers.
- *
- * Stat tiles rather than a chart: four unrelated single values have no shared
- * scale, so a bar chart of them would invite comparisons that mean nothing.
- */
-function StatRow({ stats }: { stats: TankStats }) {
-  return (
-    <div className="stat-row">
-      <div className="stat">
-        <span className="stat__value data">{stats.fish}</span>
-        <span className="stat__label">fish</span>
-      </div>
-      <div className="stat">
-        <span className="stat__value data">{stats.species}</span>
-        <span className="stat__label">species</span>
-      </div>
-      <div className="stat">
-        <span className="stat__value data">
-          {stats.estimatedValue === undefined ? '—' : `$${Math.round(stats.estimatedValue).toLocaleString()}`}
-        </span>
-        <span className="stat__label">
-          {stats.estimatedValue === undefined ? 'no market data' : 'est. value'}
-        </span>
-      </div>
-      {stats.largest && (
-        <div className="stat">
-          <span className="stat__value data">{Math.round(stats.largest.adultSizeIn)}″</span>
-          <span className="stat__label">biggest, grown</span>
-        </div>
-      )}
-    </div>
-  );
-}
-
-/**
- * Where everyone actually swims, drawn as the tank rather than as a bar chart.
- *
- * WHY NO COLOUR RAMP. The bands are stacked top-to-bottom in the order the
- * fish occupy them, so the geometry already encodes the ordering. Colouring
- * them as well would spend the identity channel re-encoding what position
- * shows - and it is the one chart here whose meaning a guest gets instantly
- * without reading a legend, because it is shaped like the thing on the wall.
- */
-function WaterColumn({ stats }: { stats: TankStats }) {
-  const max = Math.max(...stats.byZone.map((z) => z.fish));
-  return (
-    <section className="card stack">
-      <h2>Where they swim</h2>
-      <div className="watercolumn" role="img"
-        aria-label={stats.byZone.map((z) => `${z.label}: ${z.fish} fish`).join(', ')}>
-        {stats.byZone.map((z) => (
-          <div key={z.key} className="watercolumn__band">
-            <span className="watercolumn__label">{z.label}</span>
-            <span className="watercolumn__track">
-              <span className="watercolumn__fill" style={{ width: `${(z.fish / max) * 100}%` }} />
-            </span>
-            <span className="watercolumn__value data">{z.fish}</span>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-/**
- * Temperament mix.
- *
- * Reuses the app's existing severity vocabulary (the badge tones), because a
- * second visual language for the same idea is how a design system rots. Every
- * segment carries its label, so colour is never the only cue (NFR-06).
- */
-const AGGRESSION_TONE: Record<string, string> = {
-  peaceful: 'suitable',
-  'semi-aggressive': 'conditional',
-  aggressive: 'high-risk',
-  'highly-aggressive': 'extreme-risk',
-  unknown: 'insufficient-data',
-};
-
-function Temperament({ stats }: { stats: TankStats }) {
-  if (stats.byAggression.length === 0) return null;
-  return (
-    <section className="card stack">
-      <h2>Temperament</h2>
-      <div className="segbar" role="img"
-        aria-label={stats.byAggression.map((a) => `${a.label}: ${a.fish} fish`).join(', ')}>
-        {stats.byAggression.map((a) => (
-          <span key={a.key} className={`segbar__seg segbar__seg--${AGGRESSION_TONE[a.key]}`}
-            style={{ flexGrow: a.fish }} />
-        ))}
-      </div>
-      <ul className="legend">
-        {stats.byAggression.map((a) => (
-          <li key={a.key}>
-            <span className={`legend__swatch legend__swatch--${AGGRESSION_TONE[a.key]}`} aria-hidden="true" />
-            {a.key === 'unknown' ? 'Not rated' : AGGRESSION_LABEL[a.key as keyof typeof AGGRESSION_LABEL]}
-            <span className="muted data"> {a.fish}</span>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
-
-/**
- * What the tank becomes.
- *
- * Magnitude, low to high, so one hue and a length - and the single most
- * useful thing a keeper can show a guest, because the two-inch fish in front
- * of them is a fourteen-inch fish later.
- */
-function GrowsInto({ residents }: { residents: TankResident[] }) {
-  const withSize = residents.filter((r) => r.adultSizeIn !== undefined)
-    .sort((a, b) => b.adultSizeIn! - a.adultSizeIn!);
-  const sized = withSize.slice(0, 8);
-  if (sized.length === 0) return null;
-  const max = Math.max(...sized.map((r) => r.adultSizeIn!));
-
-  return (
-    <section className="card stack">
-      <h2>Grown up</h2>
-      <p className="xs muted" style={{ marginBottom: 0 }}>
-        {withSize.length > sized.length
-          ? `The ${sized.length} that grow biggest, at adult size.`
-          : 'Adult size each of these reaches.'}
-      </p>
-      <div className="bars">
-        {sized.map((r) => (
-          <div key={r.holding.id} className="bars__row">
-            <span className="bars__label">{r.commonName}</span>
-            <span className="bars__track">
-              <span className="bars__fill" style={{ width: `${(r.adultSizeIn! / max) * 100}%` }} />
-            </span>
-            <span className="bars__value data">{Math.round(r.adultSizeIn!)}″</span>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-/** The fish themselves — the part a guest actually wants to tap. */
-/**
- * Who lives here - and, with the switch on, the place you change it.
- *
- * A tile is small and a phone is smaller, so editing does NOT cram controls
- * into every tile. Tapping one opens a panel for that fish alone: how many,
- * where it lives, and out. One thing at a time, in a target the size of the
- * whole tile.
- *
- * The plus is a tile in the same grid rather than a button below it, because
- * "add a fish" belongs where the fish are, and an empty tank then shows a grid
- * containing exactly one thing to do.
- */
-function ResidentGrid({ residents, editing, allTanks, aquarium }: {
-  residents: TankResident[];
-  editing: boolean;
-  allTanks: Array<{ id: string; name: string }>;
-  aquarium: Aquarium;
-}) {
   const [openHolding, setOpenHolding] = useState<string>();
   const [adding, setAdding] = useState(false);
 
-  const shown = forDisplay(residents);
-  const open = shown.find((r) => r.holding.id === openHolding);
+  const open = forDisplay(residents).find((r) => r.holding.id === openHolding);
 
   return (
-    <section className="stack">
-      <h2>Who lives here</h2>
-      <div className="tank-grid">
-        {shown.map((r) => {
-          const inner = (
-            <>
-              {r.portraitUrl
-                ? <img className="tank-tile__art" src={r.portraitUrl} alt="" loading="lazy" />
-                : <span className="tank-tile__art tank-tile__art--empty" aria-hidden="true">◍</span>}
-              <span className="tank-tile__body">
-                <strong>{r.commonName}</strong>
-                {r.quantity > 1 && <span className="muted data"> ×{r.quantity}</span>}
-                {r.scientificName && <><br /><span className="sci xs">{r.scientificName}</span></>}
-              </span>
-            </>
+    <TankViewer
+      tankName={aquarium.name}
+      residents={residents}
+      stats={stats}
+      renderTile={(r, content) => {
+        // Editing: the tile edits. Not editing: it opens the species, as before.
+        if (editing) {
+          return (
+            <button
+              type="button"
+              className={`tank-tile tank-tile--editable${openHolding === r.holding.id ? ' tank-tile--open' : ''}`}
+              aria-expanded={openHolding === r.holding.id}
+              onClick={() => setOpenHolding(openHolding === r.holding.id ? undefined : r.holding.id)}
+            >
+              {content}
+            </button>
           );
-
-          // Editing: the tile edits. Not editing: it opens the species, as before.
-          if (editing) {
-            return (
-              <button
-                key={r.holding.id}
-                type="button"
-                className={`tank-tile tank-tile--editable${openHolding === r.holding.id ? ' tank-tile--open' : ''}`}
-                aria-expanded={openHolding === r.holding.id}
-                onClick={() => setOpenHolding(openHolding === r.holding.id ? undefined : r.holding.id)}
-              >
-                {inner}
-              </button>
-            );
-          }
-          return r.speciesId ? (
-            <Link key={r.holding.id} to={`/species/${r.speciesId}`} className="tank-tile">{inner}</Link>
-          ) : (
-            // Not a link: there is nothing to open, and a dead link in front of
-            // a guest is worse than an honest plain tile.
-            <div key={r.holding.id} className="tank-tile tank-tile--plain">{inner}</div>
-          );
-        })}
-
-        {editing && (
-          <button
-            type="button"
-            className="tank-tile tank-tile--add"
-            onClick={() => { setAdding(true); setOpenHolding(undefined); }}
-          >
-            <span className="tank-tile__art tank-tile__art--empty" aria-hidden="true">＋</span>
-            <span className="tank-tile__body"><strong>Add a fish</strong></span>
-          </button>
-        )}
-      </div>
-
+        }
+        return r.speciesId
+          ? <Link to={`/species/${r.speciesId}`} className="tank-tile">{content}</Link>
+          // Not a link: there is nothing to open, and a dead link in front of
+          // a guest is worse than an honest plain tile.
+          : <div className="tank-tile tank-tile--plain">{content}</div>;
+      }}
+      /* The plus is a tile in the same grid rather than a button below it,
+         because "add a fish" belongs where the fish are - and an empty tank
+         then shows a grid containing exactly one thing to do. */
+      extraTile={editing ? (
+        <button
+          type="button"
+          className="tank-tile tank-tile--add"
+          onClick={() => { setAdding(true); setOpenHolding(undefined); }}
+        >
+          <span className="tank-tile__art tank-tile__art--empty" aria-hidden="true">＋</span>
+          <span className="tank-tile__body"><strong>Add a fish</strong></span>
+        </button>
+      ) : undefined}
+    >
+      {/* A tile is small and a phone is smaller, so editing does NOT cram
+          controls into every tile. Tapping one opens a panel for that fish
+          alone: how many, where it lives, and out. */}
       {editing && open && (
         <ResidentEditor
           key={open.holding.id}
@@ -370,7 +177,7 @@ function ResidentGrid({ residents, editing, allTanks, aquarium }: {
           onDone={() => setAdding(false)}
         />
       )}
-    </section>
+    </TankViewer>
   );
 }
 
@@ -504,23 +311,6 @@ function ResidentEditor({ resident, aquarium, allTanks, onDone }: {
         </>
       )}
     </div>
-  );
-}
-
-/** What the dashboard could not speak for. Always shown when it is not zero. */
-function Coverage({ stats }: { stats: TankStats }) {
-  const notes = [
-    stats.unidentifiedFish > 0
-      && `${stats.unidentifiedFish} of ${stats.fish} fish are recorded by name only and could not be matched to a species, so they are outside every chart above.`,
-    stats.estimatedValue !== undefined && stats.unvaluedFish > 0
-      && `The estimate covers ${stats.valuedFish} of ${stats.fish} fish; the rest have no market listing to price them from.`,
-  ].filter(Boolean) as string[];
-  if (notes.length === 0) return null;
-  return (
-    <section className="card stack">
-      <h2 className="h3">What this leaves out</h2>
-      {notes.map((n) => <p key={n} className="xs muted" style={{ marginBottom: 0 }}>{n}</p>)}
-    </section>
   );
 }
 

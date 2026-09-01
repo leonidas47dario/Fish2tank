@@ -130,6 +130,9 @@
   --radius-card: 14px;
   --radius-control: 10px;
   --radius-pill: 999px;
+  /* Spec 025: the shared-tank peek. A legibility threshold, not a
+     security control - the values it covers are in a public file. */
+  --blur-peek: 5px;
   --radius-hair: 2px;
   --rarity-frame-radius: 14px;
   --border-width: 1px;
@@ -182,6 +185,12 @@
   --tap-min: 44px;
   --nav-height: 56px;
   --content-max: 640px;
+  /* Spec 018. Settings is the one screen that earns more than --content-max,
+     because it is the only one with a navigation rail beside its content. The
+     rail plus a column no wider than --content-max, so the settings
+     themselves never get longer lines than anything else in the app. */
+  --settings-max: 900px;
+  --settings-rail: 11rem;
 }
 
 /* ---------------------------------------------------------------------- */
