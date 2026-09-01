@@ -35,6 +35,7 @@ import { remember, takePending } from '@/data/share/pending-intent';
 import type { PublicSnapshot, SharedResident } from '@/data/share/snapshot';
 import type { TankResident } from '@/domain/tank-stats';
 import { TankViewer } from '../components/tank/TankViewer';
+import { Sheet } from '../components/Sheet';
 import { FishIcon, GoogleLogoIcon, HeartIcon } from '../components/Icons';
 import { portraitAsset } from '@/data/catalog';
 import { peekRows } from './shared-peek';
@@ -145,6 +146,12 @@ export default function SharedTank() {
 
   const { snapshot } = state;
   const residents = snapshot.residents.map((r, i) => asResident(r, i, token));
+  /*
+   * Which published resident a tile stands for (spec 035). Keyed by the same
+   * synthetic id `asResident` mints, because the published list has no ids of
+   * its own and a species id is not unique within a tank.
+   */
+  const bySharedId = new Map(snapshot.residents.map((r, i) => [`shared_${i}`, r]));
   const photoKey = snapshot.tank.photoBlobKey;
 
   return (
@@ -171,6 +178,16 @@ export default function SharedTank() {
         </p>
       </header>
 
+      {/*
+        Spec 035. A tile is a button but does not look like one - reported as
+        "there is no hint to click on a fish to see details". Said in words
+        once, because a wall of fish with a chevron on every tile is noisier
+        than one line, and the per-tile cue below carries it from there.
+      */}
+      <p className="xs muted sharedtank__hint" style={{ marginBottom: 0 }}>
+        Tap a fish to read about it, or the heart to add it to your Dream List.
+      </p>
+
       <TankViewer
         tankName={snapshot.tank.name}
         residents={residents}
@@ -181,7 +198,7 @@ export default function SharedTank() {
           // plain tile, exactly as the owner's own screen shows it.
           if (!speciesId) return <div className="tank-tile tank-tile--plain">{content}</div>;
           const already = hearted.has(speciesId);
-          const resident = snapshot.residents.find((s) => s.speciesId === speciesId);
+          const resident = bySharedId.get(r.holding.id);
           // Not `--plain`: that is the owner's dimmed treatment for a fish the
           // catalog could not name, and applying it here would fade the whole
           // grid for no reason.
@@ -195,7 +212,7 @@ export default function SharedTank() {
               */}
               <button
                 type="button"
-                className="tank-tile__open"
+                className="tank-tile__open tank-tile__open--hinted"
                 aria-label={`Read about ${r.commonName}`}
                 onClick={() => {
                   if (signedIn) { navigate(`/species/${speciesId}`); return; }
@@ -212,7 +229,7 @@ export default function SharedTank() {
                 onClick={() => {
                   if (already) return;
                   if (signedIn) { void heart(speciesId); return; }
-                  setWanted(snapshot.residents.find((s) => s.speciesId === speciesId));
+                  setWanted(bySharedId.get(r.holding.id));
                 }}
               >
                 <HeartIcon size={18} weight={already ? 'fill' : 'regular'} aria-hidden="true" />
@@ -221,19 +238,28 @@ export default function SharedTank() {
           );
         }}
       >
+        {/*
+          Spec 035. Both were siblings below the grid and were invisible on a
+          long tank - the keeper tapped a fish and, as far as they could tell,
+          nothing happened.
+        */}
         {wanted && !signedIn && (
-          <JoinPrompt
-            resident={wanted}
-            token={token}
-            onDismiss={() => setWanted(undefined)}
-          />
+          <Sheet label={`Want a ${wanted.commonName}?`} onDismiss={() => setWanted(undefined)}>
+            <JoinPrompt
+              resident={wanted}
+              token={token}
+              onDismiss={() => setWanted(undefined)}
+            />
+          </Sheet>
         )}
         {peeked && !signedIn && (
-          <ProfilePeek
-            resident={peeked}
-            token={token}
-            onDismiss={() => setPeeked(undefined)}
-          />
+          <Sheet label={`About ${peeked.commonName}`} onDismiss={() => setPeeked(undefined)}>
+            <ProfilePeek
+              resident={peeked}
+              token={token}
+              onDismiss={() => setPeeked(undefined)}
+            />
+          </Sheet>
         )}
         {hearted.size > 0 && (
           <p className="xs muted" aria-live="polite" style={{ marginBottom: 0 }}>
@@ -438,7 +464,10 @@ function asResident(resident: SharedResident, index: number, token: string): Tan
     ? `${MEDIA_WORKER_URL}/shared/${token}/media/${resident.photoBlobKey}`
     : undefined;
   return {
-    holding: { id: `shared_${resident.speciesId ?? index}` } as TankResident['holding'],
+    // Spec 035: the INDEX, never the species id. Two fish of one species -
+    // a school, which is most tanks - collided here, which made the grid's
+    // React key ambiguous and made "which fish did they tap" unanswerable.
+    holding: { id: `shared_${index}` } as TankResident['holding'],
     quantity: resident.quantity,
     speciesId: resident.speciesId,
     commonName: resident.commonName,

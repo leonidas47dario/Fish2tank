@@ -1913,3 +1913,64 @@ summary.factor::-webkit-details-marker { display: none; }
   .crop__img { opacity: 1; }
   .crop__box { box-shadow: 0 0 0 2px var(--color-surface); }
 }
+
+/* --- A shared tank says its tiles are tappable (spec 035) --------------- */
+
+.sharedtank__hint { padding: 0 var(--space-4); }
+
+/* The cue is on the ART, not a badge in the corner: a chevron per tile on a
+   wall of fish is noise, and a lifted edge reads as "this is a surface you
+   can press" on a phone with no hover to rely on. */
+.tank-tile__open--hinted .tank-tile__art {
+  transition: transform var(--duration-fast) var(--ease-standard),
+              opacity var(--duration-fast) var(--ease-standard);
+}
+.tank-tile__open--hinted:active .tank-tile__art { transform: scale(0.98); opacity: 0.8; }
+
+/* The name carries the affordance the way a link does, which is the one
+   convention every reader already has. */
+.tank-tile__open--hinted .tank-tile__body strong {
+  color: var(--color-primary);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+/* --- A panel that cannot be missed (spec 035) --------------------------- */
+
+.sheet { position: fixed; inset: 0; z-index: 20; }
+
+/* A real button, so it is reachable without a pointer. */
+.sheet__scrim {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: var(--color-scrim);
+  cursor: pointer;
+}
+
+/* Bottom-anchored: this app is used on a phone, where a sheet is the native
+   idiom and the thumb is already at the bottom of the screen. */
+.sheet__panel {
+  position: absolute;
+  inset: auto 0 0 0;
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: var(--space-4);
+  padding-bottom: max(var(--space-4), env(safe-area-inset-bottom));
+  border-radius: var(--radius-card) var(--radius-card) 0 0;
+  background: var(--color-surface-raised);
+}
+.sheet__panel:focus { outline: none; }
+
+/* Wide enough to be a dialog rather than a drawer, on a desktop. */
+@media (min-width: 900px) {
+  .sheet__panel {
+    inset: 50% auto auto 50%;
+    transform: translate(-50%, -50%);
+    width: min(28rem, calc(100vw - var(--space-6)));
+    border-radius: var(--radius-card);
+  }
+}

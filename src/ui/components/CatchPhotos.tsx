@@ -19,7 +19,7 @@
  * fish you already own and photographed last year.
  */
 import { useRef, useState } from 'react';
-import { addPhotos, type CaptureFile } from '@/data/repositories';
+import { addPhotos, deletePhoto, type CaptureFile } from '@/data/repositories';
 import { cropToBlob, type CropRect } from '@/data/media/crop';
 import { CropSheet } from './CropSheet';
 import type { Id } from '@/domain/types';
@@ -42,6 +42,8 @@ export function CatchPhotos({ specimenId, title, reducedMotion }: Props) {
   const [shownId, setShownId] = useState<Id | undefined>();
   /** The photo waiting to be cropped, if any (spec 032). */
   const [pending, setPending] = useState<File>();
+  /** The photo the keeper has asked to delete, awaiting confirmation (spec 033). */
+  const [confirmDelete, setConfirmDelete] = useState<Id>();
 
   // Newest first, so a record with no explicit choice shows the latest photo.
   // Falls back rather than pins: the chosen one can be deleted from elsewhere.
@@ -99,6 +101,23 @@ export function CatchPhotos({ specimenId, title, reducedMotion }: Props) {
     }
   }
 
+  async function removeShown(mediaId: Id) {
+    setConfirmDelete(undefined);
+    setSaving(true);
+    setError(undefined);
+    try {
+      const { detached } = await deletePhoto({ mediaId, specimenId });
+      console.info('[photos] removed from catch', { specimenId, mediaId, detached });
+      // Fall back to whatever the strip shows next rather than pinning a row
+      // that no longer exists.
+      setShownId(undefined);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not remove that photo.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
   const pick = () => fileRef.current?.click();
 
   return (
@@ -144,6 +163,44 @@ export function CatchPhotos({ specimenId, title, reducedMotion }: Props) {
           </button>
         )}
       </div>
+
+      {/*
+        Spec 033. Under the picture it acts on, not in the strip: a delete
+        button on every thumbnail is a row of small destructive targets on a
+        phone, and this is the one action with no undo.
+      */}
+      {shown && (
+        <div className="pad stack">
+          {confirmDelete === shown.media.id ? (
+            <>
+              <p className="warn small" style={{ marginBottom: 0 }}>
+                Delete this {shown.media.kind}? The original is the only copy — there
+                is no undo.
+              </p>
+              <button
+                type="button"
+                className="btn--danger"
+                disabled={saving}
+                onClick={() => void removeShown(shown.media.id)}
+              >
+                {saving ? 'Deleting…' : 'Delete it'}
+              </button>
+              <button type="button" className="btn--ghost" onClick={() => setConfirmDelete(undefined)}>
+                Keep it
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              className="btn--ghost"
+              disabled={saving}
+              onClick={() => setConfirmDelete(shown.media.id)}
+            >
+              Delete this photo
+            </button>
+          )}
+        </div>
+      )}
 
       {media && media.length > 0 && (
         <div className="pad">
