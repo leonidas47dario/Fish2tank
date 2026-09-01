@@ -89,7 +89,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<Settings>(loadCache);
 
   // The profile wins over the cache, but only if there is one. This reads and
-  // never writes (spec 020): `user_local` is a hardcoded key in a synced table,
+  // never writes (spec 022): `user_local` is a hardcoded key in a synced table,
   // and this component mounts above the sign-in gate, so creating the row here
   // meant every signed-out launch queued a default profile to be pushed over
   // the account's real one. The row is created by the first settings change.

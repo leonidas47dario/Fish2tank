@@ -1,4 +1,4 @@
-# 020 — The second device must not win
+# 022 — The second device must not win
 
 **Claims:** BUG-08 (a device joining an account overwrites it), FR-A11 (the
 gate asks which copy is the real one), NFR-13 (a sync is not complete until it

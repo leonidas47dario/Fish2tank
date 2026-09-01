@@ -73,7 +73,7 @@ function blankProfile(legacyRaw?: string | null): User {
 }
 
 /**
- * The profile as it stands, without creating one - spec 020, BUG-08.
+ * The profile as it stands, without creating one - spec 022, BUG-08.
  *
  * WHY A READ THAT WRITES NOTHING EXISTS. `users` is a synced table and
  * `user_local` is a hardcoded primary key, so a row written here before anyone

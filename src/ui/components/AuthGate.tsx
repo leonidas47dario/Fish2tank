@@ -43,7 +43,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
   const [busy, setBusy] = useState<'in' | 'replacing' | undefined>();
   const [problem, setProblem] = useState<string>();
   const [developer, setDeveloper] = useState(isDeveloperMode);
-  /** `undefined` until counted. See the reconcile panel below (spec 020). */
+  /** `undefined` until counted. See the reconcile panel below (spec 022). */
   const [claim, setClaim] = useState<PendingClaim>();
 
   // Entering and leaving happen from two different subtrees (the gate below,
@@ -231,7 +231,7 @@ function describe(table: string, rows: number): string {
 }
 
 /**
- * The choice a joining device has to be offered - spec 020 FR-A11.
+ * The choice a joining device has to be offered - spec 022 FR-A11.
  *
  * WHY THIS EXISTS AT ALL. Dexie Cloud's first sync after a login pushes every
  * local row of every not-yet-synced table up as a whole-object upsert, and the
