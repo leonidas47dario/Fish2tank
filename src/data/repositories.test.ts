@@ -7,6 +7,7 @@ import {
   stockTank,
   addEncounterChapter,
   addPhotos,
+  deletePhoto,
   assertIdentity,
   assessmentHistory,
   awardGolden,
@@ -1632,5 +1633,79 @@ describe('deleting a catch that was mourned', () => {
 
     expect(await db.memorials.get(theirs.memorial.id)).toBeDefined();
     expect(await db.specimens.get(theirs.specimen.id)).toBeDefined();
+  });
+});
+
+describe('deleting one photograph (spec 033)', () => {
+  async function aCatchWithPhotos(count: number) {
+    const { specimen } = await createCatchDraft({ files: [photo()], clientKey: newId('k') }, db);
+    const extra = await addPhotos(
+      { specimenId: specimen.id, files: Array.from({ length: count - 1 }, photo) }, db,
+    );
+    return { specimen, extra };
+  }
+
+  it('removes the row and every blob it owns, not just the original', async () => {
+    // The four older delete sites removed originalBlobKey alone, which was
+    // harmless until spec 029 gave a photo a preview and a thumbnail too.
+    const { specimen } = await aCatchWithPhotos(1);
+    const media = (await db.media.toArray())[0]!;
+    await db.media.update(media.id, {
+      previewBlobKey: 'blob_preview', thumbnailBlobKey: 'blob_thumb',
+    });
+    await db.blobs.bulkAdd([
+      { key: 'blob_preview', data: new ArrayBuffer(4), bytes: 4, mimeType: 'image/jpeg', storedAt: '2026-09-01T00:00:00.000Z' },
+      { key: 'blob_thumb', data: new ArrayBuffer(4), bytes: 4, mimeType: 'image/jpeg', storedAt: '2026-09-01T00:00:00.000Z' },
+    ] as never);
+
+    await deletePhoto({ mediaId: media.id, specimenId: specimen.id }, db);
+
+    expect(await db.media.get(media.id)).toBeUndefined();
+    expect(await db.blobs.get(media.originalBlobKey)).toBeUndefined();
+    expect(await db.blobs.get('blob_preview')).toBeUndefined();
+    expect(await db.blobs.get('blob_thumb')).toBeUndefined();
+  });
+
+  it('DETACHES rather than destroying when another fish still has it', async () => {
+    // One picture can show several fish. Deleting it from one record must not
+    // take it from the others - the rule the catch cascade already follows.
+    const { specimen } = await aCatchWithPhotos(1);
+    const media = (await db.media.toArray())[0]!;
+    await db.media.update(media.id, { specimenIds: [specimen.id, 'spec_other'] });
+
+    const result = await deletePhoto({ mediaId: media.id, specimenId: specimen.id }, db);
+
+    expect(result.detached).toBe(true);
+    expect((await db.media.get(media.id))!.specimenIds).toEqual(['spec_other']);
+    expect(await db.blobs.get(media.originalBlobKey)).toBeDefined();
+  });
+
+  it('clears a card preference that pointed at the deleted photo', async () => {
+    const { specimen } = await aCatchWithPhotos(1);
+    const media = (await db.media.toArray())[0]!;
+    await db.cardPrefs.put({
+      speciesId: 'sp_jaguar_cichlid', artSource: 'own', preferredMediaId: media.id,
+      updatedAt: '2026-09-01T00:00:00.000Z',
+    } as never);
+
+    await deletePhoto({ mediaId: media.id, specimenId: specimen.id }, db);
+
+    expect((await db.cardPrefs.get('sp_jaguar_cichlid'))!.preferredMediaId).toBeUndefined();
+  });
+
+  it('refuses a tank photo, which has its own control', async () => {
+    // Deleting the row from here would leave the tank pointing at nothing.
+    const { specimen } = await aCatchWithPhotos(1);
+    const media = (await db.media.toArray())[0]!;
+    if (!(await db.aquariums.get('tank_75g'))) await db.aquariums.add(seventyFive());
+    await db.aquariums.update('tank_75g', { photoMediaId: media.id });
+
+    await expect(deletePhoto({ mediaId: media.id, specimenId: specimen.id }, db))
+      .rejects.toThrow(/tank photo/i);
+    expect(await db.media.get(media.id)).toBeDefined();
+  });
+
+  it('is a no-op for a photo that is already gone', async () => {
+    await expect(deletePhoto({ mediaId: 'media_nope' }, db)).resolves.toEqual({ detached: false });
   });
 });
