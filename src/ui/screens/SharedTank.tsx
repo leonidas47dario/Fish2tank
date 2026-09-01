@@ -10,14 +10,23 @@
  * carries the numbers the owner's device computed. That is what keeps a fresh
  * browser from having to seed anything before the page can draw.
  *
- * IT IS ALSO THE TOP OF A FUNNEL, which is why hearting a fish and opening a
- * fish are gated rather than absent. A stranger looking at a tank of fish is
- * the most interested this app's audience ever gets; asking for an account at
- * exactly that moment is the point, and the tap they made survives the
- * sign-in so they are not dumped on an empty Home screen afterwards.
+ * IT IS ALSO THE TOP OF A FUNNEL. A stranger looking at a tank of fish is the
+ * most interested this app's audience ever gets, so the two things they might
+ * want - THIS fish, and to READ about this fish - are two separate targets on
+ * a tile, and the tap they made survives the sign-in.
+ *
+ * Spec 025 wired the second of those. Until then a tile was a plain div with a
+ * heart on it: opening a fish had been specified, typed into PendingIntent and
+ * branched on by the consumer, and never built. The branch that existed would
+ * have HEARTED a fish somebody asked to read about.
+ *
+ * BEING SIGNED IN DOES NOT CHANGE WHAT THIS ROUTE RENDERS, and must not. A
+ * share link has to show the share - to a keeper checking their own link, to a
+ * signed-in friend following it. What signing in changes is that a tile can
+ * now open the real catalog entry, and that the way into the app is offered.
  */
 import { useCallback, useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useObservable } from 'dexie-react-hooks';
 import { db } from '@/data/db';
 import { addToDreamList } from '@/data/repositories';
@@ -28,6 +37,7 @@ import type { TankResident } from '@/domain/tank-stats';
 import { TankViewer } from '../components/tank/TankViewer';
 import { FishIcon, GoogleLogoIcon, HeartIcon } from '../components/Icons';
 import { portraitAsset } from '@/data/catalog';
+import { peekRows } from './shared-peek';
 
 type LoadState =
   | { status: 'loading' }
@@ -37,10 +47,13 @@ type LoadState =
 
 export default function SharedTank() {
   const { token = '' } = useParams<{ token: string }>();
+  const navigate = useNavigate();
   const [state, setState] = useState<LoadState>({ status: 'loading' });
   const user = useObservable(db.cloud?.currentUser);
   const signedIn = Boolean(user?.isLoggedIn);
   const [wanted, setWanted] = useState<SharedResident>();
+  /** The fish a signed-out guest asked to read about (spec 025). */
+  const [peeked, setPeeked] = useState<SharedResident | undefined>();
   const [hearted, setHearted] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -100,10 +113,15 @@ export default function SharedTank() {
     const intent = takePending();
     if (!intent) return;
     console.info('[share] replaying the intent from before sign-in', intent);
-    if (intent.action === 'heart' || intent.action === 'profile') {
-      void heart(intent.speciesId);
+    // Spec 025. These used to collapse into one branch, so asking to READ
+    // about a fish silently added it to a Dream List instead. Two wants, two
+    // outcomes: `profile` opens the catalog entry, `heart` hearts.
+    if (intent.action === 'profile') {
+      navigate(`/species/${intent.speciesId}`);
+      return;
     }
-  }, [signedIn, heart]);
+    void heart(intent.speciesId);
+  }, [signedIn, heart, navigate]);
 
   if (state.status === 'loading') return <p className="muted">Loading…</p>;
 
@@ -163,12 +181,29 @@ export default function SharedTank() {
           // plain tile, exactly as the owner's own screen shows it.
           if (!speciesId) return <div className="tank-tile tank-tile--plain">{content}</div>;
           const already = hearted.has(speciesId);
+          const resident = snapshot.residents.find((s) => s.speciesId === speciesId);
           // Not `--plain`: that is the owner's dimmed treatment for a fish the
           // catalog could not name, and applying it here would fade the whole
           // grid for no reason.
           return (
             <div className="tank-tile">
-              {content}
+              {/*
+                Spec 025. The tile itself opens the fish, which it could not do
+                before. Signed in that is the real catalog entry; signed out it
+                is the peek, because asking for an account before showing
+                anything is the request everybody dismisses.
+              */}
+              <button
+                type="button"
+                className="tank-tile__open"
+                aria-label={`Read about ${r.commonName}`}
+                onClick={() => {
+                  if (signedIn) { navigate(`/species/${speciesId}`); return; }
+                  setPeeked(resident);
+                }}
+              >
+                {content}
+              </button>
               <button
                 type="button"
                 className="tank-tile__heart"
@@ -193,13 +228,113 @@ export default function SharedTank() {
             onDismiss={() => setWanted(undefined)}
           />
         )}
+        {peeked && !signedIn && (
+          <ProfilePeek
+            resident={peeked}
+            token={token}
+            onDismiss={() => setPeeked(undefined)}
+          />
+        )}
         {hearted.size > 0 && (
           <p className="xs muted" aria-live="polite" style={{ marginBottom: 0 }}>
             {hearted.size === 1 ? 'One fish added' : `${hearted.size} fish added`} to your Dream List.
           </p>
         )}
+        {/*
+          Spec 025. Signing in leaves a guest here, which is right - they were
+          reading a tank and should not be yanked out of it - but it must not
+          be a dead end. Offered, never forced: redirecting a signed-in visitor
+          off this route would stop a share link showing the share.
+        */}
+        {signedIn && (
+          <Link className="btn--ghost sharedtank__enter" to="/">
+            Open Fish2Tank
+          </Link>
+        )}
       </TankViewer>
     </SharedShell>
+  );
+}
+
+/**
+ * What a signed-out guest gets when they ask to read about a fish (spec 025).
+ *
+ * THE BLUR IS AN INVITATION, NOT A LOCK. Every value behind it is already in
+ * the published JSON that anyone holding this link can fetch directly, so
+ * nothing here is protected and this code must not pretend otherwise. What is
+ * actually behind the account is the app: the Dream List, the tank you measure
+ * against, the honest read on whether this fish could live in it.
+ *
+ * It shows the fish first and asks second, which is the opposite of the heart
+ * path and the reason that one leaks: an account request with nothing shown
+ * yet is a request to trust a stranger's link.
+ */
+function ProfilePeek({ resident, token, onDismiss }: {
+  resident: SharedResident;
+  token: string;
+  onDismiss: () => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState<string>();
+
+  async function open() {
+    setBusy(true);
+    setProblem(undefined);
+    // Written BEFORE the login call: Google can return through a full-page
+    // redirect, and anything held only in memory is gone by then. `profile`
+    // rather than `heart` - they asked to read, not to want.
+    remember({
+      action: 'profile',
+      speciesId: resident.speciesId!,
+      returnTo: `/share/${token}`,
+    });
+    try {
+      await db.cloud.login({ provider: 'google' });
+    } catch (cause) {
+      console.error('[share] sign-in from a shared tank peek failed', cause);
+      setProblem(cause instanceof Error ? cause.message : String(cause));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const rows = peekRows(resident);
+
+  return (
+    <section className="card stack">
+      <strong>{resident.commonName}</strong>
+      {resident.scientificName && (
+        <p className="sci xs muted" style={{ marginBottom: 0 }}>{resident.scientificName}</p>
+      )}
+
+      {rows.length > 0 ? (
+        <dl className="peek" aria-hidden="true">
+          {rows.map((row) => (
+            <div className="peek__row" key={row.label}>
+              <dt className="xs muted">{row.label}</dt>
+              <dd className="peek__value data">{row.value}</dd>
+            </div>
+          ))}
+        </dl>
+      ) : (
+        <p className="small muted" style={{ marginBottom: 0 }}>
+          Nobody has measured this one yet.
+        </p>
+      )}
+
+      <p className="small muted" style={{ marginBottom: 0 }}>
+        Sign in to read the full profile in the catalog - care, compatibility with
+        the tank you actually have, and what one costs near you.
+      </p>
+      <button type="button" className="btn--primary" disabled={busy} onClick={() => void open()}>
+        <GoogleLogoIcon size={18} weight="bold" aria-hidden="true" />
+        {busy ? ' Opening...' : ' Continue with Google'}
+      </button>
+      <button type="button" className="btn--ghost" onClick={onDismiss}>
+        Not now
+      </button>
+      {problem && <p className="warn small" style={{ marginBottom: 0 }}>{problem}</p>}
+    </section>
   );
 }
 
