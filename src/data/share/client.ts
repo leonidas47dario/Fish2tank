@@ -13,6 +13,7 @@
 import { db as defaultDb, type Fish2TankDB } from '../db';
 import { loadTankResidents } from '../tank-residents';
 import { BUILD_ID, CLOUD_DATABASE_URL, DEPLOYMENT, MEDIA_WORKER_URL } from '@/build-info';
+import { viewableBlobKey } from '../media/renditions';
 import { buildSnapshot, fingerprintOf, type PublicSnapshot, type SharedSnapshot } from './snapshot';
 import { forgetShare, recordShare, shareFor } from './shares';
 import type { Id } from '@/domain/types';
@@ -119,11 +120,16 @@ export async function publishTank(
         ...identity, photoMediaId: loaded.aquarium.photoMediaId,
       });
     } else {
-      const present = await headBlob(media.originalBlobKey, {
+      // Spec 029: the preview where one exists, the original otherwise. A
+      // guest is sent the smallest honest copy, not the keeper's 3.6 MB
+      // original; `viewableBlobKey` falls back on its own for any photo
+      // already small enough not to have a rendition.
+      const key = viewableBlobKey(media);
+      const present = await headBlob(key, {
         workerUrl, accessToken, doFetch,
       });
       if (present) {
-        tankPhotoBlobKey = media.originalBlobKey;
+        tankPhotoBlobKey = key;
       } else {
         warnings.push(
           'The tank photo has not finished syncing, so guests will see the placeholder. '
@@ -154,9 +160,11 @@ export async function publishTank(
   await Promise.all(loaded.ownArt.map(async ({ holdingId, mediaId }) => {
     const media = await database.media.get(mediaId);
     if (!media) return;
-    const present = await headBlob(media.originalBlobKey, { workerUrl, accessToken, doFetch });
+    // Spec 029, as above: preview first, original as the honest fallback.
+    const key = viewableBlobKey(media);
+    const present = await headBlob(key, { workerUrl, accessToken, doFetch });
     if (present) {
-      residentPhotoKeys.set(holdingId, media.originalBlobKey);
+      residentPhotoKeys.set(holdingId, key);
     } else {
       unsyncedPhotos += 1;
     }

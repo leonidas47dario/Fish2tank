@@ -41,6 +41,7 @@ import { computeDiscoveryTier } from '@/engine/rarity/discovery-tier';
 import { scarcityFor } from './market';
 import { db, newId, nowIso, today, type Fish2TankDB } from './db';
 import { loadProfile } from './profile';
+import { deriveRenditions } from './media/renditions';
 
 type DB = Fish2TankDB;
 
@@ -899,8 +900,22 @@ export async function addPhotos(
   const at = input.capturedAt ?? nowIso();
   const media: Media[] = [];
   const files = await detachFiles(input.files);
-  const blobs = files.map((f) => {
+  const blobs: Array<{ key: string; data: ArrayBuffer; bytes: number; mimeType: string; storedAt: string }> = [];
+
+  for (const f of files) {
     const key = newId('blob');
+
+    /*
+     * FR-A08, spec 029. Derived ALONGSIDE the original, never instead of it
+     * (NFR-03). `deriveRenditions` returns nothing rather than throwing when
+     * the engine cannot resize, because losing a capture to save bytes would
+     * be the wrong trade by a wide margin - and nothing downstream is required
+     * to have a rendition: every reader falls back to the original.
+     */
+    const derived = f.kind === 'photo'
+      ? await deriveRenditions(new Blob([f.data], { type: f.mimeType }), { newKey: () => newId('blob') })
+      : {};
+
     media.push({
       id: newId('media'),
       kind: f.kind,
@@ -908,12 +923,18 @@ export async function addPhotos(
       originalBlobKey: key,
       originalBytes: f.data.byteLength,
       mimeType: f.mimeType,
+      previewBlobKey: derived.preview?.key,
+      thumbnailBlobKey: derived.thumbnail?.key,
       durationSeconds: f.durationSeconds,
       capturedAt: at,
       syncState: 'local-draft',
     });
-    return { key, data: f.data, bytes: f.data.byteLength, mimeType: f.mimeType, storedAt: at };
-  });
+
+    blobs.push({ key, data: f.data, bytes: f.data.byteLength, mimeType: f.mimeType, storedAt: at });
+    for (const r of [derived.preview, derived.thumbnail]) {
+      if (r) blobs.push({ key: r.key, data: r.data, bytes: r.bytes, mimeType: r.mimeType, storedAt: at });
+    }
+  }
 
   try {
     await database.transaction('rw', [database.media, database.blobs, database.specimens], async () => {
