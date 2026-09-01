@@ -69,14 +69,52 @@ describe('keptFishRows', () => {
     expect(row!.name).toBe('Super red severum');
   });
 
-  it('hides a holding nothing is left of', () => {
-    expect(rows({
-      holdings: [holding({ id: 'h1', openingQuantity: 2 })],
+  /**
+   * Spec 020. These used to be dropped. Once uploading a photo moved onto the
+   * record, dropping them removed the last route to photographing a fish you
+   * have lost - `ownership()` still counts the holding, so the species reads
+   * as yours while offering nothing to open. That is the memorial case Fish
+   * Heaven's FH-6 needs to work.
+   */
+  const allDied = () => ({
+    holdings: [holding({ id: 'h1', openingQuantity: 2 })],
+    lifeEvents: [{
+      id: 'e1', holdingId: 'h1', type: 'deceased' as const, occurredOn: '2026-08-02',
+      quantityDelta: -2, createdAt: NOW,
+    }],
+  });
+
+  it('keeps a holding nothing is left of, so it can still be opened', () => {
+    const [row, ...rest] = rows(allDied());
+    expect(rest).toHaveLength(0);
+    expect(row).toMatchObject({ key: 'h1', holdingId: 'h1', quantity: 0, pastKept: true });
+  });
+
+  it('marks a specimen past kept once every holding behind it is empty', () => {
+    const [row] = rows({
+      specimens: [specimen({ id: 's1', nickname: 'pineapple' })],
+      holdings: [holding({ id: 'h1', specimenId: 's1', openingQuantity: 2 })],
       lifeEvents: [{
         id: 'e1', holdingId: 'h1', type: 'deceased', occurredOn: '2026-08-02',
         quantityDelta: -2, createdAt: NOW,
       }],
-    })).toHaveLength(0);
+    });
+    expect(row).toMatchObject({ specimenId: 's1', quantity: 0, pastKept: true });
+  });
+
+  it('does not call a fish never brought home past kept', () => {
+    // No holding ever existed, so there is nothing to have lost. "Not in a
+    // tank" and "no longer kept" are different sentences.
+    const [row] = rows({ specimens: [specimen({ id: 's1' })] });
+    expect(row).toMatchObject({ quantity: 0, pastKept: false });
+  });
+
+  it('does not call a living holding past kept just because it left its tank', () => {
+    const [row] = rows({
+      holdings: [holding({ id: 'h1', openingQuantity: 3 })],
+      residencies: [residency({ id: 'r1', holdingId: 'h1', endDate: '2026-08-01' })],
+    });
+    expect(row).toMatchObject({ quantity: 3, tanks: [], pastKept: false });
   });
 
   it('carries the count and the tank onto a specimen row too', () => {

@@ -13,18 +13,18 @@
  * through algae at an angle is sometimes genuinely worse than the reference
  * shot.
  *
- * Photos can be added here for anything you have, kept fish included. That is
- * the only route for a fish imported as an opening balance: it never passed
- * through the Catch screen, so without this its card could never carry your
- * own picture.
+ * Photos are NOT added here any more (spec 020). They belong to a fish rather
+ * than to a species, so they are added on a record, and every fish of yours
+ * now has one reachable from "Your fish" below. What stays here is the choice
+ * this screen is uniquely placed to make: which of your pictures the card
+ * wears, and whether it wears one at all.
  */
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { db } from '@/data/db';
-import type { Id } from '@/domain/types';
 import {
-  addPhotos, addToDreamList, ensureSpecimenForHolding, removeFromDreamList, type CaptureFile,
+  addToDreamList, ensureSpecimenForHolding, removeFromDreamList,
 } from '@/data/repositories';
 import {
   CATALOG_BY_SPECIES, cardPrice, marketAndScarcity, ownership, portraitCredit,
@@ -39,7 +39,7 @@ import { MarketPanel } from '../components/MarketPanel';
 import { OwnPhotoStrip } from '../components/OwnPhotoStrip';
 import { Plate, useCardArt } from '../components/Plate';
 import { ScarcityBadge, TierBadge } from '../components/Badges';
-import { CaretLeftIcon, PlusIcon } from '../components/Icons';
+import { CaretLeftIcon } from '../components/Icons';
 import type { DiscoveryTier } from '@/domain/types';
 import { SCARCITY_LABELS, type MarketScarcityBand } from '@/engine/rarity/market-scarcity';
 
@@ -109,10 +109,7 @@ export default function SpeciesDetail() {
 
   const pref = useLiveQuery(() => (id ? db.cardPrefs.get(id) : undefined), [id]);
 
-  const fileRef = useRef<HTMLInputElement>(null);
-  const [saving, setSaving] = useState(false);
-  const [photoError, setPhotoError] = useState<string | undefined>();
-  const [photoTarget, setPhotoTarget] = useState('');
+  const [openError, setOpenError] = useState<string | undefined>();
 
   /* A dead end with no way out is not an empty state. This one is reachable
      from a stale bookmark or a link written before a catalog rebuild renamed
@@ -176,17 +173,10 @@ export default function SpeciesDetail() {
     speciesName: species.commonName,
   });
 
-  /**
-   * Ambiguous whenever there is more than one fish it could be.
-   *
-   * This used to read `specimens.length === 0 && holdingsWithoutSpecimen.length > 1`,
-   * which had a seam in it. Opening a row now mints a specimen, so that first
-   * clause went false and the next photo routed silently to the newest
-   * specimen - one Congo Puffer holding opened, then a photo meant for the
-   * other, landing on the wrong fish with nothing said. One rule over one
-   * list has no seam to fall through.
-   */
-  const needsPhotoTarget = yourFish.length > 1;
+  /* Spec 019 added a "which one is this?" picker here, and spec 020 deleted
+     it. It answered "which of your fish is this a photo of", which is a
+     question only a species page has to ask; a record already knows. Moving
+     the upload there removed the ambiguity rather than resolving it. */
 
   const hasOwnPhoto = data.ownPhotos.length > 0;
   const usingOwn = pref?.artSource !== 'portrait' && hasOwnPhoto;
@@ -195,51 +185,16 @@ export default function SpeciesDetail() {
     await db.cardPrefs.put({ speciesId: id!, artSource, updatedAt: new Date().toISOString() });
   }
 
-  /**
-   * Where a new photo goes. A photo is of a fish, not of a species.
-   *
-   * The chosen row when one was asked for, and otherwise the only row there
-   * is. A row that has no record yet mints one here, which is the same call
-   * opening the row makes.
-   */
-  async function targetSpecimenId(): Promise<Id> {
-    const chosen = needsPhotoTarget
-      ? yourFish.find((r) => r.key === photoTarget)
-      : yourFish[0];
-    if (!chosen) throw new Error('Nothing of yours to attach this photo to.');
-    if (chosen.specimenId) return chosen.specimenId;
-    return (await ensureSpecimenForHolding(chosen.holdingId!)).id;
-  }
-
   /** Open the record for a row, minting it first if the fish never had one. */
   async function openRow(row: KeptFishRow) {
     if (row.specimenId) return navigate(`/specimen/${row.specimenId}`);
-    setPhotoError(undefined);
+    setOpenError(undefined);
     try {
       const specimen = await ensureSpecimenForHolding(row.holdingId!);
       navigate(`/specimen/${specimen.id}`);
     } catch (e) {
       console.error('[mint] opening a kept fish failed', { holdingId: row.holdingId, error: e });
-      setPhotoError(e instanceof Error ? e.message : 'Could not open that fish.');
-    }
-  }
-
-  async function onFiles(list: FileList | null) {
-    if (!list || list.length === 0) return;
-    setSaving(true);
-    setPhotoError(undefined);
-    try {
-      const files: CaptureFile[] = Array.from(list).map((f) => ({
-        kind: f.type.startsWith('video') ? 'video' : 'photo',
-        blob: f,
-        mimeType: f.type || 'application/octet-stream',
-      }));
-      await addPhotos({ specimenId: await targetSpecimenId(), files });
-    } catch (e) {
-      setPhotoError(e instanceof Error ? e.message : 'Could not save that photo.');
-    } finally {
-      setSaving(false);
-      if (fileRef.current) fileRef.current.value = '';
+      setOpenError(e instanceof Error ? e.message : 'Could not open that fish.');
     }
   }
 
@@ -385,77 +340,36 @@ export default function SpeciesDetail() {
           </>
         ) : (
           <p className="panel__note">
+            {/* Says where the button is, now that it is not here. A note that
+                asks for a photo without offering a way to give one is the
+                thing this panel was already being criticised for. */}
             {card.user.inCollection
-              ? 'No photo of yours yet. Add one and it becomes this card’s art.'
+              ? 'No photo of yours yet. Add one on any of your fish below and it becomes this card’s art.'
               : 'Catch one and your own photo becomes this card’s art.'}
           </p>
         )}
 
         {/* Anything you have can take a photo - a fish imported as an opening
             balance never passed through the Catch screen, so this is its only
-            route to having its own picture. */}
-        {card.user.inCollection && (
-          <>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*,video/*"
-              capture="environment"
-              multiple
-              className="visually-hidden"
-              onChange={(e) => void onFiles(e.target.files)}
+            route to having its own picture.
+
+            NO LONGER TRUE, and the panel is smaller for it (spec 020). A photo
+            is of a fish, not of a species, so uploading moved onto the record,
+            where there is no "which one of yours is this?" to ask. This panel
+            keeps only the choice it is named for: which picture the card
+            wears. The upload button, its hidden input and that whole picker
+            are gone. */}
+        {card.user.inCollection && data.ownPhotos.length > 0 && (
+          <div style={{ marginTop: 'var(--space-3)' }}>
+            <OwnPhotoStrip
+              mediaIds={data.ownPhotos.map((m) => m.id)}
+              onPick={(mediaId) => void db.cardPrefs.put({
+                speciesId: id, artSource: 'own', preferredMediaId: mediaId,
+                updatedAt: new Date().toISOString(),
+              })}
+              selected={usingOwn ? (pref?.preferredMediaId ?? data.ownPhotos[0]!.id) : undefined}
             />
-            {/* Which fish is this a photo OF?
-​
-                Asked whenever you have more than one of this species, whether
-                or not each already has a record. Before spec 005 the code
-                picked a holding with .find() and attached the photo to
-                whichever came first, which was invisible and wrong as soon as
-                the same species could sit in two tanks; spec 019 widened the
-                question from holdings to every fish, because minting a record
-                used to switch the question off rather than answer it. */}
-            {needsPhotoTarget && (
-              <div style={{ marginTop: 'var(--space-3)' }}>
-                <label htmlFor="photo-target">Which one is this?</label>
-                <select
-                  id="photo-target"
-                  value={photoTarget}
-                  onChange={(e) => setPhotoTarget(e.target.value)}
-                >
-                  <option value="">Choose…</option>
-                  {yourFish.map((r) => (
-                    <option key={r.key} value={r.key}>
-                      {r.tanks.length ? r.tanks.join(' + ') : 'not in a tank'} — {r.name}
-                      {r.quantity > 0 && ` ×${r.quantity}`}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-            <button
-              type="button"
-              className="cta cta--quiet"
-              style={{ marginTop: 'var(--space-3)' }}
-              disabled={saving || (needsPhotoTarget && !photoTarget)}
-              onClick={() => fileRef.current?.click()}
-            >
-              <PlusIcon size={16} aria-hidden="true" />
-              {saving ? 'Saving…' : hasOwnPhoto ? 'Add another photo' : 'Add your photo'}
-            </button>
-            {photoError && <p className="warn" style={{ marginTop: 'var(--space-3)' }}>{photoError}</p>}
-            {data.ownPhotos.length > 0 && (
-              <div style={{ marginTop: 'var(--space-3)' }}>
-                <OwnPhotoStrip
-                  mediaIds={data.ownPhotos.map((m) => m.id)}
-                  onPick={(mediaId) => void db.cardPrefs.put({
-                    speciesId: id, artSource: 'own', preferredMediaId: mediaId,
-                    updatedAt: new Date().toISOString(),
-                  })}
-                  selected={usingOwn ? (pref?.preferredMediaId ?? data.ownPhotos[0]!.id) : undefined}
-                />
-              </div>
-            )}
-          </>
+          </div>
         )}
       </section>
 
@@ -493,7 +407,13 @@ export default function SpeciesDetail() {
                   {row.quantity > 1 && <span className="muted data"> ×{row.quantity}</span>}
                 </span>
                 <span className="tankrow__meta" style={{ display: 'block' }}>
-                  {row.tanks.length ? row.tanks.join(' + ') : 'not in a tank'}
+                  {/* Three different sentences, and they are not the same
+                      fact. Past kept means you held it and hold none now;
+                      "not in a tank" means it is alive somewhere unrecorded,
+                      or was caught and never brought home (spec 020). */}
+                  {row.pastKept
+                    ? 'no longer kept'
+                    : row.tanks.length ? row.tanks.join(' + ') : 'not in a tank'}
                 </span>
               </span>
               <span className={row.createdAt ? 'tankrow__meta num' : 'tankrow__meta'}>
@@ -501,6 +421,9 @@ export default function SpeciesDetail() {
               </span>
             </button>
           ))
+        )}
+        {openError && (
+          <p className="warn" style={{ margin: 'var(--space-3) var(--space-4) 0' }}>{openError}</p>
         )}
       </section>
 
