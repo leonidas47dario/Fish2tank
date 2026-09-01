@@ -1,13 +1,18 @@
-# 017 — Fish Heaven becomes a place you can visit
+# 030 — Fish Heaven becomes a place you can visit
 
 **Status: requirements only. No code.** Written to be built after the catch
 database redesign, because most of the open questions below are questions that
 redesign will answer. See "What the catch redesign has to settle".
 
-> A note on the name: the request says "Fish Haven"; the code and the shipped
-> UI say **Fish Heaven**. This spec keeps "Heaven" throughout to match what
-> exists. If Haven is the intended name, that is a rename worth doing
-> deliberately and separately — it touches the screen, the specs and ENH-09.
+> **The name is settled: Fish Heaven.** The request below says "Haven"; asked
+> about it on 2026-09-01 the answer was *"I had a typo, it's fish heaven for
+> dead fish memorials"*. The quote is left exactly as it was written, because
+> a spec that edits the ask to match the answer stops being a record of what
+> was asked. No rename is needed anywhere.
+
+> **Renumbered 017 → 030.** This was written when 017 was free; specs 017–029
+> have since merged. Git would not have caught the collision, because the
+> filenames differ.
 
 ## What was asked
 
