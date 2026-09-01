@@ -71,6 +71,42 @@ jobs:
           fi
           echo "id=$id" >> "$GITHUB_OUTPUT"
 
+      # BEFORE wrangler, because wrangler's error blames a missing env var and
+      # cannot know WHY it is missing. GitHub silently CREATES an environment a
+      # job references but cannot find - with no secrets and no reviewers - so
+      # a name that does not match turns a gated production deploy into an
+      # ungated one that fails obscurely three steps later. That happened on
+      # this workflow's first run: it never paused for approval, which was the
+      # real signal, and the wrangler error buried it.
+      - name: The environment actually attached
+        env:
+          TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          if [ -n "$TOKEN" ]; then
+            echo "CLOUDFLARE_API_TOKEN is present for environment '${{ inputs.environment }}'."
+            exit 0
+          fi
+          echo "::error::No CLOUDFLARE_API_TOKEN reached this job."
+          cat <<'MSG'
+          The job asked for a GitHub Environment named exactly:
+
+              ${{ inputs.environment }}
+
+          and got no secret from it. GitHub does not fail when an environment
+          is missing - it creates an empty one - so the usual cause is a name
+          that does not match: an environment called PROD or Production is a
+          DIFFERENT environment from production.
+
+          Fix it at:
+            https://github.com/leonidas47dario/Fish2tank/settings/environments
+
+          The environment must be named exactly as above, hold a secret named
+          exactly CLOUDFLARE_API_TOKEN, and - for production - list a required
+          reviewer. If this run did not pause for approval, the reviewers are
+          not attached either, and both symptoms have the same cause.
+          MSG
+          exit 1
+
       - name: Deploy
         working-directory: worker
         env:
