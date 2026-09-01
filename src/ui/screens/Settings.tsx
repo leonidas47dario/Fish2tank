@@ -34,6 +34,7 @@ import { SETTINGS_SECTIONS, initiallyOpen, sectionDomId } from './settings-secti
 import { exportArchive } from '@/data/portability/export';
 import { importArchive } from '@/data/portability/import';
 import { eraseEverything } from '@/data/portability/erase';
+import { revokeEveryShare } from '@/data/share/revoke-all';
 
 /**
  * Who the backup belongs to, for its filename (spec 016).
@@ -56,8 +57,14 @@ export default function Settings() {
 
   // A plain read, not loadProfile(): a live query re-runs whenever `users`
   // changes, and loadProfile() writes on first call, so using it here would put
-  // a write inside a query observing the table it writes to. ThemeProvider has
-  // already created the row by the time this screen renders.
+  // a write inside a query observing the table it writes to.
+  //
+  // This screen got it right and said why; four others did not, and the last
+  // line of this comment used to read "ThemeProvider has already created the
+  // row by the time this screen renders." Spec 022 stopped ThemeProvider
+  // creating it, which made that false and turned the latent bug live - a
+  // blank screen wherever a read path called loadProfile (spec 027). Nothing
+  // may rely on the row existing before it is deliberately written.
   const profile = useLiveQuery(() => db.users.get(LOCAL_PROFILE_ID));
   const reduced = usePrefersReducedMotion();
 
@@ -417,10 +424,44 @@ function ErasePanel() {
   async function erase() {
     setStage('working');
     try {
+      /*
+       * BUG-11, spec 028. Take the published pages down BEFORE destroying the
+       * rows that name them, and abort the whole thing if any survives.
+       *
+       * The precedent is the backup one step up: a failed export aborts rather
+       * than erasing anyway, because the dangerous outcome is not the failure,
+       * it is a screen reporting success while something the keeper believes
+       * is gone is still out there. A shared page is exactly that - and since
+       * spec 026 it carries their own photographs.
+       *
+       * Aborting rather than erasing-and-warning is deliberate. Clearing
+       * `shares` takes the token with it, so a page left up here could never
+       * be revoked from the app again; a keeper who is offline can reconnect
+       * and try again, or stop sharing each tank by hand first.
+       */
+      const sweep = await revokeEveryShare(db);
+      if (sweep.failed.length > 0) {
+        const names = sweep.failed
+          .map((f) => f.name)
+          .join(', ');
+        console.error('[erase] refusing: tanks are still published', sweep.failed);
+        setProblem(
+          `Nothing was erased. ${sweep.failed.length === 1 ? 'This tank is' : 'These tanks are'} `
+          + `still shared publicly and could not be taken down: ${names}. `
+          + `${sweep.failed[0]!.reason} `
+          + 'Erasing now would delete the only thing that can turn those pages off. '
+          + 'Reconnect and try again, or stop sharing them from the tank screen first.',
+        );
+        setStage('idle');
+        return;
+      }
+
       const result = await eraseEverything(db);
       setNote(
         `Erased ${result.total} records${result.userSpeciesRemoved > 0
           ? `, including ${result.userSpeciesRemoved} species you added`
+          : ''}${sweep.revoked.length > 0
+          ? `, and took down ${sweep.revoked.length} shared ${sweep.revoked.length === 1 ? 'page' : 'pages'}`
           : ''}. Restore your backup to bring a collection back.`,
       );
       reset();

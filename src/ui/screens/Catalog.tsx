@@ -30,7 +30,7 @@ import {
   type CatalogCard,
 } from '@/data/catalog';
 import { MARKET_INDEX } from '@/data/market';
-import { loadProfile } from '@/data/profile';
+import { readProfile } from '@/data/profile';
 import { deriveQuantity } from '@/domain/holdings';
 import type { AggressionRating, WaterType } from '@/domain/types';
 import type { OrganismKind, WaterZone } from '@/data/seed/taxonomy';
@@ -178,7 +178,7 @@ export default function Catalog() {
         db.lifeEvents.toArray(), db.residencies.toArray(), db.dreamList.toArray(), db.media.toArray(),
         // One read of the whole table, grouped once, rather than a query per
         // species: this builds 2,176 cards on every change.
-        db.priceObservations.toArray(), loadProfile(),
+        db.priceObservations.toArray(), readProfile(),
       ]);
     const dreamed = new Set(dream.map((d) => d.speciesId));
     const ownPrices = pricesBySpecies(prices);

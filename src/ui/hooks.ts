@@ -3,12 +3,13 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { blobFor, db } from '@/data/db';
 import {
   buildCatalogCard, CATALOG_BY_SPECIES, cardPrice, catalogShapeForLocal, marketAndScarcity,
-  chooseArt, pricesBySpecies, searchableSpecies,
+  pricesBySpecies, searchableSpecies,
   type CatalogCard, type CatalogSpecies,
 } from '@/data/catalog';
 
 import { deriveBadge, deriveQuantity } from '@/domain/holdings';
-import { loadProfile } from '@/data/profile';
+import { readProfile } from '@/data/profile';
+import { loadTankResidents } from '@/data/tank-residents';
 import { summariseTank, type TankResident } from '@/domain/tank-stats';
 import type { Id } from '@/domain/types';
 import { useBlobUrls } from './blob-url';
@@ -169,112 +170,31 @@ export function useSpecimenMedia(specimenId?: Id) {
 }
 
 /**
- * One tank's residents, joined to everything the app knows about them.
+ * One tank's residents, live.
  *
- * The join is the whole point: a holding on its own is a label and a number,
- * and the viewer needs a picture, a water level, a temperament and a price.
- * Anything the catalog cannot supply stays undefined and is counted as such
- * downstream - never defaulted, never dropped.
- *
- * The picture is the fish's own where it has one (spec 021). It used to be
- * `portraitAsset(speciesId)` unconditionally, so a tank full of fish you had
- * photographed drew a grid of stock images, which is the exact inversion of
- * principle P3.
- *
- * Two passes, because your own photos are bytes in IndexedDB rather than URLs.
- * The Dexie query picks the art and, where that art is yours, the blob behind
- * it; `useBlobUrls` then owns the object URL. Minting the URL inside the query
- * would leak one photo per write to any table it touches - see blob-url.ts,
- * which exists because four hand-rolled versions of this got it wrong twice.
+ * The join itself lives in `data/tank-residents.ts` so that publishing a
+ * shared tank asks the same question this screen does (spec 023). This is the
+ * subscription, plus the one thing a shared page cannot have: the keeper's own
+ * photographs, which are blobs in this browser rather than anything a guest
+ * could fetch. `loadTankResidents` decides WHICH photo each tile should wear
+ * (spec 021's precedence); resolving it to pixels is this hook's job, and the
+ * projection simply declines to, leaving the bundled portrait in place.
  */
 export function useTankResidents(aquariumId: string | undefined) {
   const raw = useLiveQuery(async () => {
-    if (!aquariumId) return undefined;
-    const aquarium = await db.aquariums.get(aquariumId);
-    if (!aquarium) return undefined;
-
-    const [holdings, residencies, events, profiles, prices, account, allMedia, prefs] = await Promise.all([
-      db.holdings.toArray(), db.residencies.toArray(), db.lifeEvents.toArray(),
-      db.speciesProfiles.toArray(),
-      // A tank's estimated value counts the keeper's own logged prices too.
-      db.priceObservations.toArray(), loadProfile(),
-      db.media.toArray(), db.cardPrefs.toArray(),
-    ]);
-    const prefFor = new Map(prefs.map((p) => [p.speciesId, p]));
-
-    /** This fish's own photos, newest first. Not the species' - see chooseArt. */
-    const photosOf = (specimenId: string | undefined) => (specimenId
-      ? allMedia
-        .filter((m) => m.kind === 'photo' && m.specimenIds.includes(specimenId))
-        .sort((a, b) => b.capturedAt.localeCompare(a.capturedAt))
-        .map((m) => m.id)
-      : []);
-    const profileFor = new Map(profiles.map((p) => [p.speciesId, p]));
-    const ownPrices = pricesBySpecies(prices);
-    const currency = account.settings.currency;
-
-    const residents = residencies
-      .filter((r) => r.aquariumId === aquariumId && !r.endDate)
-      .flatMap((r) => {
-        const holding = holdings.find((h) => h.id === r.holdingId);
-        if (!holding) return [];
-        const quantity = deriveQuantity(holding, events);
-        if (quantity <= 0) return [];
-
-        const entry = holding.speciesId ? CATALOG_BY_SPECIES.get(holding.speciesId) : undefined;
-        const profile = holding.speciesId ? profileFor.get(holding.speciesId) : undefined;
-        const market = holding.speciesId
-          ? marketAndScarcity(holding.speciesId, { prices: ownPrices.get(holding.speciesId) ?? [], currency }).market
-          : undefined;
-
-        // Adult size and minimum volume come from the curated profile where
-        // there is one, and the mart otherwise - the mart carries the care
-        // backfill, the profile carries the hand-written 47.
-        const adultSizeIn = profile?.adultSize
-          ? (profile.adultSize.unit === 'cm' ? profile.adultSize.value / 2.54 : profile.adultSize.value)
-          : entry?.adultSizeIn;
-        const minVolumeGal = profile?.minimumVolume
-          ? (profile.minimumVolume.unit === 'l' ? profile.minimumVolume.value / 3.785411784 : profile.minimumVolume.value)
-          : entry?.minVolumeGal;
-
-        const art = chooseArt(
-          entry,
-          photosOf(holding.specimenId),
-          holding.speciesId ? prefFor.get(holding.speciesId) : undefined,
-        );
-
-        return [{
-          resident: {
-            holding,
-            quantity,
-            speciesId: holding.speciesId,
-            commonName: entry?.commonName ?? holding.rawLabel ?? 'Unidentified',
-            scientificName: entry?.scientificName,
-            artUrl: art.kind === 'portrait' ? art.src : undefined,
-            adultSizeIn,
-            minVolumeGal,
-            aggression: profile?.aggression ?? (entry?.aggression as TankResident['aggression']),
-            waterZone: entry?.waterZone,
-            // The size-matched band where we have a size, the pooled median
-            // otherwise. Undefined when the index cannot price it at all.
-            unitPrice: cardPrice(market, adultSizeIn),
-          } satisfies TankResident,
-          ownMediaId: art.kind === 'own' ? art.mediaId : undefined,
-        }];
-      });
+    const loaded = await loadTankResidents(aquariumId);
+    if (!loaded) return undefined;
 
     // Only the blobs actually going on screen, keyed by holding so two
     // holdings sharing one specimen's photo each get their own URL.
     const ownBlobs: Array<{ id: Id; blob: Blob }> = [];
-    for (const { resident, ownMediaId } of residents) {
-      if (!ownMediaId) continue;
-      const m = allMedia.find((x) => x.id === ownMediaId);
+    for (const { holdingId, mediaId } of loaded.ownArt) {
+      const m = await db.media.get(mediaId);
       if (!m) continue;
       const blob = blobFor(await db.blobs.get(m.originalBlobKey));
-      if (blob) ownBlobs.push({ id: resident.holding.id, blob });
+      if (blob) ownBlobs.push({ id: holdingId, blob });
     }
-
-    return { aquarium, residents: residents.map((r) => r.resident), ownBlobs };
+    return { ...loaded, ownBlobs };
   }, [aquariumId]);
 
   const urls = useBlobUrls(raw?.ownBlobs);
@@ -305,7 +225,7 @@ export function useTankSummaries() {
       await Promise.all([
         db.aquariums.toArray(), db.holdings.toArray(), db.residencies.toArray(),
         db.lifeEvents.toArray(), db.speciesProfiles.toArray(), db.media.toArray(),
-        db.priceObservations.toArray(), loadProfile(),
+        db.priceObservations.toArray(), readProfile(),
       ]);
     const profileFor = new Map(profiles.map((p) => [p.speciesId, p]));
     const ownPrices = pricesBySpecies(prices);
