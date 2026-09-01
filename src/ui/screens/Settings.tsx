@@ -56,8 +56,14 @@ export default function Settings() {
 
   // A plain read, not loadProfile(): a live query re-runs whenever `users`
   // changes, and loadProfile() writes on first call, so using it here would put
-  // a write inside a query observing the table it writes to. ThemeProvider has
-  // already created the row by the time this screen renders.
+  // a write inside a query observing the table it writes to.
+  //
+  // This screen got it right and said why; four others did not, and the last
+  // line of this comment used to read "ThemeProvider has already created the
+  // row by the time this screen renders." Spec 022 stopped ThemeProvider
+  // creating it, which made that false and turned the latent bug live - a
+  // blank screen wherever a read path called loadProfile (spec 027). Nothing
+  // may rely on the row existing before it is deliberately written.
   const profile = useLiveQuery(() => db.users.get(LOCAL_PROFILE_ID));
   const reduced = usePrefersReducedMotion();
 

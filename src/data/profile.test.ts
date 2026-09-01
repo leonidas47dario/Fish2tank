@@ -6,6 +6,7 @@ import {
   LOCAL_PROFILE_ID,
   foldLegacySettings,
   loadProfile,
+  readProfile,
   updateSettings,
 } from './profile';
 import { recordPrice } from './repositories';
@@ -73,6 +74,34 @@ describe('loadProfile', () => {
     await loadProfile(db, '{"theme":"playful-collector"}');
     const profile = await loadProfile(db);
     expect(profile.settings.themeId).toBe('expedition-fieldbook');
+  });
+});
+
+describe('readProfile', () => {
+  // Spec 020. `users` syncs and `user_local` is a hardcoded key, so a row
+  // written before anyone signs in is a row that gets pushed over the
+  // account's real profile on the first sync.
+  it('writes nothing when there is no profile yet', async () => {
+    const profile = await readProfile(db);
+
+    expect(profile.id).toBe(LOCAL_PROFILE_ID);
+    expect(profile.settings).toEqual(DEFAULT_SETTINGS);
+    expect(await db.users.count()).toBe(0);
+  });
+
+  it('folds legacy settings into what it hands back, still without storing them', async () => {
+    const profile = await readProfile(db, '{"theme":"expedition-fieldbook"}');
+
+    expect(profile.settings.themeId).toBe('expedition-fieldbook');
+    expect(await db.users.count()).toBe(0);
+  });
+
+  it('returns the stored row once there is one', async () => {
+    await loadProfile(db);
+    await updateSettings({ themeId: 'planted' }, db);
+
+    expect((await readProfile(db)).settings.themeId).toBe('planted');
+    expect(await db.users.count()).toBe(1);
   });
 });
 

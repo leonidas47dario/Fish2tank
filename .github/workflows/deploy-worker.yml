@@ -1,0 +1,125 @@
+# Deploy the media Worker from CI, instead of from someone's memory (ENH-10).
+#
+# WHY THIS EXISTS. On 2026-08-30 every photo on production failed to sync -
+# "0 up, 0 down, 28 failed" - because this Worker had never been deployed there.
+# `wrangler deploy --env uat` had been run; `--env production` had not, and the
+# app reported the resulting permanent 404 as a retryable failure for weeks.
+# `worker/setup-production.sh` closed that outage but not the class: a deploy
+# whose trigger is a person remembering will drift again. It already has -
+# the uat Worker was deployed from a feature branch during spec 023 and nobody
+# recorded it, which is how a tier ends up running code no one can name.
+#
+# Two deliberate choices:
+#
+#   - MANUAL, not on push. A Worker deploy changes a live tier for every device
+#     at once, with no /uat/ equivalent to review it on first. It stays a
+#     decision someone makes, this just removes the laptop from the path.
+#   - THE PROBE IS THE POINT. Deploying and believing it worked is exactly what
+#     went wrong before, so the job fails unless the deployed Worker answers
+#     401 to an unauthenticated call. 404 is what "believed deployed" looked
+#     like, and it is the case this must never report as success.
+name: Deploy Worker
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Which tier's Worker to deploy
+        type: choice
+        options: [uat, production]
+        required: true
+
+# A tier deploys one at a time. Never cancel one in flight: a half-applied
+# Worker deploy is the state this whole file exists to avoid.
+concurrency:
+  group: worker-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # The GitHub Environment of the same name. It holds CLOUDFLARE_API_TOKEN,
+    # and on `production` it is also what makes this wait for a human to
+    # approve - matching the promotion PR that already gates production's site.
+    environment: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      # wrangler is not a dependency of this repo, so npx resolves it fresh.
+      # Pinned to a major to keep a v5 from arriving unannounced; printed so
+      # the first green run tells us the exact version worth pinning to.
+      - name: Which wrangler
+        run: npx --yes wrangler@4 --version
+
+      # Not a secret: the Cloudflare account id is already committed in
+      # wrangler.toml as R2_ACCOUNT_ID (an R2 account id IS the account id),
+      # and wrangler.toml carries no top-level `account_id` for wrangler to
+      # read. Taken from the file rather than stored twice, so it cannot drift.
+      - name: Resolve the account id from wrangler.toml
+        id: account
+        working-directory: worker
+        run: |
+          id=$(grep -m1 '^R2_ACCOUNT_ID' wrangler.toml | cut -d'"' -f2)
+          if [ -z "$id" ]; then
+            echo "::error::No R2_ACCOUNT_ID in worker/wrangler.toml"
+            exit 1
+          fi
+          echo "id=$id" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy
+        working-directory: worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ steps.account.outputs.id }}
+        run: npx --yes wrangler@4 deploy --env ${{ inputs.environment }}
+
+      # The check that distinguishes "deployed" from "believed deployed".
+      #
+      # An unauthenticated POST must be REFUSED by our own Worker (401). A 404
+      # means the deploy did not land. Cloudflare's own `error code: 1042`, in
+      # plain text rather than our JSON, means nothing is deployed at that
+      # subdomain at all - the exact state production sat in for weeks.
+      - name: Verify something is actually answering
+        run: |
+          case "${{ inputs.environment }}" in
+            uat) host=fish2tank-media-uat ;;
+            production) host=fish2tank-media-prod ;;
+            *) echo "::error::Unknown environment"; exit 1 ;;
+          esac
+          url="https://$host.leonidas47dario.workers.dev"
+
+          status=$(curl -s -o /tmp/body -w '%{http_code}' -X POST "$url/presign/put" \
+            -H 'Content-Type: application/json' \
+            -H 'Origin: https://leonidas47dario.github.io' \
+            -d '{"blobKey":"probe"}' || echo 000)
+          echo "POST /presign/put -> $status"
+          head -c 200 /tmp/body || true
+          echo
+
+          if [ "$status" != "401" ]; then
+            echo "::error::Expected 401 from $url, got $status. The deploy did not land."
+            exit 1
+          fi
+          echo "OK - the Worker is live and refusing anonymous callers."
+
+      # Informational, not a gate. Says WHICH code is live, which the 401 above
+      # cannot: the share routes arrived in spec 023, so `no such share` proves
+      # the tier is running that code rather than something older.
+      - name: Report which code is live
+        run: |
+          case "${{ inputs.environment }}" in
+            uat) host=fish2tank-media-uat ;;
+            production) host=fish2tank-media-prod ;;
+          esac
+          body=$(curl -s "https://$host.leonidas47dario.workers.dev/shared/probeprobe" || true)
+          echo "GET /shared/probeprobe -> $body"
+          case "$body" in
+            *"no such share"*) echo "Share routes (spec 023) are live." ;;
+            *"no such route"*) echo "::warning::No share routes here - this tier predates spec 023." ;;
+            *) echo "::warning::Unrecognised answer; check the Worker by hand." ;;
+          esac

@@ -32,7 +32,7 @@ import {
 } from '@/data/catalog';
 import { deriveQuantity } from '@/domain/holdings';
 import { keptFishRows, type KeptFishRow } from '@/domain/kept-fish';
-import { loadProfile } from '@/data/profile';
+import { readProfile } from '@/data/profile';
 import { isBlended } from '@/engine/pricing/own-prices';
 import { formatVolume } from '@/domain/units';
 import { MarketPanel } from '../components/MarketPanel';
@@ -95,7 +95,7 @@ export default function SpeciesDetail() {
         db.lifeEvents.toArray(), db.residencies.toArray(), db.media.toArray(),
         db.dreamList.where('speciesId').equals(id).first(),
         db.priceObservations.where('speciesId').equals(id).toArray(),
-        loadProfile(),
+        readProfile(),
         db.places.toArray(),
       ]);
     const aquariums = await db.aquariums.toArray();
