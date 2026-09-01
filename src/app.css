@@ -1856,3 +1856,60 @@ summary.factor::-webkit-details-marker { display: none; }
 }
 
 .sharedtank__enter { align-self: flex-start; }
+
+/* --- Cropping a photo before it is stored (spec 032) -------------------- */
+
+/* The image sets the height; the selection is positioned against it, so the
+   crop tracks the picture at any width without a resize observer. */
+.crop {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  /* A dragging finger must move the crop, not scroll the page. */
+  touch-action: none;
+  user-select: none;
+}
+.crop__img {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* Dimmed, so the bright selection reads as the part being kept. */
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.crop__box {
+  position: absolute;
+  box-sizing: border-box;
+  border: 2px solid var(--color-primary);
+  cursor: move;
+  touch-action: none;
+  /* Punches the selection back to full brightness without a second copy of
+     the image: the shadow darkens everything OUTSIDE the box. */
+  box-shadow: 0 0 0 100vmax var(--color-surface);
+  backdrop-filter: brightness(1.8);
+  -webkit-backdrop-filter: brightness(1.8);
+}
+
+.crop__handle {
+  position: absolute;
+  width: var(--space-5);
+  height: var(--space-5);
+  background: var(--color-primary);
+  border-radius: var(--radius-hair);
+  touch-action: none;
+}
+/* Offset by half so the handle straddles the corner it drags. */
+.crop__handle--nw { left: calc(var(--space-5) / -2); top: calc(var(--space-5) / -2); cursor: nwse-resize; }
+.crop__handle--ne { right: calc(var(--space-5) / -2); top: calc(var(--space-5) / -2); cursor: nesw-resize; }
+.crop__handle--sw { left: calc(var(--space-5) / -2); bottom: calc(var(--space-5) / -2); cursor: nesw-resize; }
+.crop__handle--se { right: calc(var(--space-5) / -2); bottom: calc(var(--space-5) / -2); cursor: nwse-resize; }
+
+/* Without backdrop-filter the box would be a plain outline over a dimmed
+   photo, which still reads correctly - so this only restores brightness. */
+@supports not (backdrop-filter: brightness(1.5)) {
+  .crop__img { opacity: 1; }
+  .crop__box { box-shadow: 0 0 0 2px var(--color-surface); }
+}
