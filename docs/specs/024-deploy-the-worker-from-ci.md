@@ -154,3 +154,37 @@ That leaves two routes, and the choice belongs to the repo owner:
 7. Not yet met, and cannot be from here: **one green run against `uat`**, which
    requires the workflow to be on `main` first. Until that happens this spec is
    a design nobody has executed, and it should not be described as working.
+
+---
+
+## What the first run taught (2026-09-01)
+
+The first dispatch against `production` failed, and the *interesting* part was
+not the error.
+
+```
+ERROR  In a non-interactive environment, it's necessary to set a
+       CLOUDFLARE_API_TOKEN environment variable
+```
+
+That reads as a missing secret. The real signal was that **the run never
+paused for approval** - which it must, because `production` was configured
+with required reviewers. Both symptoms have one cause: the job's environment
+was never attached.
+
+**GitHub does not fail when a job references an environment that does not
+exist. It creates an empty one** - no secrets, no protection rules - and runs.
+So a name that does not match does not produce "no such environment"; it
+produces an ungated deploy that fails three steps later blaming wrangler.
+
+`production` is a different environment from `PROD` or `Production`.
+
+A preflight step now checks the token before wrangler runs and says exactly
+this, naming the environment the job asked for. Spec 024 already argued that
+"the probe is the deliverable, not the deploy" - this is the same argument one
+step earlier: a deploy that cannot work should say why, not let the next tool
+guess.
+
+**The absence of an approval prompt is now documented as a diagnostic**, not
+just a convenience. If a production run does not stop for a human, its
+protection rules are not attached, whatever the settings page appears to say.
