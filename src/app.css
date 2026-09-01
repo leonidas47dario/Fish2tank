@@ -1812,3 +1812,47 @@ summary.factor::-webkit-details-marker { display: none; }
     text-align: left;
   }
 }
+
+/* --- A shared tank's tile opens the fish (spec 025) --------------------- */
+
+/* The tile content became a button. It must not LOOK like one: the grid is a
+   wall of fish, and a border round every tile would read as a form. */
+.tank-tile__open {
+  display: block;
+  width: 100%;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  text-align: inherit;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.tank-tile__open:hover .tank-tile__art { opacity: 0.86; }
+
+/* The peek's values. Blurred to say "there is more here", never to protect:
+   every one of these is already in the public snapshot (spec 025). Hidden from
+   assistive tech at the call site rather than here, because a blurred number
+   read aloud is just a number - the offer below it is the real content. */
+.peek__row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-1) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+.peek__value {
+  filter: blur(var(--blur-peek));
+  /* Selecting blurred text would hand over the exact string, which makes the
+     invitation feel like a trick rather than an offer. */
+  user-select: none;
+}
+
+/* Under an engine without filter support the values would render sharp, which
+   gives away the tease rather than breaking anything. Dim them instead, the
+   same treatment a locked plate already uses. */
+@supports not (filter: blur(1px)) {
+  .peek__value { opacity: 0.35; }
+}
+
+.sharedtank__enter { align-self: flex-start; }
