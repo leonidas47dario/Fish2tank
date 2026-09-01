@@ -11,11 +11,15 @@
  * and a tap to open. Everything that writes lives one level down.
  */
 import { useRef, useState } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
 import { Link } from 'react-router-dom';
+import { db } from '@/data/db';
 import { createAquarium, setTankPhoto } from '@/data/repositories';
 import { formatVolume } from '@/domain/units';
 import type { Aquarium, AquariumKind } from '@/domain/types';
 import { useTankSummaries } from '../hooks';
+import ShareSheet from '../components/ShareSheet';
+import { ShareNetworkIcon } from '../components/Icons';
 
 export default function Tanks() {
   const tanks = useTankSummaries();
@@ -182,6 +186,9 @@ function TankCard({ aquarium, stats, photoUrl }: {
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
+  const [sharing, setSharing] = useState(false);
+  // Live, so the icon reflects a link revoked from another device.
+  const shared = Boolean(useLiveQuery(() => db.shares.get(aquarium.id), [aquarium.id]));
 
   async function onPick(file: File | undefined) {
     if (!file) return;
@@ -240,15 +247,34 @@ function TankCard({ aquarium, stats, photoUrl }: {
         </span>
       </Link>
 
-      {/* Outside the link, so choosing a photo never navigates away mid-pick. */}
-      <button
-        type="button"
-        className="tankcard__photo-btn btn--ghost"
-        disabled={busy}
-        onClick={() => input.current?.click()}
-      >
-        {busy ? 'Saving…' : photoUrl ? 'Change photo' : 'Add a photo'}
-      </button>
+      {/* Outside the link, so choosing a photo never navigates away mid-pick.
+          The share control follows the same rule for the same reason. */}
+      <div className="row tankcard__actions">
+        <button
+          type="button"
+          className="tankcard__photo-btn btn--ghost"
+          disabled={busy}
+          onClick={() => input.current?.click()}
+        >
+          {busy ? 'Saving…' : photoUrl ? 'Change photo' : 'Add a photo'}
+        </button>
+        <button
+          type="button"
+          className="btn--ghost tankcard__share"
+          aria-expanded={sharing}
+          aria-label={shared ? `Sharing ${aquarium.name}` : `Share ${aquarium.name}`}
+          onClick={() => setSharing(!sharing)}
+        >
+          <ShareNetworkIcon
+            size={18}
+            /* Filled while a link is live, so "this tank is public" is legible
+               at a glance and in greyscale (NFR-06). */
+            weight={shared ? 'fill' : 'regular'}
+            aria-hidden="true"
+          />
+          {shared && <span className="xs"> Shared</span>}
+        </button>
+      </div>
       <input
         ref={input}
         type="file"
@@ -258,6 +284,7 @@ function TankCard({ aquarium, stats, photoUrl }: {
         onChange={(e) => { void onPick(e.target.files?.[0]); e.target.value = ''; }}
       />
       {error && <p className="warn xs" style={{ marginBottom: 0 }}>{error}</p>}
+      {sharing && <ShareSheet aquarium={aquarium} onClose={() => setSharing(false)} />}
     </article>
   );
 }

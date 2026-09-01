@@ -40,6 +40,9 @@ export { XIcon } from '@phosphor-icons/react/dist/csr/X';
 export { CheckIcon } from '@phosphor-icons/react/dist/csr/Check';
 export { UserCircleIcon } from '@phosphor-icons/react/dist/csr/UserCircle';
 export { GoogleLogoIcon } from '@phosphor-icons/react/dist/csr/GoogleLogo';
+export { ShareNetworkIcon } from '@phosphor-icons/react/dist/csr/ShareNetwork';
+export { HeartIcon } from '@phosphor-icons/react/dist/csr/Heart';
+export { LinkIcon } from '@phosphor-icons/react/dist/csr/Link';
 
 /**
  * The one stroke weight, everywhere.
