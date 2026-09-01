@@ -20,6 +20,8 @@
  */
 import { useRef, useState } from 'react';
 import { addPhotos, type CaptureFile } from '@/data/repositories';
+import { cropToBlob, type CropRect } from '@/data/media/crop';
+import { CropSheet } from './CropSheet';
 import type { Id } from '@/domain/types';
 import { useSpecimenMedia } from '../hooks';
 import { PlusIcon } from './Icons';
@@ -38,19 +40,48 @@ export function CatchPhotos({ specimenId, title, reducedMotion }: Props) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | undefined>();
   const [shownId, setShownId] = useState<Id | undefined>();
+  /** The photo waiting to be cropped, if any (spec 032). */
+  const [pending, setPending] = useState<File>();
 
   // Newest first, so a record with no explicit choice shows the latest photo.
   // Falls back rather than pins: the chosen one can be deleted from elsewhere.
   const shown = media?.find((m) => m.media.id === shownId) ?? media?.[0];
 
-  async function onFiles(list: FileList | null) {
+  /*
+   * Spec 032. A single photo goes through the crop sheet first; anything else
+   * - several files at once, or a video - is stored as it was.
+   *
+   * Cropping several at a time would mean a queue of sheets, which is a worse
+   * flow than cropping them afterwards one at a time, and cropping a video
+   * needs frame extraction this does not have.
+   */
+  function onFiles(list: FileList | null) {
     if (!list || list.length === 0) return;
+    const only = list.length === 1 ? list[0]! : undefined;
+    if (only && only.type.startsWith('image/')) {
+      setPending(only);
+      return;
+    }
+    void store(Array.from(list));
+  }
+
+  async function croppedThenStore(rect: CropRect | undefined) {
+    const file = pending;
+    setPending(undefined);
+    if (!file) return;
+    // `cropToBlob` returns undefined for an untouched selection AND for a
+    // failure, and both mean the same thing here: keep the photo whole.
+    const cropped = rect ? await cropToBlob(file, rect) : undefined;
+    await store([cropped ?? file], file.type);
+  }
+
+  async function store(list: Blob[], typeHint?: string) {
     setSaving(true);
     setError(undefined);
-    const files: CaptureFile[] = Array.from(list).map((f) => ({
-      kind: f.type.startsWith('video') ? 'video' : 'photo',
+    const files: CaptureFile[] = list.map((f) => ({
+      kind: (f.type || typeHint || '').startsWith('video') ? 'video' : 'photo',
       blob: f,
-      mimeType: f.type || 'application/octet-stream',
+      mimeType: f.type || typeHint || 'application/octet-stream',
     }));
     try {
       const added = await addPhotos({ specimenId, files });
@@ -78,8 +109,21 @@ export function CatchPhotos({ specimenId, title, reducedMotion }: Props) {
         accept="image/*,video/*"
         multiple
         className="visually-hidden"
-        onChange={(e) => void onFiles(e.target.files)}
+        onChange={(e) => onFiles(e.target.files)}
       />
+
+      {/* Spec 032. Replaces the plate while it is open, so the choice being
+          made is the only thing on screen. */}
+      {pending && (
+        <CropSheet
+          file={pending}
+          onDone={(rect) => void croppedThenStore(rect)}
+          onCancel={() => {
+            setPending(undefined);
+            if (fileRef.current) fileRef.current.value = '';
+          }}
+        />
+      )}
 
       <div className="hero-plate">
         {shown ? (
