@@ -144,7 +144,7 @@ export default function SharedTank() {
   }
 
   const { snapshot } = state;
-  const residents = snapshot.residents.map(asResident);
+  const residents = snapshot.residents.map((r, i) => asResident(r, i, token));
   const photoKey = snapshot.tank.photoBlobKey;
 
   return (
@@ -418,14 +418,32 @@ function SharedShell({ children }: { children: React.ReactNode }) {
  * editor never runs here. The portrait comes from the guest's own bundled
  * assets, because that is where the owner's came from too (`portraitAsset`).
  */
-function asResident(resident: SharedResident, index: number): TankResident {
+/**
+ * One published resident, as the grid wants it.
+ *
+ * THE KEEPER'S OWN PHOTOGRAPH WINS (spec 026), served through the Worker's
+ * share-media route, which checks the key against the manifest's allowlist
+ * before redirecting to a presigned URL. Spec 023 drew the bundled portrait
+ * unconditionally here, which is what made a shared tank a wall of stock
+ * images - and contradicted the ask it was built from, "anyone should be able
+ * to review the page and see the exact same thing".
+ *
+ * The fallback order is the same one `chooseArt` applies on the owner's
+ * screen, arrived at the other way round: the publisher already resolved WHICH
+ * photo this fish wears, so there is no second opinion to have here - either a
+ * key was published or the portrait stands.
+ */
+function asResident(resident: SharedResident, index: number, token: string): TankResident {
+  const own = resident.photoBlobKey
+    ? `${MEDIA_WORKER_URL}/shared/${token}/media/${resident.photoBlobKey}`
+    : undefined;
   return {
     holding: { id: `shared_${resident.speciesId ?? index}` } as TankResident['holding'],
     quantity: resident.quantity,
     speciesId: resident.speciesId,
     commonName: resident.commonName,
     scientificName: resident.scientificName,
-    artUrl: resident.speciesId ? portraitAsset(resident.speciesId) : undefined,
+    artUrl: own ?? (resident.speciesId ? portraitAsset(resident.speciesId) : undefined),
     adultSizeIn: resident.adultSizeIn,
     minVolumeGal: resident.minVolumeGal,
     aggression: resident.aggression,

@@ -136,10 +136,47 @@ export async function publishTank(
     }
   }
 
+  /*
+   * The same rule as the tank photo, per fish (spec 026). A key is published
+   * only when the object is confirmed in the bucket, because a key the Worker
+   * cannot serve is a torn image on a stranger's screen - the bug report
+   * nobody files.
+   *
+   * `loadTankResidents` already decided WHICH photo each fish wears, using the
+   * one precedence rule the owner's screen uses (spec 021), so a guest sees
+   * the same face rather than a second opinion about it.
+   *
+   * Checked in parallel: this is one HEAD per photographed fish, and doing
+   * them in series would make publishing a well-photographed tank feel broken.
+   */
+  const residentPhotoKeys = new Map<string, string>();
+  let unsyncedPhotos = 0;
+  await Promise.all(loaded.ownArt.map(async ({ holdingId, mediaId }) => {
+    const media = await database.media.get(mediaId);
+    if (!media) return;
+    const present = await headBlob(media.originalBlobKey, { workerUrl, accessToken, doFetch });
+    if (present) {
+      residentPhotoKeys.set(holdingId, media.originalBlobKey);
+    } else {
+      unsyncedPhotos += 1;
+    }
+  }));
+  if (unsyncedPhotos > 0) {
+    warnings.push(
+      `${unsyncedPhotos} fish ${unsyncedPhotos === 1 ? 'photo has' : 'photos have'} not finished `
+      + 'syncing, so guests will see the reference portrait for those. '
+      + 'Sync your photos, then update the shared page.',
+    );
+    console.warn('[share] resident photos -> not in the bucket yet', {
+      ...identity, unsyncedPhotos,
+    });
+  }
+
   const snapshot = buildSnapshot({
     aquarium: loaded.aquarium,
     residents: loaded.residents,
     tankPhotoBlobKey,
+    residentPhotoKeys,
     token,
     publishedAt: new Date().toISOString(),
     buildId: BUILD_ID,
@@ -190,8 +227,9 @@ export async function publishTank(
   await recordShare(aquariumId, {
     token,
     publishedAt: snapshot.publishedAt,
-    fingerprint: fingerprintOf(snapshot, loaded.aquarium.photoMediaId),
+    fingerprint: fingerprintOf(snapshot, loaded.aquarium.photoMediaId, loaded.ownArt.map((a) => a.mediaId)),
     photoIncluded: Boolean(tankPhotoBlobKey),
+    photoCount: residentPhotoKeys.size,
   }, database);
 
   const url = shareUrlFor(token);
@@ -264,7 +302,7 @@ export async function revokeTank(aquariumId: Id, deps: ShareDeps = {}): Promise<
 export async function currentShareState(
   aquariumId: Id,
   database: Fish2TankDB = defaultDb,
-): Promise<{ fingerprint: string; hasPhoto: boolean } | undefined> {
+): Promise<{ fingerprint: string; hasPhoto: boolean; photoCount: number } | undefined> {
   const loaded = await loadTankResidents(aquariumId, database);
   if (!loaded) return undefined;
 
@@ -281,8 +319,11 @@ export async function currentShareState(
   });
 
   return {
-    fingerprint: fingerprintOf(snapshot, loaded.aquarium.photoMediaId),
+    fingerprint: fingerprintOf(snapshot, loaded.aquarium.photoMediaId, loaded.ownArt.map((a) => a.mediaId)),
     hasPhoto: Boolean(loaded.aquarium.photoMediaId),
+    // The tank's count of photographed fish, not how many are in the bucket -
+    // a content fact, exactly like `hasPhoto` beside it.
+    photoCount: loaded.ownArt.length,
   };
 }
 
