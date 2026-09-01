@@ -1599,6 +1599,98 @@ summary.factor::-webkit-details-marker { display: none; }
   font-size: var(--size-xs);
 }
 
+/*
+ * A tank shared with a stranger (spec 023).
+ *
+ * The page has no bottom nav, so it needs its own bottom breathing room -
+ * without it the last card sits against the edge of the viewport on a phone.
+ */
+.sharedtank {
+  padding-bottom: var(--space-6);
+}
+.sharedtank__photo {
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  border-radius: var(--radius-card);
+  background: var(--color-surface-raised);
+}
+/* The pitch, at the bottom rather than the top: somebody arrives here for a
+   tank, not for the app, and the ask reads better after they have seen it. */
+.sharedtank__footer {
+  margin-top: var(--space-5);
+}
+
+/*
+ * The heart on a shared tile.
+ *
+ * Sits in the tile's own flow rather than floating over the portrait: an
+ * overlay on a 3:2 photo lands on the fish about a third of the time, and a
+ * control you cannot see is worse than one that costs a row.
+ */
+.tank-tile__heart {
+  width: auto;
+  align-self: flex-end;
+  margin: 0 var(--space-2) var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  background: transparent;
+  border: 1px solid var(--color-border-control);
+  border-radius: var(--radius-pill);
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--ease-standard),
+              border-color var(--duration-fast) var(--ease-standard);
+}
+.tank-tile__heart:hover { color: var(--color-danger-bright); border-color: var(--color-danger-bright); }
+/* Pressed is a fill AND a colour, so the state survives greyscale (NFR-06). */
+.tank-tile__heart[aria-pressed='true'] {
+  color: var(--color-danger-bright);
+  border-color: var(--color-danger-bright);
+}
+
+/*
+ * Sharing a tank (spec 023).
+ *
+ * The two card actions sit on one rule below the body, sharing the border the
+ * photo button already drew. The share control is sized to its content so the
+ * photo button keeps the width it had - the common action stays the big
+ * target, and sharing is the deliberate one.
+ */
+.tankcard__actions {
+  gap: 0;
+  align-items: stretch;
+  border-top: 1px solid var(--color-border);
+}
+/* `width: 100%` on the photo button is what it needed when it was the only
+   action; left alone it claims the whole line and wraps the share control
+   onto a second one. */
+.tankcard__actions .tankcard__photo-btn {
+  border-top: none;
+  width: auto;
+  flex: 1;
+}
+.tankcard__share {
+  width: auto;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border-radius: 0;
+  border-left: 1px solid var(--color-border);
+  color: var(--color-muted);
+}
+.tankcard__share[aria-expanded='true'] { color: var(--color-primary); }
+
+.sharesheet { margin-top: var(--space-2); }
+/* The URL is long and must be selectable in full, so it scrolls rather than
+   wrapping - a wrapped token is harder to read back to somebody. */
+.sharesheet__url {
+  font-size: var(--size-xs);
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
 /* ======================================================================== */
 /* Settings: collapsible sections and a jump nav (spec 018)                 */
 /* ======================================================================== */
