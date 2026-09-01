@@ -1,5 +1,5 @@
 import 'fake-indexeddb/auto';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { blobFor, Fish2TankDB, newId } from './db';
 import {
   acquireSpecimen,
@@ -613,6 +613,61 @@ describe('photos on a fish you keep but never caught', () => {
 
     expect(specimen.identityStatus).toBe('unknown');
     expect(await identityHistory(specimen.id, db)).toHaveLength(0);
+  });
+
+  /**
+   * Spec 019. Minting used to be reachable only by deliberately uploading a
+   * photo; it is now one tap on a row in "Your fish", so it has to say what it
+   * did and it has to notice when it did not do it.
+   */
+  it('logs the mint, and says it was a mint rather than a lookup', async () => {
+    const { holding } = await openingBalance();
+    const logged: unknown[][] = [];
+    const spy = vi.spyOn(console, 'info').mockImplementation((...args) => { logged.push(args); });
+
+    const specimen = await ensureSpecimenForHolding(holding.id, db);
+    spy.mockRestore();
+
+    const line = logged.find((l) => String(l[0]).startsWith('[mint]'));
+    expect(line).toBeDefined();
+    expect(line![1]).toMatchObject({
+      holdingId: holding.id,
+      speciesId: 'sp_neon_tetra',
+      specimenId: specimen.id,
+      outcome: 'minted',
+    });
+  });
+
+  it('logs a second call as an existing specimen, not a second mint', async () => {
+    const { holding } = await openingBalance();
+    await ensureSpecimenForHolding(holding.id, db);
+
+    const logged: unknown[][] = [];
+    const spy = vi.spyOn(console, 'info').mockImplementation((...args) => { logged.push(args); });
+    await ensureSpecimenForHolding(holding.id, db);
+    spy.mockRestore();
+
+    const line = logged.find((l) => String(l[0]).startsWith('[mint]'));
+    expect(line![1]).toMatchObject({ outcome: 'existing' });
+  });
+
+  /**
+   * The failure this guards is silent, not loud: the caller navigates to a
+   * real record while the holding still reads "no photo yet" forever, and
+   * every later mint makes another orphan.
+   */
+  it('throws when the link back to the holding was not written', async () => {
+    const { holding } = await openingBalance();
+    const quiet = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const halfWritten = Object.create(db) as Fish2TankDB;
+    Object.defineProperty(halfWritten, 'holdings', {
+      value: Object.assign(Object.create(db.holdings), { update: async () => 0 }),
+    });
+
+    await expect(ensureSpecimenForHolding(holding.id, halfWritten)).rejects.toThrow(/did not land/);
+    expect(quiet).toHaveBeenCalled();
+    quiet.mockRestore();
+    expect((await db.holdings.get(holding.id))!.specimenId).toBeUndefined();
   });
 
   it('stores the photo against the specimen, without inventing an encounter', async () => {
