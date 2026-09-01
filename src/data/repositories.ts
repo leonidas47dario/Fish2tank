@@ -1632,7 +1632,8 @@ export async function deleteCatch(specimenId: Id, database: DB = db): Promise<De
           await database.media.update(m.id, { specimenIds: others });
         } else {
           await database.media.delete(m.id);
-          if (m.originalBlobKey) await database.blobs.delete(m.originalBlobKey);
+          // All three, not just the original (spec 033).
+          for (const key of blobKeysOf(m)) await database.blobs.delete(key);
         }
       }
 
@@ -1715,7 +1716,7 @@ export async function setTankPhoto(
         await database.aquariums.update(aquariumId, { photoMediaId: media.id });
         if (previous) {
           await database.media.delete(previous.id);
-          await database.blobs.delete(previous.originalBlobKey);
+          for (const key of blobKeysOf(previous)) await database.blobs.delete(key);
         }
       },
     );
@@ -1724,6 +1725,89 @@ export async function setTankPhoto(
   }
 
   return media;
+}
+
+/**
+ * Every blob a media row owns.
+ *
+ * Spec 033. The four older delete sites removed only `originalBlobKey`, which
+ * was harmless while nothing else existed - spec 029 changed that, and every
+ * delete now strands a preview and a thumbnail for the orphan sweep to find
+ * later. Collecting them here means a delete finishes its own work.
+ */
+export function blobKeysOf(media: Media): string[] {
+  return [media.originalBlobKey, media.previewBlobKey, media.thumbnailBlobKey]
+    .filter((k): k is string => Boolean(k));
+}
+
+/**
+ * Remove one photograph from one fish - spec 033.
+ *
+ * DETACH, NEVER DESTROY, when another fish still has it. `Media.specimenIds`
+ * is a list because one picture can show several fish (section 9), so deleting
+ * "this photo" from one record must not take it from the others. The catch
+ * cascade already worked this way; this is the same rule at the level a keeper
+ * actually acts on.
+ *
+ * THE ORIGINAL IS THE ONLY COPY. There is no undo and no bin: NFR-03 keeps one
+ * untouched original and nothing else, so the caller must confirm before
+ * calling this. It is the one destructive act in the photo flow.
+ *
+ * A TANK PHOTO IS REFUSED rather than silently mishandled. `clearTankPhoto`
+ * owns that one, and it has to clear `aquarium.photoMediaId` too; deleting the
+ * row from here would leave a tank pointing at nothing.
+ *
+ * WHAT THIS DOES NOT REACH is the copy in R2 and the copy on other devices.
+ * The `media` row is synced, so its deletion travels and every device's sweep
+ * (BUG-06, spec 012) collects the bytes locally. The R2 object survives -
+ * ENH-11, still open. For a SHARED tank that is not a leak: removing the photo
+ * changes the fingerprint, the page republishes, and the key drops out of
+ * `allowedBlobKeys`, after which the Worker refuses to serve it. Until that
+ * republish lands, a guest holding the link can still see it.
+ */
+export async function deletePhoto(
+  input: { mediaId: Id; specimenId?: Id },
+  database: DB = db,
+): Promise<{ detached: boolean }> {
+  const media = await database.media.get(input.mediaId);
+  if (!media) {
+    console.info('[photos] delete -> already gone', { mediaId: input.mediaId });
+    return { detached: false };
+  }
+
+  const tank = await database.aquariums.filter((a) => a.photoMediaId === media.id).first();
+  if (tank) {
+    throw new Error('That is a tank photo. Remove it from the tank instead.');
+  }
+
+  const others = input.specimenId
+    ? media.specimenIds.filter((s) => s !== input.specimenId)
+    : [];
+  if (others.length > 0) {
+    await database.media.update(media.id, { specimenIds: others });
+    console.info('[photos] detached, another fish still has it', {
+      mediaId: media.id, from: input.specimenId, remaining: others.length,
+    });
+    return { detached: true };
+  }
+
+  const keys = blobKeysOf(media);
+  await database.transaction('rw', [database.media, database.blobs, database.cardPrefs], async () => {
+    await database.media.delete(media.id);
+    for (const key of keys) await database.blobs.delete(key);
+
+    // A card pointing at a photo that no longer exists. `chooseArt` already
+    // falls back to the newest, so this is tidiness rather than a crash - but
+    // a stored preference naming a deleted row is a lie the next reader has
+    // to work out.
+    const stale = await database.cardPrefs.filter((p) => p.preferredMediaId === media.id).toArray();
+    for (const pref of stale) {
+      await database.cardPrefs.update(pref.speciesId, { preferredMediaId: undefined });
+    }
+  });
+
+  console.info('[photos] deleted', { mediaId: media.id, blobs: keys.length });
+  return { detached: false };
 }
 
 /** Remove a tank's photo, leaving the tank itself alone. */
@@ -1738,7 +1822,7 @@ export async function clearTankPhoto(aquariumId: Id, database: DB = db): Promise
     async () => {
       if (media) {
         await database.media.delete(media.id);
-        await database.blobs.delete(media.originalBlobKey);
+        for (const key of blobKeysOf(media)) await database.blobs.delete(key);
       }
       await database.aquariums.update(aquariumId, { photoMediaId: undefined });
       // Tombstoned, or bootstrap's seedTankPhoto puts a bundled photo straight
@@ -1909,7 +1993,7 @@ export async function deleteTank(aquariumId: Id, database: DB = db): Promise<Del
     async () => {
       if (media) {
         await database.media.delete(media.id);
-        await database.blobs.delete(media.originalBlobKey);
+        for (const key of blobKeysOf(media)) await database.blobs.delete(key);
         await database.deletedRecords.put({ id: media.id, kind: 'media', deletedAt: nowIso() });
       }
       await database.assessments.bulkDelete(assessments.map((a) => a.id));
