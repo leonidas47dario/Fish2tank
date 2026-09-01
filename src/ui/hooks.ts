@@ -173,11 +173,43 @@ export function useSpecimenMedia(specimenId?: Id) {
  * One tank's residents, live.
  *
  * The join itself lives in `data/tank-residents.ts` so that publishing a
- * shared tank can produce exactly what this screen shows (spec 020). This is
- * only the subscription.
+ * shared tank asks the same question this screen does (spec 023). This is the
+ * subscription, plus the one thing a shared page cannot have: the keeper's own
+ * photographs, which are blobs in this browser rather than anything a guest
+ * could fetch. `loadTankResidents` decides WHICH photo each tile should wear
+ * (spec 021's precedence); resolving it to pixels is this hook's job, and the
+ * projection simply declines to, leaving the bundled portrait in place.
  */
 export function useTankResidents(aquariumId: string | undefined) {
-  return useLiveQuery(() => loadTankResidents(aquariumId), [aquariumId]);
+  const raw = useLiveQuery(async () => {
+    const loaded = await loadTankResidents(aquariumId);
+    if (!loaded) return undefined;
+
+    // Only the blobs actually going on screen, keyed by holding so two
+    // holdings sharing one specimen's photo each get their own URL.
+    const ownBlobs: Array<{ id: Id; blob: Blob }> = [];
+    for (const { holdingId, mediaId } of loaded.ownArt) {
+      const m = await db.media.get(mediaId);
+      if (!m) continue;
+      const blob = blobFor(await db.blobs.get(m.originalBlobKey));
+      if (blob) ownBlobs.push({ id: holdingId, blob });
+    }
+    return { ...loaded, ownBlobs };
+  }, [aquariumId]);
+
+  const urls = useBlobUrls(raw?.ownBlobs);
+
+  return useMemo(() => {
+    if (!raw) return undefined;
+    const byHolding = new Map(urls.map((u) => [u.id, u.url]));
+    return {
+      aquarium: raw.aquarium,
+      residents: raw.residents.map((r) => ({
+        ...r,
+        artUrl: byHolding.get(r.holding.id) ?? r.artUrl,
+      })),
+    };
+  }, [raw, urls]);
 }
 
 /**

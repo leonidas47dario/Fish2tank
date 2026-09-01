@@ -176,7 +176,7 @@ describe('routing', () => {
   });
 });
 
-// ── Sharing (spec 020) ─────────────────────────────────────────────────────
+// ── Sharing (spec 023) ─────────────────────────────────────────────────────
 
 /**
  * The share routes, which are the first UNAUTHENTICATED routes this Worker has

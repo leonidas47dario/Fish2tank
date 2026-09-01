@@ -66,7 +66,7 @@ been running for weeks with no Worker at all: every photo upload got
 Cloudflare's `error code: 1042` and the app reported it as a retryable
 failure. See `docs/specs/011-photo-sync-tells-the-truth.md`.
 
-**Since spec 020 the Worker also serves shared tanks**, so a tier without one
+**Since spec 023 the Worker also serves shared tanks**, so a tier without one
 deployed can neither sync photos nor share a tank. A redeploy is required for
 sharing to work at all, because the four share routes are new code — a tier
 still running the older Worker will 404 every publish. The share sheet reports

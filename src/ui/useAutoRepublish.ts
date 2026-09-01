@@ -1,5 +1,5 @@
 /**
- * Connecting the republish scheduler to Dexie and the browser - spec 020.
+ * Connecting the republish scheduler to Dexie and the browser - spec 023.
  *
  * The scheduler itself (`data/share/auto-republish.ts`) knows nothing about
  * either, which is what lets it be tested on fake timers. This is the wiring,

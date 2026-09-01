@@ -1,5 +1,5 @@
 /**
- * A tank, projected into the file a stranger is allowed to read - spec 020.
+ * A tank, projected into the file a stranger is allowed to read - spec 023.
  *
  * Pure, and separate from the code that publishes it, because this is the one
  * place that decides what leaves the device. A projection you can test
@@ -140,10 +140,22 @@ export function buildSnapshot(input: SnapshotInput): SharedSnapshot {
 /**
  * Every photo key the built view references.
  *
- * One key today, because resident tiles render bundled stock portraits
- * (`portraitAsset`, catalog.ts) and the tank photo is the only private image
- * a tank view shows. Kept as a list because the membership check in the Worker
- * is what makes the media route safe, and that check reads a list either way.
+ * One key today, and that is now a DECISION rather than a fact about the data.
+ * It used to be a fact: resident tiles rendered bundled stock portraits, so the
+ * tank photo was the only private image a tank view could show. Spec 021 ended
+ * that - a tile wears the keeper's own photograph when there is one, and on the
+ * owner's screen it does.
+ *
+ * The projection deliberately does not follow it there. `loadTankResidents`
+ * hands back its photo choices separately, in `ownArt`, and this builder simply
+ * does not read them: a shared page shows bundled portraits. Publishing one
+ * photo of a tank is a thing the keeper asked for; publishing a photograph of
+ * every fish in it is a different decision nobody has made, and it would
+ * multiply a guest download already measured at 3.6 MB for a single original.
+ * Filed as ENH-17 rather than assumed either way.
+ *
+ * Kept as a list because the membership check in the Worker is what makes the
+ * media route safe, and that check reads a list either way.
  */
 function collectBlobKeys(snapshot: SharedSnapshot): string[] {
   const keys = [snapshot.tank.photoBlobKey].filter((k): k is string => Boolean(k));

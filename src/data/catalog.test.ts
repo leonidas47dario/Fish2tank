@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   CATALOG, CATALOG_BY_SPECIES, cardPrice, identityStatusFor, ownership, portraitCredit,
-  resolveCardArt, searchableSpecies,
+  chooseArt, resolveCardArt, searchableSpecies,
   type CatalogCard, type CatalogSpecies,
 } from './catalog';
 import {
@@ -82,6 +82,44 @@ describe('card art (principle P3: the exact specimen matters)', () => {
   it('shows a silhouette when there is neither a photo nor a portrait', () => {
     const c = card({ species: species({ portrait: undefined }) });
     expect(resolveCardArt(c, undefined)).toEqual({ kind: 'none' });
+  });
+});
+
+/**
+ * Spec 021. A tank tile asks the same question as a card, over a different
+ * pool: the photos of ONE fish rather than every fish of the species. Two
+ * green severums in two tanks are two faces, and the grid was drawing the
+ * reference portrait for both.
+ *
+ * Same rule, so the same function answers it - `resolveCardArt` is a thin
+ * wrapper over this, and a second copy of the precedence would drift.
+ */
+describe('chooseArt over one fish rather than one species', () => {
+  const sp = species();
+
+  it('uses that fish’s own photo ahead of the reference portrait', () => {
+    expect(chooseArt(sp, ['mine'], undefined)).toEqual({ kind: 'own', mediaId: 'mine' });
+  });
+
+  it('falls back to the portrait when this fish has never been photographed', () => {
+    // Its sibling in the next tank having a photo must not lend it one.
+    expect(chooseArt(sp, [], undefined)).toMatchObject({ kind: 'portrait' });
+  });
+
+  it('still honours an explicit preference for the reference portrait', () => {
+    expect(chooseArt(sp, ['mine'], { artSource: 'portrait' })).toMatchObject({ kind: 'portrait' });
+  });
+
+  it('shows the newest photo of that fish', () => {
+    expect(chooseArt(sp, ['newest', 'older'], undefined)).toEqual({ kind: 'own', mediaId: 'newest' });
+  });
+
+  it('has nothing to draw for an unidentified fish with no photo', () => {
+    expect(chooseArt(undefined, [], undefined)).toEqual({ kind: 'none' });
+  });
+
+  it('draws the photo of an unidentified fish, which has no portrait to fall back to', () => {
+    expect(chooseArt(undefined, ['mine'], undefined)).toEqual({ kind: 'own', mediaId: 'mine' });
   });
 });
 

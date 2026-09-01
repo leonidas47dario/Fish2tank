@@ -29,6 +29,14 @@ export interface KeptFishRow {
   quantity: number;
   /** Tanks it currently lives in, in holding order. Empty when it lives nowhere. */
   tanks: string[];
+  /**
+   * You kept this and no longer do - every holding behind it is empty.
+   *
+   * Distinct from a quantity of zero, which a fish caught but never brought
+   * home also has. "Not in a tank" and "no longer kept" are different
+   * sentences and the row has to be able to tell them apart.
+   */
+  pastKept: boolean;
   /** When the record was created. Absent until one exists. */
   createdAt?: Instant;
 }
@@ -54,10 +62,16 @@ export function keptFishRows(input: KeptFishInput): KeptFishRow[] {
     return aquariums.find((t) => t.id === open.aquariumId)?.name;
   };
 
-  const summarise = (of: Holding[]) => ({
-    quantity: of.reduce((n, h) => n + deriveQuantity(h, lifeEvents), 0),
-    tanks: of.map((h) => tankOf(h.id)).filter((n): n is string => Boolean(n)),
-  });
+  const summarise = (of: Holding[]) => {
+    const quantity = of.reduce((n, h) => n + deriveQuantity(h, lifeEvents), 0);
+    return {
+      quantity,
+      tanks: of.map((h) => tankOf(h.id)).filter((n): n is string => Boolean(n)),
+      // Held something once, holds nothing now. A row with no holding at all
+      // was never kept, so it is not past kept either.
+      pastKept: of.length > 0 && quantity === 0,
+    };
+  };
 
   /* A specimen can stand behind several holdings, because "also add to another
      tank" attaches a second one rather than moving the first. So a specimen is
@@ -70,8 +84,13 @@ export function keptFishRows(input: KeptFishInput): KeptFishRow[] {
     ...summarise(holdings.filter((h) => h.specimenId === s.id)),
   }));
 
-  /* Kept but never caught. Dropped once nothing is left of it, the way the
-     tank views drop it - a holding at zero is history, not a resident. */
+  /* Kept but never caught.
+​
+     These used to be dropped once nothing was left of them. Spec 020 keeps
+     them: with uploading moved onto the record, dropping a row is dropping the
+     only way to reach the fish, and `ownership()` counts the holding either
+     way - so the species would read as yours and offer nothing to open. A
+     photo of a fish you have lost is the case Fish Heaven exists for. */
   const holdingRows: KeptFishRow[] = holdings
     .filter((h) => !h.specimenId)
     .map((h) => ({
@@ -79,8 +98,7 @@ export function keptFishRows(input: KeptFishInput): KeptFishRow[] {
       holdingId: h.id,
       name: h.rawLabel ?? speciesName,
       ...summarise([h]),
-    }))
-    .filter((r) => r.quantity > 0);
+    }));
 
   // Specimens first, so minting a record moves a row up the list rather than
   // shuffling the rows around it.

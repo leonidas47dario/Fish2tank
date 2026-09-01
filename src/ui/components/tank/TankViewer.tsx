@@ -1,7 +1,7 @@
 /**
  * A tank, drawn from what it contains. Nothing here reads a database.
  *
- * Lifted out of `TankDetail.tsx` (spec 020) so that two callers can render the
+ * Lifted out of `TankDetail.tsx` (spec 023) so that two callers can render the
  * same tank the same way: the keeper's live screen, and the public page a
  * stranger opens. A copy would have been faster and would have drifted within
  * a month - the guest's version quietly losing whatever the owner's gained.
@@ -213,8 +213,8 @@ export function GrowsInto({ residents }: { residents: TankResident[] }) {
 export function ResidentTileContent({ resident }: { resident: TankResident }) {
   return (
     <>
-      {resident.portraitUrl
-        ? <img className="tank-tile__art" src={resident.portraitUrl} alt="" loading="lazy" />
+      {resident.artUrl
+        ? <img className="tank-tile__art" src={resident.artUrl} alt="" loading="lazy" />
         : <span className="tank-tile__art tank-tile__art--empty" aria-hidden="true">◍</span>}
       <span className="tank-tile__body">
         <strong>{resident.commonName}</strong>

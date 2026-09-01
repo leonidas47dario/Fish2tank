@@ -1,5 +1,5 @@
 /**
- * Somebody else's tank, opened by a stranger - spec 020.
+ * Somebody else's tank, opened by a stranger - spec 023.
  *
  * THE ONLY ROUTE IN THIS APP THAT RENDERS WITHOUT AN ACCOUNT. It reads one
  * public file from the Worker and draws it with the same components the
@@ -290,7 +290,7 @@ function asResident(resident: SharedResident, index: number): TankResident {
     speciesId: resident.speciesId,
     commonName: resident.commonName,
     scientificName: resident.scientificName,
-    portraitUrl: resident.speciesId ? portraitAsset(resident.speciesId) : undefined,
+    artUrl: resident.speciesId ? portraitAsset(resident.speciesId) : undefined,
     adultSizeIn: resident.adultSizeIn,
     minVolumeGal: resident.minVolumeGal,
     aggression: resident.aggression,

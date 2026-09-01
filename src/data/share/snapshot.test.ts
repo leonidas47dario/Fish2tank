@@ -40,7 +40,7 @@ const resident = {
   speciesId: 'sp_betta',
   commonName: 'Betta',
   scientificName: 'Betta splendens',
-  portraitUrl: '/assets/portraits/sp_betta.jpg',
+  artUrl: '/assets/portraits/sp_betta.jpg',
   adultSizeIn: 2.5,
   minVolumeGal: 5,
   aggression: 'semi-aggressive',
@@ -106,7 +106,7 @@ describe('buildSnapshot', () => {
 
     expect(snap.stats.fish).toBe(2);
     expect(snap.stats.species).toBe(1);
-    // The decision recorded in spec 020: estimated value is public.
+    // The decision recorded in spec 023: estimated value is public.
     expect(snap.stats.estimatedValue).toBe(24);
   });
 
