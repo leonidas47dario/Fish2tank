@@ -10,8 +10,10 @@ import TankDetail from './ui/screens/TankDetail';
 import Journal from './ui/screens/Journal';
 import SpecimenDetail from './ui/screens/SpecimenDetail';
 import Settings from './ui/screens/Settings';
+import SharedTank from './ui/screens/SharedTank';
 import AuthGate from './ui/components/AuthGate';
 import AutoMediaSync from './ui/components/AutoMediaSync';
+import AutoRepublish from './ui/components/AutoRepublish';
 import ProfileButton from './ui/components/ProfileButton';
 import {
   CameraIcon, DropIcon, HouseIcon, NotePencilIcon, SquaresFourIcon,
@@ -32,7 +34,27 @@ const DESTINATIONS = [
   { to: '/journal', Icon: NotePencilIcon, label: 'Journal', end: false },
 ];
 
+/**
+ * One public route, and everything else.
+ *
+ * Spec 015 FR-S02. `/share/:token` is the only thing in this app that renders
+ * without an account, and it sits out here rather than inside `AuthGate`
+ * because the whole point of a shared tank is that a stranger can open it.
+ *
+ * The split is deliberately at the top and deliberately narrow: one path, one
+ * screen, and that screen reaches no database. Anything else added here would
+ * be public too, so the default place for a new route is inside `GatedApp`.
+ */
 export default function App() {
+  return (
+    <Routes>
+      <Route path="/share/:token" element={<SharedTank />} />
+      <Route path="/*" element={<GatedApp />} />
+    </Routes>
+  );
+}
+
+function GatedApp() {
   return (
     // Spec 010 FR-A09: nothing below this renders without an account. The gate
     // tests for a cached identity, not a network, so a device that has signed
@@ -42,6 +64,9 @@ export default function App() {
       {/* Spec 014: photos sync without being asked. Renders nothing; it is
           here so the effects live and die with the app shell. */}
       <AutoMediaSync />
+      {/* Spec 015: a shared tank keeps itself current. Inside the gate, since
+          only an owner has anything to republish. */}
+      <AutoRepublish />
       {/* FR-A10: the one control that used to be seven cards down Settings. */}
       <ProfileButton />
       <main className="app">

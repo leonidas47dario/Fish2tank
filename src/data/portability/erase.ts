@@ -54,6 +54,11 @@ export const ERASED_TABLES = [
   'blobs',
   'draftKeys',
   'deletedRecords',
+  // BUG-11, spec 028. Added ONLY because the erase flow now revokes first:
+  // clearing this table while a page is live destroys the token that is the
+  // only way to take it down. `eraseEverything` must never be called with
+  // published tanks outstanding - see `revokeEveryShare`.
+  'shares',
 ] as const;
 
 export interface EraseResult {

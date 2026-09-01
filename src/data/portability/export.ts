@@ -73,8 +73,38 @@ export function referencedBlobKeys(media: Media[]): string[] {
   return [...keys];
 }
 
-export function archiveFilename(now = new Date()): string {
-  return `fish2tank-export-${now.toISOString().slice(0, 10)}.zip`;
+/**
+ * A name that says WHOSE collection this is and WHEN it was taken.
+ *
+ * The old name carried the date alone, which is fine for the occasional
+ * manual backup and wrong for the one spec 016 forces before an erase: two
+ * erases in a day produced `fish2tank-export-2026-08-30.zip` twice, and the
+ * browser quietly appended "(1)". The file you need to restore from is then
+ * the one you cannot identify, which is the worst moment to be guessing.
+ *
+ * UTC, deliberately, and to the minute. It matches `manifest.exportedAt` in
+ * the archive itself, so the name and the contents agree; a local-time name
+ * beside a UTC manifest reads like two different backups.
+ *
+ * The account is the local part of the email, never the whole address. It is
+ * enough to tell two accounts apart, and a backup is a file people hand
+ * around when something has gone wrong - a full address in the name travels
+ * further than the person who typed it expected.
+ */
+export function accountSlug(account: string | undefined): string | undefined {
+  if (!account) return undefined;
+  const local = account.split('@')[0] ?? '';
+  const slug = local.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  return slug ? slug.slice(0, 32) : undefined;
+}
+
+export function archiveFilename(now = new Date(), account?: string): string {
+  // 2026-08-30T14:07:11.000Z -> 2026-08-30-1407
+  const stamp = now.toISOString().slice(0, 16).replace('T', '-').replace(':', '');
+  const who = accountSlug(account);
+  return who
+    ? `fish2tank-backup-${who}-${stamp}.zip`
+    : `fish2tank-backup-${stamp}.zip`;
 }
 
 /**
@@ -85,7 +115,12 @@ export function archiveFilename(now = new Date()): string {
  */
 export async function exportArchive(
   database: Fish2TankDB = db,
-  options: { appBuild?: string; onProgress?: (done: number, total: number) => void } = {},
+  options: {
+    appBuild?: string;
+    onProgress?: (done: number, total: number) => void;
+    /** Who this belongs to, for the filename. Omitted when signed out. */
+    account?: string;
+  } = {},
 ): Promise<ExportResult> {
   const records = await collectRecords(database);
   const mediaRows = (records.media ?? []) as Media[];
@@ -155,5 +190,5 @@ export async function exportArchive(
       Object.entries(manifest.tables).map(([t, n]) => `${t}=${n}`).join(' '),
   );
 
-  return { blob, manifest, filename: archiveFilename() };
+  return { blob, manifest, filename: archiveFilename(new Date(), options.account) };
 }

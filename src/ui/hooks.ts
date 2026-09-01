@@ -3,14 +3,15 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { blobFor, db } from '@/data/db';
 import {
   buildCatalogCard, CATALOG_BY_SPECIES, cardPrice, catalogShapeForLocal, marketAndScarcity,
-  portraitAsset, pricesBySpecies, searchableSpecies,
+  pricesBySpecies, searchableSpecies,
   type CatalogCard, type CatalogSpecies,
 } from '@/data/catalog';
 
 import { deriveBadge, deriveQuantity } from '@/domain/holdings';
-import { loadProfile } from '@/data/profile';
+import { readProfile } from '@/data/profile';
+import { loadTankResidents } from '@/data/tank-residents';
 import { summariseTank, type TankResident } from '@/domain/tank-stats';
-import type { Aquarium, Id } from '@/domain/types';
+import type { Id } from '@/domain/types';
 import { useBlobUrls } from './blob-url';
 
 export function useSpecies(id?: Id) {
@@ -169,72 +170,46 @@ export function useSpecimenMedia(specimenId?: Id) {
 }
 
 /**
- * One tank's residents, joined to everything the app knows about them.
+ * One tank's residents, live.
  *
- * The join is the whole point: a holding on its own is a label and a number,
- * and the viewer needs a portrait, a water level, a temperament and a price.
- * Anything the catalog cannot supply stays undefined and is counted as such
- * downstream - never defaulted, never dropped.
+ * The join itself lives in `data/tank-residents.ts` so that publishing a
+ * shared tank asks the same question this screen does (spec 023). This is the
+ * subscription, plus the one thing a shared page cannot have: the keeper's own
+ * photographs, which are blobs in this browser rather than anything a guest
+ * could fetch. `loadTankResidents` decides WHICH photo each tile should wear
+ * (spec 021's precedence); resolving it to pixels is this hook's job, and the
+ * projection simply declines to, leaving the bundled portrait in place.
  */
 export function useTankResidents(aquariumId: string | undefined) {
-  return useLiveQuery(async (): Promise<{ aquarium: Aquarium; residents: TankResident[] } | undefined> => {
-    if (!aquariumId) return undefined;
-    const aquarium = await db.aquariums.get(aquariumId);
-    if (!aquarium) return undefined;
+  const raw = useLiveQuery(async () => {
+    const loaded = await loadTankResidents(aquariumId);
+    if (!loaded) return undefined;
 
-    const [holdings, residencies, events, profiles, prices, account] = await Promise.all([
-      db.holdings.toArray(), db.residencies.toArray(), db.lifeEvents.toArray(),
-      db.speciesProfiles.toArray(),
-      // A tank's estimated value counts the keeper's own logged prices too.
-      db.priceObservations.toArray(), loadProfile(),
-    ]);
-    const profileFor = new Map(profiles.map((p) => [p.speciesId, p]));
-    const ownPrices = pricesBySpecies(prices);
-    const currency = account.settings.currency;
-
-    const residents = residencies
-      .filter((r) => r.aquariumId === aquariumId && !r.endDate)
-      .flatMap((r): TankResident[] => {
-        const holding = holdings.find((h) => h.id === r.holdingId);
-        if (!holding) return [];
-        const quantity = deriveQuantity(holding, events);
-        if (quantity <= 0) return [];
-
-        const entry = holding.speciesId ? CATALOG_BY_SPECIES.get(holding.speciesId) : undefined;
-        const profile = holding.speciesId ? profileFor.get(holding.speciesId) : undefined;
-        const market = holding.speciesId
-          ? marketAndScarcity(holding.speciesId, { prices: ownPrices.get(holding.speciesId) ?? [], currency }).market
-          : undefined;
-
-        // Adult size and minimum volume come from the curated profile where
-        // there is one, and the mart otherwise - the mart carries the care
-        // backfill, the profile carries the hand-written 47.
-        const adultSizeIn = profile?.adultSize
-          ? (profile.adultSize.unit === 'cm' ? profile.adultSize.value / 2.54 : profile.adultSize.value)
-          : entry?.adultSizeIn;
-        const minVolumeGal = profile?.minimumVolume
-          ? (profile.minimumVolume.unit === 'l' ? profile.minimumVolume.value / 3.785411784 : profile.minimumVolume.value)
-          : entry?.minVolumeGal;
-
-        return [{
-          holding,
-          quantity,
-          speciesId: holding.speciesId,
-          commonName: entry?.commonName ?? holding.rawLabel ?? 'Unidentified',
-          scientificName: entry?.scientificName,
-          portraitUrl: holding.speciesId ? portraitAsset(holding.speciesId) : undefined,
-          adultSizeIn,
-          minVolumeGal,
-          aggression: profile?.aggression ?? (entry?.aggression as TankResident['aggression']),
-          waterZone: entry?.waterZone,
-          // The size-matched band where we have a size, the pooled median
-          // otherwise. Undefined when the index cannot price it at all.
-          unitPrice: cardPrice(market, adultSizeIn),
-        }];
-      });
-
-    return { aquarium, residents };
+    // Only the blobs actually going on screen, keyed by holding so two
+    // holdings sharing one specimen's photo each get their own URL.
+    const ownBlobs: Array<{ id: Id; blob: Blob }> = [];
+    for (const { holdingId, mediaId } of loaded.ownArt) {
+      const m = await db.media.get(mediaId);
+      if (!m) continue;
+      const blob = blobFor(await db.blobs.get(m.originalBlobKey));
+      if (blob) ownBlobs.push({ id: holdingId, blob });
+    }
+    return { ...loaded, ownBlobs };
   }, [aquariumId]);
+
+  const urls = useBlobUrls(raw?.ownBlobs);
+
+  return useMemo(() => {
+    if (!raw) return undefined;
+    const byHolding = new Map(urls.map((u) => [u.id, u.url]));
+    return {
+      aquarium: raw.aquarium,
+      residents: raw.residents.map((r) => ({
+        ...r,
+        artUrl: byHolding.get(r.holding.id) ?? r.artUrl,
+      })),
+    };
+  }, [raw, urls]);
 }
 
 /**
@@ -250,7 +225,7 @@ export function useTankSummaries() {
       await Promise.all([
         db.aquariums.toArray(), db.holdings.toArray(), db.residencies.toArray(),
         db.lifeEvents.toArray(), db.speciesProfiles.toArray(), db.media.toArray(),
-        db.priceObservations.toArray(), loadProfile(),
+        db.priceObservations.toArray(), readProfile(),
       ]);
     const profileFor = new Map(profiles.map((p) => [p.speciesId, p]));
     const ownPrices = pricesBySpecies(prices);
