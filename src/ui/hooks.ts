@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { blobFor, db } from '@/data/db';
+import { db } from '@/data/db';
+import { readMediaBlob } from '@/data/media/read';
+import type { RenditionSize } from '@/data/media/renditions';
 import {
   buildCatalogCard, CATALOG_BY_SPECIES, cardPrice, catalogShapeForLocal, marketAndScarcity,
   pricesBySpecies, searchableSpecies,
@@ -11,8 +13,8 @@ import { deriveBadge, deriveQuantity } from '@/domain/holdings';
 import { readProfile } from '@/data/profile';
 import { loadTankResidents } from '@/data/tank-residents';
 import { summariseTank, type TankResident } from '@/domain/tank-stats';
-import type { Id } from '@/domain/types';
-import { useBlobUrls } from './blob-url';
+import type { Id, Media } from '@/domain/types';
+import { useBlobUrl, useBlobUrls } from './blob-url';
 
 export function useSpecies(id?: Id) {
   return useLiveQuery(async () => (id ? db.species.get(id) : undefined), [id]);
@@ -135,7 +137,18 @@ export function useTanksWithResidents() {
 }
 
 /**
- * Original media for a specimen, newest first, as object URLs (FR-J01).
+ * Every photo of a specimen, newest first, at THUMBNAIL size (FR-J01).
+ *
+ * Spec 036: this hook feeds lists - the 64px strip on a record, and the one
+ * picture a caller then chooses to show large. A list of twenty photographs
+ * should cost twenty thumbnails, so the preview for whichever one is on screen
+ * is fetched separately by `useMediaUrl`, not eagerly for all of them here.
+ * Before spec 036 this loaded twenty full-size originals to draw twenty 64px
+ * squares.
+ *
+ * A video has no renditions - deriving one needs frame extraction that spec
+ * 029 deliberately left out - so the ladder falls straight through to the
+ * original, exactly as before.
  *
  * The query yields blobs and `useBlobUrls` owns the URLs, because this hook
  * re-runs on every write to `media` or `blobs` and minting a URL inside it
@@ -153,7 +166,7 @@ export function useSpecimenMedia(specimenId?: Id) {
       media.map(async (m) => ({
         id: m.id,
         media: m,
-        blob: blobFor(await db.blobs.get(m.originalBlobKey)),
+        blob: await readMediaBlob(m, 'thumbnail'),
       })),
     );
     return withBlobs
@@ -164,9 +177,27 @@ export function useSpecimenMedia(specimenId?: Id) {
   const urls = useBlobUrls(rows);
 
   return useMemo(
-    () => rows?.map((r) => ({ media: r.media, url: urls.find((u) => u.id === r.id)?.url })),
+    () => rows?.map((r) => ({ media: r.media, thumbUrl: urls.find((u) => u.id === r.id)?.url })),
     [rows, urls],
   );
+}
+
+/**
+ * One picture, at the size it is about to be drawn - spec 036.
+ *
+ * The companion to `useSpecimenMedia`: that hook draws the strip, this one
+ * draws whichever picture the strip has selected. Keeping them apart is what
+ * stops a record with twenty photos from decoding twenty previews to show one.
+ *
+ * Keyed on the media id rather than the row, so a `useLiveQuery` refresh that
+ * hands back an equal-but-new object does not re-mint the URL under the img.
+ */
+export function useMediaUrl(media: Media | undefined, size: RenditionSize) {
+  const blob = useLiveQuery(
+    async () => (media ? readMediaBlob(media, size) : undefined),
+    [media?.id, size],
+  );
+  return useBlobUrl(blob);
 }
 
 /**
@@ -191,7 +222,9 @@ export function useTankResidents(aquariumId: string | undefined) {
     for (const { holdingId, mediaId } of loaded.ownArt) {
       const m = await db.media.get(mediaId);
       if (!m) continue;
-      const blob = blobFor(await db.blobs.get(m.originalBlobKey));
+      // Preview: a tank tile is minmax(150px, 1fr), well past where a 320px
+      // thumbnail stays sharp - spec 036.
+      const blob = await readMediaBlob(m, 'preview');
       if (blob) ownBlobs.push({ id: holdingId, blob });
     }
     return { ...loaded, ownBlobs };
@@ -218,9 +251,16 @@ export function useTankResidents(aquariumId: string | undefined) {
  * Uses the same join and the same summariser as the single-tank viewer, so the
  * count on the list and the count inside a tank cannot disagree - which they
  * would within a month if the list computed its own.
+ *
+ * SPEC 036 FIXED A LEAK HERE. This query used to call `URL.createObjectURL`
+ * inline and never revoke it, which is precisely what `blob-url.ts` exists to
+ * prevent. It re-runs on any write to eight tables - `media` and `blobs` among
+ * them - so every catch logged pinned one more full-size copy of every tank
+ * photo for the life of the tab. It now yields blobs and lets `useBlobUrls`
+ * own the URLs, like every other media reader in the app.
  */
 export function useTankSummaries() {
-  return useLiveQuery(async () => {
+  const raw = useLiveQuery(async () => {
     const [aquariums, holdings, residencies, events, profiles, media, prices, account] =
       await Promise.all([
         db.aquariums.toArray(), db.holdings.toArray(), db.residencies.toArray(),
@@ -262,13 +302,28 @@ export function useTankSummaries() {
         });
 
       const photoMedia = aquarium.photoMediaId ? mediaById.get(aquarium.photoMediaId) : undefined;
-      const blob = photoMedia ? blobFor(await db.blobs.get(photoMedia.originalBlobKey)) : undefined;
+      // .tankcard__art is 96x96, so the 320px thumbnail is sharp even at 3x
+      // and this is one of only two surfaces small enough for it - spec 036.
+      const blob = photoMedia ? await readMediaBlob(photoMedia, 'thumbnail') : undefined;
 
-      return {
-        aquarium,
-        stats: summariseTank(residents),
-        photoUrl: blob ? URL.createObjectURL(blob) : undefined,
-      };
+      return { id: aquarium.id, aquarium, stats: summariseTank(residents), blob };
     }));
   }, []);
+
+  // Only the tanks that actually have a photo: `useBlobUrls` re-mints on every
+  // change of identity of the array it is handed, and a tank without a picture
+  // has nothing to mint.
+  const withPhotos = useMemo(
+    () => raw?.filter((t): t is typeof t & { blob: Blob } => Boolean(t.blob)),
+    [raw],
+  );
+  const urls = useBlobUrls(withPhotos);
+
+  return useMemo(() => {
+    if (!raw) return undefined;
+    const byTank = new Map(urls.map((u) => [u.id, u.url]));
+    return raw.map(({ aquarium, stats }) => ({
+      aquarium, stats, photoUrl: byTank.get(aquarium.id),
+    }));
+  }, [raw, urls]);
 }
