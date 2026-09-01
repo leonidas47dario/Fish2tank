@@ -8,7 +8,7 @@ import {
 } from '@/data/catalog';
 
 import { deriveBadge, deriveQuantity } from '@/domain/holdings';
-import { loadProfile } from '@/data/profile';
+import { readProfile } from '@/data/profile';
 import { loadTankResidents } from '@/data/tank-residents';
 import { summariseTank, type TankResident } from '@/domain/tank-stats';
 import type { Id } from '@/domain/types';
@@ -225,7 +225,7 @@ export function useTankSummaries() {
       await Promise.all([
         db.aquariums.toArray(), db.holdings.toArray(), db.residencies.toArray(),
         db.lifeEvents.toArray(), db.speciesProfiles.toArray(), db.media.toArray(),
-        db.priceObservations.toArray(), loadProfile(),
+        db.priceObservations.toArray(), readProfile(),
       ]);
     const profileFor = new Map(profiles.map((p) => [p.speciesId, p]));
     const ownPrices = pricesBySpecies(prices);

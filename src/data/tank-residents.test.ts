@@ -126,3 +126,35 @@ describe('loadTankResidents (spec 023)', () => {
     expect(loaded.ownArt).toEqual([]);
   });
 });
+
+describe('read paths never write (spec 027)', () => {
+  /**
+   * The regression that blanked the species page and made sign-out look
+   * broken. `loadProfile()` CREATES `user_local` when it is missing, and this
+   * join runs inside `useLiveQuery` - a write inside a read-only transaction,
+   * which IndexedDB rejects with ReadOnlyError and React turns into an empty
+   * screen. It was latent until spec 022 stopped ThemeProvider creating the
+   * row eagerly; sign-out clears `users`, so it fired every time afterwards.
+   */
+  it('loads a tank without creating a profile row', async () => {
+    expect(await db.users.count()).toBe(0);
+
+    const loaded = await loadTankResidents('aq_1', db);
+
+    expect(loaded).toBeDefined();
+    // The assertion that fails if anything here goes back to loadProfile().
+    expect(await db.users.count()).toBe(0);
+  });
+
+  it('still prices in the keeper\'s currency once a profile exists', async () => {
+    await db.users.put({
+      id: 'user_local',
+      settings: { themeId: 'midnight-aquarium', sceneId: 'original-tank', currency: 'GBP' },
+    } as never);
+
+    const loaded = await loadTankResidents('aq_1', db);
+
+    expect(loaded).toBeDefined();
+    expect(await db.users.count()).toBe(1);
+  });
+});

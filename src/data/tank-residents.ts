@@ -13,7 +13,7 @@
  */
 import { db as defaultDb, type Fish2TankDB } from './db';
 import { CATALOG_BY_SPECIES, cardPrice, chooseArt, marketAndScarcity, pricesBySpecies } from './catalog';
-import { loadProfile } from './profile';
+import { readProfile } from './profile';
 import { deriveQuantity } from '@/domain/holdings';
 import type { TankResident } from '@/domain/tank-stats';
 import type { Aquarium, Id } from '@/domain/types';
@@ -49,10 +49,12 @@ export async function loadTankResidents(
     database.speciesProfiles.toArray(),
     // A tank's estimated value counts the keeper's own logged prices too.
     database.priceObservations.toArray(),
-    // Passed the database explicitly. Defaulting it here would read the
-    // module-level db while every other query read the one handed in, which a
-    // test would never notice and a second database would get wrong.
-    loadProfile(database),
+    // readProfile, NOT loadProfile: this runs inside a live query, and
+    // loadProfile writes the row when it is missing - a write inside a
+    // read-only transaction, which throws ReadOnlyError and blanks the screen
+    // (spec 027). Passed the database explicitly, because defaulting it would
+    // read the module-level db while every other query read the one handed in.
+    readProfile(database),
     database.media.toArray(), database.cardPrefs.toArray(),
   ]);
   const prefFor = new Map(prefs.map((p) => [p.speciesId, p]));
