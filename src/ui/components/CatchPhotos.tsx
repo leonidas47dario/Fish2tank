@@ -23,7 +23,7 @@ import { addPhotos, deletePhoto, type CaptureFile } from '@/data/repositories';
 import { cropToBlob, type CropRect } from '@/data/media/crop';
 import { CropSheet } from './CropSheet';
 import type { Id } from '@/domain/types';
-import { useSpecimenMedia } from '../hooks';
+import { useMediaUrl, useSpecimenMedia } from '../hooks';
 import { PlusIcon } from './Icons';
 
 interface Props {
@@ -48,6 +48,14 @@ export function CatchPhotos({ specimenId, title, reducedMotion }: Props) {
   // Newest first, so a record with no explicit choice shows the latest photo.
   // Falls back rather than pins: the chosen one can be deleted from elsewhere.
   const shown = media?.find((m) => m.media.id === shownId) ?? media?.[0];
+
+  /*
+   * Spec 036. The strip draws thumbnails; only the one picture actually on
+   * the plate is worth a preview. Fetching it here rather than in
+   * `useSpecimenMedia` is what stops a fish with twenty photographs from
+   * decoding twenty previews to show one.
+   */
+  const shownUrl = useMediaUrl(shown?.media, 'preview');
 
   /*
    * Spec 032. A single photo goes through the crop sheet first; anything else
@@ -148,9 +156,9 @@ export function CatchPhotos({ specimenId, title, reducedMotion }: Props) {
         {shown ? (
           <span className="plate">
             {shown.media.kind === 'video' ? (
-              <video className="plate__img" src={shown.url} controls playsInline muted={reducedMotion} />
+              <video className="plate__img" src={shownUrl} controls playsInline muted={reducedMotion} />
             ) : (
-              <img className="plate__img" src={shown.url} alt={`Your photo of ${title}`} />
+              <img className="plate__img" src={shownUrl} alt={`Your photo of ${title}`} />
             )}
           </span>
         ) : (
@@ -205,7 +213,7 @@ export function CatchPhotos({ specimenId, title, reducedMotion }: Props) {
       {media && media.length > 0 && (
         <div className="pad">
           <div className="photo-strip">
-            {media.map(({ media: m, url }) => (
+            {media.map(({ media: m, thumbUrl }) => (
               <button
                 key={m.id}
                 type="button"
@@ -215,8 +223,8 @@ export function CatchPhotos({ specimenId, title, reducedMotion }: Props) {
                 onClick={() => setShownId(m.id)}
               >
                 {m.kind === 'video'
-                  ? <video src={url} muted playsInline preload="metadata" />
-                  : <img src={url} alt="" loading="lazy" />}
+                  ? <video src={thumbUrl} muted playsInline preload="metadata" />
+                  : <img src={thumbUrl} alt="" loading="lazy" />}
               </button>
             ))}
             <button

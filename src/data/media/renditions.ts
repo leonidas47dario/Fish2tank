@@ -65,16 +65,66 @@ export function planRendition(
 }
 
 /**
+ * A picture's identity as far as this module is concerned.
+ *
+ * Structural rather than `Media` so the share projection, which works from a
+ * plain snapshot row, can ask the same question the UI does.
+ */
+export interface RenditionKeys {
+  originalBlobKey: string;
+  previewBlobKey?: string;
+  thumbnailBlobKey?: string;
+}
+
+/** How large the picture is about to be drawn. Spec 036. */
+export type RenditionSize = 'thumbnail' | 'preview';
+
+/**
+ * WHICH SIZE A BOX WANTS, and the rule is arithmetic rather than taste.
+ *
+ * `THUMBNAIL_EDGE` is 320 and a phone renders at 3x, so a thumbnail is sharp
+ * up to 107 CSS pixels and visibly soft above it. Only two surfaces in the app
+ * are that small: the 64px photo strip and the 96px tank card. Everything else
+ * - the catalog tile, the tank grid, every hero - takes the preview, measured
+ * at 21x fewer bytes than the original it replaces.
+ */
+export const THUMBNAIL_MAX_CSS_PX = THUMBNAIL_EDGE / 3;
+
+/**
+ * The keys to try, best first, for a picture being drawn at `size`.
+ *
+ * A LADDER RATHER THAN A CHOICE, because a rung can be missing for two quite
+ * different reasons and both are normal:
+ *
+ *   - the rendition was never derived - a photo under 1280 pixels has no
+ *     preview and never will, and one under 320 has no thumbnail either
+ *   - the rendition exists but its blob has not arrived on THIS device yet.
+ *     The sync queue sends thumbnails, then previews, then originals (FR-A03),
+ *     so a row can carry all three keys while one blob is still in flight.
+ *
+ * Only the first reason can be settled from the row. `readMediaBlob` in
+ * `media/read.ts` walks this same ladder against storage for the second.
+ */
+export function blobKeyLadder(media: RenditionKeys, size: RenditionSize): string[] {
+  const rungs = size === 'thumbnail'
+    ? [media.thumbnailBlobKey, media.previewBlobKey, media.originalBlobKey]
+    : [media.previewBlobKey, media.originalBlobKey];
+  return rungs.filter((k): k is string => Boolean(k));
+}
+
+/**
  * Which blob a viewer should be sent.
  *
  * Preview when there is one, original otherwise - and the fallback is not a
  * degraded case, it is the normal one for any photo already smaller than
  * `PREVIEW_EDGE`. Pure so the projection can call it without a browser.
+ *
+ * Kept as its own name because the publisher's question is not the UI's: it is
+ * choosing what to UPLOAD for a guest, where there is no device-pixel ratio to
+ * reason about and no local storage to fall back through.
  */
-export function viewableBlobKey(
-  media: { originalBlobKey: string; previewBlobKey?: string },
-): string {
-  return media.previewBlobKey ?? media.originalBlobKey;
+export function viewableBlobKey(media: RenditionKeys): string {
+  return blobKeyLadder(media, 'preview')[0]!;
 }
 
 export interface DerivedRendition {

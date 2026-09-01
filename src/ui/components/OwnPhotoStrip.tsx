@@ -7,7 +7,8 @@
  * up to the photo library sitting in memory twice.
  */
 import { useLiveQuery } from 'dexie-react-hooks';
-import { blobFor, db } from '@/data/db';
+import { db } from '@/data/db';
+import { readMediaBlob } from '@/data/media/read';
 import type { Id } from '@/domain/types';
 import { useBlobUrls } from '../blob-url';
 
@@ -25,7 +26,9 @@ export function OwnPhotoStrip({ mediaIds, selected, onPick }: Props) {
     const found: Array<{ id: Id; blob: Blob }> = [];
     for (const m of media) {
       if (!m) continue;
-      const blob = blobFor(await db.blobs.get(m.originalBlobKey));
+      // 64px tiles (.photo-strip__item), so the 320px thumbnail is sharp
+      // even at 3x - spec 036.
+      const blob = await readMediaBlob(m, 'thumbnail');
       if (blob) found.push({ id: m.id, blob });
     }
     return found;

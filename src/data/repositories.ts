@@ -1688,11 +1688,30 @@ export async function setTankPhoto(
 
   const at = nowIso();
   const blobKey = newId('blob');
+
+  /*
+   * FR-A08, spec 036. `addPhotos` has derived renditions since spec 029 and
+   * this path never did, which went unnoticed while nothing READ them. The
+   * tank card draws a 96x96 square, so it is one of only two surfaces small
+   * enough for the 320px thumbnail - and without this it had no thumbnail to
+   * read and quietly fell back to a full-size original.
+   *
+   * Inline rather than deferred, unlike the capture path: choosing a tank
+   * photo is an explicit save that already shows "Saving...", not the
+   * take-a-picture-of-a-fish moment FR-C02 protects.
+   */
+  const derived = await deriveRenditions(
+    new Blob([detached.data], { type: detached.mimeType }),
+    { newKey: () => newId('blob') },
+  );
+
   const media: Media = {
     id: newId('media'),
     kind: 'photo',
     specimenIds: [],
     originalBlobKey: blobKey,
+    previewBlobKey: derived.preview?.key,
+    thumbnailBlobKey: derived.thumbnail?.key,
     originalBytes: detached.data.byteLength,
     mimeType: detached.mimeType,
     capturedAt: at,
@@ -1712,6 +1731,16 @@ export async function setTankPhoto(
           key: blobKey, data: detached.data, bytes: detached.data.byteLength,
           mimeType: detached.mimeType, storedAt: at,
         });
+        // The renditions go in the SAME transaction as the original, so a
+        // media row can never name a blob that is not there beside it.
+        for (const r of [derived.preview, derived.thumbnail]) {
+          if (r) {
+            await database.blobs.add({
+              key: r.key, data: r.data, bytes: r.bytes,
+              mimeType: r.mimeType, storedAt: at,
+            });
+          }
+        }
         await database.media.add(media);
         await database.aquariums.update(aquariumId, { photoMediaId: media.id });
         if (previous) {

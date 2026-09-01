@@ -27,7 +27,7 @@ import { canShareFiles, identifyFromText, isConfident, shareForLens, type Candid
 import { assertIdentity, revealSpecimen, submitUserSpecies } from '@/data/repositories';
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
-  useCatalogCard, useIsFirstOfSpecies, useSearchableSpecies, useSpecimenMedia,
+  useCatalogCard, useIsFirstOfSpecies, useMediaUrl, useSearchableSpecies, useSpecimenMedia,
 } from '../hooks';
 import type { RevealOutcome } from '@/data/repositories';
 import { RevealCeremony } from '../components/RevealCeremony';
@@ -63,12 +63,22 @@ export default function IdentifyFlow() {
   const [shareFile, setShareFile] = useState<File | undefined>();
 
   const photo = media?.[0];
+  /*
+   * Spec 036: the shot fills the width of the screen, so it takes the preview
+   * rather than the strip-sized thumbnail `useSpecimenMedia` yields.
+   */
+  const photoUrl = useMediaUrl(photo?.media, 'preview');
 
   /**
    * The original blob as a File, so the share sheet has something to hand over.
    *
    * Object URLs are useless for this - navigator.share wants a real File - so
    * the blob comes back out of IndexedDB. Read once, when the media appears.
+   *
+   * DELIBERATELY THE ORIGINAL, not the preview spec 036 introduced everywhere
+   * else. This hands a file to another application. Passing on a re-encoded
+   * 1280-pixel copy of someone's photograph because it was cheaper to read
+   * would be the app quietly degrading the very thing it was asked to share.
    */
   useEffect(() => {
     let cancelled = false;
@@ -207,7 +217,7 @@ export default function IdentifyFlow() {
         </p>
       </header>
 
-      {photo?.url && <img className="identify__shot media" src={photo.url} alt="The fish you just caught" />}
+      {photoUrl && <img className="identify__shot media" src={photoUrl} alt="The fish you just caught" />}
 
       {/* "Not yet" used to sit here. It is gone by direct instruction - "all
           records must be identified" - and the way out for a fish the catalog
