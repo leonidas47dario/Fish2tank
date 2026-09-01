@@ -1,4 +1,4 @@
-# 018 — Where care data should actually come from
+# 031 — Where care data should actually come from
 
 **Status: audit + source evaluation. No code.**
 
@@ -219,6 +219,11 @@ that species.
 > Not gonna be commercial, just personal use. Cant we scrape multiple sites?
 > To improve coverage?
 
+> **Superseded 2026-09-01.** Asked again, the answer became **"It's a maybe."**
+> Everything below about *which* sources fill *which* gap still holds — it is
+> measurement, not licensing. What no longer holds is the conclusion in the
+> next paragraph. See open question 1.
+
 **Personal, non-commercial use settles the FishBase question — CC-BY-NC is
 fine.** And yes, stacking sources is the right instinct. The useful question is
 not *can we* but *what does each additional one actually add*, because a source
@@ -305,8 +310,23 @@ easy to get wrong under time pressure:
 
 ## Open questions for the product owner
 
-1. ~~Is the app ever going to be commercial?~~ **Answered: no, personal use.**
-   FishBase is therefore usable.
+1. ~~Is the app ever going to be commercial?~~ **Answered twice, and the second
+   answer is weaker than the first.** Revision 2 recorded *"Not gonna be
+   commercial, just personal use"* and concluded FishBase was fine. Asked again
+   on 2026-09-01, the answer was **"It's a maybe."**
+
+   That is not the same answer, and it changes what may be built on FishBase.
+   CC-BY-NC forbids commercial use outright, so "maybe" makes FishBase a
+   foundation that might have to be torn out — and the expensive moment to
+   discover that is after 2,000 species depend on it, because the migration is
+   the whole catalog.
+
+   **The ordering below is revised accordingly:** SeriouslyFish first rather
+   than second, because it is © rather than NC-licensed and the take-facts-
+   never-prose rule already covers it. FishBase, if used at all, must be
+   confined to a slice whose provenance is recorded per field, so it can be
+   removed without taking the rest with it. That is a real cost of "maybe" and
+   is stated rather than absorbed.
 2. **PlanetCatfish and Cichlidae.com carry a `ClaudeBot: Disallow` signal**
    while allowing general crawlers under `use=reference`. Do you want a
    crawler built for those two hosts? They are worth ~48% of the remaining
