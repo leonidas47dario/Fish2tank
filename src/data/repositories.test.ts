@@ -1863,3 +1863,61 @@ describe('measurements over time (ENH-12, spec 037)', () => {
     expect((await db.holdings.get(h.id))!.acquiredOn).toBeUndefined();
   });
 });
+
+describe('editing a fish that never had an encounter (BUG-17, spec 044)', () => {
+  /*
+   * `createCatchDraft` makes a specimen AND an encounter; `ensureSpecimenForHolding`
+   * makes only the specimen. So every fish minted for an imported holding - 61 of
+   * them - had nothing for `updateCatch` to amend, and every encounter-shaped
+   * field written to one was silently discarded.
+   */
+  async function keptFishWithNoEncounter() {
+    const { holding } = await createOpeningBalanceHolding(
+      { aquariumId: 'tank_75g', rawLabel: 'Imported', kind: 'individual', openingQuantity: 1 }, db,
+    );
+    const specimen = await ensureSpecimenForHolding(holding.id, db);
+    expect(await db.encounters.where('specimenId').equals(specimen.id).count()).toBe(0);
+    return specimen;
+  }
+
+  it('WRITES THE VALUE INSTEAD OF DROPPING IT', async () => {
+    const specimen = await keptFishWithNoEncounter();
+
+    await updateCatch({ specimenId: specimen.id, quantitySeen: 3 }, db);
+
+    const encounters = await db.encounters.where('specimenId').equals(specimen.id).toArray();
+    expect(encounters).toHaveLength(1);
+    expect(encounters[0]!.quantitySeen).toBe(3);
+  });
+
+  it('uses the date the keeper gave rather than the moment they typed it', async () => {
+    const specimen = await keptFishWithNoEncounter();
+
+    await updateCatch({ specimenId: specimen.id, observedAt: '2023-04-01T12:00:00.000Z' }, db);
+
+    const [enc] = await db.encounters.where('specimenId').equals(specimen.id).toArray();
+    expect(enc!.observedAt).toBe('2023-04-01T12:00:00.000Z');
+  });
+
+  it('creates ONE encounter, not one per field', async () => {
+    const specimen = await keptFishWithNoEncounter();
+
+    await updateCatch({ specimenId: specimen.id, quantitySeen: 2 }, db);
+    await updateCatch({ specimenId: specimen.id, observedSize: { value: 3, unit: 'in' } }, db);
+
+    const encounters = await db.encounters.where('specimenId').equals(specimen.id).toArray();
+    expect(encounters).toHaveLength(1);
+    expect(encounters[0]!.quantitySeen).toBe(2);
+    expect(encounters[0]!.observedSize!.value).toBe(3);
+  });
+
+  it('does not invent an encounter for a specimen-only edit', async () => {
+    // A nickname is not an observation of a fish in a place on a day.
+    const specimen = await keptFishWithNoEncounter();
+
+    await updateCatch({ specimenId: specimen.id, nickname: 'Panther' }, db);
+
+    expect(await db.encounters.where('specimenId').equals(specimen.id).count()).toBe(0);
+    expect((await db.specimens.get(specimen.id))!.nickname).toBe('Panther');
+  });
+});

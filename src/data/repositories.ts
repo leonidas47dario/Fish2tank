@@ -1405,12 +1405,6 @@ export async function updateCatch(input: UpdateCatchInput, database: DB = db): P
   const specimen = await database.specimens.get(input.specimenId);
   if (!specimen) throw new Error(`No such catch: ${input.specimenId}`);
 
-  const encounters = await database.encounters.where('specimenId').equals(input.specimenId).toArray();
-  encounters.sort((a, b) => a.observedAt.localeCompare(b.observedAt));
-  const target = input.encounterId
-    ? encounters.find((e) => e.id === input.encounterId)
-    : encounters[encounters.length - 1];
-
   /*
    * ONLY THE FIELDS THE CALLER MENTIONED, and nothing else - spec 043, BUG-16.
    *
@@ -1454,9 +1448,56 @@ export async function updateCatch(input: UpdateCatchInput, database: DB = db): P
 
   await database.transaction('rw', [database.specimens, database.encounters], async () => {
     await database.specimens.update(input.specimenId, patch);
-    if (target && Object.keys(chapter).length > 0) {
+    if (Object.keys(chapter).length === 0) return;
+
+    /*
+     * The encounter is chosen INSIDE the transaction - spec 044, BUG-17.
+     *
+     * Reading it outside was the other half of BUG-16's stale read, and it
+     * matters more here: two edits racing on a specimen with no encounter
+     * would each decide to create one, and the fish would end up with two.
+     */
+    const encounters = await database.encounters
+      .where('specimenId').equals(input.specimenId).toArray();
+    encounters.sort((a, b) => a.observedAt.localeCompare(b.observedAt));
+    const target = input.encounterId
+      ? encounters.find((e) => e.id === input.encounterId)
+      : encounters[encounters.length - 1];
+
+    if (target) {
       await database.encounters.update(target.id, chapter);
+      return;
     }
+
+    /*
+     * NO ENCOUNTER TO AMEND, SO ONE IS CREATED - BUG-17.
+     *
+     * A specimen minted for an imported holding has none: `createCatchDraft`
+     * makes a specimen and an encounter together, `ensureSpecimenForHolding`
+     * makes only the specimen. So for the 61 imported rows, every
+     * encounter-shaped field - seen on, shop, how many, size - was written
+     * into nothing. `updateCatch` returned successfully, the field showed the
+     * typed value until the next render, and then reverted to empty. Reported
+     * exactly that way, and silently losing what somebody typed is the worst
+     * outcome an edit can have.
+     *
+     * Recording it is what the keeper asked for. "How big was it, where, and
+     * when" IS an encounter - that is what the table is for - so the honest
+     * response to being handed one for a fish that has none is to write it
+     * down, not to drop it.
+     */
+    const at = (chapter.observedAt as string | undefined) ?? nowIso();
+    await database.encounters.add({
+      ...chapter,
+      id: newId('enc'),
+      specimenId: input.specimenId,
+      observedAt: at,
+      createdAt: nowIso(),
+      syncState: 'local-draft',
+    } as Encounter);
+    console.info('[record] first encounter created to hold an edit', {
+      specimenId: input.specimenId, fields: Object.keys(chapter),
+    });
   });
 }
 
