@@ -19,7 +19,7 @@
  */
 import { useMemo } from 'react';
 import type { LifeEventType } from '@/domain/types';
-import { formatLength, formatWeight } from '@/domain/units';
+import { formatLength } from '@/domain/units';
 import { daysBetween, type Anchor } from '@/domain/fish-timeline';
 import type { HoldingMeasurement } from '@/domain/types';
 import { MeasurementForm } from './MeasurementForm';
@@ -68,11 +68,7 @@ function relativeLabel(on: string, anchor?: Anchor): string | undefined {
 }
 
 function measurementText(m: HoldingMeasurement): string {
-  const parts = [
-    m.length ? formatLength(m.length) : undefined,
-    m.weight ? formatWeight(m.weight) : undefined,
-  ].filter(Boolean);
-  return parts.join(' · ');
+  return formatLength(m.length);
 }
 
 export function FishTimeline({ timeline, title }: {

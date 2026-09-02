@@ -35,7 +35,6 @@ import type {
   Specimen,
   SpecimenKind,
   VolumeMeasurement,
-  WeightMeasurement,
 } from '@/domain/types';
 import { deriveQuantity, planMove } from '@/domain/holdings';
 import { evaluateAllTanks, type CandidateInput, type ResidentInput, type TankInput } from '@/engine/compatibility/engine';
@@ -1880,8 +1879,7 @@ export async function deletePhoto(
 export interface RecordMeasurementInput {
   holdingId: Id;
   observedOn: CalendarDate;
-  length?: LengthMeasurement;
-  weight?: WeightMeasurement;
+  length: LengthMeasurement;
   /** The photograph it was read from, when there is one. */
   mediaId?: Id;
   note?: string;
@@ -1890,9 +1888,9 @@ export interface RecordMeasurementInput {
 /**
  * Record how big a fish is on a given day - spec 037.
  *
- * REFUSES AN EMPTY OBSERVATION. A row with neither a length nor a weight
- * records that somebody opened a form, which is not a fact about a fish, and
- * it would then sit in the timeline as a dated entry saying nothing.
+ * REFUSES AN EMPTY OBSERVATION. A row with no length records that somebody
+ * opened a form, which is not a fact about a fish, and it would then sit in
+ * the timeline as a dated entry saying nothing.
  *
  * A holding can be a GROUP, and then this is a measurement of one of them on
  * that day. Nothing here averages anything; see the note on
@@ -1904,8 +1902,8 @@ export async function recordMeasurement(
 ): Promise<HoldingMeasurement> {
   const holding = await database.holdings.get(input.holdingId);
   if (!holding) throw new Error(`Unknown holding ${input.holdingId}`);
-  if (!input.length && !input.weight) {
-    throw new Error('Record a length, a weight, or both.');
+  if (!input.length) {
+    throw new Error('Record a length.');
   }
 
   const measurement: HoldingMeasurement = {
@@ -1913,7 +1911,6 @@ export async function recordMeasurement(
     holdingId: input.holdingId,
     observedOn: input.observedOn,
     length: input.length,
-    weight: input.weight,
     mediaId: input.mediaId,
     note: input.note,
     createdAt: nowIso(),
@@ -1922,7 +1919,7 @@ export async function recordMeasurement(
   await database.holdingMeasurements.add(measurement);
   console.info('[timeline] measurement recorded', {
     holdingId: input.holdingId, observedOn: input.observedOn,
-    length: input.length?.value, weight: input.weight?.value, fromPhoto: Boolean(input.mediaId),
+    length: input.length.value, fromPhoto: Boolean(input.mediaId),
   });
   return measurement;
 }

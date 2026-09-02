@@ -164,7 +164,7 @@ export function measurementsByMedia(
 }
 
 /**
- * First and last measurement carrying a length, for FH-4.
+ * First and last measurement, for FH-4.
  *
  * Returns both only when there are two DISTINCT observations: one measurement
  * is a size, not a growth, and reporting "grew 0 in" from a single data point
@@ -173,8 +173,7 @@ export function measurementsByMedia(
 export function lengthSpan(measurements: HoldingMeasurement[]): {
   first?: HoldingMeasurement; last?: HoldingMeasurement;
 } {
-  const withLength = measurements
-    .filter((m) => m.length)
+  const withLength = [...measurements]
     .sort((a, b) => a.observedOn.localeCompare(b.observedOn) || a.id.localeCompare(b.id));
 
   if (withLength.length === 0) return {};

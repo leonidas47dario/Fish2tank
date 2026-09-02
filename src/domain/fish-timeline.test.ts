@@ -20,7 +20,8 @@ const photo = (id: string, capturedAt: string): Media => ({
   mimeType: 'image/jpeg', capturedAt, syncState: 'synced',
 });
 const measured = (over: Partial<HoldingMeasurement> & Pick<HoldingMeasurement, 'id' | 'observedOn'>): HoldingMeasurement => ({
-  holdingId: HOLDING, createdAt: '2026-01-01T00:00:00.000Z', ...over,
+  holdingId: HOLDING, length: { value: 2, unit: 'in' },
+  createdAt: '2026-01-01T00:00:00.000Z', ...over,
 });
 
 describe('acquisitionAnchor', () => {
@@ -213,11 +214,7 @@ describe('lengthSpan', () => {
     expect(span.last).toBeUndefined();
   });
 
-  it('ignores measurements that recorded only a weight', () => {
-    const span = lengthSpan([
-      measured({ id: 'w1', observedOn: '2026-01-01', weight: { value: 12, unit: 'g' } }),
-    ]);
-
-    expect(span.first).toBeUndefined();
+  it('is empty when there are no measurements at all', () => {
+    expect(lengthSpan([])).toEqual({});
   });
 });

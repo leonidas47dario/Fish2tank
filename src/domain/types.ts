@@ -19,7 +19,6 @@ export type CalendarDate = string;
 
 export type LengthUnit = 'in' | 'cm';
 export type VolumeUnit = 'gal' | 'l';
-export type WeightUnit = 'g' | 'oz';
 export type CurrencyCode = string;
 
 export interface Measurement<U extends string> {
@@ -31,8 +30,6 @@ export interface Measurement<U extends string> {
 
 export type LengthMeasurement = Measurement<LengthUnit>;
 export type VolumeMeasurement = Measurement<VolumeUnit>;
-/** Spec 037. Grams or ounces, carried on the value like every other unit. */
-export type WeightMeasurement = Measurement<WeightUnit>;
 
 export interface Dimensions {
   length: LengthMeasurement;
@@ -596,8 +593,7 @@ export interface HoldingMeasurement {
   id: Id;
   holdingId: Id;
   observedOn: CalendarDate;
-  length?: LengthMeasurement;
-  weight?: WeightMeasurement;
+  length: LengthMeasurement;
   /**
    * The photograph this was measured from, when there is one.
    *
