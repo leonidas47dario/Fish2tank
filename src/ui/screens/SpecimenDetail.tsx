@@ -28,7 +28,7 @@ import {
 } from '@/data/repositories';
 import { identifyFromText } from '@/data/identify';
 import { deriveQuantity } from '@/domain/holdings';
-import { formatLength, formatVolume } from '@/domain/units';
+import { formatVolume } from '@/domain/units';
 import type { Specimen, Verdict } from '@/domain/types';
 import { useFishTimeline, useSearchableSpecies } from '../hooks';
 import {
@@ -249,17 +249,28 @@ export default function SpecimenDetail() {
         </div>
 
         {/*
-          Spec 039. THE RECORD'S OWN FACTS, EDITED WHERE THEY ARE SHOWN. These
-          were displayed here and edited in a separate "Edit this catch" form,
-          so the same fact lived in two places and the two could disagree.
-          There is one copy now.
+          Spec 040. ONE BLOCK OF FACTS ABOUT THIS FISH, one per line.
 
-          `specimen.createdAt` is NOT among them: it is when the row was
-          written, not when the fish was met, and offering it as "caught" would
-          be the same untruth P6 forbids elsewhere. What the keeper saw and
-          when is the encounter's, and that is what is editable.
+          Spec 039 put these here and edited them in place, which was right,
+          and laid them out as five equal columns, which was not: on a 390px
+          phone that is 70px each, so every heading wrapped to three lines and
+          the values wrapped under them. Reported as "too cramped for phone",
+          and the screenshot showed it plainly.
+
+          Rows, not columns. And the nickname and the price join them, because
+          they are the same kind of fact and were three separate sections
+          asking the reader to hold one record in three places.
+
+          `specimen.createdAt` is still not offered as "caught": it is when the
+          row was written, not when the fish was met.
         */}
-        <dl className="label-line label-line--editable">
+        <dl className="factlist">
+          <InlineField
+            label="Nickname"
+            value={specimen.nickname}
+            empty="none"
+            onSave={(v) => updateCatch({ specimenId: id, nickname: v ?? null })}
+          />
           <InlineField
             label="The store's label"
             value={specimen.rawLabel}
@@ -270,7 +281,6 @@ export default function SpecimenDetail() {
             label="Seen on"
             type="date"
             value={latest?.observedAt?.slice(0, 10)}
-            empty="not recorded"
             onSave={(v) => updateCatch({
               specimenId: id,
               encounterId: latest?.id,
@@ -280,7 +290,6 @@ export default function SpecimenDetail() {
           <InlineField
             label="Shop"
             value={latest?.placeId}
-            empty="not recorded"
             options={(places ?? []).map((pl) => ({ id: pl.id, name: pl.name }))}
             onSave={(v) => updateCatch({
               specimenId: id, encounterId: latest?.id, placeId: v ?? null,
@@ -296,11 +305,62 @@ export default function SpecimenDetail() {
               quantitySeen: v ? Number(v) : null,
             })}
           />
-          <div>
-            <dt>Size</dt>
-            <dd>{latest?.observedSize ? formatLength(latest.observedSize) : '—'}</dd>
-          </div>
+          {/* Inches, matching the price form and every other size the app
+              asks for. The label is "(in)" rather than "when seen (inches)"
+              because the long version was the one heading still wrapping to
+              two lines at 390px - measured, not guessed. */}
+          <InlineField
+            label="Size (in)"
+            type="number"
+            value={latest?.observedSize ? String(latest.observedSize.value) : undefined}
+            onSave={(v) => updateCatch({
+              specimenId: id, encounterId: latest?.id,
+              observedSize: v ? { value: Number(v), unit: 'in' } : null,
+            })}
+          />
+
+          {/*
+            The price figures, folded in rather than sitting under their own
+            heading. They are read-only HERE on purpose: a price is a dated
+            observation of what a shop asked, not a mutable field, so the way
+            to change one is to record another - which is what the form below
+            does. Editing the number in place would quietly rewrite history.
+          */}
+          {price && (
+            <>
+              <div className="factlist__row">
+                <dt>Asking</dt>
+                <dd className={price.askingPrice === undefined ? 'is-blank' : undefined}>
+                  {price.askingPrice === undefined ? 'not noted' : `$${price.askingPrice}`}
+                </dd>
+              </div>
+              {price.memberPrice !== undefined && (
+                <div className="factlist__row">
+                  <dt>Member</dt>
+                  <dd>${price.memberPrice}</dd>
+                </div>
+              )}
+              <div className="factlist__row">
+                <dt>Paid</dt>
+                <dd className={price.paidPrice === undefined ? 'is-blank' : undefined}>
+                  {price.paidPrice === undefined ? 'not bought' : `$${price.paidPrice}`}
+                </dd>
+              </div>
+            </>
+          )}
         </dl>
+
+        <details style={{ marginTop: 'var(--space-3)' }}>
+          <summary className="xs muted" style={{ cursor: 'pointer' }}>
+            {price ? 'Record another price' : 'Record a price'}
+          </summary>
+          <PriceForm
+            specimenId={id}
+            speciesId={specimen.speciesId}
+            encounterId={latest?.id}
+            places={places ?? []}
+          />
+        </details>
       </header>
 
       {/* --- The gate (spec 005) --------------------------------------------
@@ -434,59 +494,6 @@ export default function SpecimenDetail() {
       {specimen.speciesId && <SpeciesBrief speciesId={specimen.speciesId} />}
 
       {/* --- Size and price (PRD 4.5) ------------------------------------- */}
-      <section className="panel">
-        <h2 className="sec-head">What you paid</h2>
-
-        {/* Ask and paid are two different facts and the data model keeps them
-            apart on purpose; collapsing them into "you paid" throws away the
-            distinction PRD 5.4 exists to preserve.
-
-            Member is no longer captured, but it is still DISPLAYED when a
-            record already carries one. Dropping the field is a decision about
-            what to ask for next time, not a licence to hide a figure the user
-            already wrote down. */}
-        {price && (
-          <dl className="prices" style={{ marginBottom: 'var(--space-4)' }}>
-            <div>
-              <dt>Asking</dt>
-              <dd className={price.askingPrice === undefined ? 'is-blank' : undefined}>
-                {price.askingPrice === undefined ? 'not noted' : `$${price.askingPrice}`}
-              </dd>
-            </div>
-            {price.memberPrice !== undefined && (
-              <div>
-                <dt>Member</dt>
-                <dd>${price.memberPrice}</dd>
-              </div>
-            )}
-            <div>
-              <dt>Paid</dt>
-              <dd className={price.paidPrice === undefined ? 'is-blank' : undefined}>
-                {price.paidPrice === undefined ? 'not bought' : `$${price.paidPrice}`}
-              </dd>
-            </div>
-            {/* Shown only when noted. A "not noted" row here would be a third
-                blank in a list that already carries two, and where the price
-                came from is context rather than a figure the record is
-                incomplete without. */}
-            {price.placeId && (
-              <div>
-                <dt>Shop</dt>
-                <dd>{places?.find((pl) => pl.id === price.placeId)?.name ?? 'noted'}</dd>
-              </div>
-            )}
-          </dl>
-        )}
-
-        <PriceForm
-          specimenId={id}
-          speciesId={specimen.speciesId}
-          encounterId={latest?.id}
-          places={places ?? []}
-        />
-
-      </section>
-
       {/*
         Spec 039. The market reference and the price-fit verdict are gone from
         here: both answer "what do fish LIKE THIS sell for", which is the
@@ -1074,15 +1081,9 @@ function IdentityPanel({ specimen, species }: {
         </p>
       )}
 
-      <div style={{ marginTop: 'var(--space-3)' }}>
-        <label htmlFor="nickname">Nickname <span className="faint">(optional)</span></label>
-        <input
-          id="nickname"
-          defaultValue={specimen.nickname ?? ''}
-          placeholder="the Panther"
-          onBlur={(e) => void db.specimens.update(specimen.id, { nickname: e.target.value || undefined })}
-        />
-      </div>
+      {/* Spec 040: the nickname moved up into the fact block. Identity is
+          about which SPECIES this is; what you call the animal is one of its
+          own facts and belongs with the others. */}
     </section>
   );
 }
