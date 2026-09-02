@@ -1411,30 +1411,51 @@ export async function updateCatch(input: UpdateCatchInput, database: DB = db): P
     ? encounters.find((e) => e.id === input.encounterId)
     : encounters[encounters.length - 1];
 
-  // A field is only written when the caller mentioned it, so a form that
-  // submits three fields cannot blank the other seven.
-  const set = <T>(value: T | null | undefined, current: T | undefined): T | undefined =>
-    value === undefined ? current : (value === null ? undefined : value);
+  /*
+   * ONLY THE FIELDS THE CALLER MENTIONED, and nothing else - spec 043, BUG-16.
+   *
+   * The previous version said exactly that in a comment and did the opposite:
+   * it read the whole specimen and encounter up front, then wrote EVERY field
+   * back, using the values from that read for anything the caller had not
+   * passed. A read-modify-write, and therefore a lost update by construction.
+   *
+   * That was survivable while one form submitted every field at once. It stops
+   * being survivable the moment each field saves on its own (spec 039/041): a
+   * finger moving from one field to the next fires two commits milliseconds
+   * apart, the second one reads state from before the first landed, and writes
+   * the stale value back over it. Reproduced as BOTH failure modes - an edit
+   * silently vanishing, and a value the keeper had CLEARED coming back.
+   *
+   * Dexie's `update()` already merges: a key that is absent is left alone.
+   * So the patch carries only what was asked for, `undefined` deletes (which
+   * is what `null` means here), and two concurrent edits of different fields
+   * cannot touch each other's.
+   */
+  const patch: Record<string, unknown> = { updatedAt: nowIso() };
+  const put = (key: string, value: unknown) => {
+    if (value !== undefined) patch[key] = value === null ? undefined : value;
+  };
+  put('nickname', input.nickname);
+  put('rawLabel', input.rawLabel);
+  put('exceptional', input.exceptional);
+
+  const chapter: Record<string, unknown> = {};
+  const putChapter = (key: string, value: unknown) => {
+    if (value !== undefined) chapter[key] = value === null ? undefined : value;
+  };
+  putChapter('observedAt', input.observedAt);
+  putChapter('placeId', input.placeId);
+  putChapter('quantitySeen', input.quantitySeen);
+  putChapter('observedSize', input.observedSize);
+  putChapter('rawTankLabel', input.rawTankLabel);
+  putChapter('observedTankmates', input.observedTankmates);
+  putChapter('originLocality', input.originLocality);
+  putChapter('notes', input.notes);
 
   await database.transaction('rw', [database.specimens, database.encounters], async () => {
-    await database.specimens.update(input.specimenId, {
-      nickname: set(input.nickname, specimen.nickname),
-      rawLabel: set(input.rawLabel, specimen.rawLabel),
-      exceptional: input.exceptional === undefined ? specimen.exceptional : input.exceptional,
-      updatedAt: nowIso(),
-    });
-
-    if (target) {
-      await database.encounters.update(target.id, {
-        observedAt: input.observedAt ?? target.observedAt,
-        placeId: set(input.placeId, target.placeId),
-        quantitySeen: set(input.quantitySeen, target.quantitySeen),
-        observedSize: set(input.observedSize, target.observedSize),
-        rawTankLabel: set(input.rawTankLabel, target.rawTankLabel),
-        observedTankmates: set(input.observedTankmates, target.observedTankmates),
-        originLocality: set(input.originLocality, target.originLocality),
-        notes: set(input.notes, target.notes),
-      });
+    await database.specimens.update(input.specimenId, patch);
+    if (target && Object.keys(chapter).length > 0) {
+      await database.encounters.update(target.id, chapter);
     }
   });
 }
