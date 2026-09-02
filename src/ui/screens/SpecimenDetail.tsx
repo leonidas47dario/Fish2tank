@@ -23,7 +23,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { db } from '@/data/db';
 import {
   acquireSpecimen, addEncounterChapter, assertIdentity, deleteCatch,
-  evaluateSpecimen, moveHolding, planDeleteCatch, recordPrice, stockTank, updateCatch,
+  evaluateSpecimen, moveHolding, planDeleteCatch, recordPrice, updateCatch,
   type DeleteCatchPlan,
 } from '@/data/repositories';
 import { identifyFromText } from '@/data/identify';
@@ -155,7 +155,7 @@ export default function SpecimenDetail() {
    */
   const placementPanel = (
     <section className="panel">
-      <h2 className="sec-head">If it comes home</h2>
+      <h2 className="sec-head">Keeping the fish</h2>
 
       {placement === undefined ? (
         <p className="panel__note" style={{ marginTop: 0 }}>Checking…</p>
@@ -184,29 +184,50 @@ export default function SpecimenDetail() {
           </div>
         </>
       ) : (
-        <>
-          <p className="panel__note" style={{ marginTop: 0 }}>
-            {placed.map((p) => `${p.aquarium!.name} (×${p.quantity})`).join(', ')}
-          </p>
-          {/* A holding lives in one tank, always - moveHolding closes one
-              residency before opening the next. So the same species in two
-              tanks is two holdings, which is exactly how the inventory
-              import already records it. */}
-          <details style={{ marginTop: 'var(--space-3)' }}>
-            <summary className="prompt__act" style={{ cursor: 'pointer' }}>
-              Also add to another tank
-            </summary>
-            <div style={{ marginTop: 'var(--space-3)' }}>
-              <StockAnotherTank
-                speciesId={specimen.speciesId}
-                rawLabel={specimen.nickname ?? specimen.rawLabel}
-                aquariums={(aquariums ?? []).filter(
-                  (t) => !placed.some((p) => p.aquarium!.id === t.id),
-                )}
-              />
+        /*
+          Spec 042. A PICKER THAT MOVES IT, not a way to add a second one.
+
+          The old panel offered "Also add to another tank", which minted a
+          second holding of the same species. That is a real capability - six
+          tetras split across two tanks genuinely are two holdings - but it is
+          the wrong offer on a SPECIMEN's record. This page is about one fish,
+          a fish is in one tank, and offering to put it in a second is offering
+          to create a second animal.
+
+          moveHolding has done the right thing since FR-T03: it closes the
+          current residency, opens the next, and writes a `moved` life event -
+          which now also lands in the timeline, so where a fish has lived
+          becomes part of its history rather than only its current state.
+
+          Several rows only when a record already HAS several holdings, which
+          the inventory import can produce and nothing here can any more.
+          Hiding the second would be tidier and would let a keeper see a fish
+          in the tank list that its own record denied being in.
+        */
+        <dl className="factlist">
+          {placed.map((p) => (
+            <InlineField
+              key={p.holding.id}
+              label={placed.length > 1 ? `Tank (×${p.quantity})` : 'Tank'}
+              value={p.aquarium!.id}
+              empty="not in a tank"
+              options={(aquariums ?? []).map((t) => ({ id: t.id, name: t.name }))}
+              onSave={(to) => (to && to !== p.aquarium!.id
+                ? moveHolding(p.holding.id, to)
+                : undefined)}
+            />
+          ))}
+          {placed.length === 1 && (
+            <div className="factlist__row">
+              <dt>How many</dt>
+              {/* Derived from life events by deriveQuantity - a death, a birth,
+                  a correction - so it is shown rather than typed. A number that
+                  looked editable but was computed would be worse than one that
+                  plainly is not. */}
+              <dd>×{placed[0]!.quantity}</dd>
             </div>
-          </details>
-        </>
+          )}
+        </dl>
       )}
     </section>
   );
@@ -689,75 +710,6 @@ function PlaceHolding({ holdingId, aquariums, defaultQuantity }: {
   );
 }
 
-/**
- * The same species, in a second tank.
- *
- * Not a move. A holding is in one tank for its whole life, so "one in the 75
- * and one in the 40" is two holdings - which is already how the inventory
- * import records two spreadsheet rows of the same fish.
- */
-function StockAnotherTank({ speciesId, rawLabel, aquariums }: {
-  speciesId?: string;
-  rawLabel?: string;
-  aquariums: Array<{ id: string; name: string }>;
-}) {
-  const [tankId, setTankId] = useState('');
-  const [qty, setQty] = useState('1');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | undefined>();
-  const [done, setDone] = useState(false);
-  const chosen = aquariums.find((t) => t.id === tankId);
-  const n = Number(qty);
-  const validQty = Number.isInteger(n) && n >= 1;
-
-  if (aquariums.length === 0) {
-    return <p className="panel__note" style={{ marginTop: 0 }}>It is already in every tank you have.</p>;
-  }
-
-  return (
-    <>
-      <label htmlFor="stock-tank">Also in</label>
-      <select id="stock-tank" value={tankId} onChange={(e) => { setTankId(e.target.value); setDone(false); }}>
-        <option value="">Choose a tank…</option>
-        {aquariums.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-      </select>
-
-      {chosen && (
-        <>
-          <div style={{ marginTop: 'var(--space-3)' }}>
-            <label htmlFor="stock-qty">How many</label>
-            <input id="stock-qty" inputMode="numeric" value={qty} onChange={(e) => setQty(e.target.value)} />
-          </div>
-          <p className="panel__note panel__note--tight">
-            Records {validQty ? n : '—'} more of this species in {chosen.name}, as its own entry.
-            The ones you already have are not moved.
-          </p>
-          {error && <p className="warn">{error}</p>}
-          {done && <p className="panel__note panel__note--tight">Added to {chosen.name}.</p>}
-          <button
-            type="button" className="btn btn--primary" disabled={busy || !validQty}
-            onClick={async () => {
-              setBusy(true);
-              setError(undefined);
-              try {
-                await stockTank({ aquariumId: chosen.id, speciesId, rawLabel, quantity: n });
-                setDone(true);
-              } catch (e) {
-                const message = e instanceof Error ? e.message : String(e);
-                console.error('[stock] second tank failed', { speciesId, tankId: chosen.id, quantity: n, error: message });
-                setError(message);
-              } finally {
-                setBusy(false);
-              }
-            }}
-          >
-            {busy ? 'Recording…' : `Add to ${chosen.name}`}
-          </button>
-        </>
-      )}
-    </>
-  );
-}
 
 
 /**
