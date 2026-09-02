@@ -2015,3 +2015,41 @@ summary.factor::-webkit-details-marker { display: none; }
      text too narrow to read, which is worse than losing the alignment. */
   .timeline__row { grid-template-columns: 1fr; gap: var(--space-1); }
 }
+
+/*
+ * A value that edits where it is shown - spec 039.
+ *
+ * It must LOOK like a value and BEHAVE like a control. A field styled as an
+ * input on a read-only page is noisy; one with no affordance at all is a
+ * secret. So: reads as text, gains an underline on hover and focus, and shows
+ * a dotted one when empty because "nothing here" is the state most worth
+ * inviting a tap.
+ */
+.label-line--editable { row-gap: var(--space-2); }
+.inline-field__value,
+.inline-note {
+  display: inline-block;
+  width: 100%;
+  padding: 0;
+  min-height: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: text;
+  border-bottom: var(--border-width) solid transparent;
+}
+.inline-field__value { font-family: var(--font-data); color: var(--color-muted); }
+.inline-field__value:hover,
+.inline-note:hover { border-bottom-color: var(--color-border-control); }
+.inline-field__value:focus-visible,
+.inline-note:focus-visible { outline: none; border-bottom-color: var(--color-primary); }
+/* Empty is the state most worth a tap, so it says so rather than hiding. */
+.inline-field__value--empty,
+.inline-note--empty {
+  color: var(--color-faint);
+  font-style: italic;
+  border-bottom: var(--border-width) dotted var(--color-border-control);
+}
+.inline-note { font-family: inherit; color: inherit; }
