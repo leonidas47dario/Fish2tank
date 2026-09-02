@@ -8,6 +8,9 @@ import {
   addEncounterChapter,
   addPhotos,
   deletePhoto,
+  recordMeasurement,
+  deleteMeasurement,
+  setAcquiredOn,
   assertIdentity,
   assessmentHistory,
   awardGolden,
@@ -1757,5 +1760,123 @@ describe('deleting one photograph (spec 033)', () => {
 
   it('is a no-op for a photo that is already gone', async () => {
     await expect(deletePhoto({ mediaId: 'media_nope' }, db)).resolves.toEqual({ detached: false });
+  });
+});
+
+describe('measurements over time (ENH-12, spec 037)', () => {
+  /** A group of three, because a holding being a group is the interesting case. */
+  async function aHolding() {
+    const { holding } = await createOpeningBalanceHolding(
+      { aquariumId: 'tank_75g', rawLabel: 'Severum', kind: 'group', openingQuantity: 3 }, db,
+    );
+    return holding;
+  }
+
+  it('records a length, a weight, or both', async () => {
+    const h = await aHolding();
+
+    const len = await recordMeasurement(
+      { holdingId: h.id, observedOn: '2026-02-14', length: { value: 2.1, unit: 'in' } }, db);
+    const wt = await recordMeasurement(
+      { holdingId: h.id, observedOn: '2026-03-01', weight: { value: 14, unit: 'g' } }, db);
+    const both = await recordMeasurement({
+      holdingId: h.id, observedOn: '2026-04-04',
+      length: { value: 2.8, unit: 'in' }, weight: { value: 21, unit: 'g' },
+    }, db);
+
+    expect(len.length?.value).toBe(2.1);
+    expect(wt.weight?.unit).toBe('g');
+    expect(both.length && both.weight).toBeTruthy();
+    expect(await db.holdingMeasurements.count()).toBe(3);
+  });
+
+  it('REFUSES AN OBSERVATION THAT OBSERVED NOTHING', async () => {
+    // A row with neither measure records that somebody opened a form. It would
+    // then sit in the timeline as a dated entry saying nothing at all.
+    const h = await aHolding();
+
+    await expect(recordMeasurement({ holdingId: h.id, observedOn: '2026-02-14' }, db))
+      .rejects.toThrow(/length, a weight, or both/);
+    expect(await db.holdingMeasurements.count()).toBe(0);
+  });
+
+  it('keeps an eyeballed measurement marked as an estimate', async () => {
+    // `Measurement.estimate` already exists for this, so a guessed 3 inches
+    // never passes as a measured one (FR-C05).
+    const h = await aHolding();
+    const m = await recordMeasurement(
+      { holdingId: h.id, observedOn: '2026-02-14', length: { value: 3, unit: 'in', estimate: true } }, db);
+
+    expect((await db.holdingMeasurements.get(m.id))!.length!.estimate).toBe(true);
+  });
+
+  it('deleting the photo a measurement was read from CLEARS THE LINK, keeping the measurement', async () => {
+    // The measurement is still a true observation of the fish on that day.
+    // Losing it because a picture was tidied away would delete data the keeper
+    // never asked to lose.
+    const h = await aHolding();
+    const specimen = await ensureSpecimenForHolding(h.id, db);
+    const [shot] = await addPhotos({ specimenId: specimen.id, files: [photo()] }, db);
+    const m = await recordMeasurement({
+      holdingId: h.id, observedOn: '2026-02-14',
+      length: { value: 2.1, unit: 'in' }, mediaId: shot!.id,
+    }, db);
+
+    await deletePhoto({ mediaId: shot!.id, specimenId: specimen.id }, db);
+
+    const after = await db.holdingMeasurements.get(m.id);
+    expect(after).toBeDefined();
+    expect(after!.mediaId).toBeUndefined();
+    expect(after!.length!.value).toBe(2.1);
+  });
+
+  it('removing the holding takes its measurements with it', async () => {
+    // Unlike a photograph, a measurement is only ever about the holding it
+    // names - there is nothing to detach it to.
+    const h = await aHolding();
+    await recordMeasurement(
+      { holdingId: h.id, observedOn: '2026-02-14', length: { value: 2.1, unit: 'in' } }, db);
+
+    const out = await removeHolding(h.id, db);
+
+    expect(out.measurements).toBe(1);
+    expect(await db.holdingMeasurements.count()).toBe(0);
+  });
+
+  it('does not touch another holding\'s measurements', async () => {
+    const mine = await aHolding();
+    const theirs = await aHolding();
+    await recordMeasurement(
+      { holdingId: mine.id, observedOn: '2026-02-14', length: { value: 2.1, unit: 'in' } }, db);
+    await recordMeasurement(
+      { holdingId: theirs.id, observedOn: '2026-02-14', length: { value: 9, unit: 'in' } }, db);
+
+    await removeHolding(mine.id, db);
+
+    expect(await db.holdingMeasurements.count()).toBe(1);
+    expect((await db.holdingMeasurements.toArray())[0]!.holdingId).toBe(theirs.id);
+  });
+
+  it('deleteMeasurement removes one and cascades nothing', async () => {
+    const h = await aHolding();
+    const m = await recordMeasurement(
+      { holdingId: h.id, observedOn: '2026-02-14', length: { value: 2.1, unit: 'in' } }, db);
+
+    await deleteMeasurement(m.id, db);
+
+    expect(await db.holdingMeasurements.get(m.id)).toBeUndefined();
+    expect(await db.holdings.get(h.id)).toBeDefined();
+  });
+
+  it('records an acquisition date, and clearing it really clears it', async () => {
+    // Clearing must remove the property so the evidence ladder takes over -
+    // "actually I do not know" is an honest answer the app has to accept.
+    const h = await aHolding();
+
+    await setAcquiredOn(h.id, '2023-04-01', db);
+    expect((await db.holdings.get(h.id))!.acquiredOn).toBe('2023-04-01');
+
+    await setAcquiredOn(h.id, undefined, db);
+    expect((await db.holdings.get(h.id))!.acquiredOn).toBeUndefined();
   });
 });

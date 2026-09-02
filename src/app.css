@@ -1974,3 +1974,44 @@ summary.factor::-webkit-details-marker { display: none; }
     border-radius: var(--radius-card);
   }
 }
+
+/*
+ * A kept fish's history - ENH-12, spec 037.
+ *
+ * A rail with a dot per entry, because "cascading timeline" was the ask and a
+ * plain list of dates does not read as a sequence. Every value below is a
+ * token: this file may not hold a colour, radius, spacing or duration literal.
+ */
+.timeline { list-style: none; margin: var(--space-3) 0 0; padding: 0 var(--space-4); }
+.timeline__row {
+  display: grid;
+  grid-template-columns: minmax(7.5rem, auto) 1fr;
+  gap: var(--space-3);
+  padding: var(--space-2) 0 var(--space-2) var(--space-3);
+  border-left: var(--border-width) solid var(--color-border);
+  position: relative;
+}
+/* The dot sits ON the rail, so the rail reads as one continuous thread. */
+.timeline__row::before {
+  content: '';
+  position: absolute;
+  left: calc(var(--border-width) * -1);
+  top: var(--space-3);
+  width: var(--space-2); height: var(--space-2);
+  margin-left: calc(var(--space-2) / -2);
+  border-radius: 50%;
+  background: var(--color-border-control);
+}
+/* The two ends of a life are the two a reader looks for first. */
+.timeline__row--event::before { background: var(--color-primary); }
+.timeline__row--memorial::before { background: var(--color-muted); }
+.timeline__row--measurement::before { background: var(--color-accent); }
+.timeline__when { color: var(--color-muted); font-size: var(--size-xs); }
+.timeline__what { min-width: 0; font-size: var(--size-sm); }
+.timeline__count { color: var(--color-muted); font-weight: var(--weight-regular); }
+
+@media (max-width: 26rem) {
+  /* One column on a narrow phone: 7.5rem of date beside the text leaves the
+     text too narrow to read, which is worse than losing the alignment. */
+  .timeline__row { grid-template-columns: 1fr; gap: var(--space-1); }
+}

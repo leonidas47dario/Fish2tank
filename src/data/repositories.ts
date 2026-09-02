@@ -18,6 +18,7 @@ import type {
   Id,
   IdentificationAssertion,
   Instant,
+  HoldingMeasurement,
   LengthMeasurement,
   LifeEvent,
   Media,
@@ -34,6 +35,7 @@ import type {
   Specimen,
   SpecimenKind,
   VolumeMeasurement,
+  WeightMeasurement,
 } from '@/domain/types';
 import { deriveQuantity, planMove } from '@/domain/holdings';
 import { evaluateAllTanks, type CandidateInput, type ResidentInput, type TankInput } from '@/engine/compatibility/engine';
@@ -1135,30 +1137,45 @@ export async function adjustHoldingQuantity(
 export async function removeHolding(
   holdingId: Id,
   database: DB = db,
-): Promise<{ residencies: number; lifeEvents: number; wasInTanks: string[] }> {
+): Promise<{
+  residencies: number; lifeEvents: number; measurements: number; wasInTanks: string[];
+}> {
   const holding = await database.holdings.get(holdingId);
   if (!holding) throw new Error(`Unknown holding ${holdingId}`);
 
   const residencies = await database.residencies.where('holdingId').equals(holdingId).toArray();
   const events = await database.lifeEvents.where('holdingId').equals(holdingId).toArray();
+  /*
+   * Spec 037. A measurement is only ever about the holding it names, so it
+   * goes with it - unlike a photograph, which can be shared with another fish
+   * and is therefore detached rather than destroyed. `deleteCatch` reaches
+   * this through here, so both delete paths cascade from one place.
+   */
+  const measurements = await database.holdingMeasurements
+    .where('holdingId').equals(holdingId).toArray();
   const tanks = await database.aquariums.toArray();
   const wasInTanks = [...new Set(residencies.map((r) => r.aquariumId))]
     .map((id) => tanks.find((t) => t.id === id)?.name ?? id);
 
   await database.transaction(
     'rw',
-    [database.holdings, database.residencies, database.lifeEvents],
+    [database.holdings, database.residencies, database.lifeEvents, database.holdingMeasurements],
     async () => {
       await database.residencies.bulkDelete(residencies.map((r) => r.id));
       await database.lifeEvents.bulkDelete(events.map((e) => e.id));
+      await database.holdingMeasurements.bulkDelete(measurements.map((m) => m.id));
       await database.holdings.delete(holdingId);
     },
   );
 
   console.info('[stock] holding removed', {
-    holdingId, residencies: residencies.length, lifeEvents: events.length, wasInTanks,
+    holdingId, residencies: residencies.length, lifeEvents: events.length,
+    measurements: measurements.length, wasInTanks,
   });
-  return { residencies: residencies.length, lifeEvents: events.length, wasInTanks };
+  return {
+    residencies: residencies.length, lifeEvents: events.length,
+    measurements: measurements.length, wasInTanks,
+  };
 }
 
 /** FR-T03: close the current interval, open the next, log the move. */
@@ -1821,22 +1838,117 @@ export async function deletePhoto(
   }
 
   const keys = blobKeysOf(media);
-  await database.transaction('rw', [database.media, database.blobs, database.cardPrefs], async () => {
-    await database.media.delete(media.id);
-    for (const key of keys) await database.blobs.delete(key);
+  await database.transaction(
+    'rw',
+    [database.media, database.blobs, database.cardPrefs, database.holdingMeasurements],
+    async () => {
+      await database.media.delete(media.id);
+      for (const key of keys) await database.blobs.delete(key);
 
-    // A card pointing at a photo that no longer exists. `chooseArt` already
-    // falls back to the newest, so this is tidiness rather than a crash - but
-    // a stored preference naming a deleted row is a lie the next reader has
-    // to work out.
-    const stale = await database.cardPrefs.filter((p) => p.preferredMediaId === media.id).toArray();
-    for (const pref of stale) {
-      await database.cardPrefs.update(pref.speciesId, { preferredMediaId: undefined });
-    }
-  });
+      /*
+       * Spec 037. A measurement may name the photo it was read from. Deleting
+       * the photo must CLEAR that link rather than orphan it - the measurement
+       * is still a true observation of the fish on that day, and losing it
+       * because a picture was tidied away would be deleting data the keeper
+       * never asked to lose. Indexed on `mediaId` so this is a lookup, not a
+       * scan of every measurement in the collection.
+       */
+      const measured = await database.holdingMeasurements.where('mediaId').equals(media.id).toArray();
+      for (const m of measured) {
+        await database.holdingMeasurements.update(m.id, { mediaId: undefined });
+      }
+
+      // A card pointing at a photo that no longer exists. `chooseArt` already
+      // falls back to the newest, so this is tidiness rather than a crash - but
+      // a stored preference naming a deleted row is a lie the next reader has
+      // to work out.
+      const stale = await database.cardPrefs.filter((p) => p.preferredMediaId === media.id).toArray();
+      for (const pref of stale) {
+        await database.cardPrefs.update(pref.speciesId, { preferredMediaId: undefined });
+      }
+    },
+  );
 
   console.info('[photos] deleted', { mediaId: media.id, blobs: keys.length });
   return { detached: false };
+}
+
+// ---------------------------------------------------------------------------
+// Measurements over time (ENH-12, spec 037)
+// ---------------------------------------------------------------------------
+
+export interface RecordMeasurementInput {
+  holdingId: Id;
+  observedOn: CalendarDate;
+  length?: LengthMeasurement;
+  weight?: WeightMeasurement;
+  /** The photograph it was read from, when there is one. */
+  mediaId?: Id;
+  note?: string;
+}
+
+/**
+ * Record how big a fish is on a given day - spec 037.
+ *
+ * REFUSES AN EMPTY OBSERVATION. A row with neither a length nor a weight
+ * records that somebody opened a form, which is not a fact about a fish, and
+ * it would then sit in the timeline as a dated entry saying nothing.
+ *
+ * A holding can be a GROUP, and then this is a measurement of one of them on
+ * that day. Nothing here averages anything; see the note on
+ * `HoldingMeasurement`.
+ */
+export async function recordMeasurement(
+  input: RecordMeasurementInput,
+  database: DB = db,
+): Promise<HoldingMeasurement> {
+  const holding = await database.holdings.get(input.holdingId);
+  if (!holding) throw new Error(`Unknown holding ${input.holdingId}`);
+  if (!input.length && !input.weight) {
+    throw new Error('Record a length, a weight, or both.');
+  }
+
+  const measurement: HoldingMeasurement = {
+    id: newId('meas'),
+    holdingId: input.holdingId,
+    observedOn: input.observedOn,
+    length: input.length,
+    weight: input.weight,
+    mediaId: input.mediaId,
+    note: input.note,
+    createdAt: nowIso(),
+  };
+
+  await database.holdingMeasurements.add(measurement);
+  console.info('[timeline] measurement recorded', {
+    holdingId: input.holdingId, observedOn: input.observedOn,
+    length: input.length?.value, weight: input.weight?.value, fromPhoto: Boolean(input.mediaId),
+  });
+  return measurement;
+}
+
+/** Remove one observation. Nothing else depends on it, so nothing cascades. */
+export async function deleteMeasurement(id: Id, database: DB = db): Promise<void> {
+  await database.holdingMeasurements.delete(id);
+  console.info('[timeline] measurement deleted', { id });
+}
+
+/**
+ * When this fish came home, as the keeper says rather than as the app guesses.
+ *
+ * Clearing it is a real operation - `undefined` removes the property and the
+ * evidence ladder in `fish-timeline.ts` takes over again, which is the honest
+ * result of the keeper saying "actually I do not know".
+ */
+export async function setAcquiredOn(
+  holdingId: Id,
+  acquiredOn: CalendarDate | undefined,
+  database: DB = db,
+): Promise<void> {
+  const holding = await database.holdings.get(holdingId);
+  if (!holding) throw new Error(`Unknown holding ${holdingId}`);
+  await database.holdings.update(holdingId, { acquiredOn });
+  console.info('[timeline] acquisition date set', { holdingId, acquiredOn: acquiredOn ?? null });
 }
 
 /** Remove a tank's photo, leaving the tank itself alone. */

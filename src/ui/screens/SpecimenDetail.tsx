@@ -34,7 +34,7 @@ import { evaluatePriceFit } from '@/engine/pricing/price-fit';
 import { COMPONENT_LABELS, LOCAL_RARITY_UNAVAILABLE } from '@/engine/rarity/discovery-tier';
 import { formatLength, formatVolume } from '@/domain/units';
 import type { Specimen, Verdict } from '@/domain/types';
-import { useSearchableSpecies } from '../hooks';
+import { useFishTimeline, useSearchableSpecies } from '../hooks';
 import {
   CATALOG_BY_SPECIES, identityStatusFor, marketAndScarcity, portraitAsset, type CatalogSpecies,
 } from '@/data/catalog';
@@ -45,6 +45,7 @@ import { bandForSize, scarcityFor } from '@/data/market';
 import { usePrefersReducedMotion } from '@/theme/ThemeProvider';
 import { CaretLeftIcon, CaretRightIcon } from '../components/Icons';
 import { CatchPhotos } from '../components/CatchPhotos';
+import { FishTimeline } from '../components/FishTimeline';
 
 export default function SpecimenDetail() {
   const { id } = useParams<{ id: string }>();
@@ -106,6 +107,8 @@ export default function SpecimenDetail() {
       };
     });
   }, [id]);
+
+  const timeline = useFishTimeline(placement?.[0]?.holding.id);
 
   const placed = placement?.filter((p) => p.aquarium) ?? [];
   const unplaced = placement?.filter((p) => !p.aquarium) ?? [];
@@ -277,6 +280,16 @@ export default function SpecimenDetail() {
 
       {/* --- Media. Original, always (FR-J01, PRD 7.4) --------------------- */}
       <CatchPhotos specimenId={specimen.id} title={title} reducedMotion={reducedMotion} />
+
+      {/*
+        Spec 037. Rendered only once this fish is actually kept - a catch that
+        never came home is an encounter, and "history" on a fish you met once
+        in a shop would be a section about nothing. The first holding, because
+        a specimen with several is the group case and they share one story.
+      */}
+      {timeline && timeline.entries.length > 0 && (
+        <FishTimeline timeline={timeline} title={title} />
+      )}
 
       <header className="pad">
         <h1 className="specimen-name">{title}</h1>
