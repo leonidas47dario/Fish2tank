@@ -220,6 +220,17 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 
 input, select, textarea {
   font: inherit;
+  /*
+   * Spec 041. iOS Safari ZOOMS THE PAGE when a focused field is under 16px,
+   * and the body is --size-md, 15px. So every field in this app - the search
+   * box, the price form, the measurement form - shunted the layout sideways
+   * on focus and left the reader to pinch back out. On the only device this
+   * app is built for.
+   *
+   * `max(1rem, ...)` rather than a flat 16px, so a reader who has turned their
+   * browser's base size up still gets their size.
+   */
+  font-size: max(1rem, var(--size-md));
   width: 100%;
   color: var(--color-text);
   background: var(--color-surface);
@@ -2017,41 +2028,52 @@ summary.factor::-webkit-details-marker { display: none; }
 }
 
 /*
- * A value that edits where it is shown - spec 039.
+ * A field that reads as a value - spec 041.
  *
- * It must LOOK like a value and BEHAVE like a control. A field styled as an
- * input on a read-only page is noisy; one with no affordance at all is a
- * secret. So: reads as text, gains an underline on hover and focus, and shows
- * a dotted one when empty because "nothing here" is the state most worth
- * inviting a tap.
+ * IT IS ALWAYS AN INPUT. Spec 039 rendered the value as a button and swapped
+ * in an input on tap, focusing it from an effect. iOS Safari opens the
+ * keyboard only when focus() happens inside the gesture that caused it, so on
+ * a phone the input appeared and the keyboard never did.
+ *
+ * So the styling does the work the swap used to: no background, no border but
+ * a bottom rule, and the font of the value beside it. It must look like a
+ * value at rest and like a field the moment it is touched - a page of visible
+ * input boxes is a form, and this is a record.
  */
-.inline-field__value,
-.inline-note {
-  display: inline-block;
+.inline-input {
   width: 100%;
   padding: 0;
   min-height: 0;
   border: 0;
-  background: transparent;
-  font: inherit;
-  color: inherit;
-  text-align: left;
-  cursor: text;
   border-bottom: var(--border-width) solid transparent;
+  border-radius: 0;
+  background: transparent;
+  font-family: var(--font-data);
+  /* NO font-size here. `font-size: inherit` looked harmless and was the bug
+     twice over: this selector is more specific than the base input rule, so
+     it beat the 16px floor and inherited 13px from .factlist - putting the
+     iOS zoom back on the very fields this spec exists to make typable. The
+     value therefore renders larger than its label, which is the right
+     hierarchy anyway: the label is the quiet half. */
+  color: var(--color-muted);
+  -webkit-appearance: none;
+  appearance: none;
 }
-.inline-field__value { font-family: var(--font-data); color: var(--color-muted); }
-.inline-field__value:hover,
-.inline-note:hover { border-bottom-color: var(--color-border-control); }
-.inline-field__value:focus-visible,
-.inline-note:focus-visible { outline: none; border-bottom-color: var(--color-primary); }
+.inline-input:hover { border-bottom-color: var(--color-border-control); }
+.inline-input:focus {
+  outline: none;
+  border-bottom-color: var(--color-primary);
+  color: var(--color-text);
+}
 /* Empty is the state most worth a tap, so it says so rather than hiding. */
-.inline-field__value--empty,
-.inline-note--empty {
-  color: var(--color-faint);
-  font-style: italic;
-  border-bottom: var(--border-width) dotted var(--color-border-control);
+.inline-input--empty { border-bottom: var(--border-width) dotted var(--color-border-control); }
+.inline-input::placeholder { color: var(--color-faint); font-style: italic; }
+.inline-input--note {
+  font-family: inherit;
+  color: inherit;
+  resize: vertical;
 }
-.inline-note { font-family: inherit; color: inherit; }
+select.inline-input { cursor: pointer; }
 
 /*
  * One fact per line - spec 040.

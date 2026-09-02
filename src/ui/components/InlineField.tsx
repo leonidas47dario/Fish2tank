@@ -1,23 +1,31 @@
 /**
- * A value that edits where it is displayed - spec 039.
+ * A value that edits where it is displayed - spec 041.
  *
- * WHY THIS EXISTS. The record had an "Edit this catch" button, and the keeper's
- * verdict on it was blunt: *"this is the most dump design, everything should be
- * editable and not through the edit this catch button, it's very redundant and
- * not useful"*.
+ * WHY THIS EXISTS. The record had an "Edit this catch" button, and the verdict
+ * on it was blunt: *"everything should be editable and not through the edit
+ * this catch button"*. A page with an edit button says WHAT YOU CAN SEE IS NOT
+ * WHAT YOU CAN CHANGE, so every editable fact exists twice - once rendered,
+ * once in a form - and the two drift.
  *
- * They are right, and the reason is worth writing down. A page with an edit
- * button says: WHAT YOU CAN SEE IS NOT WHAT YOU CAN CHANGE, the real version is
- * behind here. So every editable fact exists twice - once rendered, once in a
- * form - and the two drift, because nothing forces them to agree. The label,
- * the date and the shop were each displayed in one place and edited in another.
+ * WHY IT NO LONGER SWAPS A BUTTON FOR AN INPUT. The first version rendered the
+ * value as a button and replaced it with an input on tap, focusing the input
+ * from an effect. On a desktop browser that works, and in Chromium's touch
+ * emulation it works, which is why it shipped.
  *
- * Here there is one copy. Tap the value, change it, it saves on blur or Enter,
- * Escape abandons. No mode, no second form, no button whose only job is to
- * reveal the truth.
+ * ON iOS SAFARI IT CANNOT WORK. WebKit opens the keyboard only when `focus()`
+ * happens inside the user gesture that caused it. React state -> re-render ->
+ * `useEffect` -> `focus()` is several turns removed from the tap, so the input
+ * appears and the keyboard never does. Reported exactly as it would feel:
+ * "the system doesn't allow entering any info".
  *
- * AN EMPTY ANSWER IS A REAL ANSWER (P6). Clearing a field stores nothing rather
- * than a placeholder, and the display says "not recorded" rather than guessing.
+ * So THERE IS NO SWAP. The input is always the input; it is styled to read as
+ * a value rather than a form field. A tap lands on a real focusable control
+ * and the keyboard opens because the browser decided to, not because we asked
+ * it to afterwards. This removes the whole class of bug rather than working
+ * around one browser.
+ *
+ * AN EMPTY ANSWER IS A REAL ANSWER (P6). Clearing a field stores nothing, and
+ * the placeholder says "not recorded" rather than guessing at what it was.
  */
 import { useEffect, useRef, useState } from 'react';
 
@@ -28,6 +36,13 @@ interface Common {
   onSave: (next: string | undefined) => Promise<void> | void;
 }
 
+/** Only push the prop back into the box when the user is not in it. */
+function useSyncedDraft(value: string | undefined, focused: boolean) {
+  const [draft, setDraft] = useState(value ?? '');
+  useEffect(() => { if (!focused) setDraft(value ?? ''); }, [value, focused]);
+  return [draft, setDraft] as const;
+}
+
 export function InlineField({
   label, value, empty = 'not recorded', type = 'text', options, onSave,
 }: Common & {
@@ -36,131 +51,102 @@ export function InlineField({
   /** Turns this into a select. `value` is the option id. */
   options?: Array<{ id: string; name: string }>;
 }) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(value ?? '');
+  const [focused, setFocused] = useState(false);
+  const [draft, setDraft] = useSyncedDraft(value, focused);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string>();
-  const box = useRef<HTMLInputElement | HTMLSelectElement>(null);
+  const committed = useRef(value ?? '');
 
-  useEffect(() => { if (!editing) setDraft(value ?? ''); }, [value, editing]);
-  useEffect(() => { if (editing) box.current?.focus(); }, [editing]);
+  useEffect(() => { if (!focused) committed.current = value ?? ''; }, [value, focused]);
 
-  async function commit() {
-    const next = draft.trim();
-    setEditing(false);
-    if (next === (value ?? '')) return;
+  async function commit(next: string) {
+    const trimmed = next.trim();
+    if (trimmed === committed.current) return;
+    committed.current = trimmed;
     setSaving(true);
     setError(undefined);
     try {
-      await onSave(next === '' ? undefined : next);
+      await onSave(trimmed === '' ? undefined : trimmed);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not save that.');
       setDraft(value ?? '');
+      committed.current = value ?? '';
     } finally {
       setSaving(false);
     }
   }
 
-  const shown = options
-    ? options.find((o) => o.id === value)?.name
-    : value;
-
-  if (!editing) {
-    return (
-      <div className="inline-field">
-        <dt>{label}</dt>
-        <dd>
-          <button
-            type="button"
-            className={`inline-field__value${shown ? '' : ' inline-field__value--empty'}`}
-            onClick={() => setEditing(true)}
-            aria-label={`${label}: ${shown ?? empty}. Tap to change.`}
-          >
-            {saving ? 'Saving…' : shown || empty}
-          </button>
-          {error && <span className="warn xs"> {error}</span>}
-        </dd>
-      </div>
-    );
-  }
+  const empty_ = !draft;
 
   return (
     <div className="inline-field">
-      <dt>{label}</dt>
+      <dt>
+        <label htmlFor={`f_${label}`}>{label}</label>
+      </dt>
       <dd>
         {options ? (
           <select
-            ref={box as React.RefObject<HTMLSelectElement>}
+            id={`f_${label}`}
+            className="inline-input"
             value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            onBlur={() => void commit()}
+            onFocus={() => setFocused(true)}
+            onChange={(e) => { setDraft(e.target.value); void commit(e.target.value); }}
+            onBlur={() => setFocused(false)}
           >
             <option value="">{empty}</option>
             {options.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
           </select>
         ) : (
           <input
-            ref={box as React.RefObject<HTMLInputElement>}
+            id={`f_${label}`}
+            className={`inline-input${empty_ ? ' inline-input--empty' : ''}`}
             type={type}
             inputMode={type === 'number' ? 'decimal' : undefined}
+            placeholder={empty}
             value={draft}
+            onFocus={() => setFocused(true)}
             onChange={(e) => setDraft(e.target.value)}
-            onBlur={() => void commit()}
+            onBlur={(e) => { setFocused(false); void commit(e.target.value); }}
+            // Enter commits and closes the keyboard, which on a phone is the
+            // only way to dismiss it without tapping somewhere arbitrary.
             onKeyDown={(e) => {
-              if (e.key === 'Enter') { e.preventDefault(); void commit(); }
-              // Escape abandons rather than saving, which is what every other
-              // text field on every other platform does.
-              if (e.key === 'Escape') { setDraft(value ?? ''); setEditing(false); }
+              if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur(); }
+              if (e.key === 'Escape') { setDraft(committed.current); e.currentTarget.blur(); }
             }}
           />
         )}
+        {saving && <span className="xs muted"> saving…</span>}
+        {error && <span className="warn xs"> {error}</span>}
       </dd>
     </div>
   );
 }
 
-/** The same, for prose. A note wants room and does not want Enter to submit. */
+/** The same, for prose. A note wants room, and Enter should make a paragraph. */
 export function InlineNote({ label, value, empty = 'nothing written yet', onSave }: Common & {
   value: string | undefined;
 }) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(value ?? '');
-  const [saving, setSaving] = useState(false);
-  const box = useRef<HTMLTextAreaElement>(null);
-
-  useEffect(() => { if (!editing) setDraft(value ?? ''); }, [value, editing]);
-  useEffect(() => { if (editing) box.current?.focus(); }, [editing]);
-
-  async function commit() {
-    const next = draft.trim();
-    setEditing(false);
-    if (next === (value ?? '')) return;
-    setSaving(true);
-    try {
-      await onSave(next === '' ? undefined : next);
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  if (!editing) {
-    return (
-      <button type="button" className={`inline-note${value ? '' : ' inline-note--empty'}`}
-        onClick={() => setEditing(true)} aria-label={`${label}. Tap to change.`}>
-        {saving ? 'Saving…' : value || empty}
-      </button>
-    );
-  }
+  const [focused, setFocused] = useState(false);
+  const [draft, setDraft] = useSyncedDraft(value, focused);
+  const committed = useRef(value ?? '');
+  useEffect(() => { if (!focused) committed.current = value ?? ''; }, [value, focused]);
 
   return (
     <textarea
-      ref={box}
-      rows={3}
-      value={draft}
-      onChange={(e) => setDraft(e.target.value)}
-      onBlur={() => void commit()}
-      onKeyDown={(e) => { if (e.key === 'Escape') { setDraft(value ?? ''); setEditing(false); } }}
+      className={`inline-input inline-input--note${draft ? '' : ' inline-input--empty'}`}
+      rows={2}
       aria-label={label}
+      placeholder={empty}
+      value={draft}
+      onFocus={() => setFocused(true)}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={(e) => {
+        setFocused(false);
+        const next = e.target.value.trim();
+        if (next === committed.current) return;
+        committed.current = next;
+        void onSave(next === '' ? undefined : next);
+      }}
     />
   );
 }
