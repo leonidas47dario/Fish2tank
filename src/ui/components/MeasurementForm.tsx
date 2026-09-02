@@ -37,7 +37,14 @@ export function MeasurementForm({ holdingId, photos, acquiredOn, isGroup }: {
   const [lengthUnit, setLengthUnit] = useState<LengthUnit>('in');
   const [weight, setWeight] = useState('');
   const [weightUnit, setWeightUnit] = useState<WeightUnit>('g');
-  const [estimate, setEstimate] = useState(false);
+  /*
+   * Spec 038. AN ESTIMATE IS THE NORMAL CASE. A fish is measured through
+   * glass, in water, while it moves - "it certainly is always length
+   * estimate". The box previously defaulted off, so every measurement quietly
+   * claimed a precision nobody had, which is the exact failure FR-C05 exists
+   * to prevent.
+   */
+  const [estimate, setEstimate] = useState(true);
   const [mediaId, setMediaId] = useState('');
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
@@ -65,7 +72,7 @@ export function MeasurementForm({ holdingId, photos, acquiredOn, isGroup }: {
         mediaId: mediaId || undefined,
         note: note.trim() || undefined,
       });
-      setLength(''); setWeight(''); setNote(''); setMediaId(''); setEstimate(false);
+      setLength(''); setWeight(''); setNote(''); setMediaId(''); setEstimate(true);
       setSaved(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not save that measurement.');
@@ -119,28 +126,39 @@ export function MeasurementForm({ holdingId, photos, acquiredOn, isGroup }: {
         </select>
       </span>
 
-      <label htmlFor="meas-weight">Weight</label>
-      <span style={{ display: 'flex', gap: 'var(--space-2)' }}>
-        <input id="meas-weight" type="number" min="0" step="0.1" inputMode="decimal"
-          value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="21" />
-        <select aria-label="Weight unit" value={weightUnit}
-          onChange={(e) => setWeightUnit(e.target.value as WeightUnit)}>
-          <option value="g">g</option>
-          <option value="oz">oz</option>
-        </select>
+      {/* FR-C05, inverted by spec 038: the box now says "no, I really
+          measured this", because the estimate is what a keeper almost always
+          has. */}
+      <label htmlFor="meas-est">Measured</label>
+      <span>
+        <input id="meas-est" type="checkbox" checked={!estimate}
+          onChange={(e) => setEstimate(!e.target.checked)} />
+        <span className="xs muted"> Against a ruler, not eyeballed</span>
       </span>
 
-      {/* FR-C05: an eyeballed figure must never pass as a measured one. */}
-      <label htmlFor="meas-est">Estimated</label>
-      <span>
-        <input id="meas-est" type="checkbox" checked={estimate}
-          onChange={(e) => setEstimate(e.target.checked)} />
-        <span className="xs muted"> I eyeballed it rather than measuring</span>
-      </span>
+      {/*
+        Spec 038. Weight was asked for and is kept, but "I'd never know how
+        heavy the fish is" - it needs a scale and a wet fish. Behind a
+        disclosure it costs nothing on the day nobody has a figure, and is
+        still there on the day somebody does.
+      */}
+      <details style={{ gridColumn: '1 / -1' }}>
+        <summary className="xs muted">Weight, if you have a scale (optional)</summary>
+        <span style={{ display: 'flex', gap: 'var(--space-2)', marginTop: 'var(--space-2)' }}>
+          <input id="meas-weight" type="number" min="0" step="0.1" inputMode="decimal"
+            aria-label="Weight" value={weight}
+            onChange={(e) => setWeight(e.target.value)} placeholder="21" />
+          <select aria-label="Weight unit" value={weightUnit}
+            onChange={(e) => setWeightUnit(e.target.value as WeightUnit)}>
+            <option value="g">g</option>
+            <option value="oz">oz</option>
+          </select>
+        </span>
+      </details>
 
       {photos.length > 0 && (
         <>
-          <label htmlFor="meas-photo">Read from</label>
+          <label htmlFor="meas-photo">Read from <span className="xs muted">(optional)</span></label>
           <select id="meas-photo" value={mediaId} onChange={(e) => setMediaId(e.target.value)}>
             <option value="">No particular photo</option>
             {photos.map((p) => (
@@ -150,7 +168,7 @@ export function MeasurementForm({ holdingId, photos, acquiredOn, isGroup }: {
         </>
       )}
 
-      <label htmlFor="meas-note">Note</label>
+      <label htmlFor="meas-note">Note <span className="xs muted">(optional)</span></label>
       <textarea id="meas-note" rows={2} value={note} onChange={(e) => setNote(e.target.value)} />
 
       <button type="button" className="btn--primary" style={{ gridColumn: '1 / -1' }}
@@ -159,7 +177,7 @@ export function MeasurementForm({ holdingId, photos, acquiredOn, isGroup }: {
       </button>
       {!hasLength && !hasWeight && (
         <p className="panel__note panel__note--tight" style={{ gridColumn: '1 / -1' }}>
-          Enter a length, a weight, or both.
+          Enter a length — or a weight, under the toggle.
         </p>
       )}
       {saved && (
