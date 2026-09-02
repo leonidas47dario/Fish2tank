@@ -18,10 +18,12 @@
  * lie every time it is read.
  */
 import { useMemo } from 'react';
-import type { Id, LifeEventType } from '@/domain/types';
+import type { LifeEventType } from '@/domain/types';
 import { formatLength, formatWeight } from '@/domain/units';
-import { daysBetween, type Anchor, type TimelineEntry } from '@/domain/fish-timeline';
+import { daysBetween, type Anchor } from '@/domain/fish-timeline';
 import type { HoldingMeasurement } from '@/domain/types';
+import { MeasurementForm } from './MeasurementForm';
+import type { FishTimelineView } from '../hooks';
 
 /** Past tense, because every one of these already happened. */
 const EVENT_LABEL: Record<LifeEventType, string> = {
@@ -74,13 +76,7 @@ function measurementText(m: HoldingMeasurement): string {
 }
 
 export function FishTimeline({ timeline, title }: {
-  timeline: {
-    entries: TimelineEntry[];
-    anchor?: Anchor;
-    byMedia: Map<Id, HoldingMeasurement>;
-    quantity: number;
-    isGroup: boolean;
-  };
+  timeline: FishTimelineView;
   title: string;
 }) {
   const { entries, anchor, byMedia, quantity, isGroup } = timeline;
@@ -103,6 +99,12 @@ export function FishTimeline({ timeline, title }: {
         <p className="panel__note" style={{ marginTop: 0 }}>
           Nothing dated yet. A photo or a life event starts the story.
         </p>
+      <MeasurementForm
+        holdingId={timeline.holdingId}
+        photos={timeline.photos}
+        acquiredOn={timeline.acquiredOn}
+        isGroup={isGroup}
+      />
       </section>
     );
   }
@@ -179,6 +181,13 @@ export function FishTimeline({ timeline, title }: {
           );
         })}
       </ol>
+
+      <MeasurementForm
+        holdingId={timeline.holdingId}
+        photos={timeline.photos}
+        acquiredOn={timeline.acquiredOn}
+        isGroup={isGroup}
+      />
     </section>
   );
 }
