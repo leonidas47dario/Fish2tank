@@ -12,7 +12,8 @@
  */
 import { Link } from 'react-router-dom';
 import { useLiveQuery, useObservable } from 'dexie-react-hooks';
-import { blobFor, db } from '@/data/db';
+import { db } from '@/data/db';
+import { readMediaBlob } from '@/data/media/read';
 import { CATALOG_BY_SPECIES, portraitAsset } from '@/data/catalog';
 import { formatVolume } from '@/domain/units';
 import type { Id } from '@/domain/types';
@@ -20,6 +21,7 @@ import { LOCAL_PROFILE_ID } from '@/data/profile';
 import { useRecentCatches, useTanksWithResidents } from '../hooks';
 import { homeSummary } from './home-summary';
 import { Plate } from '../components/Plate';
+import { useBlobUrl } from '../blob-url';
 import { CameraIcon, GearIcon } from '../components/Icons';
 
 export default function Home() {
@@ -212,16 +214,22 @@ export default function Home() {
  * Not the shared card-art preference: that answers "which picture represents
  * this species", which is a different question from "what does this one look
  * like".
+ *
+ * SPEC 036 FIXED A LEAK HERE. This minted an object URL inside `useLiveQuery`
+ * and never revoked it - once per shelf item, again on every write to `media`
+ * or `blobs`. It now yields the blob and lets `useBlobUrl` own the URL.
  */
 function SpecimenPlate({ specimenId, speciesId }: { specimenId: Id; speciesId?: Id }) {
-  const ownUrl = useLiveQuery(async () => {
+  const blob = useLiveQuery(async () => {
     const media = (await db.media.where('specimenIds').equals(specimenId).toArray())
       .filter((m) => m.kind === 'photo')
       .sort((a, b) => b.capturedAt.localeCompare(a.capturedAt))[0];
     if (!media) return undefined;
-    const blob = blobFor(await db.blobs.get(media.originalBlobKey));
-    return blob ? URL.createObjectURL(blob) : undefined;
+    // A shelf item is 132px wide, past where a 320px thumbnail stays sharp on
+    // a 3x screen, so this takes the preview - spec 036.
+    return readMediaBlob(media, 'preview');
   }, [specimenId]);
+  const ownUrl = useBlobUrl(blob);
 
   const portrait = speciesId ? portraitAsset(speciesId) : undefined;
   const credit = speciesId ? CATALOG_BY_SPECIES.get(speciesId)?.portrait : undefined;

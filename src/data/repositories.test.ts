@@ -1192,6 +1192,56 @@ describe('tank photos', () => {
     expect(await db.blobs.count()).toBe(1);
   });
 
+  it('derives the renditions the tank card reads, and stores them beside the original', async () => {
+    /*
+     * Spec 036. `setTankPhoto` did not derive anything until this change, and
+     * nothing noticed because nothing read a rendition. The tank card is
+     * 96x96 - one of only two surfaces small enough for the 320px thumbnail -
+     * so without this it had nothing to read and silently fell back to a
+     * full-size original.
+     *
+     * jsdom has no canvas, so the engine is stubbed: what is guarded here is
+     * that the derivation is CALLED and its output STORED, which is the part
+     * that can silently regress. That the pixels are right is checked in a
+     * real browser, in the spec.
+     */
+    const bitmap = { width: 4000, height: 3000, close: vi.fn() };
+    vi.stubGlobal('createImageBitmap', async () => bitmap);
+    vi.stubGlobal('OffscreenCanvas', class {
+      constructor(readonly width: number, readonly height: number) {}
+      getContext() { return { drawImage: () => {} }; }
+      async convertToBlob() {
+        // Smaller than the original, or `deriveRenditions` rightly discards it.
+        return new Blob([new Uint8Array(this.width)], { type: 'image/jpeg' });
+      }
+    });
+
+    try {
+      const id = await aTank();
+      const big = {
+        kind: 'photo' as const,
+        blob: new Blob([new Uint8Array(4_000_000)], { type: 'image/jpeg' }),
+        mimeType: 'image/jpeg',
+      };
+      const media = await setTankPhoto(id, big, db);
+
+      expect(media.previewBlobKey).toBeDefined();
+      expect(media.thumbnailBlobKey).toBeDefined();
+      // A row must never name a blob that is not there beside it - they go in
+      // the same transaction as the original for exactly this reason.
+      expect(await db.blobs.get(media.previewBlobKey!)).toBeDefined();
+      expect(await db.blobs.get(media.thumbnailBlobKey!)).toBeDefined();
+
+      // Replacing must take all three, not just the original (spec 033).
+      await setTankPhoto(id, big, db);
+      expect(await db.blobs.get(media.originalBlobKey)).toBeUndefined();
+      expect(await db.blobs.get(media.previewBlobKey!)).toBeUndefined();
+      expect(await db.blobs.get(media.thumbnailBlobKey!)).toBeUndefined();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it('clearing removes the photo and leaves the tank', async () => {
     const id = await aTank();
     const media = await setTankPhoto(id, shot(1), db);
