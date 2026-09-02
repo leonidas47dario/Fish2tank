@@ -21,7 +21,8 @@
  */
 import { useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { blobFor, db } from '@/data/db';
+import { db } from '@/data/db';
+import { readMediaBlob } from '@/data/media/read';
 import { resolveCardArt, type CardArt, type CatalogCard } from '@/data/catalog';
 import { useBlobUrl } from '../blob-url';
 import { FishIcon, ImageBrokenIcon, LockIcon } from './Icons';
@@ -61,7 +62,9 @@ export function useCardArt(
     if (art.kind !== 'own') return undefined;
     const media = await db.media.get(art.mediaId);
     if (!media) return undefined;
-    return blobFor(await db.blobs.get(media.originalBlobKey));
+    // Preview, not thumbnail: the smallest box this hook feeds is a catalog
+    // tile at ~187px, well past where 320px stays sharp - spec 036.
+    return readMediaBlob(media, 'preview');
   }, [art.kind === 'own' ? art.mediaId : undefined]);
 
   return { art, ownUrl: useBlobUrl(blob) };
