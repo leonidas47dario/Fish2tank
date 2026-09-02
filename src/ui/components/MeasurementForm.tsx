@@ -17,7 +17,7 @@
  */
 import { useState } from 'react';
 import { recordMeasurement, setAcquiredOn } from '@/data/repositories';
-import type { Id, LengthUnit, WeightUnit } from '@/domain/types';
+import type { Id, LengthUnit } from '@/domain/types';
 
 /** `2026-02-14` for today, in the reader's own timezone rather than UTC. */
 function todayLocal(): string {
@@ -35,9 +35,6 @@ export function MeasurementForm({ holdingId, photos, acquiredOn, isGroup }: {
   const [on, setOn] = useState(todayLocal());
   const [length, setLength] = useState('');
   const [lengthUnit, setLengthUnit] = useState<LengthUnit>('in');
-  const [weight, setWeight] = useState('');
-  const [weightUnit, setWeightUnit] = useState<WeightUnit>('g');
-  const [estimate, setEstimate] = useState(false);
   const [mediaId, setMediaId] = useState('');
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
@@ -48,9 +45,7 @@ export function MeasurementForm({ holdingId, photos, acquiredOn, isGroup }: {
   const [acqBusy, setAcqBusy] = useState(false);
 
   const lengthValue = Number.parseFloat(length);
-  const weightValue = Number.parseFloat(weight);
   const hasLength = length.trim() !== '' && Number.isFinite(lengthValue) && lengthValue > 0;
-  const hasWeight = weight.trim() !== '' && Number.isFinite(weightValue) && weightValue > 0;
 
   async function save() {
     setBusy(true);
@@ -60,12 +55,11 @@ export function MeasurementForm({ holdingId, photos, acquiredOn, isGroup }: {
       await recordMeasurement({
         holdingId,
         observedOn: on,
-        length: hasLength ? { value: lengthValue, unit: lengthUnit, estimate: estimate || undefined } : undefined,
-        weight: hasWeight ? { value: weightValue, unit: weightUnit, estimate: estimate || undefined } : undefined,
+        length: { value: lengthValue, unit: lengthUnit },
         mediaId: mediaId || undefined,
         note: note.trim() || undefined,
       });
-      setLength(''); setWeight(''); setNote(''); setMediaId(''); setEstimate(false);
+      setLength(''); setNote(''); setMediaId('');
       setSaved(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not save that measurement.');
@@ -102,7 +96,7 @@ export function MeasurementForm({ holdingId, photos, acquiredOn, isGroup }: {
       <p className="panel__note" style={{ marginTop: 0, gridColumn: '1 / -1' }}>
         {isGroup
           ? 'A measurement of one of them on that day. Nothing here is averaged across the group.'
-          : 'How big this fish was on a given day. A length, a weight, or both.'}
+          : 'How long this fish was on a given day.'}
       </p>
 
       <label htmlFor="meas-on">When you measured</label>
@@ -119,28 +113,23 @@ export function MeasurementForm({ holdingId, photos, acquiredOn, isGroup }: {
         </select>
       </span>
 
-      <label htmlFor="meas-weight">Weight</label>
-      <span style={{ display: 'flex', gap: 'var(--space-2)' }}>
-        <input id="meas-weight" type="number" min="0" step="0.1" inputMode="decimal"
-          value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="21" />
-        <select aria-label="Weight unit" value={weightUnit}
-          onChange={(e) => setWeightUnit(e.target.value as WeightUnit)}>
-          <option value="g">g</option>
-          <option value="oz">oz</option>
-        </select>
-      </span>
+      {/*
+        Spec 038 removed the estimate toggle AND the weight field.
 
-      {/* FR-C05: an eyeballed figure must never pass as a measured one. */}
-      <label htmlFor="meas-est">Estimated</label>
-      <span>
-        <input id="meas-est" type="checkbox" checked={estimate}
-          onChange={(e) => setEstimate(e.target.checked)} />
-        <span className="xs muted"> I eyeballed it rather than measuring</span>
-      </span>
+        The toggle first defaulted to "measured", then to "estimate" - and the
+        second version made the point that killed it: if the answer is always
+        the same, the question is not worth asking. Every one of these is
+        eyeballed through glass, in water, on a moving fish. A flag that is
+        always true distinguishes nothing and costs a decision every time.
+
+        Weight went for the same reason from the other direction: "I'd never
+        know how heavy the fish is." A field nobody will ever fill is not
+        neutral - it is a question asked every time and never answered.
+      */}
 
       {photos.length > 0 && (
         <>
-          <label htmlFor="meas-photo">Read from</label>
+          <label htmlFor="meas-photo">Read from <span className="xs muted">(optional)</span></label>
           <select id="meas-photo" value={mediaId} onChange={(e) => setMediaId(e.target.value)}>
             <option value="">No particular photo</option>
             {photos.map((p) => (
@@ -150,16 +139,16 @@ export function MeasurementForm({ holdingId, photos, acquiredOn, isGroup }: {
         </>
       )}
 
-      <label htmlFor="meas-note">Note</label>
+      <label htmlFor="meas-note">Note <span className="xs muted">(optional)</span></label>
       <textarea id="meas-note" rows={2} value={note} onChange={(e) => setNote(e.target.value)} />
 
       <button type="button" className="btn--primary" style={{ gridColumn: '1 / -1' }}
-        disabled={busy || (!hasLength && !hasWeight)} onClick={() => void save()}>
+        disabled={busy || !hasLength} onClick={() => void save()}>
         {busy ? 'Saving…' : 'Save measurement'}
       </button>
-      {!hasLength && !hasWeight && (
+      {!hasLength && (
         <p className="panel__note panel__note--tight" style={{ gridColumn: '1 / -1' }}>
-          Enter a length, a weight, or both.
+          Enter a length.
         </p>
       )}
       {saved && (

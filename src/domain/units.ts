@@ -3,7 +3,7 @@
  * tank recorded in gallons and a profile recorded in litres never silently
  * mis-compare.
  */
-import type { LengthMeasurement, VolumeMeasurement, WeightMeasurement } from './types';
+import type { LengthMeasurement, VolumeMeasurement } from './types';
 
 const CM_PER_IN = 2.54;
 const L_PER_GAL = 3.785411784;
@@ -36,15 +36,4 @@ export function formatVolume(m: VolumeMeasurement | undefined): string {
   if (!m) return 'unknown';
   const rounded = Math.round(m.value * 10) / 10;
   return `${rounded}${m.unit === 'gal' ? 'G' : 'L'}`;
-}
-
-/**
- * A weight with its unit - spec 037. Same shape and same rounding as
- * `formatLength`, including the estimate marker, so an eyeballed weight is
- * never mistaken for one off a scale.
- */
-export function formatWeight(m: WeightMeasurement | undefined): string {
-  if (!m) return 'unknown';
-  const rounded = Math.round(m.value * 10) / 10;
-  return `${rounded}${m.unit}${m.estimate ? ' (est.)' : ''}`;
 }

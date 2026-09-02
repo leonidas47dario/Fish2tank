@@ -1772,42 +1772,25 @@ describe('measurements over time (ENH-12, spec 037)', () => {
     return holding;
   }
 
-  it('records a length, a weight, or both', async () => {
+  it('records a length against a date', async () => {
     const h = await aHolding();
 
-    const len = await recordMeasurement(
+    const m = await recordMeasurement(
       { holdingId: h.id, observedOn: '2026-02-14', length: { value: 2.1, unit: 'in' } }, db);
-    const wt = await recordMeasurement(
-      { holdingId: h.id, observedOn: '2026-03-01', weight: { value: 14, unit: 'g' } }, db);
-    const both = await recordMeasurement({
-      holdingId: h.id, observedOn: '2026-04-04',
-      length: { value: 2.8, unit: 'in' }, weight: { value: 21, unit: 'g' },
-    }, db);
 
-    expect(len.length?.value).toBe(2.1);
-    expect(wt.weight?.unit).toBe('g');
-    expect(both.length && both.weight).toBeTruthy();
-    expect(await db.holdingMeasurements.count()).toBe(3);
+    expect(m.length.value).toBe(2.1);
+    expect(m.length.unit).toBe('in');
+    expect(await db.holdingMeasurements.count()).toBe(1);
   });
 
   it('REFUSES AN OBSERVATION THAT OBSERVED NOTHING', async () => {
-    // A row with neither measure records that somebody opened a form. It would
-    // then sit in the timeline as a dated entry saying nothing at all.
+    // A row with no length records that somebody opened a form. It would then
+    // sit in the timeline as a dated entry saying nothing at all.
     const h = await aHolding();
 
-    await expect(recordMeasurement({ holdingId: h.id, observedOn: '2026-02-14' }, db))
-      .rejects.toThrow(/length, a weight, or both/);
+    await expect(recordMeasurement({ holdingId: h.id, observedOn: '2026-02-14' } as never, db))
+      .rejects.toThrow(/Record a length/);
     expect(await db.holdingMeasurements.count()).toBe(0);
-  });
-
-  it('keeps an eyeballed measurement marked as an estimate', async () => {
-    // `Measurement.estimate` already exists for this, so a guessed 3 inches
-    // never passes as a measured one (FR-C05).
-    const h = await aHolding();
-    const m = await recordMeasurement(
-      { holdingId: h.id, observedOn: '2026-02-14', length: { value: 3, unit: 'in', estimate: true } }, db);
-
-    expect((await db.holdingMeasurements.get(m.id))!.length!.estimate).toBe(true);
   });
 
   it('deleting the photo a measurement was read from CLEARS THE LINK, keeping the measurement', async () => {
