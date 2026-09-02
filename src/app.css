@@ -2025,7 +2025,6 @@ summary.factor::-webkit-details-marker { display: none; }
  * a dotted one when empty because "nothing here" is the state most worth
  * inviting a tap.
  */
-.label-line--editable { row-gap: var(--space-2); }
 .inline-field__value,
 .inline-note {
   display: inline-block;
@@ -2053,3 +2052,42 @@ summary.factor::-webkit-details-marker { display: none; }
   border-bottom: var(--border-width) dotted var(--color-border-control);
 }
 .inline-note { font-family: inherit; color: inherit; }
+
+/*
+ * One fact per line - spec 040.
+ *
+ * WHAT THIS REPLACES. Spec 039 laid the record's facts out as `.label-line`,
+ * which is `grid-auto-flow: column` - five equal columns. That suits the three
+ * short items it was built for and collapses for six longer ones: on a 390px
+ * phone each column is about 70px, so "The store's label" wrapped to three
+ * lines and its value wrapped under it. Reported as "too cramped for phone",
+ * and it was.
+ *
+ * Rows instead, label beside value. The label column is sized in `ch` so it
+ * fits the longest heading without measuring one, and the value takes the
+ * rest. Below 22rem - a small phone in a large font - they stack, because a
+ * 14ch label beside a value is worse than a label above it.
+ */
+.factlist {
+  margin: var(--space-3) 0 0;
+  padding-top: var(--space-3);
+  border-top: var(--border-width) var(--divider-style) var(--color-border);
+  font-size: var(--size-sm);
+}
+.factlist > div,
+.factlist__row {
+  display: grid;
+  grid-template-columns: minmax(0, 14ch) minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: baseline;
+  padding: var(--space-2) 0;
+}
+.factlist > div + div,
+.factlist__row + .factlist__row { border-top: var(--border-width) solid var(--color-border); }
+.factlist dt { color: var(--color-faint); }
+.factlist dd { margin: 0; color: var(--color-muted); font-family: var(--font-data); min-width: 0; }
+
+@media (max-width: 22rem) {
+  .factlist > div,
+  .factlist__row { grid-template-columns: 1fr; gap: 0; }
+}
