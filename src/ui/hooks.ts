@@ -342,14 +342,19 @@ export function useTankSummaries() {
  * has no photos and still gets a timeline from its life events, which is the
  * point: nothing has to be entered for this to be useful.
  */
-export function useFishTimeline(holdingId?: Id): {
+export interface FishTimelineView {
+  holdingId: Id;
   entries: TimelineEntry[];
   anchor?: Anchor;
   /** The measurement each photo was read from, so they render as one row. */
   byMedia: Map<Id, HoldingMeasurement>;
   quantity: number;
   isGroup: boolean;
-} | undefined {
+  acquiredOn?: string;
+  photos: Array<{ id: Id; on: string }>;
+}
+
+export function useFishTimeline(holdingId?: Id): FishTimelineView | undefined {
   return useLiveQuery(async () => {
     if (!holdingId) return undefined;
     const holding = await db.holdings.get(holdingId);
@@ -365,11 +370,18 @@ export function useFishTimeline(holdingId?: Id): {
       : [];
 
     return {
+      holdingId,
       entries: fishTimeline({ holdingId, events, media, measurements, memorials }),
       anchor: acquisitionAnchor(holding, events, media),
       byMedia: measurementsByMedia(measurements, media),
       quantity: deriveQuantity(holding, events),
       isGroup: holding.kind === 'group',
+      acquiredOn: holding.acquiredOn,
+      /** Photos a measurement can say it was read from, newest first. */
+      photos: media
+        .filter((m) => m.kind === 'photo')
+        .map((m) => ({ id: m.id, on: m.capturedAt.slice(0, 10) }))
+        .sort((a, b) => b.on.localeCompare(a.on)),
     };
   }, [holdingId]);
 }
