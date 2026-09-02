@@ -22,6 +22,7 @@ import type {
   DreamListItem,
   Encounter,
   Holding,
+  HoldingMeasurement,
   Id,
   IdentificationAssertion,
   KeeperPrinciple,
@@ -194,6 +195,8 @@ export class Fish2TankDB extends Dexie {
   lifeEvents!: EntityTable<LifeEvent, 'id'>;
   assessments!: EntityTable<CompatibilityAssessment, 'id'>;
   memorials!: EntityTable<Memorial, 'id'>;
+  /** Spec 037. Dated size observations, keyed on the holding like life events. */
+  holdingMeasurements!: EntityTable<HoldingMeasurement, 'id'>;
   keeperPrinciples!: EntityTable<KeeperPrinciple, 'id'>;
   draftKeys!: EntityTable<DraftKey, 'clientKey'>;
   cardPrefs!: EntityTable<CardPref, 'speciesId'>;
@@ -309,6 +312,23 @@ export class Fish2TankDB extends Dexie {
     // gets an empty table and behaves exactly as before.
     this.version(5).stores({
       shares: 'aquariumId, token',
+    });
+
+    /*
+     * v6 adds dated size observations (ENH-12, spec 037). A pure addition like
+     * v2, v3 and v5 - existing data carries forward untouched and no upgrade
+     * function is needed. A collection that has never recorded a measurement
+     * gets an empty table and behaves exactly as before.
+     *
+     * `Holding.acquiredOn` arrives in the same spec and needs NO version bump:
+     * it is an unindexed optional property, and Dexie stores what it is given
+     * per record. Only an index change requires a version.
+     *
+     * `mediaId` is indexed so spec 033's photo delete can find the
+     * measurements pointing at a photo without scanning the table.
+     */
+    this.version(6).stores({
+      holdingMeasurements: 'id, holdingId, observedOn, mediaId',
     });
   }
 }
