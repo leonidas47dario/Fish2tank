@@ -159,8 +159,11 @@ export default function SharedTank() {
       <header className="stack">
         {photoKey && (
           // Straight at the Worker, which checks the manifest and redirects to
-          // a presigned URL. Lazy, because it is the keeper's untouched
-          // original and can be several megabytes.
+          // a presigned URL. Still lazy: since spec 036 this is the preview
+          // where the keeper's tank photo has one, but there is no backfill,
+          // so a photo set before that is still the untouched original and can
+          // be several megabytes. Measured on slow 4G, that was 51s to first
+          // paint against 3.4s for the preview.
           <img
             className="sharedtank__photo"
             src={`${MEDIA_WORKER_URL}/shared/${token}/media/${photoKey}`}
