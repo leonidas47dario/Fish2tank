@@ -223,7 +223,13 @@ attached — not a parallel store of facts about dead fish.
 
 **This PR — the spine.** `HoldingMeasurement`, `Holding.acquiredOn`, the
 repository functions, the merged timeline as a pure domain function with tests,
-and the timeline section on a holding's record.
+the timeline section on a holding's record, **and the form that writes one**.
+
+The form was nearly left out, on the reasoning that the spine is the read path.
+That would have shipped a review round in which the headline of the ask —
+*"post dated updates (new photos, metrics)"* — could not be exercised at all,
+because `recordMeasurement` existed, was tested, and was called by nothing. A
+repository function no screen reaches is not a feature.
 
 **Next — Fish Heaven** rebuilt on it: the `/heaven` route, the memorial page,
 memos, photos, edit and delete, per FH-1…FH-7.
@@ -286,10 +292,11 @@ under their own dates. The rule lives in the domain function with a test.
 ### The spine, this PR
 
 1. A `HoldingMeasurement` records a length, a weight, or both, against a date
-   and a holding. ✅
-2. Either measure alone is valid; neither is not. ✅
-3. A measurement may name a photo, and **deleting that photo clears the link
-   rather than orphaning it**. ✅
+   and a holding, **from the app**. ✅ (browser)
+2. Either measure alone is valid; neither is not — and the form disables
+   saving rather than letting someone discover that by pressing it. ✅
+3. A measurement may name a photo — chosen by date in the form — and
+   **deleting that photo clears the link rather than orphaning it**. ✅
 4. Deleting a catch or a holding takes its measurements with it. ✅ (both paths cascade through `removeHolding`)
 5. A holding's record shows one merged, dated stream of life events, photos,
    measurements and its memorial. ✅ (browser)
