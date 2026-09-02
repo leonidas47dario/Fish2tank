@@ -84,19 +84,42 @@ falls straight through the ladder, and looks exactly as it did.
 
 ## One of the two thumbnail surfaces had no thumbnail to read
 
-Found while checking this work, and it changes what the change is worth:
-**only one of the three paths that write a photograph derives renditions.**
+**Correction, 2026-09-02.** An earlier version of this spec, and the commit
+message that shipped it, said this gap "went unnoticed because nothing read a
+rendition until now." That was wrong, and it made spec 029 look sloppier than
+it was. Spec 029 named it plainly in its own *Not done here* list:
+
+> **`setTankPhoto`** still stores its buffer unchanged; only `addPhotos`
+> derives today. The tank photo is one image per tank rather than one per
+> fish, so it is the smaller half of the cost.
+
+The disclosure was there. What was wrong was the **cost estimate**, and it is
+worth being exact about why, because the reasoning is the sort that sounds
+obviously right.
+
+Only one of the three paths that write a photograph derived renditions:
 
 | writer | what it is | derived before | derived now |
 |---|---|---|---|
 | `addPhotos` | a photo added to a record | yes (spec 029) | yes |
-| `setTankPhoto` | the picture on a tank | **no** | **yes** |
-| `createCatchDraft` | the first photos of a catch | **no** | no — below |
+| `setTankPhoto` | the picture on a tank | no | **yes** |
+| `createCatchDraft` | the first photos of a catch | no | no — below |
 
-This went unnoticed because nothing read a rendition until now. It matters
-here because the tank card is one of only two surfaces small enough for the
-thumbnail: pointing it at a thumbnail that never existed would have been a
-change that measured as an improvement and delivered nothing.
+"One image per tank rather than one per fish" is true, and it is the right way
+to count **local storage**. It is the wrong way to count a **shared page**,
+where the tank photo is the header image and every other picture on the page
+was already a preview. Measured on a tank with eight photographed fish, the
+one image judged cheapest to skip was **67% of the page's bytes** — 10.17 MB
+of a 15.10 MB page. The numbers are below.
+
+So the lesson is not "somebody should have noticed." It is that a per-image
+cost was compared against the wrong denominator: cheapest per copy, dearest
+per page, and only the second one is what a guest waits for.
+
+It also matters locally: the tank card is one of only two surfaces small
+enough for the thumbnail, so pointing it at a thumbnail that never existed
+would have been a change that measured as an improvement and delivered
+nothing.
 
 `setTankPhoto` now derives inline, in the same transaction as the original, so
 a `media` row can never name a blob that is not stored beside it. Inline is
@@ -223,6 +246,89 @@ its `media` row kept naming it — which is exactly what a second device looks
 like part-way through the queue. A thumbnail surface then read **617,487**
 bytes: it fell to the preview and drew a picture, where a reader that trusted
 the row would have drawn nothing.
+
+## What it is worth, measured against the version it replaces
+
+Added 2026-09-02, in answer to "how does this improve the experience, and can
+you quantify it?" — a fair challenge to a section that had byte ratios and no
+time in it. Everything here is an A/B: `81f7141` (the tree this replaced) built
+and served alongside `33a8877`, both seeded with byte-identical photographs,
+both driven at a 390 × 844 viewport with the CPU throttled 4× to approximate a
+mid-range phone. Median of five runs.
+
+### Time until a screen shows its pictures
+
+| screen | before | after | |
+|---|---|---|---|
+| tank list, 6 tanks | **2,392 ms** | **367 ms** | 6.5× |
+| fish record, 12 photos | **4,742 ms** | **457 ms** | 10.4× |
+
+The spread matters as much as the median. A record ranged 3,810–6,527 ms
+before and 414–556 ms after: it was not merely slow, it was unpredictably
+slow, which is the part a person remembers.
+
+### Memory pinned by photographs
+
+`createObjectURL` / `revokeObjectURL` were instrumented in the page, so this is
+a count rather than an inference. Six tanks, ten trips between the tank list
+and home inside one document:
+
+| | before | after |
+|---|---|---|
+| first arrival at the tank list | 61.0 MB | 0.23 MB |
+| after ten trips | **752.5 MB, still climbing** | 0.23 MB (peak 1.46 MB) |
+| object URLs revoked | **0 of 74** | 70 of 76 |
+
+Two independent effects, and it is worth keeping them apart: reading a
+thumbnail rather than an original made each retained blob ~264× smaller, and
+fixing the leak stopped the count growing at all. The leak would have grown
+just the same with no renditions in the picture. It is filed as BUG-13.
+
+### What a guest downloads for a shared tank
+
+The publish path has chosen preview-first since spec 029, so **fish photos are
+unchanged** by this spec — 616,450 bytes each, in both builds, measured. The
+tank photo is the whole difference:
+
+| | before | after |
+|---|---|---|
+| tank cover photo published | 10,170,059 B | **616,386 B** |
+| whole page, 8 photographed fish | 15.10 MB | **5.55 MB** |
+
+### Time until a guest sees the tank
+
+Real published bytes, same viewport and CPU throttle, Chrome's own network
+presets:
+
+| connection | before | after | |
+|---|---|---|---|
+| Fast 4G (9 Mbps) | **9,270 ms** | **685 ms** | 13.5× |
+| Slow 4G (1.6 Mbps) | **51,358 ms** | **3,417 ms** | 15.0× |
+
+Bandwidth-bound, so barely any variance: 51,358 / 51,381 and 3,417 / 3,408.
+Fifty-one seconds of empty header before a stranger sees the tank is not a
+slow page, it is a closed tab.
+
+**No backfill, so this is not retroactive.** A tank photo set before this
+change has no preview and still publishes the original; the keeper has to
+re-set the tank's photo and update the share. Worth saying out loud, because
+re-publishing alone looks like it should be enough and is not.
+
+### What it costs
+
+190.9 MB → 194.8 MB stored for the same 18 photographs, 42 blobs → 54: about
+**2% more disk** for the derived copies. That is the entire downside.
+
+### Caveats
+
+A 4× CPU throttle approximates a phone, it is not one. The test photographs are
+4032 × 3024 — a real phone's resolution — but synthetic noise, which
+compresses worse than a photograph, so decode cost is representative while file
+sizes run high. The guest timings serve the real published bytes from a local
+server rather than R2 through the Worker; the snapshot fetch and the Worker's
+redirect are identical either side, so the difference is faithful, but the
+absolute times exclude that round trip. The ratios and the URL counts are the
+robust findings.
 
 ## Acceptance criteria
 
