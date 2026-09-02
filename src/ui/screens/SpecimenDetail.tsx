@@ -23,18 +23,19 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { db } from '@/data/db';
 import {
   acquireSpecimen, addEncounterChapter, assertIdentity, deleteCatch,
-  moveHolding, planDeleteCatch, recordPrice, stockTank, updateCatch,
+  evaluateSpecimen, moveHolding, planDeleteCatch, recordPrice, stockTank, updateCatch,
   type DeleteCatchPlan,
 } from '@/data/repositories';
 import { identifyFromText } from '@/data/identify';
 import { deriveQuantity } from '@/domain/holdings';
 import { formatLength, formatVolume } from '@/domain/units';
-import type { Specimen } from '@/domain/types';
+import type { Specimen, Verdict } from '@/domain/types';
 import { useFishTimeline, useSearchableSpecies } from '../hooks';
 import {
   CATALOG_BY_SPECIES, identityStatusFor, portraitAsset, type CatalogSpecies,
 } from '@/data/catalog';
-import { IdentityBadge } from '../components/Badges';
+import { IdentityBadge, VerdictBadge } from '../components/Badges';
+import { FactorList, MissingInputsNotice } from '../components/FactorList';
 import { InlineField, InlineNote } from '../components/InlineField';
 import { usePrefersReducedMotion } from '@/theme/ThemeProvider';
 import { CaretLeftIcon, CaretRightIcon } from '../components/Icons';
@@ -54,6 +55,11 @@ export default function SpecimenDetail() {
   const encounters = useLiveQuery(
     async () => (id ? (await db.encounters.where('specimenId').equals(id).toArray())
       .sort((a, b) => a.observedAt.localeCompare(b.observedAt)) : []),
+    [id],
+  );
+  const assessments = useLiveQuery(
+    async () => (id ? (await db.assessments.where('specimenId').equals(id).toArray())
+      .sort((a, b) => b.assessedAt.localeCompare(a.assessedAt)) : []),
     [id],
   );
   const prices = useLiveQuery(
@@ -90,15 +96,35 @@ export default function SpecimenDetail() {
 
   const timeline = useFishTimeline(placement?.[0]?.holding.id);
 
+  /**
+   * Spec 039. Owned means a holding exists - acquireSpecimen mints one - so
+   * the screening panel disappears the moment the fish is brought home.
+   */
+  const owned = (placement?.length ?? 0) > 0;
   const placed = placement?.filter((p) => p.aquarium) ?? [];
   const unplaced = placement?.filter((p) => !p.aquarium) ?? [];
 
+
+  // Hooks before the early returns, always: React counts them per render and
+  // a conditional one is error #310. The screening panel's state came back
+  // with it in spec 039 and briefly landed below these guards.
+  const [busy, setBusy] = useState(false);
+  const [openTank, setOpenTank] = useState<string | undefined>();
 
   if (!id) return <p className="empty">No specimen.</p>;
   if (specimen === undefined) return <p className="empty muted">Loading…</p>;
   if (specimen === null) return <p className="empty">That catch is no longer here.</p>;
 
   const latest = encounters?.[encounters.length - 1];
+  const newest = assessments?.[0];
+  const groupedAssessments = assessments?.filter((a) => a.assessedAt === newest?.assessedAt) ?? [];
+
+  async function onEvaluate() {
+    setBusy(true);
+    await evaluateSpecimen(id!, { observedSize: latest?.observedSize });
+    setBusy(false);
+  }
+
 
   const price = prices?.[0];
   const title = specimen.nickname ?? specimen.rawLabel ?? 'Mystery Catch';
@@ -309,16 +335,97 @@ export default function SpecimenDetail() {
       ) : (
       <>
       {/*
-        Spec 039. "Your tanks" removed: the screening answers a question about
-        the SPECIES - adult size, aggression, minimum volume - and its verdict
-        for two severums in one tank is identical. It read as being about the
-        fish in front of you and was not.
+        Spec 039. TANK SCREENING, BUT ONLY WHILE THE ANSWER CAN CHANGE
+        ANYTHING.
 
-        This was its ONLY surface, so the compatibility engine (PRD 5.1/5.2) is
-        off screen until it has a home on the species page. The engine, its
-        tests and every stored assessment are untouched; this is a move that
-        has not landed, not a deletion.
+        It was removed entirely at first, as species-shaped: every input is a
+        species fact and the verdict for two severums in one tank is
+        identical. The keeper's correction is sharper than the removal was -
+        "the tank analysis can stay but should disappear once the fish is
+        already owned, because the analysis is meaningless."
+
+        That is the real distinction. Standing in a shop, "would this suit my
+        tanks?" is a decision with a deadline. Once the fish is home and in a
+        tank, the same panel is a verdict on something already done - and a
+        high-risk badge over a fish you are keeping is either a reproach or
+        noise. The stocking view is where a tank you already own gets judged.
+
+        Owned means it has a holding: acquireSpecimen mints one, so this
+        vanishes the moment the fish is brought home.
       */}
+      {!owned && (
+        <section className="panel panel--flush">
+          <div className="pad spread" style={{ marginBottom: 'var(--space-3)' }}>
+            <h2 className="sec-head" style={{ margin: 0 }}>Your tanks</h2>
+            <button type="button" className="prompt__act" onClick={() => void onEvaluate()} disabled={busy}>
+              {busy ? 'Checking…' : groupedAssessments.length ? 'Check again' : 'Check my tanks'}
+            </button>
+          </div>
+
+          {groupedAssessments.length === 0 ? (
+            <div className="prompt">
+              <p className="prompt__title">Not screened yet</p>
+              <p className="prompt__body">
+                {aquariums?.length
+                  ? `Check this fish against your ${aquariums.length} tank${aquariums.length === 1 ? '' : 's'}. Nothing is inferred: where a fact is missing the answer says so.`
+                  : 'There are no tanks to check against yet.'}
+              </p>
+            </div>
+          ) : (
+            <>
+              <p className="verdict-lede">{lede(groupedAssessments.map((a) => a.verdict))}</p>
+
+              {groupedAssessments.map((a) => {
+                const tank = aquariums?.find((t) => t.id === a.aquariumId);
+                const name = tank?.name ?? a.aquariumId;
+                const open = openTank === a.id;
+                const bad = a.verdict === 'high-risk' || a.verdict === 'extreme-risk';
+                return (
+                  <div key={a.id}>
+                    <button
+                      type="button"
+                      className="tankrow"
+                      aria-expanded={open}
+                      onClick={() => setOpenTank(open ? undefined : a.id)}
+                    >
+                      <span className="grow">
+                        <span className="tankrow__name">{name}</span>
+                        {/*
+                          The reason, on the COLLAPSED row. The engine already
+                          aggregates worst-wins and writes the top findings into
+                          the headline; printing it small and grey under a pill
+                          was what let a row reading "Conditional" hide "eats 4
+                          residents" one tap down. A summary is never allowed to
+                          be calmer than its own contents.
+                        */}
+                        {a.headline && (
+                          <span className={`tankrow__why${bad ? '' : ' tankrow__why--warn'}`}>
+                            {a.headline}
+                          </span>
+                        )}
+                      </span>
+                      <VerdictBadge verdict={a.verdict} />
+                    </button>
+
+                    {open && (
+                      <>
+                        {/* FR-E03: the juvenile view is present but visibly secondary. */}
+                        {a.temporaryJuvenileFit && (
+                          <p className="warn" style={{ margin: 'var(--space-3) var(--space-4)' }}>
+                            Right now, temporarily: {a.temporaryJuvenileFit.note}
+                          </p>
+                        )}
+                        <MissingInputsNotice missing={a.missingInputs} />
+                        {a.factors.length > 0 && <FactorList assessment={a} tankName={name} />}
+                      </>
+                    )}
+                  </div>
+                );
+              })}
+            </>
+          )}
+        </section>
+      )}
 
       {/* --- Identity (PRD 4.3) ------------------------------------------- */}
       <IdentityPanel specimen={specimen} species={species} />
@@ -1146,3 +1253,36 @@ function StoryForm({ specimenId }: { specimenId: string }) {
     </div>
   );
 }
+
+/**
+ * The answer, in one sentence, before any of the working.
+ *
+ * The denominator is the tanks that were CHECKED, and the tanks that could not
+ * answer are counted separately rather than folded in as failures. "Fits none
+ * of your 6 tanks" when four of them are unmeasured is a false negative
+ * dressed as a result, and this app does not do that in either direction.
+ */
+function lede(verdicts: Verdict[]): string {
+  const n = verdicts.length;
+  const fits = verdicts.filter((v) => v === 'suitable').length;
+  const conditional = verdicts.filter((v) => v === 'conditional').length;
+  const unknown = verdicts.filter((v) => v === 'insufficient-data').length;
+  const answerable = n - unknown;
+
+  if (answerable === 0) {
+    return `None of your ${n} tank${n === 1 ? '' : 's'} has enough recorded for this to be judged.`;
+  }
+
+  const head = fits > 0
+    ? `Fits ${fits} of your ${answerable} answerable tank${answerable === 1 ? '' : 's'}.`
+    : conditional > 0
+      ? `Fits none outright; ${conditional} would work with care.`
+      : `Fits none of your ${answerable} answerable tank${answerable === 1 ? '' : 's'}.`;
+
+  const tail = unknown > 0
+    ? ` ${unknown} tank${unknown === 1 ? '' : 's'} cannot answer yet.`
+    : '';
+
+  return head + tail;
+}
+

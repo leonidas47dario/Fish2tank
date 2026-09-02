@@ -41,11 +41,11 @@ stating plainly rather than discovering later — see below.
 
 ## The three that leave
 
-| Panel | What it answers | Whose question |
-|---|---|---|
-| **Your tanks** | would a fish like this suit my tanks? | the **species** |
-| **Discovery** | how rare is this kind of fish? | the **species** |
-| **Size and price** | what do fish like this sell for? | the **species** |
+| Panel | What it answers | Whose question | |
+|---|---|---|---|
+| **Discovery** | how rare is this kind of fish? | the **species** | removed |
+| **Size and price** | what do fish like this sell for? | the **species** | split |
+| **Your tanks** | would a fish like this suit my tanks? | see below | **kept, until owned** |
 
 The tank screening is the one worth arguing about, because it feels
 specimen-shaped: *should I buy **this** fish?* But every input is a species
@@ -53,24 +53,32 @@ fact — adult size, aggression, minimum volume — and the verdict for two
 severums in the same tank is identical. It reads as being about the fish in
 front of you and is not.
 
-### Tank screening loses its only surface, and that needs saying
+### Tank screening: kept, but only while the answer can change anything
 
-Checked rather than assumed: the market panel and the Discovery badges are
-already on the species page, so removing them from the record removes a
-*repeat*. **Tank screening is not.** `SpecimenDetail` is the only screen in the
-app that renders it, so this removal takes the compatibility engine — PRD 5.1
-and 5.2, one of the product's core promises — off the screen entirely.
+The first pass removed it outright and flagged that it had no second home —
+`SpecimenDetail` is the only screen that renders the compatibility engine, so
+the removal took PRD 5.1 and 5.2 off screen entirely.
 
-It is removed anyway, because it was asked for and it is genuinely
-species-shaped. But it is removed **as a move that has not landed yet**, not as
-a deletion, and the engine, its tests and its stored assessments are all
-untouched.
+The correction is sharper than the removal was:
 
-Giving it a home is not a five-line lift, which is why it is not smuggled in
-here: `evaluateSpecimen` is keyed on a specimen and writes assessments against
-one, and the useful version of the question — *"should I buy a fish I do not
-own yet?"* — has no specimen to key on. That is a design question with a real
-answer to work out, and it is filed rather than guessed at.
+> the tank analysis can stay but should disappear once the fish is already
+> owned, because the analysis is meaningless
+
+That is the real distinction, and it is better than "species fact vs specimen
+fact" here. Standing in a shop, *"would this suit my tanks?"* is a decision
+with a deadline. Once the fish is home and in a tank, the same panel is a
+verdict on something already done — and a high-risk badge over a fish you are
+keeping is either a reproach or noise. The stocking view is where a tank you
+already own gets judged.
+
+So the panel stays, gated on ownership. Owned means a holding exists, which
+`acquireSpecimen` mints, so it vanishes the moment the fish is brought home.
+
+**It produces a symmetry that was not designed and is worth keeping.** The
+timeline needs a holding, and screening needs the absence of one, so at the
+moment of acquisition the page swaps *"Your tanks"* for *"History"* — from
+"should I buy this?" to "what happened to this fish?". Verified in a browser
+rather than reasoned about.
 
 ### What "Size and price" splits into, because it is two things
 
@@ -166,11 +174,12 @@ readable enough to judge B in.
 
 ### A — the declutter
 
-1. Tank screening, Discovery and the market panels do not appear on a
-   specimen's record. ✅ (browser)
-2. The market panel and Discovery remain reachable on the species page. ✅
-   **Tank screening does not** — it had no second home, and finding it one is
-   its own change, filed, not folded in here. ⬜
+1. Discovery and the market panels do not appear on a specimen's record;
+   tank screening appears only before the fish is owned. ✅ (browser: the
+   panel is present before acquisition and gone after, replaced by History)
+2. The market panel and Discovery remain reachable on the species page, and
+   tank screening keeps its only surface for the case where it means
+   something. ✅
 3. What you paid, where and when survives on the record. ✅
 4. No "Edit this catch" button; every editable field edits in place. ✅ (browser: zero edit buttons, an inline change survives a reload)
 5. Deleting still sits behind its own confirmation. ✅
