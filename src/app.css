@@ -220,6 +220,17 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 
 input, select, textarea {
   font: inherit;
+  /*
+   * Spec 041. iOS Safari ZOOMS THE PAGE when a focused field is under 16px,
+   * and the body is --size-md, 15px. So every field in this app - the search
+   * box, the price form, the measurement form - shunted the layout sideways
+   * on focus and left the reader to pinch back out. On the only device this
+   * app is built for.
+   *
+   * `max(1rem, ...)` rather than a flat 16px, so a reader who has turned their
+   * browser's base size up still gets their size.
+   */
+  font-size: max(1rem, var(--size-md));
   width: 100%;
   color: var(--color-text);
   background: var(--color-surface);
@@ -1973,4 +1984,132 @@ summary.factor::-webkit-details-marker { display: none; }
     width: min(28rem, calc(100vw - var(--space-6)));
     border-radius: var(--radius-card);
   }
+}
+
+/*
+ * A kept fish's history - ENH-12, spec 037.
+ *
+ * A rail with a dot per entry, because "cascading timeline" was the ask and a
+ * plain list of dates does not read as a sequence. Every value below is a
+ * token: this file may not hold a colour, radius, spacing or duration literal.
+ */
+.timeline { list-style: none; margin: var(--space-3) 0 0; padding: 0 var(--space-4); }
+.timeline__row {
+  display: grid;
+  grid-template-columns: minmax(7.5rem, auto) 1fr;
+  gap: var(--space-3);
+  padding: var(--space-2) 0 var(--space-2) var(--space-3);
+  border-left: var(--border-width) solid var(--color-border);
+  position: relative;
+}
+/* The dot sits ON the rail, so the rail reads as one continuous thread. */
+.timeline__row::before {
+  content: '';
+  position: absolute;
+  left: calc(var(--border-width) * -1);
+  top: var(--space-3);
+  width: var(--space-2); height: var(--space-2);
+  margin-left: calc(var(--space-2) / -2);
+  border-radius: 50%;
+  background: var(--color-border-control);
+}
+/* The two ends of a life are the two a reader looks for first. */
+.timeline__row--event::before { background: var(--color-primary); }
+.timeline__row--memorial::before { background: var(--color-muted); }
+.timeline__row--measurement::before { background: var(--color-accent); }
+.timeline__when { color: var(--color-muted); font-size: var(--size-xs); }
+.timeline__what { min-width: 0; font-size: var(--size-sm); }
+.timeline__count { color: var(--color-muted); font-weight: var(--weight-regular); }
+
+@media (max-width: 26rem) {
+  /* One column on a narrow phone: 7.5rem of date beside the text leaves the
+     text too narrow to read, which is worse than losing the alignment. */
+  .timeline__row { grid-template-columns: 1fr; gap: var(--space-1); }
+}
+
+/*
+ * A field that reads as a value - spec 041.
+ *
+ * IT IS ALWAYS AN INPUT. Spec 039 rendered the value as a button and swapped
+ * in an input on tap, focusing it from an effect. iOS Safari opens the
+ * keyboard only when focus() happens inside the gesture that caused it, so on
+ * a phone the input appeared and the keyboard never did.
+ *
+ * So the styling does the work the swap used to: no background, no border but
+ * a bottom rule, and the font of the value beside it. It must look like a
+ * value at rest and like a field the moment it is touched - a page of visible
+ * input boxes is a form, and this is a record.
+ */
+.inline-input {
+  width: 100%;
+  padding: 0;
+  min-height: 0;
+  border: 0;
+  border-bottom: var(--border-width) solid transparent;
+  border-radius: 0;
+  background: transparent;
+  font-family: var(--font-data);
+  /* NO font-size here. `font-size: inherit` looked harmless and was the bug
+     twice over: this selector is more specific than the base input rule, so
+     it beat the 16px floor and inherited 13px from .factlist - putting the
+     iOS zoom back on the very fields this spec exists to make typable. The
+     value therefore renders larger than its label, which is the right
+     hierarchy anyway: the label is the quiet half. */
+  color: var(--color-muted);
+  -webkit-appearance: none;
+  appearance: none;
+}
+.inline-input:hover { border-bottom-color: var(--color-border-control); }
+.inline-input:focus {
+  outline: none;
+  border-bottom-color: var(--color-primary);
+  color: var(--color-text);
+}
+/* Empty is the state most worth a tap, so it says so rather than hiding. */
+.inline-input--empty { border-bottom: var(--border-width) dotted var(--color-border-control); }
+.inline-input::placeholder { color: var(--color-faint); font-style: italic; }
+.inline-input--note {
+  font-family: inherit;
+  color: inherit;
+  resize: vertical;
+}
+select.inline-input { cursor: pointer; }
+
+/*
+ * One fact per line - spec 040.
+ *
+ * WHAT THIS REPLACES. Spec 039 laid the record's facts out as `.label-line`,
+ * which is `grid-auto-flow: column` - five equal columns. That suits the three
+ * short items it was built for and collapses for six longer ones: on a 390px
+ * phone each column is about 70px, so "The store's label" wrapped to three
+ * lines and its value wrapped under it. Reported as "too cramped for phone",
+ * and it was.
+ *
+ * Rows instead, label beside value. The label column is sized in `ch` so it
+ * fits the longest heading without measuring one, and the value takes the
+ * rest. Below 22rem - a small phone in a large font - they stack, because a
+ * 14ch label beside a value is worse than a label above it.
+ */
+.factlist {
+  margin: var(--space-3) 0 0;
+  padding-top: var(--space-3);
+  border-top: var(--border-width) var(--divider-style) var(--color-border);
+  font-size: var(--size-sm);
+}
+.factlist > div,
+.factlist__row {
+  display: grid;
+  grid-template-columns: minmax(0, 14ch) minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: baseline;
+  padding: var(--space-2) 0;
+}
+.factlist > div + div,
+.factlist__row + .factlist__row { border-top: var(--border-width) solid var(--color-border); }
+.factlist dt { color: var(--color-faint); }
+.factlist dd { margin: 0; color: var(--color-muted); font-family: var(--font-data); min-width: 0; }
+
+@media (max-width: 22rem) {
+  .factlist > div,
+  .factlist__row { grid-template-columns: 1fr; gap: 0; }
 }

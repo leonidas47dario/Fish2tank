@@ -448,6 +448,17 @@ export interface Holding {
   /** True when created by inventory import rather than a tracked acquisition. */
   openingBalance: boolean;
   notes?: string;
+  /**
+   * When this fish came home - spec 037.
+   *
+   * A REAL FIELD rather than a derivation, because every derived answer was
+   * either honest-but-absent or plausible-and-wrong. `createdAt` is never a
+   * substitute: for the 61 imported rows it is the minute a spreadsheet was
+   * read in 2026, which renders a three-year-old fish as "together for 2 days".
+   *
+   * Optional and unindexed, so it is additive in the sense FR-A06 requires.
+   */
+  acquiredOn?: CalendarDate;
   createdAt: Instant;
 }
 
@@ -558,6 +569,40 @@ export interface Memorial {
   causeConfidence: CauseConfidence;
   lesson?: string;
   keeperPrincipleId?: Id;
+  createdAt: Instant;
+}
+
+/**
+ * One dated observation of how big a fish is - ENH-12, spec 037.
+ *
+ * NOT CALLED `Measurement`, and the name is deliberate: `Measurement<U>` is
+ * already the generic above that `LengthMeasurement` and `VolumeMeasurement`
+ * are built from. The proposal in PR #71 named this record `Measurement` and
+ * would have collided with it on the first import. Do not "simplify" the name.
+ *
+ * KEYED ON THE HOLDING, like `LifeEvent`, `Memorial` and `Residency`, because
+ * that is what the app already treats as one unit you manage. A holding can be
+ * a group, so a measurement here is a measurement of ONE of them on that day -
+ * never an average, which would be a number about an animal nobody measured.
+ *
+ * Both measures are optional: a keeper who eyeballs a length must not be
+ * blocked by owning no scale, and `Measurement.estimate` already records which
+ * it was, so an eyeballed 3 inches never passes as a measured one.
+ */
+export interface HoldingMeasurement {
+  id: Id;
+  holdingId: Id;
+  observedOn: CalendarDate;
+  length: LengthMeasurement;
+  /**
+   * The photograph this was measured from, when there is one.
+   *
+   * One-way on purpose: the measurement names the photo and `Media` knows
+   * nothing about it. Deleting the photo clears this rather than orphaning it
+   * (spec 033's delete path).
+   */
+  mediaId?: Id;
+  note?: string;
   createdAt: Instant;
 }
 
