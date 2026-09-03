@@ -22,29 +22,25 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { db } from '@/data/db';
 import {
-  acquireSpecimen, addEncounterChapter, assertIdentity, awardGolden, deleteCatch,
-  evaluateSpecimen, moveHolding, planDeleteCatch, recordPrice, revealSpecimen,
-  stockTank, updateCatch,
+  acquireSpecimen, addEncounterChapter, assertIdentity, deleteCatch,
+  evaluateSpecimen, moveHolding, planDeleteCatch, recordPrice, updateCatch,
   type DeleteCatchPlan,
 } from '@/data/repositories';
 import { identifyFromText } from '@/data/identify';
 import { deriveQuantity } from '@/domain/holdings';
-import { isBlended } from '@/engine/pricing/own-prices';
-import { evaluatePriceFit } from '@/engine/pricing/price-fit';
-import { COMPONENT_LABELS, LOCAL_RARITY_UNAVAILABLE } from '@/engine/rarity/discovery-tier';
-import { formatLength, formatVolume } from '@/domain/units';
+import { formatVolume } from '@/domain/units';
 import type { Specimen, Verdict } from '@/domain/types';
-import { useSearchableSpecies } from '../hooks';
+import { useFishTimeline, useSearchableSpecies } from '../hooks';
 import {
-  CATALOG_BY_SPECIES, identityStatusFor, marketAndScarcity, portraitAsset, type CatalogSpecies,
+  CATALOG_BY_SPECIES, identityStatusFor, portraitAsset, type CatalogSpecies,
 } from '@/data/catalog';
-import { IdentityBadge, TierBadge, VerdictBadge, ScarcityBadge } from '../components/Badges';
+import { IdentityBadge, VerdictBadge } from '../components/Badges';
 import { FactorList, MissingInputsNotice } from '../components/FactorList';
-import { MarketPanel } from '../components/MarketPanel';
-import { bandForSize, scarcityFor } from '@/data/market';
+import { InlineField, InlineNote } from '../components/InlineField';
 import { usePrefersReducedMotion } from '@/theme/ThemeProvider';
 import { CaretLeftIcon, CaretRightIcon } from '../components/Icons';
 import { CatchPhotos } from '../components/CatchPhotos';
+import { FishTimeline } from '../components/FishTimeline';
 
 export default function SpecimenDetail() {
   const { id } = useParams<{ id: string }>();
@@ -66,18 +62,9 @@ export default function SpecimenDetail() {
       .sort((a, b) => b.assessedAt.localeCompare(a.assessedAt)) : []),
     [id],
   );
-  const snapshot = useLiveQuery(
-    async () => (id ? db.raritySnapshots.where('specimenId').equals(id).first() : undefined),
-    [id],
-  );
   const prices = useLiveQuery(
     async () => (id ? db.priceObservations.where('specimenId').equals(id).toArray() : []),
     [id],
-  );
-  const allPricesForSpecies = useLiveQuery(
-    async () => (specimen?.speciesId
-      ? db.priceObservations.where('speciesId').equals(specimen.speciesId).toArray() : []),
-    [specimen?.speciesId],
   );
   const aquariums = useLiveQuery(() => db.aquariums.where('status').equals('active').toArray(), []);
   const places = useLiveQuery(() => db.places.toArray(), []);
@@ -107,12 +94,22 @@ export default function SpecimenDetail() {
     });
   }, [id]);
 
+  const timeline = useFishTimeline(placement?.[0]?.holding.id);
+
+  /**
+   * Spec 039. Owned means a holding exists - acquireSpecimen mints one - so
+   * the screening panel disappears the moment the fish is brought home.
+   */
+  const owned = (placement?.length ?? 0) > 0;
   const placed = placement?.filter((p) => p.aquarium) ?? [];
   const unplaced = placement?.filter((p) => !p.aquarium) ?? [];
 
+
+  // Hooks before the early returns, always: React counts them per render and
+  // a conditional one is error #310. The screening panel's state came back
+  // with it in spec 039 and briefly landed below these guards.
   const [busy, setBusy] = useState(false);
   const [openTank, setOpenTank] = useState<string | undefined>();
-  const [revealError, setRevealError] = useState<string | undefined>();
 
   if (!id) return <p className="empty">No specimen.</p>;
   if (specimen === undefined) return <p className="empty muted">Loading…</p>;
@@ -128,58 +125,6 @@ export default function SpecimenDetail() {
     setBusy(false);
   }
 
-  /**
-   * Reveal, and say so when it declines.
-   *
-   * The old version ignored the return value entirely. That was survivable
-   * while every confirmed catch got a snapshot; under v0.3.0 a decline is the
-   * common case, and swallowing it left a button that looked live and did
-   * nothing. The section above should mean this never fires on an unrateable
-   * species - this handles it anyway, because "should never happen" is how the
-   * first bug got shipped.
-   */
-  async function onReveal() {
-    setBusy(true);
-    setRevealError(undefined);
-    try {
-      const outcome = await revealSpecimen(id!);
-      if (outcome.status === 'no-market-evidence') {
-        setRevealError(`${outcome.reason}. ${outcome.explanation}`);
-      } else if (outcome.status === 'not-identified') {
-        setRevealError('This catch needs a confirmed species before it can be rated.');
-      }
-    } catch (e) {
-      const message = e instanceof Error ? e.message : String(e);
-      console.error('[reveal] failed from the record', { specimenId: id, error: message });
-      setRevealError(message);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  /*
-   * Market context, with the keeper's own logged prices counted in - EXCEPT
-   * this catch's own.
-   *
-   * The panel below compares what you paid against the market, and a pool
-   * containing your own price is partly a comparison with itself: log $40 for
-   * a fish nobody else lists and the market obligingly agrees it is worth $40.
-   * evaluatePriceFit already excludes the subject for the same reason; this is
-   * the same rule applied to the same question one panel higher.
-   */
-  const otherOwnPrices = (allPricesForSpecies ?? []).filter((o) => o.specimenId !== id);
-  const marketStats = specimen.speciesId
-    ? marketAndScarcity(specimen.speciesId, {
-        prices: otherOwnPrices,
-        currency: prices?.[0]?.currency ?? 'USD',
-      }).market
-    : undefined;
-  const marketScarcity = scarcityFor(specimen.speciesId);
-  const marketBand = marketStats ? bandForSize(marketStats, latest?.observedSize) : undefined;
-
-  const priceFit = prices?.[0] && allPricesForSpecies
-    ? evaluatePriceFit({ subject: prices[0], candidates: allPricesForSpecies })
-    : undefined;
 
   const price = prices?.[0];
   const title = specimen.nickname ?? specimen.rawLabel ?? 'Mystery Catch';
@@ -210,7 +155,7 @@ export default function SpecimenDetail() {
    */
   const placementPanel = (
     <section className="panel">
-      <h2 className="sec-head">If it comes home</h2>
+      <h2 className="sec-head">Keeping the fish</h2>
 
       {placement === undefined ? (
         <p className="panel__note" style={{ marginTop: 0 }}>Checking…</p>
@@ -239,29 +184,50 @@ export default function SpecimenDetail() {
           </div>
         </>
       ) : (
-        <>
-          <p className="panel__note" style={{ marginTop: 0 }}>
-            {placed.map((p) => `${p.aquarium!.name} (×${p.quantity})`).join(', ')}
-          </p>
-          {/* A holding lives in one tank, always - moveHolding closes one
-              residency before opening the next. So the same species in two
-              tanks is two holdings, which is exactly how the inventory
-              import already records it. */}
-          <details style={{ marginTop: 'var(--space-3)' }}>
-            <summary className="prompt__act" style={{ cursor: 'pointer' }}>
-              Also add to another tank
-            </summary>
-            <div style={{ marginTop: 'var(--space-3)' }}>
-              <StockAnotherTank
-                speciesId={specimen.speciesId}
-                rawLabel={specimen.nickname ?? specimen.rawLabel}
-                aquariums={(aquariums ?? []).filter(
-                  (t) => !placed.some((p) => p.aquarium!.id === t.id),
-                )}
-              />
+        /*
+          Spec 042. A PICKER THAT MOVES IT, not a way to add a second one.
+
+          The old panel offered "Also add to another tank", which minted a
+          second holding of the same species. That is a real capability - six
+          tetras split across two tanks genuinely are two holdings - but it is
+          the wrong offer on a SPECIMEN's record. This page is about one fish,
+          a fish is in one tank, and offering to put it in a second is offering
+          to create a second animal.
+
+          moveHolding has done the right thing since FR-T03: it closes the
+          current residency, opens the next, and writes a `moved` life event -
+          which now also lands in the timeline, so where a fish has lived
+          becomes part of its history rather than only its current state.
+
+          Several rows only when a record already HAS several holdings, which
+          the inventory import can produce and nothing here can any more.
+          Hiding the second would be tidier and would let a keeper see a fish
+          in the tank list that its own record denied being in.
+        */
+        <dl className="factlist">
+          {placed.map((p) => (
+            <InlineField
+              key={p.holding.id}
+              label={placed.length > 1 ? `Tank (×${p.quantity})` : 'Tank'}
+              value={p.aquarium!.id}
+              empty="not in a tank"
+              options={(aquariums ?? []).map((t) => ({ id: t.id, name: t.name }))}
+              onSave={(to) => (to && to !== p.aquarium!.id
+                ? moveHolding(p.holding.id, to)
+                : undefined)}
+            />
+          ))}
+          {placed.length === 1 && (
+            <div className="factlist__row">
+              <dt>How many</dt>
+              {/* Derived from life events by deriveQuantity - a death, a birth,
+                  a correction - so it is shown rather than typed. A number that
+                  looked editable but was computed would be worse than one that
+                  plainly is not. */}
+              <dd>×{placed[0]!.quantity}</dd>
             </div>
-          </details>
-        </>
+          )}
+        </dl>
       )}
     </section>
   );
@@ -278,6 +244,16 @@ export default function SpecimenDetail() {
       {/* --- Media. Original, always (FR-J01, PRD 7.4) --------------------- */}
       <CatchPhotos specimenId={specimen.id} title={title} reducedMotion={reducedMotion} />
 
+      {/*
+        Spec 037. Rendered only once this fish is actually kept - a catch that
+        never came home is an encounter, and "history" on a fish you met once
+        in a shop would be a section about nothing. The first holding, because
+        a specimen with several is the group case and they share one story.
+      */}
+      {timeline && timeline.entries.length > 0 && (
+        <FishTimeline timeline={timeline} title={title} />
+      )}
+
       <header className="pad">
         <h1 className="specimen-name">{title}</h1>
         {species && (
@@ -287,26 +263,125 @@ export default function SpecimenDetail() {
           </>
         )}
         <div className="tagrow">
+          {/* Identity is about THIS fish - what it was decided to be, and how
+              confidently. The tier and scarcity badges went with Discovery:
+              both are the species' rarity, identical for every specimen. */}
           <IdentityBadge status={specimen.identityStatus} />
-          {snapshot && <TierBadge tier={snapshot.tier} golden={Boolean(specimen.golden)} />}
-          {marketScarcity.available && <ScarcityBadge band={marketScarcity.band} />}
         </div>
 
-        {/* The rest of the label: when, and at what size. */}
-        <dl className="label-line">
-          <div>
-            <dt>Caught</dt>
-            <dd>{new Date(specimen.createdAt).toLocaleDateString()}</dd>
-          </div>
-          <div>
-            <dt>Size</dt>
-            <dd>{latest?.observedSize ? formatLength(latest.observedSize) : '—'}</dd>
-          </div>
-          <div>
-            <dt>Chapters</dt>
-            <dd>{encounters?.filter((e) => e.notes).length ?? 0}</dd>
-          </div>
+        {/*
+          Spec 040. ONE BLOCK OF FACTS ABOUT THIS FISH, one per line.
+
+          Spec 039 put these here and edited them in place, which was right,
+          and laid them out as five equal columns, which was not: on a 390px
+          phone that is 70px each, so every heading wrapped to three lines and
+          the values wrapped under them. Reported as "too cramped for phone",
+          and the screenshot showed it plainly.
+
+          Rows, not columns. And the nickname and the price join them, because
+          they are the same kind of fact and were three separate sections
+          asking the reader to hold one record in three places.
+
+          `specimen.createdAt` is still not offered as "caught": it is when the
+          row was written, not when the fish was met.
+        */}
+        <dl className="factlist">
+          <InlineField
+            label="Nickname"
+            value={specimen.nickname}
+            empty="none"
+            onSave={(v) => updateCatch({ specimenId: id, nickname: v ?? null })}
+          />
+          <InlineField
+            label="The store's label"
+            value={specimen.rawLabel}
+            empty="not written down"
+            onSave={(v) => updateCatch({ specimenId: id, rawLabel: v ?? null })}
+          />
+          <InlineField
+            label="Seen on"
+            type="date"
+            value={latest?.observedAt?.slice(0, 10)}
+            onSave={(v) => updateCatch({
+              specimenId: id,
+              encounterId: latest?.id,
+              ...(v ? { observedAt: new Date(`${v}T12:00:00`).toISOString() } : {}),
+            })}
+          />
+          <InlineField
+            label="Shop"
+            value={latest?.placeId}
+            options={(places ?? []).map((pl) => ({ id: pl.id, name: pl.name }))}
+            onSave={(v) => updateCatch({
+              specimenId: id, encounterId: latest?.id, placeId: v ?? null,
+            })}
+          />
+          <InlineField
+            label="How many you saw"
+            type="number"
+            value={latest?.quantitySeen ? String(latest.quantitySeen) : undefined}
+            empty="not counted"
+            onSave={(v) => updateCatch({
+              specimenId: id, encounterId: latest?.id,
+              quantitySeen: v ? Number(v) : null,
+            })}
+          />
+          {/* Inches, matching the price form and every other size the app
+              asks for. The label is "(in)" rather than "when seen (inches)"
+              because the long version was the one heading still wrapping to
+              two lines at 390px - measured, not guessed. */}
+          <InlineField
+            label="Size (in)"
+            type="number"
+            value={latest?.observedSize ? String(latest.observedSize.value) : undefined}
+            onSave={(v) => updateCatch({
+              specimenId: id, encounterId: latest?.id,
+              observedSize: v ? { value: Number(v), unit: 'in' } : null,
+            })}
+          />
+
+          {/*
+            The price figures, folded in rather than sitting under their own
+            heading. They are read-only HERE on purpose: a price is a dated
+            observation of what a shop asked, not a mutable field, so the way
+            to change one is to record another - which is what the form below
+            does. Editing the number in place would quietly rewrite history.
+          */}
+          {price && (
+            <>
+              <div className="factlist__row">
+                <dt>Asking</dt>
+                <dd className={price.askingPrice === undefined ? 'is-blank' : undefined}>
+                  {price.askingPrice === undefined ? 'not noted' : `$${price.askingPrice}`}
+                </dd>
+              </div>
+              {price.memberPrice !== undefined && (
+                <div className="factlist__row">
+                  <dt>Member</dt>
+                  <dd>${price.memberPrice}</dd>
+                </div>
+              )}
+              <div className="factlist__row">
+                <dt>Paid</dt>
+                <dd className={price.paidPrice === undefined ? 'is-blank' : undefined}>
+                  {price.paidPrice === undefined ? 'not bought' : `$${price.paidPrice}`}
+                </dd>
+              </div>
+            </>
+          )}
         </dl>
+
+        <details style={{ marginTop: 'var(--space-3)' }}>
+          <summary className="xs muted" style={{ cursor: 'pointer' }}>
+            {price ? 'Record another price' : 'Record a price'}
+          </summary>
+          <PriceForm
+            specimenId={id}
+            speciesId={specimen.speciesId}
+            encounterId={latest?.id}
+            places={places ?? []}
+          />
+        </details>
       </header>
 
       {/* --- The gate (spec 005) --------------------------------------------
@@ -340,80 +415,98 @@ export default function SpecimenDetail() {
         </>
       ) : (
       <>
-      {/* --- Your tanks (PRD 4.4) ------------------------------------------
-          First, because standing in the aisle it is the only question that has
-          a deadline. */}
-      <section className="panel panel--flush">
-        <div className="pad spread" style={{ marginBottom: 'var(--space-3)' }}>
-          <h2 className="sec-head" style={{ margin: 0 }}>Your tanks</h2>
-          <button type="button" className="prompt__act" onClick={() => void onEvaluate()} disabled={busy}>
-            {busy ? 'Checking…' : groupedAssessments.length ? 'Check again' : 'Check my tanks'}
-          </button>
-        </div>
+      {/*
+        Spec 039. TANK SCREENING, BUT ONLY WHILE THE ANSWER CAN CHANGE
+        ANYTHING.
 
-        {groupedAssessments.length === 0 ? (
-          <div className="prompt">
-            <p className="prompt__title">Not screened yet</p>
-            <p className="prompt__body">
-              {aquariums?.length
-                ? `Check this fish against your ${aquariums.length} tank${aquariums.length === 1 ? '' : 's'}. Nothing is inferred: where a fact is missing the answer says so.`
-                : 'There are no tanks to check against yet.'}
-            </p>
+        It was removed entirely at first, as species-shaped: every input is a
+        species fact and the verdict for two severums in one tank is
+        identical. The keeper's correction is sharper than the removal was -
+        "the tank analysis can stay but should disappear once the fish is
+        already owned, because the analysis is meaningless."
+
+        That is the real distinction. Standing in a shop, "would this suit my
+        tanks?" is a decision with a deadline. Once the fish is home and in a
+        tank, the same panel is a verdict on something already done - and a
+        high-risk badge over a fish you are keeping is either a reproach or
+        noise. The stocking view is where a tank you already own gets judged.
+
+        Owned means it has a holding: acquireSpecimen mints one, so this
+        vanishes the moment the fish is brought home.
+      */}
+      {!owned && (
+        <section className="panel panel--flush">
+          <div className="pad spread" style={{ marginBottom: 'var(--space-3)' }}>
+            <h2 className="sec-head" style={{ margin: 0 }}>Your tanks</h2>
+            <button type="button" className="prompt__act" onClick={() => void onEvaluate()} disabled={busy}>
+              {busy ? 'Checking…' : groupedAssessments.length ? 'Check again' : 'Check my tanks'}
+            </button>
           </div>
-        ) : (
-          <>
-            <p className="verdict-lede">{lede(groupedAssessments.map((a) => a.verdict))}</p>
 
-            {groupedAssessments.map((a) => {
-              const tank = aquariums?.find((t) => t.id === a.aquariumId);
-              const name = tank?.name ?? a.aquariumId;
-              const open = openTank === a.id;
-              const bad = a.verdict === 'high-risk' || a.verdict === 'extreme-risk';
-              return (
-                <div key={a.id}>
-                  <button
-                    type="button"
-                    className="tankrow"
-                    aria-expanded={open}
-                    onClick={() => setOpenTank(open ? undefined : a.id)}
-                  >
-                    <span className="grow">
-                      <span className="tankrow__name">{name}</span>
-                      {/*
-                        The reason, on the COLLAPSED row. The engine already
-                        aggregates worst-wins and writes the top findings into
-                        the headline; printing it small and grey under a pill
-                        was what let a row reading "Conditional" hide "eats 4
-                        residents" one tap down. A summary is never allowed to
-                        be calmer than its own contents.
-                      */}
-                      {a.headline && (
-                        <span className={`tankrow__why${bad ? '' : ' tankrow__why--warn'}`}>
-                          {a.headline}
-                        </span>
-                      )}
-                    </span>
-                    <VerdictBadge verdict={a.verdict} />
-                  </button>
+          {groupedAssessments.length === 0 ? (
+            <div className="prompt">
+              <p className="prompt__title">Not screened yet</p>
+              <p className="prompt__body">
+                {aquariums?.length
+                  ? `Check this fish against your ${aquariums.length} tank${aquariums.length === 1 ? '' : 's'}. Nothing is inferred: where a fact is missing the answer says so.`
+                  : 'There are no tanks to check against yet.'}
+              </p>
+            </div>
+          ) : (
+            <>
+              <p className="verdict-lede">{lede(groupedAssessments.map((a) => a.verdict))}</p>
 
-                  {open && (
-                    <>
-                      {/* FR-E03: the juvenile view is present but visibly secondary. */}
-                      {a.temporaryJuvenileFit && (
-                        <p className="warn" style={{ margin: 'var(--space-3) var(--space-4)' }}>
-                          Right now, temporarily: {a.temporaryJuvenileFit.note}
-                        </p>
-                      )}
-                      <MissingInputsNotice missing={a.missingInputs} />
-                      {a.factors.length > 0 && <FactorList assessment={a} tankName={name} />}
-                    </>
-                  )}
-                </div>
-              );
-            })}
-          </>
-        )}
-      </section>
+              {groupedAssessments.map((a) => {
+                const tank = aquariums?.find((t) => t.id === a.aquariumId);
+                const name = tank?.name ?? a.aquariumId;
+                const open = openTank === a.id;
+                const bad = a.verdict === 'high-risk' || a.verdict === 'extreme-risk';
+                return (
+                  <div key={a.id}>
+                    <button
+                      type="button"
+                      className="tankrow"
+                      aria-expanded={open}
+                      onClick={() => setOpenTank(open ? undefined : a.id)}
+                    >
+                      <span className="grow">
+                        <span className="tankrow__name">{name}</span>
+                        {/*
+                          The reason, on the COLLAPSED row. The engine already
+                          aggregates worst-wins and writes the top findings into
+                          the headline; printing it small and grey under a pill
+                          was what let a row reading "Conditional" hide "eats 4
+                          residents" one tap down. A summary is never allowed to
+                          be calmer than its own contents.
+                        */}
+                        {a.headline && (
+                          <span className={`tankrow__why${bad ? '' : ' tankrow__why--warn'}`}>
+                            {a.headline}
+                          </span>
+                        )}
+                      </span>
+                      <VerdictBadge verdict={a.verdict} />
+                    </button>
+
+                    {open && (
+                      <>
+                        {/* FR-E03: the juvenile view is present but visibly secondary. */}
+                        {a.temporaryJuvenileFit && (
+                          <p className="warn" style={{ margin: 'var(--space-3) var(--space-4)' }}>
+                            Right now, temporarily: {a.temporaryJuvenileFit.note}
+                          </p>
+                        )}
+                        <MissingInputsNotice missing={a.missingInputs} />
+                        {a.factors.length > 0 && <FactorList assessment={a} tankName={name} />}
+                      </>
+                    )}
+                  </div>
+                );
+              })}
+            </>
+          )}
+        </section>
+      )}
 
       {/* --- Identity (PRD 4.3) ------------------------------------------- */}
       <IdentityPanel specimen={specimen} species={species} />
@@ -422,131 +515,20 @@ export default function SpecimenDetail() {
       {specimen.speciesId && <SpeciesBrief speciesId={specimen.speciesId} />}
 
       {/* --- Size and price (PRD 4.5) ------------------------------------- */}
-      <section className="panel">
-        <h2 className="sec-head">Size and price</h2>
+      {/*
+        Spec 039. The market reference and the price-fit verdict are gone from
+        here: both answer "what do fish LIKE THIS sell for", which is the
+        species' question and is already answered on the species page. What you
+        paid, where and when stays above, because that is a fact about this
+        exact animal and lives nowhere else.
+      */}
 
-        {/* Ask and paid are two different facts and the data model keeps them
-            apart on purpose; collapsing them into "you paid" throws away the
-            distinction PRD 5.4 exists to preserve.
-
-            Member is no longer captured, but it is still DISPLAYED when a
-            record already carries one. Dropping the field is a decision about
-            what to ask for next time, not a licence to hide a figure the user
-            already wrote down. */}
-        {price && (
-          <dl className="prices" style={{ marginBottom: 'var(--space-4)' }}>
-            <div>
-              <dt>Asking</dt>
-              <dd className={price.askingPrice === undefined ? 'is-blank' : undefined}>
-                {price.askingPrice === undefined ? 'not noted' : `$${price.askingPrice}`}
-              </dd>
-            </div>
-            {price.memberPrice !== undefined && (
-              <div>
-                <dt>Member</dt>
-                <dd>${price.memberPrice}</dd>
-              </div>
-            )}
-            <div>
-              <dt>Paid</dt>
-              <dd className={price.paidPrice === undefined ? 'is-blank' : undefined}>
-                {price.paidPrice === undefined ? 'not bought' : `$${price.paidPrice}`}
-              </dd>
-            </div>
-            {/* Shown only when noted. A "not noted" row here would be a third
-                blank in a list that already carries two, and where the price
-                came from is context rather than a figure the record is
-                incomplete without. */}
-            {price.placeId && (
-              <div>
-                <dt>Shop</dt>
-                <dd>{places?.find((pl) => pl.id === price.placeId)?.name ?? 'noted'}</dd>
-              </div>
-            )}
-          </dl>
-        )}
-
-        <PriceForm
-          specimenId={id}
-          speciesId={specimen.speciesId}
-          encounterId={latest?.id}
-          marketEstimate={marketBand?.medianPrice}
-          places={places ?? []}
-        />
-
-        {priceFit && (
-          <p className="panel__note panel__note--tight">
-            {priceFit.status === 'compared'
-              ? `Median of your own ${priceFit.sampleCount} comparable observations: $${priceFit.comparison!.median.toFixed(2)} each. Yours sits ${(priceFit.comparison!.percentDifferenceFromMedian * 100).toFixed(0)}% from that, against a stated ±${(priceFit.comparison!.inLineTolerance * 100).toFixed(0)}% band.`
-              : priceFit.message}
-          </p>
-        )}
-      </section>
-
-      {/* --- Market reference (PRD 4.5, FR-P06) --------------------------- */}
-      <MarketPanel
-        speciesId={specimen.speciesId}
-        observedSize={latest?.observedSize}
-        yourPrice={price?.askingPrice}
-        blended={isBlended(marketStats) ? marketStats : undefined}
-        placeNames={Object.fromEntries((places ?? []).map((pl) => [pl.id, pl.name]))}
-      />
-
-      {/* --- Reveal (PRD 4.6) --------------------------------------------- */}
-      {specimen.identityStatus === 'user-confirmed' && (
-        <section className="panel">
-          <h2 className="sec-head">Discovery</h2>
-          {!snapshot && !marketScarcity.available ? (
-            /* NO BUTTON, because pressing it could not do anything.
-​
-               v0.3.0 scores on market evidence alone, and 1,703 of 2,178
-               species have none - so for most of the catalog revealSpecimen
-               declines and writes nothing. The button was still rendered and
-               still enabled, so it sat there doing nothing at all, forever,
-               with no explanation. An affordance that cannot act is worse than
-               no affordance: it reads as a broken app rather than an honest
-               refusal. */
-            <>
-              <p className="panel__note" style={{ marginTop: 0 }}>
-                <strong>Not rated.</strong> {marketScarcity.reason}.
-              </p>
-              <p className="panel__note panel__note--tight">{marketScarcity.explanation}</p>
-            </>
-          ) : !snapshot ? (
-            <>
-              <button type="button" className="cta" onClick={() => void onReveal()} disabled={busy}>
-                {busy ? 'Revealing…' : 'Reveal'}
-              </button>
-              {revealError && <p className="warn">{revealError}</p>}
-            </>
-          ) : (
-            <div className={specimen.golden ? 'reveal-card reveal-card--golden golden' : 'reveal-card'}>
-              <div className="spread" style={{ marginBottom: 'var(--space-3)' }}>
-                <TierBadge tier={snapshot.tier} golden={Boolean(specimen.golden)} />
-                <span className="data">{snapshot.totalScore} / 100</span>
-              </div>
-              {/* FR-R05: the breakdown is shown, not just the total. */}
-              <dl className="kv">
-                {(Object.keys(snapshot.components) as Array<keyof typeof snapshot.components>).map((k) => (
-                  <div key={k} style={{ display: 'contents' }}>
-                    <dt>{COMPONENT_LABELS[k]}</dt>
-                    <dd>+{snapshot.components[k]}</dd>
-                  </div>
-                ))}
-              </dl>
-              <p className="panel__note panel__note--tight">
-                {LOCAL_RARITY_UNAVAILABLE.message}. {LOCAL_RARITY_UNAVAILABLE.explanation}
-              </p>
-              <p className="xs faint data">Formula {snapshot.formulaVersion}</p>
-              {!specimen.golden && (
-                <button type="button" className="cta cta--quiet" onClick={() => void awardGolden(id, undefined)}>
-                  Mark this one Golden
-                </button>
-              )}
-            </div>
-          )}
-        </section>
-      )}
+      {/*
+        Spec 039. Discovery removed: a tier is how rare the SPECIES is, and it
+        is identical for every specimen of it. The badges are on the species
+        page, where the question belongs; the reveal ceremony and its snapshot
+        are untouched.
+      */}
 
       {/* --- Story (PRD 4.7) ---------------------------------------------- */}
       <section className="panel">
@@ -558,21 +540,27 @@ export default function SpecimenDetail() {
               <p className="xs faint data" style={{ marginBottom: 'var(--space-1)' }}>
                 Chapter {i + 1} · {new Date(e.observedAt).toLocaleString()}
               </p>
-              {e.notes
-                ? <p style={{ marginBottom: 0 }}>{e.notes}</p>
-                : <p className="muted small" style={{ marginBottom: 0 }}>No note on this chapter yet.</p>}
+              {/* Spec 039: the note edits here, where it is read. Previously
+                  only the LATEST chapter's note was reachable, and only
+                  through the edit form - so a note on an older chapter could
+                  be read and never corrected. */}
+              <InlineNote
+                label={`Note on chapter ${i + 1}`}
+                value={e.notes}
+                empty="No note on this chapter yet."
+                onSave={(v) => updateCatch({ specimenId: id, encounterId: e.id, notes: v ?? null })}
+              />
             </li>
           ))}
         </ul>
       </section>
 
-      {/* --- Correct the record (FR-C03) ----------------------------------- */}
-      <EditCatchForm
-        specimenId={id}
-        rawLabel={specimen.rawLabel}
-        encounter={latest}
-        places={places ?? []}
-      />
+      {/*
+        Spec 039. "Edit this catch" is gone. Every field it held now edits
+        where it is displayed - the label, the date, the shop and the count in
+        the header, the note on each chapter in the Story below. FR-C03 is
+        unchanged in what it permits and changed in how it is reached.
+      */}
 
       {placementPanel}
 
@@ -722,203 +710,7 @@ function PlaceHolding({ holdingId, aquariums, defaultQuantity }: {
   );
 }
 
-/**
- * The same species, in a second tank.
- *
- * Not a move. A holding is in one tank for its whole life, so "one in the 75
- * and one in the 40" is two holdings - which is already how the inventory
- * import records two spreadsheet rows of the same fish.
- */
-function StockAnotherTank({ speciesId, rawLabel, aquariums }: {
-  speciesId?: string;
-  rawLabel?: string;
-  aquariums: Array<{ id: string; name: string }>;
-}) {
-  const [tankId, setTankId] = useState('');
-  const [qty, setQty] = useState('1');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | undefined>();
-  const [done, setDone] = useState(false);
-  const chosen = aquariums.find((t) => t.id === tankId);
-  const n = Number(qty);
-  const validQty = Number.isInteger(n) && n >= 1;
 
-  if (aquariums.length === 0) {
-    return <p className="panel__note" style={{ marginTop: 0 }}>It is already in every tank you have.</p>;
-  }
-
-  return (
-    <>
-      <label htmlFor="stock-tank">Also in</label>
-      <select id="stock-tank" value={tankId} onChange={(e) => { setTankId(e.target.value); setDone(false); }}>
-        <option value="">Choose a tank…</option>
-        {aquariums.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-      </select>
-
-      {chosen && (
-        <>
-          <div style={{ marginTop: 'var(--space-3)' }}>
-            <label htmlFor="stock-qty">How many</label>
-            <input id="stock-qty" inputMode="numeric" value={qty} onChange={(e) => setQty(e.target.value)} />
-          </div>
-          <p className="panel__note panel__note--tight">
-            Records {validQty ? n : '—'} more of this species in {chosen.name}, as its own entry.
-            The ones you already have are not moved.
-          </p>
-          {error && <p className="warn">{error}</p>}
-          {done && <p className="panel__note panel__note--tight">Added to {chosen.name}.</p>}
-          <button
-            type="button" className="btn btn--primary" disabled={busy || !validQty}
-            onClick={async () => {
-              setBusy(true);
-              setError(undefined);
-              try {
-                await stockTank({ aquariumId: chosen.id, speciesId, rawLabel, quantity: n });
-                setDone(true);
-              } catch (e) {
-                const message = e instanceof Error ? e.message : String(e);
-                console.error('[stock] second tank failed', { speciesId, tankId: chosen.id, quantity: n, error: message });
-                setError(message);
-              } finally {
-                setBusy(false);
-              }
-            }}
-          >
-            {busy ? 'Recording…' : `Add to ${chosen.name}`}
-          </button>
-        </>
-      )}
-    </>
-  );
-}
-
-/** Local datetime for an <input type="datetime-local">, which will not take an ISO Z string. */
-function toLocalInput(iso: string | undefined): string {
-  if (!iso) return '';
-  const d = new Date(iso);
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
-/**
- * Correct what you recorded.
- *
- * Collapsed by default: on a screen whose whole point is the fish, an edit form
- * open by default would push the photo off the top. Deliberately does NOT
- * include the species - changing that goes through the Identity block above,
- * which supersedes the old assertion instead of overwriting it.
- */
-function EditCatchForm({ specimenId, rawLabel, encounter, places }: {
-  specimenId: string;
-  rawLabel?: string;
-  encounter?: { id: string; observedAt: string; placeId?: string; quantitySeen?: number; notes?: string };
-  places: Array<{ id: string; name: string }>;
-}) {
-  const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({
-    rawLabel: rawLabel ?? '',
-    observedAt: toLocalInput(encounter?.observedAt),
-    placeId: encounter?.placeId ?? '',
-    quantitySeen: encounter?.quantitySeen ? String(encounter.quantitySeen) : '',
-    notes: encounter?.notes ?? '',
-  });
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-
-  // Re-seed the fields when the record changes underneath (a live query update,
-  // or opening a different catch) - but never while the user is mid-edit.
-  function reopen() {
-    if (!open) {
-      setForm({
-        rawLabel: rawLabel ?? '',
-        observedAt: toLocalInput(encounter?.observedAt),
-        placeId: encounter?.placeId ?? '',
-        quantitySeen: encounter?.quantitySeen ? String(encounter.quantitySeen) : '',
-        notes: encounter?.notes ?? '',
-      });
-      setSaved(false);
-    }
-    setOpen(!open);
-  }
-
-  async function save() {
-    setSaving(true);
-    const qty = form.quantitySeen.trim();
-    await updateCatch({
-      specimenId,
-      encounterId: encounter?.id,
-      // Nickname is deliberately absent: Identity owns it, and updateCatch
-      // only writes fields the caller mentions. Submitting a stale copy from
-      // here would silently revert a nickname edited above while this was open.
-      // Empty means "clear it", which null expresses and undefined does not.
-      rawLabel: form.rawLabel.trim() || null,
-      ...(form.observedAt ? { observedAt: new Date(form.observedAt).toISOString() } : {}),
-      placeId: form.placeId || null,
-      quantitySeen: qty ? Number(qty) : null,
-      notes: form.notes.trim() || null,
-    });
-    setSaving(false);
-    setSaved(true);
-  }
-
-  const set = (k: keyof typeof form) => (e: { target: { value: string } }) => {
-    setForm((f) => ({ ...f, [k]: e.target.value }));
-    setSaved(false);
-  };
-
-  return (
-    <section className="panel">
-      <button type="button" className="btn btn--ghost spread" onClick={reopen} aria-expanded={open}>
-        <span>Edit this catch</span>
-        <CaretRightIcon
-          size={16}
-          aria-hidden="true"
-          style={{ transform: open ? 'rotate(90deg)' : undefined, transition: 'transform var(--duration-fast)' }}
-        />
-      </button>
-
-      {open && (
-        <div className="capture" style={{ marginTop: 'var(--space-3)' }}>
-          <p className="panel__note" style={{ marginTop: 0, gridColumn: '1 / -1' }}>
-            Corrects what you recorded. The label and the nickname both live in Identity above -
-            changing the species there keeps the earlier answer instead of overwriting it.
-          </p>
-
-          <label htmlFor="edit-rawlabel">The store&apos;s label, as written</label>
-          <input id="edit-rawlabel" value={form.rawLabel} onChange={set('rawLabel')}
-            placeholder={'Jaguar Cichlid 6"'} />
-
-          <label htmlFor="edit-observedat">When you saw it</label>
-          <input id="edit-observedat" type="datetime-local" value={form.observedAt}
-            onChange={set('observedAt')} />
-
-          <label htmlFor="edit-place">Where</label>
-          <select id="edit-place" value={form.placeId} onChange={set('placeId')}>
-            <option value="">Not recorded</option>
-            {places.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-          </select>
-
-          <label htmlFor="edit-qty">How many you saw</label>
-          <input id="edit-qty" type="number" min="1" inputMode="numeric"
-            value={form.quantitySeen} onChange={set('quantitySeen')} />
-
-          <label htmlFor="edit-notes">Note on this chapter</label>
-          <textarea id="edit-notes" rows={3} value={form.notes} onChange={set('notes')} />
-
-          <button type="button" className="btn btn--primary" onClick={() => void save()} disabled={saving}
-            style={{ gridColumn: '1 / -1' }}>
-            {saving ? 'Saving…' : 'Save corrections'}
-          </button>
-          {saved && (
-            <p className="panel__note panel__note--tight" role="status" style={{ gridColumn: '1 / -1' }}>
-              Saved.
-            </p>
-          )}
-        </div>
-      )}
-    </section>
-  );
-}
 
 /**
  * Delete a catch that should not exist - a mis-tap, a duplicate, test data.
@@ -1041,37 +833,6 @@ function DeleteCatch({ specimenId, name, onDeleted }: {
   );
 }
 
-/**
- * The answer, in one sentence, before any of the working.
- *
- * The denominator is the tanks that were CHECKED, and the tanks that could not
- * answer are counted separately rather than folded in as failures. "Fits none
- * of your 6 tanks" when four of them are unmeasured is a false negative
- * dressed as a result, and this app does not do that in either direction.
- */
-function lede(verdicts: Verdict[]): string {
-  const n = verdicts.length;
-  const fits = verdicts.filter((v) => v === 'suitable').length;
-  const conditional = verdicts.filter((v) => v === 'conditional').length;
-  const unknown = verdicts.filter((v) => v === 'insufficient-data').length;
-  const answerable = n - unknown;
-
-  if (answerable === 0) {
-    return `None of your ${n} tank${n === 1 ? '' : 's'} has enough recorded for this to be judged.`;
-  }
-
-  const head = fits > 0
-    ? `Fits ${fits} of your ${answerable} answerable tank${answerable === 1 ? '' : 's'}.`
-    : conditional > 0
-      ? `Fits none outright; ${conditional} would work with care.`
-      : `Fits none of your ${answerable} answerable tank${answerable === 1 ? '' : 's'}.`;
-
-  const tail = unknown > 0
-    ? ` ${unknown} tank${unknown === 1 ? '' : 's'} cannot answer yet.`
-    : '';
-
-  return head + tail;
-}
 
 /**
  * The two things a record is called: what it is, and what you call it.
@@ -1272,15 +1033,9 @@ function IdentityPanel({ specimen, species }: {
         </p>
       )}
 
-      <div style={{ marginTop: 'var(--space-3)' }}>
-        <label htmlFor="nickname">Nickname <span className="faint">(optional)</span></label>
-        <input
-          id="nickname"
-          defaultValue={specimen.nickname ?? ''}
-          placeholder="the Panther"
-          onBlur={(e) => void db.specimens.update(specimen.id, { nickname: e.target.value || undefined })}
-        />
-      </div>
+      {/* Spec 040: the nickname moved up into the fact block. Identity is
+          about which SPECIES this is; what you call the animal is one of its
+          own facts and belongs with the others. */}
     </section>
   );
 }
@@ -1288,8 +1043,8 @@ function IdentityPanel({ specimen, species }: {
 /** Sentinel for the "add one" row, which is not a place id. */
 const NEW_SHOP = '__new__';
 
-function PriceForm({ specimenId, speciesId, encounterId, marketEstimate, places }: {
-  specimenId: string; speciesId?: string; encounterId?: string; marketEstimate?: number;
+function PriceForm({ specimenId, speciesId, encounterId, places }: {
+  specimenId: string; speciesId?: string; encounterId?: string;
   /** Shops noted before, offered for reuse so the second visit is one tap. */
   places: Array<{ id: string; name: string }>;
 }) {
@@ -1356,9 +1111,10 @@ function PriceForm({ specimenId, speciesId, encounterId, marketEstimate, places 
           <input
             id="asking" inputMode="decimal" value={asking}
             onChange={(e) => setAsking(e.target.value)}
-            // A placeholder, never a prefilled value: the market figure must
-            // not be saved as if it were a price seen in the store.
-            placeholder={marketEstimate !== undefined ? String(marketEstimate) : '100'}
+            // Spec 039: no market figure here either. It was a placeholder
+            // rather than a value, but it is still the species' market on a
+            // form about what THIS fish cost.
+            placeholder="100"
           />
         </div>
         <div className="capture--wide">
@@ -1422,12 +1178,6 @@ function PriceForm({ specimenId, speciesId, encounterId, marketEstimate, places 
       <button type="button" onClick={() => void save()} disabled={saving || (!asking && !size)}>
         Record
       </button>
-      {marketEstimate !== undefined && (
-        <p className="xs faint" style={{ marginBottom: 0 }}>
-          Online stores listed this size around <strong>${marketEstimate.toFixed(2)}</strong>. Shown for
-          reference only — it is not filled in for you, because what you type should be what the tag says.
-        </p>
-      )}
       <p className="xs faint" style={{ marginBottom: 0 }}>
         No price tag? Leave it blank. Blank means unknown, not free.
       </p>
@@ -1456,3 +1206,36 @@ function StoryForm({ specimenId }: { specimenId: string }) {
     </div>
   );
 }
+
+/**
+ * The answer, in one sentence, before any of the working.
+ *
+ * The denominator is the tanks that were CHECKED, and the tanks that could not
+ * answer are counted separately rather than folded in as failures. "Fits none
+ * of your 6 tanks" when four of them are unmeasured is a false negative
+ * dressed as a result, and this app does not do that in either direction.
+ */
+function lede(verdicts: Verdict[]): string {
+  const n = verdicts.length;
+  const fits = verdicts.filter((v) => v === 'suitable').length;
+  const conditional = verdicts.filter((v) => v === 'conditional').length;
+  const unknown = verdicts.filter((v) => v === 'insufficient-data').length;
+  const answerable = n - unknown;
+
+  if (answerable === 0) {
+    return `None of your ${n} tank${n === 1 ? '' : 's'} has enough recorded for this to be judged.`;
+  }
+
+  const head = fits > 0
+    ? `Fits ${fits} of your ${answerable} answerable tank${answerable === 1 ? '' : 's'}.`
+    : conditional > 0
+      ? `Fits none outright; ${conditional} would work with care.`
+      : `Fits none of your ${answerable} answerable tank${answerable === 1 ? '' : 's'}.`;
+
+  const tail = unknown > 0
+    ? ` ${unknown} tank${unknown === 1 ? '' : 's'} cannot answer yet.`
+    : '';
+
+  return head + tail;
+}
+

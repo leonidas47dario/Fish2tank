@@ -13,7 +13,10 @@ import { deriveBadge, deriveQuantity } from '@/domain/holdings';
 import { readProfile } from '@/data/profile';
 import { loadTankResidents } from '@/data/tank-residents';
 import { summariseTank, type TankResident } from '@/domain/tank-stats';
-import type { Id, Media } from '@/domain/types';
+import {
+  acquisitionAnchor, fishTimeline, measurementsByMedia, type Anchor, type TimelineEntry,
+} from '@/domain/fish-timeline';
+import type { HoldingMeasurement, Id, Media } from '@/domain/types';
 import { useBlobUrl, useBlobUrls } from './blob-url';
 
 export function useSpecies(id?: Id) {
@@ -326,4 +329,59 @@ export function useTankSummaries() {
       aquarium, stats, photoUrl: byTank.get(aquarium.id),
     }));
   }, [raw, urls]);
+}
+
+/**
+ * One holding's whole history, merged and dated - ENH-12, spec 037.
+ *
+ * The join lives here and the RULES live in `domain/fish-timeline.ts`, which is
+ * pure and tested. This hook only fetches; it decides nothing, so what the
+ * screen shows and what the tests assert cannot drift apart.
+ *
+ * Photos are those of the holding's specimen. A holding imported without one
+ * has no photos and still gets a timeline from its life events, which is the
+ * point: nothing has to be entered for this to be useful.
+ */
+export interface FishTimelineView {
+  holdingId: Id;
+  entries: TimelineEntry[];
+  anchor?: Anchor;
+  /** The measurement each photo was read from, so they render as one row. */
+  byMedia: Map<Id, HoldingMeasurement>;
+  quantity: number;
+  isGroup: boolean;
+  acquiredOn?: string;
+  photos: Array<{ id: Id; on: string }>;
+}
+
+export function useFishTimeline(holdingId?: Id): FishTimelineView | undefined {
+  return useLiveQuery(async () => {
+    if (!holdingId) return undefined;
+    const holding = await db.holdings.get(holdingId);
+    if (!holding) return undefined;
+
+    const [events, measurements, memorials] = await Promise.all([
+      db.lifeEvents.where('holdingId').equals(holdingId).toArray(),
+      db.holdingMeasurements.where('holdingId').equals(holdingId).toArray(),
+      db.memorials.where('holdingId').equals(holdingId).toArray(),
+    ]);
+    const media = holding.specimenId
+      ? await db.media.where('specimenIds').equals(holding.specimenId).toArray()
+      : [];
+
+    return {
+      holdingId,
+      entries: fishTimeline({ holdingId, events, media, measurements, memorials }),
+      anchor: acquisitionAnchor(holding, events, media),
+      byMedia: measurementsByMedia(measurements, media),
+      quantity: deriveQuantity(holding, events),
+      isGroup: holding.kind === 'group',
+      acquiredOn: holding.acquiredOn,
+      /** Photos a measurement can say it was read from, newest first. */
+      photos: media
+        .filter((m) => m.kind === 'photo')
+        .map((m) => ({ id: m.id, on: m.capturedAt.slice(0, 10) }))
+        .sort((a, b) => b.on.localeCompare(a.on)),
+    };
+  }, [holdingId]);
 }

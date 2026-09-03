@@ -8,6 +8,9 @@ import {
   addEncounterChapter,
   addPhotos,
   deletePhoto,
+  recordMeasurement,
+  deleteMeasurement,
+  setAcquiredOn,
   assertIdentity,
   assessmentHistory,
   awardGolden,
@@ -1757,5 +1760,164 @@ describe('deleting one photograph (spec 033)', () => {
 
   it('is a no-op for a photo that is already gone', async () => {
     await expect(deletePhoto({ mediaId: 'media_nope' }, db)).resolves.toEqual({ detached: false });
+  });
+});
+
+describe('measurements over time (ENH-12, spec 037)', () => {
+  /** A group of three, because a holding being a group is the interesting case. */
+  async function aHolding() {
+    const { holding } = await createOpeningBalanceHolding(
+      { aquariumId: 'tank_75g', rawLabel: 'Severum', kind: 'group', openingQuantity: 3 }, db,
+    );
+    return holding;
+  }
+
+  it('records a length against a date', async () => {
+    const h = await aHolding();
+
+    const m = await recordMeasurement(
+      { holdingId: h.id, observedOn: '2026-02-14', length: { value: 2.1, unit: 'in' } }, db);
+
+    expect(m.length.value).toBe(2.1);
+    expect(m.length.unit).toBe('in');
+    expect(await db.holdingMeasurements.count()).toBe(1);
+  });
+
+  it('REFUSES AN OBSERVATION THAT OBSERVED NOTHING', async () => {
+    // A row with no length records that somebody opened a form. It would then
+    // sit in the timeline as a dated entry saying nothing at all.
+    const h = await aHolding();
+
+    await expect(recordMeasurement({ holdingId: h.id, observedOn: '2026-02-14' } as never, db))
+      .rejects.toThrow(/Record a length/);
+    expect(await db.holdingMeasurements.count()).toBe(0);
+  });
+
+  it('deleting the photo a measurement was read from CLEARS THE LINK, keeping the measurement', async () => {
+    // The measurement is still a true observation of the fish on that day.
+    // Losing it because a picture was tidied away would delete data the keeper
+    // never asked to lose.
+    const h = await aHolding();
+    const specimen = await ensureSpecimenForHolding(h.id, db);
+    const [shot] = await addPhotos({ specimenId: specimen.id, files: [photo()] }, db);
+    const m = await recordMeasurement({
+      holdingId: h.id, observedOn: '2026-02-14',
+      length: { value: 2.1, unit: 'in' }, mediaId: shot!.id,
+    }, db);
+
+    await deletePhoto({ mediaId: shot!.id, specimenId: specimen.id }, db);
+
+    const after = await db.holdingMeasurements.get(m.id);
+    expect(after).toBeDefined();
+    expect(after!.mediaId).toBeUndefined();
+    expect(after!.length!.value).toBe(2.1);
+  });
+
+  it('removing the holding takes its measurements with it', async () => {
+    // Unlike a photograph, a measurement is only ever about the holding it
+    // names - there is nothing to detach it to.
+    const h = await aHolding();
+    await recordMeasurement(
+      { holdingId: h.id, observedOn: '2026-02-14', length: { value: 2.1, unit: 'in' } }, db);
+
+    const out = await removeHolding(h.id, db);
+
+    expect(out.measurements).toBe(1);
+    expect(await db.holdingMeasurements.count()).toBe(0);
+  });
+
+  it('does not touch another holding\'s measurements', async () => {
+    const mine = await aHolding();
+    const theirs = await aHolding();
+    await recordMeasurement(
+      { holdingId: mine.id, observedOn: '2026-02-14', length: { value: 2.1, unit: 'in' } }, db);
+    await recordMeasurement(
+      { holdingId: theirs.id, observedOn: '2026-02-14', length: { value: 9, unit: 'in' } }, db);
+
+    await removeHolding(mine.id, db);
+
+    expect(await db.holdingMeasurements.count()).toBe(1);
+    expect((await db.holdingMeasurements.toArray())[0]!.holdingId).toBe(theirs.id);
+  });
+
+  it('deleteMeasurement removes one and cascades nothing', async () => {
+    const h = await aHolding();
+    const m = await recordMeasurement(
+      { holdingId: h.id, observedOn: '2026-02-14', length: { value: 2.1, unit: 'in' } }, db);
+
+    await deleteMeasurement(m.id, db);
+
+    expect(await db.holdingMeasurements.get(m.id)).toBeUndefined();
+    expect(await db.holdings.get(h.id)).toBeDefined();
+  });
+
+  it('records an acquisition date, and clearing it really clears it', async () => {
+    // Clearing must remove the property so the evidence ladder takes over -
+    // "actually I do not know" is an honest answer the app has to accept.
+    const h = await aHolding();
+
+    await setAcquiredOn(h.id, '2023-04-01', db);
+    expect((await db.holdings.get(h.id))!.acquiredOn).toBe('2023-04-01');
+
+    await setAcquiredOn(h.id, undefined, db);
+    expect((await db.holdings.get(h.id))!.acquiredOn).toBeUndefined();
+  });
+});
+
+describe('editing a fish that never had an encounter (BUG-17, spec 044)', () => {
+  /*
+   * `createCatchDraft` makes a specimen AND an encounter; `ensureSpecimenForHolding`
+   * makes only the specimen. So every fish minted for an imported holding - 61 of
+   * them - had nothing for `updateCatch` to amend, and every encounter-shaped
+   * field written to one was silently discarded.
+   */
+  async function keptFishWithNoEncounter() {
+    const { holding } = await createOpeningBalanceHolding(
+      { aquariumId: 'tank_75g', rawLabel: 'Imported', kind: 'individual', openingQuantity: 1 }, db,
+    );
+    const specimen = await ensureSpecimenForHolding(holding.id, db);
+    expect(await db.encounters.where('specimenId').equals(specimen.id).count()).toBe(0);
+    return specimen;
+  }
+
+  it('WRITES THE VALUE INSTEAD OF DROPPING IT', async () => {
+    const specimen = await keptFishWithNoEncounter();
+
+    await updateCatch({ specimenId: specimen.id, quantitySeen: 3 }, db);
+
+    const encounters = await db.encounters.where('specimenId').equals(specimen.id).toArray();
+    expect(encounters).toHaveLength(1);
+    expect(encounters[0]!.quantitySeen).toBe(3);
+  });
+
+  it('uses the date the keeper gave rather than the moment they typed it', async () => {
+    const specimen = await keptFishWithNoEncounter();
+
+    await updateCatch({ specimenId: specimen.id, observedAt: '2023-04-01T12:00:00.000Z' }, db);
+
+    const [enc] = await db.encounters.where('specimenId').equals(specimen.id).toArray();
+    expect(enc!.observedAt).toBe('2023-04-01T12:00:00.000Z');
+  });
+
+  it('creates ONE encounter, not one per field', async () => {
+    const specimen = await keptFishWithNoEncounter();
+
+    await updateCatch({ specimenId: specimen.id, quantitySeen: 2 }, db);
+    await updateCatch({ specimenId: specimen.id, observedSize: { value: 3, unit: 'in' } }, db);
+
+    const encounters = await db.encounters.where('specimenId').equals(specimen.id).toArray();
+    expect(encounters).toHaveLength(1);
+    expect(encounters[0]!.quantitySeen).toBe(2);
+    expect(encounters[0]!.observedSize!.value).toBe(3);
+  });
+
+  it('does not invent an encounter for a specimen-only edit', async () => {
+    // A nickname is not an observation of a fish in a place on a day.
+    const specimen = await keptFishWithNoEncounter();
+
+    await updateCatch({ specimenId: specimen.id, nickname: 'Panther' }, db);
+
+    expect(await db.encounters.where('specimenId').equals(specimen.id).count()).toBe(0);
+    expect((await db.specimens.get(specimen.id))!.nickname).toBe('Panther');
   });
 });

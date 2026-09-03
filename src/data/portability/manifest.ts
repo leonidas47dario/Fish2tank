@@ -49,6 +49,9 @@ export const EXPORTED_TABLES = [
   'assessments',
   'memorials',
   'keeperPrinciples',
+  // Spec 037. Omitting it would make a backup silently lose every
+  // measurement, which is the one failure a backup must never have.
+  'holdingMeasurements',
   'cardPrefs',
 ] as const;
 

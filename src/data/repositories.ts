@@ -18,6 +18,7 @@ import type {
   Id,
   IdentificationAssertion,
   Instant,
+  HoldingMeasurement,
   LengthMeasurement,
   LifeEvent,
   Media,
@@ -1135,30 +1136,45 @@ export async function adjustHoldingQuantity(
 export async function removeHolding(
   holdingId: Id,
   database: DB = db,
-): Promise<{ residencies: number; lifeEvents: number; wasInTanks: string[] }> {
+): Promise<{
+  residencies: number; lifeEvents: number; measurements: number; wasInTanks: string[];
+}> {
   const holding = await database.holdings.get(holdingId);
   if (!holding) throw new Error(`Unknown holding ${holdingId}`);
 
   const residencies = await database.residencies.where('holdingId').equals(holdingId).toArray();
   const events = await database.lifeEvents.where('holdingId').equals(holdingId).toArray();
+  /*
+   * Spec 037. A measurement is only ever about the holding it names, so it
+   * goes with it - unlike a photograph, which can be shared with another fish
+   * and is therefore detached rather than destroyed. `deleteCatch` reaches
+   * this through here, so both delete paths cascade from one place.
+   */
+  const measurements = await database.holdingMeasurements
+    .where('holdingId').equals(holdingId).toArray();
   const tanks = await database.aquariums.toArray();
   const wasInTanks = [...new Set(residencies.map((r) => r.aquariumId))]
     .map((id) => tanks.find((t) => t.id === id)?.name ?? id);
 
   await database.transaction(
     'rw',
-    [database.holdings, database.residencies, database.lifeEvents],
+    [database.holdings, database.residencies, database.lifeEvents, database.holdingMeasurements],
     async () => {
       await database.residencies.bulkDelete(residencies.map((r) => r.id));
       await database.lifeEvents.bulkDelete(events.map((e) => e.id));
+      await database.holdingMeasurements.bulkDelete(measurements.map((m) => m.id));
       await database.holdings.delete(holdingId);
     },
   );
 
   console.info('[stock] holding removed', {
-    holdingId, residencies: residencies.length, lifeEvents: events.length, wasInTanks,
+    holdingId, residencies: residencies.length, lifeEvents: events.length,
+    measurements: measurements.length, wasInTanks,
   });
-  return { residencies: residencies.length, lifeEvents: events.length, wasInTanks };
+  return {
+    residencies: residencies.length, lifeEvents: events.length,
+    measurements: measurements.length, wasInTanks,
+  };
 }
 
 /** FR-T03: close the current interval, open the next, log the move. */
@@ -1389,37 +1405,99 @@ export async function updateCatch(input: UpdateCatchInput, database: DB = db): P
   const specimen = await database.specimens.get(input.specimenId);
   if (!specimen) throw new Error(`No such catch: ${input.specimenId}`);
 
-  const encounters = await database.encounters.where('specimenId').equals(input.specimenId).toArray();
-  encounters.sort((a, b) => a.observedAt.localeCompare(b.observedAt));
-  const target = input.encounterId
-    ? encounters.find((e) => e.id === input.encounterId)
-    : encounters[encounters.length - 1];
+  /*
+   * ONLY THE FIELDS THE CALLER MENTIONED, and nothing else - spec 043, BUG-16.
+   *
+   * The previous version said exactly that in a comment and did the opposite:
+   * it read the whole specimen and encounter up front, then wrote EVERY field
+   * back, using the values from that read for anything the caller had not
+   * passed. A read-modify-write, and therefore a lost update by construction.
+   *
+   * That was survivable while one form submitted every field at once. It stops
+   * being survivable the moment each field saves on its own (spec 039/041): a
+   * finger moving from one field to the next fires two commits milliseconds
+   * apart, the second one reads state from before the first landed, and writes
+   * the stale value back over it. Reproduced as BOTH failure modes - an edit
+   * silently vanishing, and a value the keeper had CLEARED coming back.
+   *
+   * Dexie's `update()` already merges: a key that is absent is left alone.
+   * So the patch carries only what was asked for, `undefined` deletes (which
+   * is what `null` means here), and two concurrent edits of different fields
+   * cannot touch each other's.
+   */
+  const patch: Record<string, unknown> = { updatedAt: nowIso() };
+  const put = (key: string, value: unknown) => {
+    if (value !== undefined) patch[key] = value === null ? undefined : value;
+  };
+  put('nickname', input.nickname);
+  put('rawLabel', input.rawLabel);
+  put('exceptional', input.exceptional);
 
-  // A field is only written when the caller mentioned it, so a form that
-  // submits three fields cannot blank the other seven.
-  const set = <T>(value: T | null | undefined, current: T | undefined): T | undefined =>
-    value === undefined ? current : (value === null ? undefined : value);
+  const chapter: Record<string, unknown> = {};
+  const putChapter = (key: string, value: unknown) => {
+    if (value !== undefined) chapter[key] = value === null ? undefined : value;
+  };
+  putChapter('observedAt', input.observedAt);
+  putChapter('placeId', input.placeId);
+  putChapter('quantitySeen', input.quantitySeen);
+  putChapter('observedSize', input.observedSize);
+  putChapter('rawTankLabel', input.rawTankLabel);
+  putChapter('observedTankmates', input.observedTankmates);
+  putChapter('originLocality', input.originLocality);
+  putChapter('notes', input.notes);
 
   await database.transaction('rw', [database.specimens, database.encounters], async () => {
-    await database.specimens.update(input.specimenId, {
-      nickname: set(input.nickname, specimen.nickname),
-      rawLabel: set(input.rawLabel, specimen.rawLabel),
-      exceptional: input.exceptional === undefined ? specimen.exceptional : input.exceptional,
-      updatedAt: nowIso(),
-    });
+    await database.specimens.update(input.specimenId, patch);
+    if (Object.keys(chapter).length === 0) return;
+
+    /*
+     * The encounter is chosen INSIDE the transaction - spec 044, BUG-17.
+     *
+     * Reading it outside was the other half of BUG-16's stale read, and it
+     * matters more here: two edits racing on a specimen with no encounter
+     * would each decide to create one, and the fish would end up with two.
+     */
+    const encounters = await database.encounters
+      .where('specimenId').equals(input.specimenId).toArray();
+    encounters.sort((a, b) => a.observedAt.localeCompare(b.observedAt));
+    const target = input.encounterId
+      ? encounters.find((e) => e.id === input.encounterId)
+      : encounters[encounters.length - 1];
 
     if (target) {
-      await database.encounters.update(target.id, {
-        observedAt: input.observedAt ?? target.observedAt,
-        placeId: set(input.placeId, target.placeId),
-        quantitySeen: set(input.quantitySeen, target.quantitySeen),
-        observedSize: set(input.observedSize, target.observedSize),
-        rawTankLabel: set(input.rawTankLabel, target.rawTankLabel),
-        observedTankmates: set(input.observedTankmates, target.observedTankmates),
-        originLocality: set(input.originLocality, target.originLocality),
-        notes: set(input.notes, target.notes),
-      });
+      await database.encounters.update(target.id, chapter);
+      return;
     }
+
+    /*
+     * NO ENCOUNTER TO AMEND, SO ONE IS CREATED - BUG-17.
+     *
+     * A specimen minted for an imported holding has none: `createCatchDraft`
+     * makes a specimen and an encounter together, `ensureSpecimenForHolding`
+     * makes only the specimen. So for the 61 imported rows, every
+     * encounter-shaped field - seen on, shop, how many, size - was written
+     * into nothing. `updateCatch` returned successfully, the field showed the
+     * typed value until the next render, and then reverted to empty. Reported
+     * exactly that way, and silently losing what somebody typed is the worst
+     * outcome an edit can have.
+     *
+     * Recording it is what the keeper asked for. "How big was it, where, and
+     * when" IS an encounter - that is what the table is for - so the honest
+     * response to being handed one for a fish that has none is to write it
+     * down, not to drop it.
+     */
+    const at = (chapter.observedAt as string | undefined) ?? nowIso();
+    await database.encounters.add({
+      ...chapter,
+      id: newId('enc'),
+      specimenId: input.specimenId,
+      observedAt: at,
+      createdAt: nowIso(),
+      syncState: 'local-draft',
+    } as Encounter);
+    console.info('[record] first encounter created to hold an edit', {
+      specimenId: input.specimenId, fields: Object.keys(chapter),
+    });
   });
 }
 
@@ -1821,22 +1899,115 @@ export async function deletePhoto(
   }
 
   const keys = blobKeysOf(media);
-  await database.transaction('rw', [database.media, database.blobs, database.cardPrefs], async () => {
-    await database.media.delete(media.id);
-    for (const key of keys) await database.blobs.delete(key);
+  await database.transaction(
+    'rw',
+    [database.media, database.blobs, database.cardPrefs, database.holdingMeasurements],
+    async () => {
+      await database.media.delete(media.id);
+      for (const key of keys) await database.blobs.delete(key);
 
-    // A card pointing at a photo that no longer exists. `chooseArt` already
-    // falls back to the newest, so this is tidiness rather than a crash - but
-    // a stored preference naming a deleted row is a lie the next reader has
-    // to work out.
-    const stale = await database.cardPrefs.filter((p) => p.preferredMediaId === media.id).toArray();
-    for (const pref of stale) {
-      await database.cardPrefs.update(pref.speciesId, { preferredMediaId: undefined });
-    }
-  });
+      /*
+       * Spec 037. A measurement may name the photo it was read from. Deleting
+       * the photo must CLEAR that link rather than orphan it - the measurement
+       * is still a true observation of the fish on that day, and losing it
+       * because a picture was tidied away would be deleting data the keeper
+       * never asked to lose. Indexed on `mediaId` so this is a lookup, not a
+       * scan of every measurement in the collection.
+       */
+      const measured = await database.holdingMeasurements.where('mediaId').equals(media.id).toArray();
+      for (const m of measured) {
+        await database.holdingMeasurements.update(m.id, { mediaId: undefined });
+      }
+
+      // A card pointing at a photo that no longer exists. `chooseArt` already
+      // falls back to the newest, so this is tidiness rather than a crash - but
+      // a stored preference naming a deleted row is a lie the next reader has
+      // to work out.
+      const stale = await database.cardPrefs.filter((p) => p.preferredMediaId === media.id).toArray();
+      for (const pref of stale) {
+        await database.cardPrefs.update(pref.speciesId, { preferredMediaId: undefined });
+      }
+    },
+  );
 
   console.info('[photos] deleted', { mediaId: media.id, blobs: keys.length });
   return { detached: false };
+}
+
+// ---------------------------------------------------------------------------
+// Measurements over time (ENH-12, spec 037)
+// ---------------------------------------------------------------------------
+
+export interface RecordMeasurementInput {
+  holdingId: Id;
+  observedOn: CalendarDate;
+  length: LengthMeasurement;
+  /** The photograph it was read from, when there is one. */
+  mediaId?: Id;
+  note?: string;
+}
+
+/**
+ * Record how big a fish is on a given day - spec 037.
+ *
+ * REFUSES AN EMPTY OBSERVATION. A row with no length records that somebody
+ * opened a form, which is not a fact about a fish, and it would then sit in
+ * the timeline as a dated entry saying nothing.
+ *
+ * A holding can be a GROUP, and then this is a measurement of one of them on
+ * that day. Nothing here averages anything; see the note on
+ * `HoldingMeasurement`.
+ */
+export async function recordMeasurement(
+  input: RecordMeasurementInput,
+  database: DB = db,
+): Promise<HoldingMeasurement> {
+  const holding = await database.holdings.get(input.holdingId);
+  if (!holding) throw new Error(`Unknown holding ${input.holdingId}`);
+  if (!input.length) {
+    throw new Error('Record a length.');
+  }
+
+  const measurement: HoldingMeasurement = {
+    id: newId('meas'),
+    holdingId: input.holdingId,
+    observedOn: input.observedOn,
+    length: input.length,
+    mediaId: input.mediaId,
+    note: input.note,
+    createdAt: nowIso(),
+  };
+
+  await database.holdingMeasurements.add(measurement);
+  console.info('[timeline] measurement recorded', {
+    holdingId: input.holdingId, observedOn: input.observedOn,
+    length: input.length.value, fromPhoto: Boolean(input.mediaId),
+  });
+  return measurement;
+}
+
+/** Remove one observation. Nothing else depends on it, so nothing cascades. */
+export async function deleteMeasurement(id: Id, database: DB = db): Promise<void> {
+  await database.holdingMeasurements.delete(id);
+  console.info('[timeline] measurement deleted', { id });
+}
+
+/**
+ * When this fish came home, as the keeper says rather than as the app guesses.
+ *
+ * Clearing it is a real operation - `undefined` removes the property and the
+ * evidence ladder in `fish-timeline.ts` takes over again, which is the honest
+ * result of the keeper saying "actually I do not know".
+ */
+export async function setAcquiredOn(
+  holdingId: Id,
+  acquiredOn: CalendarDate | undefined,
+  database: DB = db,
+): Promise<void> {
+  const holding = await database.holdings.get(holdingId);
+  if (!holding) throw new Error(`Unknown holding ${holdingId}`);
+  await database.holdings.update(holdingId, { acquiredOn });
+  console.info('[timeline] acquisition date set', { holdingId, acquiredOn: acquiredOn ?? null });
 }
 
 /** Remove a tank's photo, leaving the tank itself alone. */
