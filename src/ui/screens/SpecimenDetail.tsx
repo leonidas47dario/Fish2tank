@@ -247,12 +247,20 @@ export default function SpecimenDetail() {
       {/*
         Spec 037. Rendered only once this fish is actually kept - a catch that
         never came home is an encounter, and "history" on a fish you met once
-        in a shop would be a section about nothing. The first holding, because
-        a specimen with several is the group case and they share one story.
+        in a shop would be a section about nothing. `useFishTimeline` returns
+        nothing without a holding, so that condition is the whole test. The
+        first holding, because a specimen with several is the group case and
+        they share one story.
+
+        SPEC 046 DROPPED THE `entries.length > 0` HALF OF THIS GUARD, and it
+        was hiding the section from exactly the fish that needed it most. An
+        opening-balance holding - the 61 imported inventory rows - has no life
+        events, no photographs and no measurements by construction, so its
+        timeline is empty and the whole section vanished, taking the only way
+        to record a measurement or write a note with it. The empty state below
+        exists to say "nothing dated yet"; it was unreachable.
       */}
-      {timeline && timeline.entries.length > 0 && (
-        <FishTimeline timeline={timeline} title={title} />
-      )}
+      {timeline && <FishTimeline timeline={timeline} title={title} />}
 
       <header className="pad">
         <h1 className="specimen-name">{title}</h1>

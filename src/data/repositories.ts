@@ -19,6 +19,7 @@ import type {
   IdentificationAssertion,
   Instant,
   HoldingMeasurement,
+  KeeperNote,
   LengthMeasurement,
   LifeEvent,
   Media,
@@ -2008,6 +2009,129 @@ export async function setAcquiredOn(
   if (!holding) throw new Error(`Unknown holding ${holdingId}`);
   await database.holdings.update(holdingId, { acquiredOn });
   console.info('[timeline] acquisition date set', { holdingId, acquiredOn: acquiredOn ?? null });
+}
+
+// ---------------------------------------------------------------------------
+// Keeper notes (spec 046, FH-5)
+// ---------------------------------------------------------------------------
+
+/**
+ * Write a dated note about a fish.
+ *
+ * Keyed on the holding, so it lands in the timeline in date order and works
+ * for a living fish as readily as for a memorial - see `KeeperNote`.
+ *
+ * REFUSES AN EMPTY NOTE, for the same reason `recordMeasurement` refuses an
+ * empty observation: a dated entry that says nothing is worse than no entry,
+ * because the timeline then carries a row the reader has to work out.
+ */
+export async function writeNote(
+  input: { holdingId: Id; text: string; writtenOn?: CalendarDate },
+  database: DB = db,
+): Promise<KeeperNote> {
+  const holding = await database.holdings.get(input.holdingId);
+  if (!holding) throw new Error(`Unknown holding ${input.holdingId}`);
+  const text = input.text.trim();
+  if (!text) throw new Error('Write something first.');
+
+  const note: KeeperNote = {
+    id: newId('note'),
+    holdingId: input.holdingId,
+    writtenOn: input.writtenOn ?? today(),
+    text,
+    createdAt: nowIso(),
+  };
+  await database.keeperNotes.add(note);
+  console.info('[heaven] note written', { holdingId: input.holdingId, on: note.writtenOn });
+  return note;
+}
+
+/** Remove one note. Nothing depends on it, so nothing cascades. */
+export async function deleteNote(id: Id, database: DB = db): Promise<void> {
+  await database.keeperNotes.delete(id);
+  console.info('[heaven] note deleted', { id });
+}
+
+/** Correct a note in place, or its date. Empty text is a delete, not a blank. */
+export async function updateNote(
+  id: Id,
+  patch: { text?: string; writtenOn?: CalendarDate },
+  database: DB = db,
+): Promise<void> {
+  const next: Record<string, unknown> = {};
+  if (patch.text !== undefined) {
+    const text = patch.text.trim();
+    if (!text) return deleteNote(id, database);
+    next.text = text;
+  }
+  if (patch.writtenOn !== undefined) next.writtenOn = patch.writtenOn;
+  if (Object.keys(next).length === 0) return;
+  await database.keeperNotes.update(id, next);
+}
+
+/**
+ * Correct a memorial after the fact - FH-7.
+ *
+ * Only the fields named, for the reason spec 043 established: a
+ * read-modify-write on a synced table loses one of two concurrent edits, and
+ * every field on this page saves on its own.
+ */
+export async function updateMemorial(
+  id: Id,
+  patch: {
+    occurredOn?: CalendarDate;
+    story?: string | null;
+    lesson?: string | null;
+    suspectedContributors?: string[];
+    causeConfidence?: Memorial['causeConfidence'];
+  },
+  database: DB = db,
+): Promise<void> {
+  const next: Record<string, unknown> = {};
+  const put = (key: string, value: unknown) => {
+    if (value !== undefined) next[key] = value === null ? undefined : value;
+  };
+  put('occurredOn', patch.occurredOn);
+  put('story', patch.story);
+  put('lesson', patch.lesson);
+  put('suspectedContributors', patch.suspectedContributors);
+  put('causeConfidence', patch.causeConfidence);
+  if (Object.keys(next).length === 0) return;
+  await database.memorials.update(id, next as Partial<Memorial>);
+  console.info('[heaven] memorial corrected', { id, fields: Object.keys(next) });
+}
+
+/**
+ * Remove the record of a death - FH-7. NOT the fish.
+ *
+ * Its memos and the principles written FROM it go with it. The fish, its tank
+ * history, its photographs and the `deceased` life event all stay: somebody
+ * clearing a mistyped memorial is not asking to resurrect a fish or lose its
+ * pictures. That is the rule ENH-09 settled for deleting a catch, and the two
+ * must not disagree.
+ *
+ * A principle with no source, or one sourced from a different fish, stays. A
+ * lesson can outlive the record that taught it.
+ */
+export async function deleteMemorial(
+  id: Id,
+  database: DB = db,
+): Promise<{ principles: number }> {
+  const memorial = await database.memorials.get(id);
+  if (!memorial) return { principles: 0 };
+
+  const principles = (await database.keeperPrinciples.toArray())
+    .filter((k) => k.sourceMemorialId === id);
+
+  await database.transaction('rw', [database.memorials, database.keeperPrinciples], async () => {
+    await database.keeperPrinciples.bulkDelete(principles.map((k) => k.id));
+    await database.memorials.delete(id);
+  });
+
+  console.info('[heaven] memorial deleted', {
+    id, principles: principles.length, holdingKept: memorial.holdingId,
+  });
+  return { principles: principles.length };
 }
 
 /** Remove a tank's photo, leaving the tank itself alone. */

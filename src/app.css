@@ -2113,3 +2113,85 @@ select.inline-input { cursor: pointer; }
   .factlist > div,
   .factlist__row { grid-template-columns: 1fr; gap: 0; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Fish Heaven - spec 046
+
+   Differentiation lives in four places rather than one, because a single
+   tinted header is a decoration and wears off: its own route, a wing mark, a
+   header that reads as a SPAN OF TIME where a tank header reads as capacity,
+   and the words. Nothing here is a tank card with a different colour.
+
+   FR-L03 sets the ceiling on how much this may do: "a gentle, dignified tone
+   rather than a stats-heavy reward screen". So no badge, no ribbon, no tinted
+   banner - the difference is in the shape of the layout and the restraint.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.heaven-card {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: var(--space-3);
+  align-items: center;
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+}
+.heaven-card__art {
+  display: grid; place-items: center;
+  width: 96px; height: 96px;
+  background: var(--color-surface-raised);
+  color: var(--color-faint);
+}
+/* 96px, which is inside spec 036's rule that a thumbnail suits a box of
+   107 CSS px or less - so this loads the 320px rendition, not the original. */
+.heaven-card__art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.heaven-card__body {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: var(--space-2) var(--space-2) var(--space-2) 0;
+  min-width: 0;
+}
+/* One line of it. The whole story is on the page behind the card, and a card
+   that grows with the length of somebody's grief makes the list unreadable. */
+.heaven-card__story {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.heaven-hero { margin: 0; }
+.heaven-hero img {
+  display: block; width: 100%; height: auto;
+  max-height: 60vh; object-fit: cover;
+  background: var(--color-surface-raised);
+}
+.heaven-hero figcaption { padding: var(--space-2) var(--space-4) 0; }
+
+/* The span of time, at the head. Data font, because these are dates. */
+.heaven-span {
+  color: var(--color-muted);
+  font-family: var(--font-data);
+  font-size: var(--size-sm);
+  margin: var(--space-2) 0 0;
+}
+
+/* A note sits at the same weight as a photograph or a measurement: it is one
+   more dated observation, not a special kind of entry. */
+.timeline__row--note::before { background: var(--color-faint); }
+
+/* A destructive action that must not read like a control. "Remove this note"
+   sat as a full ghost button under every note, which made the row look like a
+   form with a submit button rather than a sentence somebody wrote. */
+.linkbtn {
+  background: none;
+  border: 0;
+  padding: 0;
+  margin-top: var(--space-1);
+  color: var(--color-faint);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  min-height: 0;
+}
+.linkbtn:hover:not(:disabled) { color: var(--color-text); }

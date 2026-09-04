@@ -51,6 +51,7 @@ export const ERASED_TABLES = [
   'memorials',
   'keeperPrinciples',
   'holdingMeasurements',   // spec 037
+  'keeperNotes',           // spec 046
   'cardPrefs',
   'blobs',
   'draftKeys',

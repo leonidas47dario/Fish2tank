@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   acquisitionAnchor, daysBetween, fishTimeline, lengthSpan, measurementsByMedia,
+  summariseLife,
 } from './fish-timeline';
-import type { HoldingMeasurement, LifeEvent, Media, Memorial } from './types';
+import type { HoldingMeasurement, KeeperNote, LifeEvent, Media, Memorial } from './types';
 
 /**
  * Spec 037. The rules worth guarding are the ones about what the app is
@@ -216,5 +217,132 @@ describe('lengthSpan', () => {
 
   it('is empty when there are no measurements at all', () => {
     expect(lengthSpan([])).toEqual({});
+  });
+});
+
+
+/**
+ * Spec 046. What a memorial page is allowed to CLAIM about a life: a span only
+ * when both ends are real, a growth only when there are two measurements, and
+ * never a percentage - FR-L03 forbids a stats screen, and a percentage is the
+ * version that reads as a performance.
+ */
+describe('summariseLife', () => {
+  const memorial: Memorial = {
+    id: 'mem1', holdingId: HOLDING, occurredOn: '2026-04-19', quantity: 1,
+    suspectedContributors: [], causeConfidence: 'unknown',
+    createdAt: '2026-04-19T00:00:00.000Z',
+  };
+
+  it('counts the days together when both ends are real', () => {
+    const out = summariseLife({
+      holding: { acquiredOn: '2026-01-03' }, memorial, events: [], media: [], measurements: [],
+    });
+
+    expect(out.days).toBe(106);
+    expect(out.anchor?.source).toBe('recorded');
+  });
+
+  it('HAS NO SPAN when the fish came home on no known day', () => {
+    // The imported rows. `createdAt` would give a plausible, false answer.
+    const out = summariseLife({
+      holding: {}, memorial, events: [], media: [], measurements: [],
+    });
+
+    expect(out.days).toBeUndefined();
+    expect(out.anchor).toBeUndefined();
+  });
+
+  it('still gives a span from a photograph, marked as a lower bound', () => {
+    // "At least this long" is true and useful; the page says which it is.
+    const out = summariseLife({
+      holding: {}, memorial, events: [],
+      media: [photo('m1', '2026-02-01T00:00:00.000Z')], measurements: [],
+    });
+
+    expect(out.days).toBe(77);
+    expect(out.anchor?.lowerBound).toBe(true);
+  });
+
+  it('reports growth as TWO SIZES, and only with two measurements', () => {
+    const out = summariseLife({
+      holding: { acquiredOn: '2026-01-03' }, memorial, events: [], media: [],
+      measurements: [
+        measured({ id: 'x1', observedOn: '2026-02-14', length: { value: 2.1, unit: 'in' } }),
+        measured({ id: 'x2', observedOn: '2026-04-04', length: { value: 2.8, unit: 'in' } }),
+      ],
+    });
+
+    expect(out.grew).toEqual({ from: { value: 2.1, unit: 'in' }, to: { value: 2.8, unit: 'in' } });
+  });
+
+  it('has NO growth from a single measurement', () => {
+    const out = summariseLife({
+      holding: {}, memorial, events: [], media: [],
+      measurements: [measured({ id: 'x1', observedOn: '2026-02-14', length: { value: 2.1, unit: 'in' } })],
+    });
+
+    expect(out.grew).toBeUndefined();
+  });
+
+  it('finds the LAST photograph, which is the one a keeper looks for', () => {
+    const out = summariseLife({
+      holding: {}, memorial, events: [],
+      media: [photo('m1', '2026-01-05T00:00:00.000Z'), photo('m3', '2026-04-01T00:00:00.000Z'),
+              photo('m2', '2026-02-02T00:00:00.000Z')],
+      measurements: [],
+    });
+
+    expect(out.lastPhoto?.id).toBe('m3');
+    expect(out.photos).toBe(3);
+  });
+
+  it('lists the tanks lived in, oldest first and without repeats', () => {
+    const out = summariseLife({
+      holding: {}, memorial, media: [], measurements: [],
+      events: [
+        event({ id: 'e1', type: 'acquired', occurredOn: '2026-01-03', toAquariumId: 'tank_a' }),
+        event({ id: 'e2', type: 'moved', occurredOn: '2026-02-20', fromAquariumId: 'tank_a', toAquariumId: 'tank_b' }),
+        event({ id: 'e3', type: 'moved', occurredOn: '2026-03-01', fromAquariumId: 'tank_b', toAquariumId: 'tank_a' }),
+      ],
+    });
+
+    expect(out.tanks).toEqual(['tank_a', 'tank_b']);
+  });
+});
+
+describe('notes in the timeline (spec 046)', () => {
+  const note = (over: Partial<KeeperNote> & Pick<KeeperNote, 'id' | 'writtenOn'>): KeeperNote => ({
+    holdingId: HOLDING, text: 'a note', createdAt: '2026-01-01T00:00:00.000Z', ...over,
+  });
+
+  it('places a note by the day it is ABOUT, not the day it was typed', () => {
+    const out = fishTimeline({
+      holdingId: HOLDING, events: [], media: [], measurements: [], memorials: [],
+      notes: [note({ id: 'n1', writtenOn: '2026-03-01', createdAt: '2026-09-04T00:00:00.000Z' })],
+    });
+
+    expect(out.map((e) => [e.on, e.kind])).toEqual([['2026-03-01', 'note']]);
+  });
+
+  it('never shows another holding\'s notes', () => {
+    const out = fishTimeline({
+      holdingId: HOLDING, events: [], media: [], measurements: [], memorials: [],
+      notes: [note({ id: 'n9', writtenOn: '2026-03-01', holdingId: 'hold_other' })],
+    });
+
+    expect(out).toEqual([]);
+  });
+
+  it('reads after a measurement and before the ending on one day', () => {
+    const out = fishTimeline({
+      holdingId: HOLDING, events: [], media: [],
+      measurements: [measured({ id: 'x1', observedOn: '2026-04-19' })],
+      memorials: [{ id: 'mem1', holdingId: HOLDING, occurredOn: '2026-04-19', quantity: 1,
+        suspectedContributors: [], causeConfidence: 'unknown', createdAt: '2026-04-19T00:00:00.000Z' }],
+      notes: [note({ id: 'n1', writtenOn: '2026-04-19' })],
+    });
+
+    expect(out.map((e) => e.kind)).toEqual(['measurement', 'note', 'memorial']);
   });
 });

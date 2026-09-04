@@ -52,6 +52,8 @@ export const EXPORTED_TABLES = [
   // Spec 037. Omitting it would make a backup silently lose every
   // measurement, which is the one failure a backup must never have.
   'holdingMeasurements',
+  // Spec 046. A note nobody backed up is a memory lost with the device.
+  'keeperNotes',
   'cardPrefs',
 ] as const;
 

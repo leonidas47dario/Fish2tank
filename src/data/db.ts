@@ -25,6 +25,7 @@ import type {
   HoldingMeasurement,
   Id,
   IdentificationAssertion,
+  KeeperNote,
   KeeperPrinciple,
   LifeEvent,
   Media,
@@ -197,6 +198,8 @@ export class Fish2TankDB extends Dexie {
   memorials!: EntityTable<Memorial, 'id'>;
   /** Spec 037. Dated size observations, keyed on the holding like life events. */
   holdingMeasurements!: EntityTable<HoldingMeasurement, 'id'>;
+  /** Spec 046. Dated notes, keyed on the holding for the same reason. */
+  keeperNotes!: EntityTable<KeeperNote, 'id'>;
   keeperPrinciples!: EntityTable<KeeperPrinciple, 'id'>;
   draftKeys!: EntityTable<DraftKey, 'clientKey'>;
   cardPrefs!: EntityTable<CardPref, 'speciesId'>;
@@ -329,6 +332,20 @@ export class Fish2TankDB extends Dexie {
      */
     this.version(6).stores({
       holdingMeasurements: 'id, holdingId, observedOn, mediaId',
+    });
+
+    /*
+     * v7 adds dated keeper notes (spec 046, FH-5). A pure addition like v2,
+     * v3, v5 and v6 - existing data carries forward untouched and no upgrade
+     * function is needed.
+     *
+     * Keyed on `holdingId` rather than a memorial, so a note is a dated
+     * observation about a fish rather than a feature of the memorial screen -
+     * see the type. Indexed on `writtenOn` because the timeline reads them in
+     * date order.
+     */
+    this.version(7).stores({
+      keeperNotes: 'id, holdingId, writtenOn',
     });
   }
 }

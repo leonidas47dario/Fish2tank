@@ -28,6 +28,16 @@ export { CaretRightIcon } from '@phosphor-icons/react/dist/csr/CaretRight';
 export { CaretDownIcon } from '@phosphor-icons/react/dist/csr/CaretDown';
 export { ArrowSquareOutIcon } from '@phosphor-icons/react/dist/csr/ArrowSquareOut';
 export { WifiSlashIcon } from '@phosphor-icons/react/dist/csr/WifiSlash';
+/*
+ * The wing mark for Fish Heaven - spec 046.
+ *
+ * The ask was "a little wing icon". Phosphor ships no `Wing`, and this module
+ * exists to keep the app to one family at one weight, so hand-drawing a single
+ * glyph would break the only thing that makes the set coherent. `Butterfly` is
+ * wings, it is in the family, and it carries the remembrance association the
+ * request reaches for. Recorded as a substitution, not the literal ask.
+ */
+export { ButterflyIcon } from '@phosphor-icons/react/dist/csr/Butterfly';
 export { WarningCircleIcon } from '@phosphor-icons/react/dist/csr/WarningCircle';
 export { ClockIcon } from '@phosphor-icons/react/dist/csr/Clock';
 export { FishIcon } from '@phosphor-icons/react/dist/csr/Fish';
