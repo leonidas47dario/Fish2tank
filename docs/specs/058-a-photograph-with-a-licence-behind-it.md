@@ -25,8 +25,14 @@ stated**. It does not cover photographs whose licence **is** stated and says no.
 
 Three further facts, none of which the loosened bar answers:
 
-- The rights are not Seriously Fish's to grant onward. The captions name
-  individual photographers, including at least two commercial stock agencies.
+- The rights are not Seriously Fish's to grant onward, and this is measured
+  rather than assumed. Of the 534 species pages already cached by spec 056's
+  care ingest, **511 carry the "Not licensed for reuse" caption verbatim**. The
+  credit lines name individual photographers — and two **commercial aquarium
+  image agencies** between them account for a majority of the pages:
+  **JJPhoto on 205 pages, Hippocampus-Bildarchiv on 106**. Taking the images
+  would not be borrowing a hobbyist's snapshots; it would be copying two
+  agencies' catalogues.
 - Spec 031 revision 3 settled that this project assumes commercial use. That
   was the answer that removed FishBase; it applies here with more force,
   because FishBase's problem was a permissive-but-NC licence and this is an
@@ -193,3 +199,58 @@ at this scale, and the gap has been open since spec 002.
   bill, which is why it is measured rather than assumed.
 - **P6, never invent a number** — a species with no usable photograph keeps no
   portrait rather than borrowing a related species'.
+
+---
+
+## Revision 1: the gap was mostly unasked, not unanswerable
+
+Written before running the pipeline; corrected after. The first real run —
+`PORTRAIT_LIMIT=150 npm run images`, the 150 most-listed gap species — resolved
+145 of 150, and the route breakdown is not what the section above implies:
+
+| Route | Resolved |
+|---|---:|
+| Wikipedia article | 119 |
+| Commons search | 11 |
+| **iNaturalist** | **4** |
+| Vendor listing | 11 |
+| *nothing on any route* | *5* |
+
+**Wikipedia answered 79% of species that this document called a gap.** That is
+the correction: the 1,166 were not species every source lacks, they are largely
+species nothing ever asked about. `build-images.ts` gap-fills only species with
+no bundleable row, so a catalog that has grown to 2,155 accumulates species the
+image pipeline has simply never been run against.
+
+### What that does and does not change
+
+**Wrong, and withdrawn:** the extrapolation "60% ≈ 693 species". That is
+iNaturalist's **standalone** coverage of the gap list. It is not its **marginal**
+contribution, because Wikipedia and Commons are tried first by design and get
+there first for most species. Marginal contribution on this batch was **4 of
+150, 2.7%**.
+
+**Still true:** the 60% itself, as measured — probes 1 and 2 asked iNaturalist
+alone, and the 4× difference between `default_photo` and the observation set is
+a real property of the API that any future use of it needs to know.
+
+**Still worth shipping:** those 4 species have a portrait that no other route
+produced, and they cost one API call each on the species where the earlier
+routes fail. The route sits below Commons precisely so it only runs then.
+
+**And the batch is not representative.** `targets()` sorts by market listings
+descending, so this run took the 150 most commonly sold fish — exactly the
+species Wikipedia covers best. The obscure marine tail, which is where the gap
+is concentrated, is where the earlier routes are expected to thin out and
+iNaturalist to earn more. The full-run breakdown replaces this table when it
+lands; until then, **2.7% is the number on record**, not an extrapolation from
+it.
+
+### The lesson worth keeping
+
+The measurement that justified this spec was sound and answered the wrong
+question. "Does iNaturalist have a usable photo for these species" is not "will
+adding iNaturalist to this pipeline produce portraits", and only the second one
+is the decision. A source probe measured in isolation will always overstate its
+marginal value behind three routes that run first. Probe the pipeline, not the
+source.
