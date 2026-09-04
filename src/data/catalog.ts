@@ -27,7 +27,9 @@ export interface CatalogPortrait {
 }
 
 /** The care fields the backfill can source, and therefore can credit. */
-export type CareField = 'adultSizeIn' | 'minVolumeGal' | 'aggression' | 'tempC';
+export type CareField = 'adultSizeIn' | 'minVolumeGal' | 'aggression' | 'tempC'
+  // Spec 045.
+  | 'ph' | 'hardnessDgh' | 'tankBaseIn';
 
 export interface CatalogSpecies {
   speciesId: string;
@@ -39,6 +41,34 @@ export interface CatalogSpecies {
   aggression?: string;
   tempMinC?: number;
   tempMaxC?: number;
+
+  /*
+   * Spec 045, from Seriously Fish. Each is absent for every species SF does
+   * not cover, which is most of the catalog - the screen renders a section
+   * only when a value backs it, never a blank row.
+   */
+  /**
+   * Which end of the fish `adultSizeIn` was measured to.
+   *
+   * Load-bearing rather than trivia: the field has meant nose-to-tail-tip for
+   * some species and nose-to-tail-base for others with no way to tell which,
+   * and a compatibility engine mixing the two is quietly wrong for every
+   * deep-bodied fish.
+   */
+  lengthBasis?: 'SL' | 'TL' | 'unstated';
+  phMin?: number;
+  phMax?: number;
+  hardnessMinDgh?: number;
+  hardnessMaxDgh?: number;
+  /** The footprint. A volume alone does not give it: a 14-gal tall is not 24x12. */
+  tankBaseLengthIn?: number;
+  tankBaseWidthIn?: number;
+  /**
+   * Seriously Fish's own six-measure rating - an editorial judgement, not a
+   * measured figure, and labelled as such wherever it is drawn.
+   */
+  difficulty?: Array<{ measure: string; word: string }>;
+
   predationTags: string[];
   sourceLabel?: string;
   sourceUrl?: string;

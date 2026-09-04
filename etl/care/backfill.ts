@@ -19,7 +19,7 @@ const DEFAULT_PATH = 'src/data/seed/species-care.json';
 export interface CareValue<T> {
   value: T;
   quote: string;
-  source: 'wikipedia' | 'vendor';
+  source: 'wikipedia' | 'vendor' | 'seriouslyfish';
   sourceUrl?: string;
 }
 
@@ -34,6 +34,26 @@ export interface CareRecord {
    */
   aggression?: CareValue<AggressionRating>;
   tempC?: CareValue<{ min: number; max: number }>;
+
+  /*
+   * Spec 045. Seriously Fish carries four things nothing else we read does.
+   *
+   * `lengthBasis` is not decoration: `adultSizeIn` has meant nose-to-tail-tip
+   * for some species and nose-to-tail-base for others, with no way to tell
+   * which, and a compatibility engine mixing the two is quietly wrong for
+   * every deep-bodied fish.
+   */
+  lengthBasis?: 'SL' | 'TL' | 'unstated';
+  ph?: CareValue<{ min: number; max: number }>;
+  hardnessDgh?: CareValue<{ min: number; max: number }>;
+  /** The footprint, which a volume alone does not give: a 14-gal tall is not 24x12. */
+  tankBaseIn?: CareValue<{ length: number; width: number }>;
+  /**
+   * SF's own six-measure rating. Attributed, never quote-gated - it is an
+   * editorial judgement with no sentence behind it, and dressing it as a
+   * sourced figure is the one thing the gate exists to prevent.
+   */
+  difficulty?: { source: string; sourceUrl?: string; measures: Array<{ measure: string; word: string }> };
 }
 
 /**
