@@ -24,14 +24,18 @@ import type { WaterZone } from '@/data/seed/taxonomy';
 export interface TankFilter {
   zone?: WaterZone | 'unknown';
   aggression?: AggressionRating | 'unknown';
-  /** A species, from a `Grown up` row. Never 'unknown' - those rows have one. */
-  speciesId?: string;
 }
+
+/*
+ * SPEC 052 REMOVED THE `speciesId` DIMENSION with the `Grown up` chart it came
+ * from. It was reachable from those rows and nowhere else, so keeping it would
+ * have left a capability with no way in - dead code that reads as a feature.
+ */
 
 export type TankFilterDimension = keyof TankFilter;
 
 export function isEmptyFilter(filter: TankFilter): boolean {
-  return !filter.zone && !filter.aggression && !filter.speciesId;
+  return !filter.zone && !filter.aggression;
 }
 
 /**
@@ -55,7 +59,6 @@ export function toggleFilter(
 export function matchesFilter(resident: TankResident, filter: TankFilter): boolean {
   if (filter.zone && (resident.waterZone ?? 'unknown') !== filter.zone) return false;
   if (filter.aggression && (resident.aggression ?? 'unknown') !== filter.aggression) return false;
-  if (filter.speciesId && resident.speciesId !== filter.speciesId) return false;
   return true;
 }
 

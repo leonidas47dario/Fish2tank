@@ -2320,3 +2320,30 @@ select.inline-input { cursor: pointer; }
   font-size: var(--size-sm);
 }
 .tankfilter__what { color: var(--color-muted); min-width: 0; }
+
+
+/*
+ * The dashboard, made short enough to see past - spec 052.
+ *
+ * The two charts were two full cards with h2 headings; they are now two
+ * compact groups in one. On a 390px screen that is the difference between the
+ * charts and the first row of fish being on the same screen or not, which was
+ * the whole complaint: a filter you cannot watch work does not read as a
+ * filter.
+ */
+.mixcard { gap: var(--space-3); }
+.mixcard__hint { order: -1; }
+.mixgroup { gap: var(--space-2); }
+.mixgroup__head {
+  font-size: var(--size-sm);
+  color: var(--color-muted);
+  font-weight: var(--weight-medium);
+  margin: 0;
+}
+/* Tighter than the standalone cards were: the bands carry the height. */
+.mixgroup .watercolumn { gap: 2px; }
+.mixgroup .watercolumn__track { height: 18px; }
+.mixgroup + .mixgroup {
+  padding-top: var(--space-3);
+  border-top: var(--border-width) solid var(--color-border);
+}

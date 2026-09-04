@@ -48,11 +48,6 @@ describe('tank filter (spec 049)', () => {
       .toEqual(['h2']);
   });
 
-  it('filters by species', () => {
-    expect(applyTankFilter(ALL, { speciesId: 'sp_neon' }).map((r) => r.holding.id))
-      .toEqual(['h5']);
-  });
-
   it('COMBINES SELECTIONS FROM DIFFERENT CHARTS', () => {
     // The question no single chart can answer, and the reason to combine at
     // all: which of my aggressive fish are bottom-dwellers?
@@ -96,7 +91,9 @@ describe('tank filter (spec 049)', () => {
   it('COUNTS FISH, NOT HOLDINGS', () => {
     // A holding of six tetras is six fish. "Showing 1 of 24" above a grid
     // displaying six animals would disagree with the stat tile above it.
-    expect(countFish(applyTankFilter(ALL, { speciesId: 'sp_neon' }))).toBe(6);
+    // The mid-water group is six fish in one holding.
+    expect(countFish(applyTankFilter(ALL, { zone: 'mid' }))).toBe(6);
+    expect(applyTankFilter(ALL, { zone: 'mid' })).toHaveLength(1);
     expect(countFish(ALL)).toBe(10);
   });
 
