@@ -17,16 +17,17 @@
  * "it", because a page that says "it" about three severums is telling a small
  * lie every time it is read.
  */
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { LifeEventType } from '@/domain/types';
 import { formatLength } from '@/domain/units';
 import { daysBetween, type Anchor } from '@/domain/fish-timeline';
-import type { HoldingMeasurement } from '@/domain/types';
+import type { HoldingMeasurement, Id } from '@/domain/types';
 import { Link } from 'react-router-dom';
 import { MeasurementForm } from './MeasurementForm';
 import { NoteForm } from './NoteForm';
 import { InlineNote } from './InlineField';
-import { deleteNote, updateNote } from '@/data/repositories';
+import { MeasurementPhoto } from './MeasurementPhoto';
+import { deleteMeasurement, deleteNote, updateNote } from '@/data/repositories';
 import type { FishTimelineView } from '../hooks';
 
 /** Past tense, because every one of these already happened. */
@@ -77,6 +78,34 @@ function measurementText(m: HoldingMeasurement): string {
   return formatLength(m.length);
 }
 
+/**
+ * A size, which opens its photograph when it has one - spec 047.
+ *
+ * A SIZE WITH NO PHOTOGRAPH IS PLAIN TEXT, not a disabled or dead button.
+ * There is nothing to open, and a control that does nothing when tapped
+ * teaches the reader to stop tapping the ones that do.
+ */
+function Size({ measurement, open, onToggle }: {
+  measurement: HoldingMeasurement;
+  open: boolean;
+  onToggle: () => void;
+}) {
+  const text = measurementText(measurement);
+  if (!measurement.mediaId) return <strong className="data">{text}</strong>;
+
+  return (
+    <button
+      type="button"
+      className="linkbtn data timeline__size"
+      aria-expanded={open}
+      onClick={onToggle}
+    >
+      <strong>{text}</strong>
+      <span className="xs"> {open ? '· hide the photo' : '· from a photo'}</span>
+    </button>
+  );
+}
+
 export function FishTimeline({ timeline, title, onMemorialPage = false }: {
   timeline: FishTimelineView;
   title: string;
@@ -90,6 +119,9 @@ export function FishTimeline({ timeline, title, onMemorialPage = false }: {
   onMemorialPage?: boolean;
 }) {
   const { entries, anchor, byMedia, quantity, isGroup } = timeline;
+
+  /** Which size has its photograph open. One at a time - spec 047. */
+  const [openShot, setOpenShot] = useState<Id | undefined>();
 
   /*
    * A measurement read off a photo is rendered ON that photo's row, so the two
@@ -169,19 +201,57 @@ export function FishTimeline({ timeline, title, onMemorialPage = false }: {
                 {entry.kind === 'photo' && (
                   <>
                     <strong>Photographed</strong>
-                    {onPhoto && <span className="data xs"> — {measurementText(onPhoto)}</span>}
+                    {/* Spec 037 draws a same-day measurement on the
+                        photograph's own row; spec 047 makes that size the same
+                        control it is anywhere else, so both shapes behave
+                        alike. */}
+                    {onPhoto && (
+                      <>
+                        {' — '}
+                        <Size
+                          measurement={onPhoto}
+                          open={openShot === onPhoto.id}
+                          onToggle={() => setOpenShot(openShot === onPhoto.id ? undefined : onPhoto.id)}
+                        />
+                      </>
+                    )}
+                    {onPhoto && openShot === onPhoto.id && onPhoto.mediaId && (
+                      <MeasurementPhoto mediaId={onPhoto.mediaId} alt={`${title} at ${measurementText(onPhoto)}`} />
+                    )}
                   </>
                 )}
 
                 {entry.kind === 'measurement' && entry.measurement && (
                   <>
-                    <strong className="data">{measurementText(entry.measurement)}</strong>
+                    <Size
+                      measurement={entry.measurement}
+                      open={openShot === entry.measurement.id}
+                      onToggle={() => setOpenShot(
+                        openShot === entry.measurement!.id ? undefined : entry.measurement!.id,
+                      )}
+                    />
                     {/* A group's measurement is of ONE of them. Averaging
                         several would be a number about no actual fish. */}
                     {isGroup && <span className="xs muted"> — one of them</span>}
                     {entry.measurement.note && (
                       <p className="xs muted" style={{ marginBottom: 0 }}>{entry.measurement.note}</p>
                     )}
+                    {openShot === entry.measurement.id && entry.measurement.mediaId && (
+                      <MeasurementPhoto
+                        mediaId={entry.measurement.mediaId}
+                        alt={`${title} at ${measurementText(entry.measurement)}`}
+                      />
+                    )}
+                    {/* Spec 047. `deleteMeasurement` has existed since spec 037
+                        and nothing ever called it, so a mistyped row was
+                        permanent. Matches the control spec 046 gave notes. */}
+                    <button
+                      type="button"
+                      className="linkbtn xs"
+                      onClick={() => void deleteMeasurement(entry.measurement!.id)}
+                    >
+                      Remove this measurement
+                    </button>
                   </>
                 )}
 

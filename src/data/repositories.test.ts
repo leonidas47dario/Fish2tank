@@ -9,6 +9,7 @@ import {
   addPhotos,
   deletePhoto,
   recordMeasurement,
+  measurementOn,
   deleteMeasurement,
   setAcquiredOn,
   writeNote,
@@ -2044,5 +2045,127 @@ describe('keeper notes and correcting a memorial (spec 046)', () => {
     expect(out.principles).toBe(1);
     const left = await db.keeperPrinciples.toArray();
     expect(left.map((k) => k.text)).toEqual(['Feed less than you think.']);
+  });
+});
+
+describe('a day holds one size (spec 047)', () => {
+  async function aHolding() {
+    const { holding } = await createOpeningBalanceHolding(
+      { aquariumId: 'tank_75g', rawLabel: 'Redfin Cactus Pleco', kind: 'individual', openingQuantity: 1 }, db,
+    );
+    return holding;
+  }
+
+  it('RECORDING A DAY THAT ALREADY HAS A SIZE REPLACES IT', async () => {
+    // The bug this fixes: `add` minted a row every save, so the only way to
+    // correct a measurement could not correct anything.
+    const h = await aHolding();
+    await recordMeasurement(
+      { holdingId: h.id, observedOn: '2026-09-03', length: { value: 1.5, unit: 'in' } }, db);
+
+    await recordMeasurement(
+      { holdingId: h.id, observedOn: '2026-09-03', length: { value: 2.8, unit: 'in' } }, db);
+
+    const rows = await db.holdingMeasurements.toArray();
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.length.value).toBe(2.8);
+  });
+
+  it('collapses several legacy rows on one day the first time it is touched', async () => {
+    // Exactly the reported screenshot: 1.5in, 1.5in and 4in under one date.
+    // Written straight to the table, since the repository can no longer
+    // produce this state.
+    const h = await aHolding();
+    for (const value of [1.5, 1.5, 4]) {
+      await db.holdingMeasurements.add({
+        id: newId('meas'), holdingId: h.id, observedOn: '2026-09-03',
+        length: { value, unit: 'in' }, createdAt: new Date().toISOString(),
+      });
+    }
+
+    await recordMeasurement(
+      { holdingId: h.id, observedOn: '2026-09-03', length: { value: 2.8, unit: 'in' } }, db);
+
+    const rows = await db.holdingMeasurements.toArray();
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.length.value).toBe(2.8);
+  });
+
+  it('replaces WHOLESALE - the old note and photo link do not survive', async () => {
+    // A note left attached to a number it was not written about is a lie of
+    // the same kind as inventing the number.
+    const h = await aHolding();
+    const specimen = await ensureSpecimenForHolding(h.id, db);
+    const [shot] = await addPhotos({ specimenId: specimen.id, files: [photo()] }, db);
+    await recordMeasurement({
+      holdingId: h.id, observedOn: '2026-09-03', length: { value: 1.5, unit: 'in' },
+      mediaId: shot!.id, note: 'read off the photo',
+    }, db);
+
+    await recordMeasurement(
+      { holdingId: h.id, observedOn: '2026-09-03', length: { value: 2.8, unit: 'in' } }, db);
+
+    const rows = await db.holdingMeasurements.toArray();
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.note).toBeUndefined();
+    expect(rows[0]!.mediaId).toBeUndefined();
+  });
+
+  it('LEAVES OTHER DAYS ALONE', async () => {
+    // The whole point of the series: a fish measured three times has a growth
+    // story. Replacing across dates would destroy it.
+    const h = await aHolding();
+    await recordMeasurement(
+      { holdingId: h.id, observedOn: '2024-03-12', length: { value: 1.1, unit: 'in' } }, db);
+    await recordMeasurement(
+      { holdingId: h.id, observedOn: '2026-01-04', length: { value: 1.9, unit: 'in' } }, db);
+
+    await recordMeasurement(
+      { holdingId: h.id, observedOn: '2026-01-04', length: { value: 2.2, unit: 'in' } }, db);
+
+    const rows = (await db.holdingMeasurements.toArray())
+      .sort((a, b) => a.observedOn.localeCompare(b.observedOn));
+    expect(rows.map((r) => [r.observedOn, r.length.value]))
+      .toEqual([['2024-03-12', 1.1], ['2026-01-04', 2.2]]);
+  });
+
+  it('leaves ANOTHER FISH measured on the same day alone', async () => {
+    // The key is (holding, day), not the day.
+    const mine = await aHolding();
+    const theirs = await aHolding();
+    await recordMeasurement(
+      { holdingId: mine.id, observedOn: '2026-09-03', length: { value: 1.5, unit: 'in' } }, db);
+    await recordMeasurement(
+      { holdingId: theirs.id, observedOn: '2026-09-03', length: { value: 9, unit: 'in' } }, db);
+
+    await recordMeasurement(
+      { holdingId: mine.id, observedOn: '2026-09-03', length: { value: 2.8, unit: 'in' } }, db);
+
+    const rows = await db.holdingMeasurements.toArray();
+    expect(rows).toHaveLength(2);
+    expect(rows.find((r) => r.holdingId === theirs.id)!.length.value).toBe(9);
+  });
+
+  it('measurementOn reads back what a day says, and nothing for a day it does not', async () => {
+    const h = await aHolding();
+    await recordMeasurement(
+      { holdingId: h.id, observedOn: '2026-09-03', length: { value: 2.8, unit: 'in' } }, db);
+
+    expect((await measurementOn(h.id, '2026-09-03', db))!.length.value).toBe(2.8);
+    expect(await measurementOn(h.id, '2026-09-04', db)).toBeUndefined();
+  });
+
+  it('measurementOn offers the NEWEST of several legacy rows', async () => {
+    // So the form prefills with the most recent thing the keeper said, rather
+    // than the oldest. The save then collapses the rest.
+    const h = await aHolding();
+    for (const [value, at] of [[1.5, '2026-09-03T09:00:00.000Z'], [4, '2026-09-03T11:00:00.000Z']] as const) {
+      await db.holdingMeasurements.add({
+        id: newId('meas'), holdingId: h.id, observedOn: '2026-09-03',
+        length: { value, unit: 'in' }, createdAt: at,
+      });
+    }
+
+    expect((await measurementOn(h.id, '2026-09-03', db))!.length.value).toBe(4);
   });
 });

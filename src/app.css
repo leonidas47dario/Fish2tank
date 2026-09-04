@@ -2185,6 +2185,9 @@ select.inline-input { cursor: pointer; }
    sat as a full ghost button under every note, which made the row look like a
    form with a submit button rather than a sentence somebody wrote. */
 .linkbtn {
+  /* Block, so it takes its own line. Inline it ran straight into the value
+     above it - "4inRemove this measurement" - which reads as one word. */
+  display: block;
   background: none;
   border: 0;
   padding: 0;
@@ -2195,3 +2198,29 @@ select.inline-input { cursor: pointer; }
   min-height: 0;
 }
 .linkbtn:hover:not(:disabled) { color: var(--color-text); }
+
+/* A size that can show the photograph it was read from - spec 047. */
+.timeline__size {
+  /* Overrides `.linkbtn`'s block: a size sits IN the sentence, beside
+     "Photographed —" or "one of them", rather than starting a line. */
+  display: inline-block;
+  text-decoration: none;
+  color: inherit;
+  text-align: left;
+}
+.timeline__size .xs { color: var(--color-faint); }
+.timeline__size:hover:not(:disabled) { color: var(--color-primary); }
+/* The photograph itself, revealed under the row. Full column width, which is
+   why it reads the preview rendition rather than the thumbnail. */
+.timeline__shot {
+  margin: var(--space-2) 0 0;
+}
+.timeline__shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 50vh;
+  object-fit: contain;
+  border-radius: var(--radius-control);
+  background: var(--color-surface-raised);
+}
