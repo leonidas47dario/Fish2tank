@@ -106,9 +106,23 @@ export function TankViewer({
         position had changed. Stable bars, a highlighted selection, and a count
         on the grid answer the same question without the ground moving.
       */}
-      <WaterColumn stats={stats} selected={filter.zone} onSelect={select} />
-      <Temperament stats={stats} selected={filter.aggression} onSelect={select} />
-      <GrowsInto residents={residents} selected={filter.speciesId} onSelect={select} />
+      <section className="card stack mixcard">
+        {/*
+          Spec 052. ONE CARD, TWO COMPACT GROUPS, rather than two full cards.
+          The complaint was that the charts were so tall you could not see a
+          chart and the grid it filters at the same time - and a filter you
+          cannot watch work does not read as a filter.
+
+          TOUCH HAS NO HOVER, so on the device this app is built for the only
+          affordance was the shape of the row. The card says it in words, once,
+          rather than putting a chevron on twelve rows.
+        */}
+        <p className="xs muted mixcard__hint" style={{ marginBottom: 0 }}>
+          Tap anything below to filter the fish.
+        </p>
+        <WaterColumn stats={stats} selected={filter.zone} onSelect={select} />
+        <Temperament stats={stats} selected={filter.aggression} onSelect={select} />
+      </section>
       <ResidentGrid
         residents={shown}
         renderTile={renderTile}
@@ -119,10 +133,6 @@ export function TankViewer({
           <FilterSummary
             filter={filter}
             stats={stats}
-            // The name comes from the matched fish rather than from a second
-            // catalog lookup: the viewer takes props only, and the residents
-            // already carry the name the grid draws.
-            speciesName={shown.find((r) => r.speciesId === filter.speciesId)?.commonName}
             shownFish={countFish(shown)}
             totalFish={stats.fish}
             onClear={() => setFilter({})}
@@ -141,10 +151,9 @@ export function TankViewer({
  * showing three of twenty-four fish with nothing saying why is indistinguishable
  * from a tank that lost twenty-one.
  */
-function FilterSummary({ filter, stats, speciesName, shownFish, totalFish, onClear }: {
+function FilterSummary({ filter, stats, shownFish, totalFish, onClear }: {
   filter: TankFilter;
   stats: TankStats;
-  speciesName?: string;
   shownFish: number;
   totalFish: number;
   onClear: () => void;
@@ -155,13 +164,6 @@ function FilterSummary({ filter, stats, speciesName, shownFish, totalFish, onCle
       && (filter.aggression === 'unknown'
         ? 'Not rated'
         : AGGRESSION_LABEL[filter.aggression as keyof typeof AGGRESSION_LABEL]),
-    /*
-     * Named, not "one species". The grid below is often scrolled out of view
-     * on a phone by the time this line is read, and a summary that will not
-     * say what it is filtering to is not a summary. Falls back only when the
-     * selection matches nothing, where there is no name to give.
-     */
-    filter.speciesId && (speciesName ?? 'one species'),
   ].filter(Boolean) as string[];
 
   return (
@@ -255,8 +257,8 @@ export function WaterColumn({ stats, selected, onSelect }: { stats: TankStats } 
     : { role: 'img', 'aria-label': stats.byZone.map((z) => `${z.label}: ${z.fish} fish`).join(', ') };
 
   return (
-    <section className="card stack">
-      <h2>Where they swim</h2>
+    <section className="stack mixgroup">
+      <h3 className="mixgroup__head">Where they swim</h3>
       <div className="watercolumn" {...wrap}>
         {stats.byZone.map((z) => {
           const on = selected === z.key;
@@ -313,8 +315,8 @@ export function Temperament({ stats, selected, onSelect }: { stats: TankStats } 
     : AGGRESSION_LABEL[key as keyof typeof AGGRESSION_LABEL]);
 
   return (
-    <section className="card stack">
-      <h2>Temperament</h2>
+    <section className="stack mixgroup">
+      <h3 className="mixgroup__head">Temperament</h3>
 
       {/* The stacked bar stays decorative even when interactive: a 6px sliver
           is not a tap target anybody can hit, and the legend row beneath it
@@ -361,64 +363,6 @@ export function Temperament({ stats, selected, onSelect }: { stats: TankStats } 
   );
 }
 
-/**
- * What the tank becomes.
- *
- * Magnitude, low to high, so one hue and a length - and the single most
- * useful thing a keeper can show a guest, because the two-inch fish in front
- * of them is a fourteen-inch fish later.
- */
-export function GrowsInto({ residents, selected, onSelect }: {
-  residents: TankResident[];
-} & Selectable) {
-  const withSize = residents.filter((r) => r.adultSizeIn !== undefined)
-    .sort((a, b) => b.adultSizeIn! - a.adultSizeIn!);
-  const sized = withSize.slice(0, 8);
-  if (sized.length === 0) return null;
-  const max = Math.max(...sized.map((r) => r.adultSizeIn!));
-
-  return (
-    <section className="card stack">
-      <h2>Grown up</h2>
-      <p className="xs muted" style={{ marginBottom: 0 }}>
-        {withSize.length > sized.length
-          ? `The ${sized.length} that grow biggest, at adult size.`
-          : 'Adult size each of these reaches.'}
-      </p>
-      <div className="bars">
-        {sized.map((r) => {
-          const body = (
-            <>
-              <span className="bars__label">{r.commonName}</span>
-              <span className="bars__track">
-                <span className="bars__fill" style={{ width: `${(r.adultSizeIn! / max) * 100}%` }} />
-              </span>
-              <span className="bars__value data">{Math.round(r.adultSizeIn!)}″</span>
-            </>
-          );
-          // A row with no species has nothing to filter TO: the grid keys on
-          // speciesId, so an unresolved label would select nothing at all.
-          if (!onSelect || !r.speciesId) {
-            return <div key={r.holding.id} className="bars__row">{body}</div>;
-          }
-          const on = selected === r.speciesId;
-          return (
-            <button
-              key={r.holding.id}
-              type="button"
-              className={`bars__row bars__row--tappable${on ? ' is-on' : ''}`}
-              aria-pressed={on}
-              aria-label={`${r.commonName}, ${Math.round(r.adultSizeIn!)} inches grown`}
-              onClick={() => onSelect('speciesId', r.speciesId!)}
-            >
-              {body}
-            </button>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
 
 /** What one fish looks like on the grid. Shared so both callers agree. */
 export function ResidentTileContent({ resident }: { resident: ViewerResident }) {
