@@ -1307,6 +1307,9 @@ summary.factor::-webkit-details-marker { display: none; }
 }
 .stat__value { font-size: var(--size-xl); line-height: 1.1; color: var(--color-text); }
 .stat__label { font-size: var(--size-xs); color: var(--color-muted); }
+/* The denominator, under the number it qualifies - spec 051. Fainter than the
+   label, because it is a caveat on the figure rather than what the figure is. */
+.stat__note { font-size: var(--size-xs); color: var(--color-faint); }
 
 /* Water column. Bands stack in the order the fish occupy them, so position
    carries the meaning and no colour ramp is needed. */
