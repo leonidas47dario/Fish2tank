@@ -238,13 +238,28 @@ a real property of the API that any future use of it needs to know.
 produced, and they cost one API call each on the species where the earlier
 routes fail. The route sits below Commons precisely so it only runs then.
 
-**And the batch is not representative.** `targets()` sorts by market listings
-descending, so this run took the 150 most commonly sold fish — exactly the
-species Wikipedia covers best. The obscure marine tail, which is where the gap
-is concentrated, is where the earlier routes are expected to thin out and
-iNaturalist to earn more. The full-run breakdown replaces this table when it
-lands; until then, **2.7% is the number on record**, not an extrapolation from
-it.
+**The full run is now in, and the tail behaved as predicted — barely.**
+`targets()` sorts by market listings descending, so the 150-species batch took
+the most commonly sold fish, exactly the species Wikipedia covers best. Running
+the remaining 1,020, which is the obscure tail:
+
+| Route | Resolved |
+|---|---:|
+| Wikipedia article | 694 |
+| Commons search | 106 |
+| Vendor listing | 44 |
+| **iNaturalist** | **27** |
+| *nothing on any route* | *149* |
+
+871 of 1,020, 85.4%. **iNaturalist's marginal contribution rose from 2.7% to
+3.1%** — the predicted direction, at a magnitude that does not change any
+conclusion. Across both runs it produced **31 portraits**, each for a species
+the other three routes could not answer.
+
+**The headline is the pipeline, not the new route.** `images.jsonl` went from
+1,012 rows to **2,027**, and portrait coverage from **989 of 2,155 (45.9%) to
+2,027 (94.1%)**. 128 species still have nothing anywhere. That is what asking
+was worth.
 
 ### The lesson worth keeping
 
