@@ -75,7 +75,7 @@ export interface CatalogEntry {
    */
   portrait?: {
     url: string;
-    provenance: 'wikimedia' | 'vendor' | 'web';
+    provenance: 'wikimedia' | 'inaturalist' | 'vendor' | 'web';
     license?: string;
     artist?: string;
     attributionUrl?: string;
@@ -394,7 +394,7 @@ async function main() {
         ? {
             portrait: {
               url,
-              provenance: (nn(r.img_provenance) ?? 'wikimedia') as 'wikimedia' | 'vendor' | 'web',
+              provenance: (nn(r.img_provenance) ?? 'wikimedia') as 'wikimedia' | 'inaturalist' | 'vendor' | 'web',
               license: nn(r.img_license),
               artist: nn(r.img_artist),
               attributionUrl: attribution,

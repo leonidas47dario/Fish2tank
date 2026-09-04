@@ -17,7 +17,7 @@ import type { MarketSpeciesStats } from './market';
 export interface CatalogPortrait {
   url: string;
   /** Which credit line to render. See spec 002. */
-  provenance: 'wikimedia' | 'vendor' | 'web';
+  provenance: 'wikimedia' | 'inaturalist' | 'vendor' | 'web';
   /** Present for Wikimedia images only; vendor and web photos have none. */
   license?: string;
   artist?: string;
@@ -435,7 +435,10 @@ export function buildCatalogCard(species: CatalogSpecies, rows: CatalogCardRows)
  * the presence of a `license` field never overrides it.
  */
 export function portraitCredit(p: CatalogPortrait): string {
-  if (p.provenance === 'wikimedia' && p.license) {
+  // iNaturalist sits with Wikimedia rather than with the vendor photos: spec
+  // 058 admits only cc0/cc-by/cc-by-sa, so the picture genuinely IS used under
+  // a stated free licence and naming it is accurate, not borrowed shape.
+  if ((p.provenance === 'wikimedia' || p.provenance === 'inaturalist') && p.license) {
     return p.artist ? `${p.artist}, ${p.license}` : p.license;
   }
   if (p.provenance === 'vendor' && p.artist) return `Photo: ${p.artist} (product listing)`;
