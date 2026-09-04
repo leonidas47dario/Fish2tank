@@ -204,6 +204,35 @@ describe('whoLivedHere (spec 048)', () => {
     expect(out.find((r) => r.id === 'r2')!.name).toBe('A fish');
   });
 
+  it('NAMES A FISH STOCKED STRAIGHT INTO A TANK BY SPECIES', () => {
+    /*
+     * Spec 050. `stockTank` creates no specimen and sets no rawLabel, so such
+     * a holding fell all the way through to "A fish" - survivable in a text
+     * list and not on a tile with its own portrait beside the name.
+     */
+    const out = whoLivedHere({
+      aquariumId: 'aq_75',
+      holdings: [holding('h1', { rawLabel: undefined, speciesId: 'sp_neon' })],
+      residencies: [residency('r1', 'h1', 'aq_75', '2024-01-01', '2025-01-01')],
+      memorials: [], specimens: [], aquariums: TANKS,
+      speciesNames: new Map([['sp_neon', 'Neon Tetra']]),
+    });
+
+    expect(out[0]!.name).toBe('Neon Tetra');
+  });
+
+  it('still prefers what the keeper typed over the catalog name', () => {
+    const out = whoLivedHere({
+      aquariumId: 'aq_75',
+      holdings: [holding('h1', { rawLabel: 'Severum (unspecified)', speciesId: 'sp_neon' })],
+      residencies: [residency('r1', 'h1', 'aq_75', '2024-01-01', '2025-01-01')],
+      memorials: [], specimens: [], aquariums: TANKS,
+      speciesNames: new Map([['sp_neon', 'Neon Tetra']]),
+    });
+
+    expect(out[0]!.name).toBe('Severum (unspecified)');
+  });
+
   it('survives a holding whose tank record is gone', () => {
     // A deleted tank leaves residencies behind (spec 013 keeps them).
     const out = run({

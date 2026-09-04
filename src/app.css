@@ -2225,28 +2225,30 @@ select.inline-input { cursor: pointer; }
   background: var(--color-surface-raised);
 }
 
-/* Who lived here - spec 048. A list of animals, deliberately not a table of
-   figures: no counts, no rates, nothing to compare one tank against another. */
-.livedhere { gap: var(--space-3); }
-.livedhere__row {
-  display: grid;
-  grid-template-columns: 1.5rem 1fr;
-  gap: var(--space-2);
-  align-items: start;
-}
-.livedhere__mark {
-  display: grid;
-  place-items: center;
-  padding-top: 2px;
-  color: var(--color-faint);
-}
-.livedhere__dash { font-size: var(--size-sm); }
-.livedhere__body {
+/*
+ * Who lived here before - spec 048, given faces by spec 050.
+ *
+ * A grid of the same tiles as the resident grid above, deliberately: the fish
+ * you lost should not be in a plainer format than the fish you still have. The
+ * differences are the two that carry meaning - dimmed, because these are not
+ * residents, and a wing mark where a death happened here.
+ */
+.departed-tile { display: flex; flex-direction: column; }
+.departed-tile:hover { opacity: 1; border-color: var(--color-primary); }
+/* The facts block sits under the name, inside the same padded body. */
+.departed__facts {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  min-width: 0;
+  padding-top: 0;
 }
+.departed__end {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--color-muted);
+}
+.departed__end svg { flex: none; }
 
 /* ═══════════════════════════════════════════════════════════════════════
    Filtering the tank from its dashboard - spec 049

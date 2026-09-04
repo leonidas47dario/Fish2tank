@@ -65,6 +65,17 @@ export function whoLivedHere(input: {
   memorials: Memorial[];
   specimens: Specimen[];
   aquariums: Aquarium[];
+  /**
+   * `speciesId` → common name, so a fish stocked straight into a tank by
+   * species has a name - spec 050.
+   *
+   * PASSED IN RATHER THAN LOOKED UP, because `domain/` imports no catalog and
+   * this stays a pure function. Without it a holding created by `stockTank`
+   * has no `rawLabel` and no specimen, so it rendered as "A fish" - which was
+   * survivable in a text list and is not on a tile with its portrait beside
+   * the name.
+   */
+  speciesNames?: Map<Id, string>;
 }): FormerResident[] {
   const {
     aquariumId, residencies, holdings, memorials, specimens, aquariums,
@@ -115,9 +126,16 @@ export function whoLivedHere(input: {
       id: residency.id,
       holdingId: holding.id,
       specimenId: holding.specimenId,
+      /*
+       * A nickname first: this section is about individual fish you lost, and
+       * "Comet" is the name that matters there. Then whatever the keeper
+       * typed, then the catalog's name for the species, and only then the
+       * honest placeholder - never a guess at what an unlabelled fish was.
+       */
       name: specimen?.nickname
         ?? holding.rawLabel
         ?? specimen?.rawLabel
+        ?? (holding.speciesId ? input.speciesNames?.get(holding.speciesId) : undefined)
         ?? 'A fish',
       from: residency.startDate,
       to: residency.endDate,
