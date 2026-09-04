@@ -1,11 +1,15 @@
 /**
- * Who lived in this tank and does not now - spec 048.
+ * Who lived in this tank and does not now - spec 048, given faces by spec 050.
  *
- * WHAT THIS MAKES GOOD ON. Fish Heaven's subtitle promises "still part of
- * every tank they lived in", and until now nothing joined a memorial to a
- * place: a fish that lived in the 75 for two years vanished from that tank the
- * moment it died. The join needed no new storage - a residency has always
- * known which tank, and a memorial has always known which holding.
+ * WHY IT IS A GRID AND NOT A LIST. It shipped as a text list beneath a grid of
+ * photographed tiles, which put the fish you lost in a plainer format than the
+ * fish you still have - on the one screen where that reads as a judgement. It
+ * was also inconsistent for no reason: `chooseArt` has decided which picture a
+ * fish wears since spec 021, and this section simply never asked.
+ *
+ * SAME COMPONENT, NOT A COPY. The tiles render through `ResidentTileContent`,
+ * the one the resident grid uses, so the two cannot drift into looking almost
+ * alike - which is worse than either looking the same or looking different.
  *
  * IT DECIDES NOTHING. Every rule about what may be claimed - above all whether
  * a death may be attributed to THIS tank - lives in
@@ -16,7 +20,8 @@
  * however gently it is worded, and this is a list of animals.
  */
 import { Link } from 'react-router-dom';
-import type { FormerResident } from '@/domain/who-lived-here';
+import type { FormerResidentView } from '../hooks';
+import { ResidentTileContent } from './tank/TankViewer';
 import { ButterflyIcon } from './Icons';
 
 /** `2026-04-19` → `19 Apr 2026`, parsed as UTC so no timezone moves a day. */
@@ -29,16 +34,16 @@ function longDate(on: string): string {
 }
 
 export function WhoLivedHere({ rows, tankName }: {
-  rows: FormerResident[] | undefined;
+  rows: FormerResidentView[] | undefined;
   tankName: string;
 }) {
   if (rows === undefined) return null;
 
   if (rows.length === 0) {
     return (
-      <section className="card stack">
-        <strong>Who lived here before</strong>
-        {/* Gently, rather than an empty list under a heading that promises
+      <section className="stack">
+        <h2>Who lived here before</h2>
+        {/* Gently, rather than an empty grid under a heading that promises
             something. Nobody having left is a good state, not a missing one. */}
         <p className="small muted" style={{ marginBottom: 0 }}>
           Everyone who has lived in {tankName} is still here.
@@ -48,82 +53,108 @@ export function WhoLivedHere({ rows, tankName }: {
   }
 
   return (
-    <section className="card stack">
+    <section className="stack">
       {/*
-        "BEFORE" IS LOAD-BEARING. The tank's own grid two sections up is headed
-        "Who lives here", and the two differ by one letter otherwise - which
-        reads fine to whoever built it and not at all to somebody scanning the
-        page. One word removes the collision and keeps the name that was asked
-        for.
+        "BEFORE" IS LOAD-BEARING. The resident grid above is headed "Who lives
+        here", and the two differ by one letter otherwise - which reads fine to
+        whoever built it and not at all to somebody scanning the page. Now that
+        both are grids of the same tiles, the wording is carrying more weight,
+        not less.
       */}
-      <strong>Who lived here before</strong>
+      <h2>Who lived here before</h2>
       <p className="xs muted" style={{ marginBottom: 0 }}>
         Fish that lived in {tankName} and have moved on or been lost.
       </p>
 
-      <ul className="list livedhere">
-        {rows.map((row) => (
-          <li key={row.id} className="livedhere__row">
-            <span className="livedhere__mark">
-              {/* The wing mark, only where a death actually happened here -
-                  the same substitution spec 046 recorded for Fish Heaven. */}
-              {row.diedHere
-                ? <ButterflyIcon size={18} aria-hidden="true" />
-                : <span aria-hidden="true" className="livedhere__dash">→</span>}
-            </span>
+      <div className="tank-grid">
+        {rows.map((row) => {
+          /*
+           * ONE TAP TARGET PER TILE, like the grid above - three competing
+           * links inside one row were already too many for a thumb, and a
+           * tile has less room, not more.
+           *
+           * In order of what the reader is most likely asking. The memorial
+           * where there is one. Otherwise the fish's own record - but a
+           * holding created by `stockTank` or the inventory import has no
+           * specimen and therefore no record page, which left most tiles
+           * inert. So then the tank it moved to, which is the answer to
+           * "where did it go" and is exactly the link the text list carried.
+           * A fish with none of the three is a plain tile rather than a dead
+           * link, which is the rule the resident grid already follows.
+           */
+          const to = row.memorial
+            ? `/heaven/${row.memorial.id}`
+            : row.specimenId ? `/specimen/${row.specimenId}`
+              : row.movedTo ? `/tanks/${row.movedTo.id}`
+                : undefined;
 
-            <span className="livedhere__body">
-              <strong>{row.name}</strong>
+          const tile = (
+            <>
+              <ResidentTileContent
+                resident={{
+                  holding: { id: row.holdingId } as never,
+                  quantity: 1,
+                  speciesId: undefined,
+                  commonName: row.name,
+                  scientificName: row.scientificName,
+                  artUrl: row.artUrl,
+                }}
+              />
+              <span className="tank-tile__body departed__facts">
+                <span className="xs muted data">
+                  {longDate(row.from)} — {row.to ? longDate(row.to) : 'still here'}
+                </span>
 
-              <span className="xs muted data">
-                {longDate(row.from)} — {row.to ? longDate(row.to) : 'still here'}
+                {row.diedHere && row.memorial && (
+                  <span className="xs departed__end">
+                    <ButterflyIcon size={14} aria-hidden="true" />
+                    {' '}Remembered {longDate(row.memorial.occurredOn)}
+                  </span>
+                )}
+
+                {/* A group that lost some and is still in the tank. Said
+                    plainly: "still here" beside "Remembered" would otherwise
+                    read as a contradiction rather than two true things. */}
+                {!row.to && row.diedHere && (
+                  <span className="xs muted">
+                    {row.isGroup ? 'Some of them are still in this tank.' : 'Still in this tank.'}
+                  </span>
+                )}
+
+                {!row.diedHere && row.movedTo && (
+                  <span className="xs muted">Moved to {row.movedTo.name}</span>
+                )}
+
+                {/*
+                  Lived here, left, and died SOMEWHERE ELSE later. Never filed
+                  as having died here - that would attribute a death to a tank
+                  the fish had already left - but still reachable, which is why
+                  the tile links to the memorial.
+                */}
+                {!row.diedHere && row.memorial && (
+                  <span className="xs muted">
+                    Later remembered, {longDate(row.memorial.occurredOn)}
+                  </span>
+                )}
+
+                {!row.diedHere && !row.movedTo && !row.memorial && (
+                  <span className="xs muted">No longer in a tank</span>
+                )}
               </span>
+            </>
+          );
 
-              {/* A group that lost some and is still in the tank. Said plainly,
-                  because "still here" beside "Remembered" otherwise reads as a
-                  contradiction rather than as two true things. */}
-              {!row.to && row.diedHere && (
-                <span className="xs muted">
-                  {row.isGroup ? 'Some of them are still in this tank.' : 'Still in this tank.'}
-                </span>
-              )}
+          /* `--plain` is the dimmed treatment that already exists for a tile
+             that is not a live resident. Identical tiles for the living and
+             the departed, in two grids under two nearly identical headings,
+             is a way to misread your own tank. */
+          const className = `tank-tile tank-tile--plain departed-tile${row.diedHere ? ' departed-tile--remembered' : ''}`;
 
-              {row.diedHere && row.memorial && (
-                <Link to={`/heaven/${row.memorial.id}`} className="xs">
-                  Remembered {longDate(row.memorial.occurredOn)}
-                </Link>
-              )}
-
-              {!row.diedHere && row.movedTo && (
-                <span className="xs muted">
-                  Moved to <Link to={`/tanks/${row.movedTo.id}`}>{row.movedTo.name}</Link>
-                </span>
-              )}
-
-              {/*
-                Lived here, left, and died SOMEWHERE ELSE later. Still
-                reachable, but never filed as having died here - that would
-                attribute a death to a tank the fish had already left.
-              */}
-              {!row.diedHere && row.memorial && (
-                <Link to={`/heaven/${row.memorial.id}`} className="xs">
-                  Later remembered, {longDate(row.memorial.occurredOn)}
-                </Link>
-              )}
-
-              {!row.diedHere && !row.movedTo && !row.memorial && (
-                <span className="xs muted">No longer in a tank</span>
-              )}
-
-              {row.specimenId && (
-                <Link to={`/specimen/${row.specimenId}`} className="xs muted">
-                  Their record
-                </Link>
-              )}
-            </span>
-          </li>
-        ))}
-      </ul>
+          return to
+            ? <Link key={row.id} to={to} className={className}>{tile}</Link>
+            : <div key={row.id} className={className}>{tile}</div>;
+        })}
+      </div>
     </section>
   );
 }
