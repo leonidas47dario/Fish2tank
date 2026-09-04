@@ -97,6 +97,12 @@ warehouse, which nothing in the PRD anticipated.
 
 ## Enhancement requests (not yet specced)
 
+> **Fish2Tank is assumed COMMERCIAL** (decided 2026-09-03). That rules out
+> CC-BY-NC sources - FishBase among them - for any data that ships in the app.
+> Facts (numbers, measured ranges) remain fair game from © sources; prose does
+> not. See `docs/specs/031-care-data-sources.md`.
+
+
 Raw feedback, kept here rather than turned into a spec under time pressure —
 per the gate in `CLAUDE.md`, a spec gets written before any of these become
 code, not as part of capturing the ask.
