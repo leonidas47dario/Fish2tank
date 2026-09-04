@@ -9,6 +9,7 @@
 import type { CurrencyCode, Id, PriceObservation, WaterType } from '@/domain/types';
 import type { OrganismKind, WaterZone } from './seed/taxonomy';
 import catalogJson from './seed/marts/catalog.json';
+import portraitTail from './seed/assets/portrait-tail.json';
 import { CANONICAL_BY_SYNONYM } from './seed/species-overrides';
 import { marketFor, scarcityFor, bandForSize, MARKET_INDEX } from './market';
 import { blendOwnPrices } from '@/engine/pricing/own-prices';
@@ -121,8 +122,44 @@ const BUNDLED_PORTRAITS = import.meta.glob('./seed/assets/portraits/*.jpg', {
   import: 'default',
 }) as Record<string, string>;
 
+/**
+ * Species whose portrait is served from `public/portraits/` rather than bundled
+ * - spec 059. Ids only, so the cost is a list of strings rather than 1,800
+ * images: ~36 KB raw and far less gzipped, against the 20.8 MB of precache the
+ * split removes.
+ */
+const TAIL_PORTRAITS = new Set(portraitTail as string[]);
+
+/**
+ * The URL for a species' portrait, from whichever tier holds it (spec 059).
+ *
+ * A CORE portrait is bundled, hashed and precached, so this returns the built
+ * asset URL and the picture is there offline on a fresh install.
+ *
+ * A TAIL portrait is copied verbatim to `public/portraits/`, so the URL is
+ * predictable and can be built here without a manifest. It is NOT precached: it
+ * is fetched on first view and kept by a runtime cache, which is the whole
+ * point - before this, every device downloaded all 984 of them (20.8 MB) before
+ * the app worked offline at all.
+ *
+ * WHY THE TAIL NEEDS A MANIFEST AND THE CORE DOES NOT. For the core the glob IS
+ * the manifest - a missing key means no file. A URL under `public/` is just a
+ * path, and returning one unconditionally would have quietly broken a
+ * distinction `Plate` makes on purpose: it shows "Picture didn't load" for a
+ * fetch that failed and a silhouette for a species that has no portrait at all,
+ * because conflating them "tells a user offline in a shop basement that a
+ * picture they have seen before is gone for good". A species whose download
+ * failed has an `images.jsonl` row and no file, so without the manifest it would
+ * have started claiming a picture that never existed.
+ *
+ * `portrait-tail.json` is written by `npm run portraits` from what it actually
+ * put on disk, so it cannot drift from the files the way a row could.
+ */
 export function portraitAsset(speciesId: string): string | undefined {
-  return BUNDLED_PORTRAITS[`./seed/assets/portraits/${speciesId}.jpg`];
+  const bundled = BUNDLED_PORTRAITS[`./seed/assets/portraits/${speciesId}.jpg`];
+  if (bundled) return bundled;
+  if (!TAIL_PORTRAITS.has(speciesId)) return undefined;
+  return `${import.meta.env.BASE_URL || '/'}portraits/${speciesId}.jpg`;
 }
 
 /**

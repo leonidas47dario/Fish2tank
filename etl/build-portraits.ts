@@ -14,12 +14,23 @@
  *   npm run portraits
  */
 import { chromium } from 'playwright';
-import { existsSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync, readFileSync, readdirSync, unlinkSync, renameSync } from 'node:fs';
 import { join } from 'node:path';
 import { readRows, isBundleable, type ImageRow } from './images-jsonl';
+import { CORE_DIR, TAIL_DIR, coreSpecies, tierFor, type ListingCounts } from './portrait-tiers';
 
 const IMAGES = 'data/market/images.jsonl';
-const OUT_DIR = 'src/data/seed/assets/portraits';
+const MARKET = 'src/data/seed/marts/market-index.json';
+/**
+ * Which species the app should look for under `public/portraits/`.
+ *
+ * Written from what is ACTUALLY ON DISK at the end of the run, not from the
+ * rows that were wanted. A species whose download failed has a row and no file,
+ * and `portraitAsset` must not offer a URL for it - that would turn "this
+ * species has no portrait" into "this picture failed to load", which `Plate`
+ * deliberately draws differently.
+ */
+const TAIL_MANIFEST = 'src/data/seed/assets/portrait-tail.json';
 
 /**
  * Cards are landscape now, not portrait.
@@ -75,23 +86,89 @@ async function fetchImage(url: string, attempt = 0): Promise<Response> {
   return fetchImage(url, attempt + 1);
 }
 
+/** Total listings per species, for ranking the core set. Absent file = no ranking. */
+function listingCounts(): ListingCounts {
+  if (!existsSync(MARKET)) return new Map();
+  const market = JSON.parse(readFileSync(MARKET, 'utf8')) as {
+    species: Record<string, { totalListings?: number }>;
+  };
+  return new Map(Object.entries(market.species ?? {}).map(([id, v]) => [id, v.totalListings ?? 0]));
+}
+
+/** Species ids that already have a file in `dir`. */
+function present(dir: string): Set<string> {
+  if (!existsSync(dir)) return new Set();
+  return new Set(readdirSync(dir).filter((f) => f.endsWith('.jpg')).map((f) => f.slice(0, -4)));
+}
+
 async function main() {
   if (!existsSync(IMAGES)) throw new Error(`${IMAGES} not found - run "npm run images" first.`);
 
   const rows: ImageRow[] = readRows();
+  const core = coreSpecies(rows, listingCounts());
+  mkdirSync(CORE_DIR, { recursive: true });
+  mkdirSync(TAIL_DIR, { recursive: true });
 
-  // Rebuild from scratch so a species dropped from the catalog does not leave
-  // an orphaned image behind in the bundle.
-  rmSync(OUT_DIR, { recursive: true, force: true });
-  mkdirSync(OUT_DIR, { recursive: true });
+  /*
+   * RECONCILE RATHER THAN REBUILD - spec 059.
+   *
+   * This used to `rmSync` the whole directory and re-download every row, which
+   * at 2,027 rows is a two-hour run to change nothing, and an interrupted one
+   * leaves the app with NO portraits rather than with stale ones. The reason
+   * for the demolition was real - a species dropped from the catalog must not
+   * leave an orphan in the bundle - so that is kept, by deleting the files that
+   * are no longer wanted instead of all of them.
+   *
+   * A species that has changed TIER is a delete on one side and a download on
+   * the other, which falls out of this without a special case.
+   */
+  const wanted = new Map<string, 'core' | 'tail'>();
+  for (const row of rows) {
+    if (!row.attribution_url || !isBundleable(row)) continue;
+    wanted.set(row.species_id, tierFor(row.species_id, core));
+  }
 
-  const browser = await chromium.launch(
-    process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {},
-  );
-  const page = await browser.newPage();
+  let removed = 0;
+  let moved = 0;
+  for (const [dir, tier] of [[CORE_DIR, 'core'], [TAIL_DIR, 'tail']] as const) {
+    const other = tier === 'core' ? TAIL_DIR : CORE_DIR;
+    for (const id of present(dir)) {
+      const want = wanted.get(id);
+      if (want === tier) continue;
+      // A species that changed TIER already has its bytes - the file is
+      // identical either side, only the directory decides whether it is
+      // precached. Moving it is why introducing the split costs no downloads
+      // at all, where delete-and-refetch would have re-fetched 811 images that
+      // were already on disk.
+      if (want) { renameSync(join(dir, `${id}.jpg`), join(other, `${id}.jpg`)); moved += 1; continue; }
+      unlinkSync(join(dir, `${id}.jpg`));
+      removed += 1;
+    }
+  }
+  const have = new Set([...present(CORE_DIR), ...present(TAIL_DIR)]);
+  console.log(`  ${have.size} on disk, ${moved} moved between tiers, ${removed} removed, ${wanted.size} wanted`);
+
+  /*
+   * Only launch a browser if there is something to decode.
+   *
+   * Chromium is here to downscale downloaded images, and once the run is
+   * incremental the common case is that nothing needs downloading at all - a
+   * re-run, or the tier split itself, which moved 811 files and fetched none.
+   * Launching anyway made a no-op run FAIL on a machine whose pinned browser
+   * build is missing, which is a failure with nothing behind it.
+   */
+  const toFetch = rows.filter((r) =>
+    r.attribution_url && isBundleable(r) && wanted.has(r.species_id) && !have.has(r.species_id));
+  const browser = toFetch.length > 0
+    ? await chromium.launch(
+      process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {},
+    )
+    : undefined;
+  const page = await browser?.newPage();
 
   let saved = 0;
   let failed = 0;
+  let skipped = 0;
   let bytes = 0;
 
   for (const row of rows) {
@@ -103,6 +180,9 @@ async function main() {
     // were .tif, which Chromium cannot decode.
     if (!row.attribution_url) continue;
     if (!isBundleable(row)) continue;
+    // Already on disk in the tier it belongs to. This is what makes a re-run
+    // free rather than a two-hour no-op.
+    if (have.has(row.species_id)) { skipped += 1; continue; }
     process.stdout.write(`  ${row.species_id.padEnd(28)}`);
     try {
       const res = await fetchImage(row.url);
@@ -111,7 +191,7 @@ async function main() {
 
       // Chromium does the decode/resize/encode. It handles every format
       // Commons serves, including the ones a minimal image library would not.
-      const out = await page.evaluate(
+      const out = await page!.evaluate(
         async ({ b64, mime, maxWidth, quality }) => {
           const img = new Image();
           img.src = `data:${mime};base64,${b64}`;
@@ -132,7 +212,8 @@ async function main() {
       );
 
       const buf = Buffer.from(out.data, 'base64');
-      writeFileSync(join(OUT_DIR, `${row.species_id}.jpg`), buf);
+      const dir = wanted.get(row.species_id) === 'core' ? CORE_DIR : TAIL_DIR;
+      writeFileSync(join(dir, `${row.species_id}.jpg`), buf);
       bytes += buf.length;
       saved += 1;
       console.log(`ok  ${out.w}x${out.h}  ${(buf.length / 1024).toFixed(0)}KB`);
@@ -145,13 +226,20 @@ async function main() {
     await sleep(DELAY_MS);
   }
 
-  await browser.close();
+  await browser?.close();
 
   console.log('\n─── portraits ───');
-  console.log(`  bundled  ${saved}`);
-  console.log(`  failed   ${failed}`);
-  console.log(`  total    ${(bytes / 1e6).toFixed(2)} MB  (avg ${(bytes / Math.max(1, saved) / 1024).toFixed(0)}KB)`);
-  console.log(`\n  wrote ${OUT_DIR}/`);
+  console.log(`  downloaded  ${saved}`);
+  console.log(`  already had ${skipped}`);
+  console.log(`  moved tier  ${moved}`);
+  console.log(`  removed     ${removed}`);
+  console.log(`  failed      ${failed}`);
+  console.log(`  new bytes   ${(bytes / 1e6).toFixed(2)} MB  (avg ${(bytes / Math.max(1, saved) / 1024).toFixed(0)}KB)`);
+  const tail = [...present(TAIL_DIR)].sort();
+  writeFileSync(TAIL_MANIFEST, `${JSON.stringify(tail, null, 0)}\n`);
+  console.log(`  core        ${present(CORE_DIR).size} in ${CORE_DIR}/  (bundled and precached)`);
+  console.log(`  tail        ${tail.length} in ${TAIL_DIR}/  (fetched on first view)`);
+  console.log(`  wrote       ${TAIL_MANIFEST}`);
 }
 
 main().catch((e) => {
