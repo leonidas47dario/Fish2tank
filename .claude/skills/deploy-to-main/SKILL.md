@@ -209,12 +209,30 @@ Then delete the promote branch and the feature branch:
 gh api -X DELETE repos/leonidas47dario/Fish2tank/git/refs/heads/promote
 ```
 
-**This deletion is best-effort, and has failed twice.** A `git push` of a ref
-deletion through the agent proxy dies with `send-pack: unexpected disconnect
-while reading sideband packet`, and retrying does not help. It leaves nothing
-wrong with the promotion - `main` is already correct - but the surviving branch
-blocks the *next* promotion's push, so if it will not go, say so rather than
-recording it as cosmetic, and handle it per step 3 next time.
+**This deletion is best-effort, and has now failed three times.** A `git push`
+of a ref deletion through the agent proxy dies with `send-pack: unexpected
+disconnect while reading sideband packet`, and retrying does not help. On
+2026-09-04 the same command surfaced the underlying cause first:
+
+```
+error: RPC failed; HTTP 403 curl 22 The requested URL returned error: 403
+send-pack: unexpected disconnect while reading sideband packet
+```
+
+A 403 is a refusal, not a flaky transfer - the session's git credential does not
+carry delete-ref permission - and `curl -sS "$HTTPS_PROXY/__agentproxy/status"`
+showed `recentRelayFailures: []`, so it is not the proxy either. **Treat the
+deletion as unavailable rather than unreliable**: try it once, and when it 403s,
+stop. Do not retry, and do not reach for the GitHub MCP server - it exposes
+`create_branch` but no delete-ref tool.
+
+This leaves nothing wrong with the promotion - `main` is already correct - but
+the surviving branch blocks the *next* promotion's push. So say so plainly
+rather than recording it as cosmetic, and expect step 3's replace-by-lease to be
+the **normal** path into a promotion, not the exception. Leaving `promote`
+pointing at the promotion you just verified is what makes that safe: the next
+session compares its tree against `main`, finds them equal, and knows it is a
+spent leftover.
 
 Finally confirm the production deploy, since a green PR is not a green site:
 
