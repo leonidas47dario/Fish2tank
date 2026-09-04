@@ -24,6 +24,10 @@ import {
   SYNC_INTERVAL_CHOICES,
 } from '@/data/sync/auto-sync';
 import { mediaSyncBlocker, runMediaSync, type MediaSyncResult } from '@/data/sync/media-sync';
+import { photoSyncWork } from '@/data/sync/media-queue';
+import { canSignOut, signOutMessage } from '@/data/sync/sign-out-gate';
+import { exportArchive } from '@/data/portability/export';
+import { BUILD_ID } from '@/build-info';
 import { autoSync, useAutoSyncState } from '@/ui/useAutoMediaSync';
 
 /** Human wording for each sync phase. The raw enum is shown alongside. */
@@ -40,8 +44,19 @@ const PHASE_TEXT: Record<string, string> = {
 export default function AccountPanel({ children }: { children?: ReactNode }) {
   const user = useObservable(db.cloud.currentUser);
   const syncState = useObservable(db.cloud.syncState);
-  const [busy, setBusy] = useState<'in' | 'out' | undefined>();
+  const [busy, setBusy] = useState<'in' | 'out' | 'backup' | undefined>();
   const [problem, setProblem] = useState<string>();
+
+  /*
+   * BUG-10, spec 045. `_logout()` clears every table including `blobs`, which
+   * is unsynced - so a photograph the queue has not pushed to R2 exists in no
+   * other place and signing out destroys it. This is the count of those.
+   */
+  const pendingPhotos = useLiveQuery(async () => (await photoSyncWork(db)).pending, []) ?? 0;
+  /** Set by taking an archive: the way THROUGH the gate, per spec 016. */
+  const [backedUp, setBackedUp] = useState(false);
+  const verdict = canSignOut({ pendingPhotos, syncPhase: syncState?.phase, backedUp });
+  const refusal = signOutMessage(verdict);
 
   // SyncState carries no timestamp, so the moment it last reached `in-sync` is
   // observed here rather than invented. Held in a ref between renders and
@@ -71,13 +86,57 @@ export default function AccountPanel({ children }: { children?: ReactNode }) {
   }
 
   async function signOut() {
+    /*
+     * REFUSED RATHER THAN WARNED ABOUT. The same precedent spec 016 set for
+     * erase and spec 028 for shared pages: abort rather than proceed with
+     * loss. Checked here as well as on the button, because a verdict that
+     * only guards the disabled attribute guards nothing.
+     */
+    if (!verdict.safe) {
+      console.warn('[sync] sign-out refused', {
+        blockers: verdict.blockers, photosAtRisk: verdict.photosAtRisk,
+      });
+      setProblem(refusal);
+      return;
+    }
     setBusy('out');
     setProblem(undefined);
     try {
       await db.cloud.logout();
-      console.info('[sync] signed out');
+      console.info('[sync] signed out', { photosAtRisk: verdict.photosAtRisk, backedUp });
     } catch (cause) {
       console.error('[sync] sign-out failed', cause);
+      setProblem(cause instanceof Error ? cause.message : String(cause));
+    }
+    setBusy(undefined);
+  }
+
+  /**
+   * Take the archive, then allow the sign-out.
+   *
+   * Not a way around the gate - the bytes genuinely exist somewhere `_logout`
+   * cannot reach once this succeeds, which is the whole objection answered.
+   * A failed export leaves the gate closed, because a backup that did not
+   * happen protects nothing (spec 016's rule).
+   */
+  async function backUpThenAllow() {
+    setBusy('backup');
+    setProblem(undefined);
+    try {
+      const { blob, filename } = await exportArchive(db, {
+        appBuild: BUILD_ID,
+        account: user?.email ?? undefined,
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      setBackedUp(true);
+      console.info('[sync] backup taken before sign-out', { filename });
+    } catch (cause) {
+      console.error('[sync] backup before sign-out failed', cause);
       setProblem(cause instanceof Error ? cause.message : String(cause));
     }
     setBusy(undefined);
@@ -99,12 +158,44 @@ export default function AccountPanel({ children }: { children?: ReactNode }) {
             Your records sync to every device you sign in on. Photos travel separately,
             below, because they are megabytes rather than kilobytes.
           </p>
-          <button type="button" onClick={() => void signOut()} disabled={Boolean(busy)}>
+          <button
+            type="button"
+            onClick={() => void signOut()}
+            disabled={Boolean(busy) || !verdict.safe}
+          >
             {busy === 'out' ? 'Signing out…' : 'Sign out'}
           </button>
-          <p className="xs muted" style={{ marginBottom: 0 }}>
-            Signing out leaves this device's copy exactly where it is. Nothing is deleted.
-          </p>
+
+          {/*
+            BUG-10, spec 045. The old line here said "Signing out leaves this
+            device's copy exactly where it is. Nothing is deleted." That was
+            false, and it was the reassurance somebody read in the second
+            before they pressed. `_logout()` clears `blobs`, which is unsynced,
+            so every photograph the queue had not pushed went with it - and
+            those are precisely the ones that existed nowhere else.
+
+            One of these two always renders, because a reassurance that is only
+            sometimes true is worse than none at all.
+          */}
+          {verdict.safe ? (
+            <p className="xs muted" style={{ marginBottom: 0 }}>
+              {backedUp && verdict.photosAtRisk > 0
+                ? `Backed up. ${verdict.photosAtRisk} ${verdict.photosAtRisk === 1 ? 'photograph is' : 'photographs are'} only in that archive, so keep the file.`
+                : 'Your photographs are all backed up to your account, so signing out leaves nothing behind.'}
+            </p>
+          ) : (
+            <>
+              <p className="warn small" style={{ marginBottom: 0 }}>{refusal}</p>
+              <button
+                type="button"
+                className="btn--ghost"
+                onClick={() => void backUpThenAllow()}
+                disabled={Boolean(busy)}
+              >
+                {busy === 'backup' ? 'Backing up…' : 'Back up, then let me sign out'}
+              </button>
+            </>
+          )}
         </>
       ) : (
         <>
