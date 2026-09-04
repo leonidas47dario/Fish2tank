@@ -606,6 +606,30 @@ export interface HoldingMeasurement {
   createdAt: Instant;
 }
 
+/**
+ * A dated note a keeper wrote about a fish - spec 046, FH-5.
+ *
+ * KEYED ON THE HOLDING, NOT THE MEMORIAL, and that is the whole design
+ * decision. Keyed on a memorial this is a feature of one screen; keyed on a
+ * holding it is a dated observation, so it lands in the timeline beside the
+ * photographs and life events in date order, and it works for a LIVING fish
+ * too - "moved him because the barbs were nipping" is worth writing down long
+ * before anything dies. Nothing about it is about death, so nothing needs a
+ * special case when a fish dies.
+ *
+ * `Memorial.story` is NOT replaced by this. That is what was written in the
+ * moment of recording the loss and keeps its own place; these are what gets
+ * added afterwards, which is the part that was missing.
+ */
+export interface KeeperNote {
+  id: Id;
+  holdingId: Id;
+  /** The day the note is ABOUT, which need not be the day it was typed. */
+  writtenOn: CalendarDate;
+  text: string;
+  createdAt: Instant;
+}
+
 export interface KeeperPrinciple {
   id: Id;
   text: string;

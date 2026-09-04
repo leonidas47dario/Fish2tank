@@ -82,8 +82,21 @@ export default defineConfig({
         // Portraits are part of the library, so they are precached: a catalog that
         // cannot draw itself offline has failed the core promise (NFR-02).
         globPatterns: ['**/*.{js,css,html,svg,png,jpg,woff2}'],
-        // ~1MB of portraits pushes past the 2MiB default.
-        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
+        /*
+         * ~1MB of portraits pushed past the 2MiB default; spec 056's care
+         * backfill pushed the app bundle itself past 4MiB.
+         *
+         * RAISED RATHER THAN LET IT FALL OUT OF THE PRECACHE. The over-limit
+         * asset is `index-*.js` - the app shell - and Workbox does not fail on
+         * one, it silently omits it, which would break NFR-02 outright: a
+         * catalog that cannot draw itself offline. The build errors instead,
+         * which is how this was noticed.
+         *
+         * The cost is smaller than it looks. The mart is inlined into the
+         * bundle (ENH-02), so 456 species of care data grew it 1.79 -> 2.46 MB
+         * raw but only 636 -> 672 KB gzipped: +35 KB over the wire.
+         */
+        maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
         // Media originals live in IndexedDB, never in the SW cache (NFR-03).
         // /uat/ is excluded from production's scope; see the note above.
         navigateFallbackDenylist,

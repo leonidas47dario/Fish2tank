@@ -4,8 +4,8 @@ import { db } from '@/data/db';
 import { readMediaBlob } from '@/data/media/read';
 import type { RenditionSize } from '@/data/media/renditions';
 import {
-  buildCatalogCard, CATALOG_BY_SPECIES, cardPrice, catalogShapeForLocal, marketAndScarcity,
-  pricesBySpecies, searchableSpecies,
+  buildCatalogCard, CATALOG_BY_SPECIES, cardPrice, catalogShapeForLocal, chooseArt,
+  marketAndScarcity, pricesBySpecies, searchableSpecies,
   type CatalogCard, type CatalogSpecies,
 } from '@/data/catalog';
 
@@ -16,6 +16,7 @@ import { summariseTank, type TankResident } from '@/domain/tank-stats';
 import {
   acquisitionAnchor, fishTimeline, measurementsByMedia, type Anchor, type TimelineEntry,
 } from '@/domain/fish-timeline';
+import { whoLivedHere, type FormerResident } from '@/domain/who-lived-here';
 import type { HoldingMeasurement, Id, Media } from '@/domain/types';
 import { useBlobUrl, useBlobUrls } from './blob-url';
 
@@ -215,37 +216,38 @@ export function useMediaUrl(media: Media | undefined, size: RenditionSize) {
  * projection simply declines to, leaving the bundled portrait in place.
  */
 export function useTankResidents(aquariumId: string | undefined) {
-  const raw = useLiveQuery(async () => {
-    const loaded = await loadTankResidents(aquariumId);
-    if (!loaded) return undefined;
-
-    // Only the blobs actually going on screen, keyed by holding so two
-    // holdings sharing one specimen's photo each get their own URL.
-    const ownBlobs: Array<{ id: Id; blob: Blob }> = [];
-    for (const { holdingId, mediaId } of loaded.ownArt) {
-      const m = await db.media.get(mediaId);
-      if (!m) continue;
-      // Preview: a tank tile is minmax(150px, 1fr), well past where a 320px
-      // thumbnail stays sharp - spec 036.
-      const blob = await readMediaBlob(m, 'preview');
-      if (blob) ownBlobs.push({ id: holdingId, blob });
-    }
-    return { ...loaded, ownBlobs };
-  }, [aquariumId]);
-
-  const urls = useBlobUrls(raw?.ownBlobs);
+  const raw = useLiveQuery(async () => loadTankResidents(aquariumId), [aquariumId]);
 
   return useMemo(() => {
     if (!raw) return undefined;
-    const byHolding = new Map(urls.map((u) => [u.id, u.url]));
+    /*
+     * SPEC 053. THIS USED TO READ EVERY FISH'S PHOTOGRAPH HERE, in a serial
+     * loop inside the live query above, at `preview` (1280px). Nothing on the
+     * screen - not the stat tiles, not the charts, not one fish - rendered
+     * until the last blob of the last fish had been read out of IndexedDB and
+     * decoded. Twenty-four photographed fish was twenty-four sequential reads
+     * before the first pixel.
+     *
+     * Now it hands each tile the MEDIA ID it should draw and `TileArt` does
+     * the rest, independently and lazily - which is the only thing that made
+     * the shared page feel fast.
+     *
+     * The id goes on THIS type and never on `TankResident`, which is the
+     * object a shared-tank projection publishes: spec 023 keeps the keeper's
+     * own photo out of it, reporting `ownArt` separately for exactly that
+     * reason. `publishTank` calls `loadTankResidents` directly and never
+     * touches this hook, so a private media id cannot reach a snapshot by this
+     * route - not a rule to remember, a type that does not have the field.
+     */
+    const byHolding = new Map(raw.ownArt.map((a) => [a.holdingId, a.mediaId]));
     return {
       aquarium: raw.aquarium,
       residents: raw.residents.map((r) => ({
         ...r,
-        artUrl: byHolding.get(r.holding.id) ?? r.artUrl,
+        ownMediaId: byHolding.get(r.holding.id),
       })),
     };
-  }, [raw, urls]);
+  }, [raw]);
 }
 
 /**
@@ -360,10 +362,13 @@ export function useFishTimeline(holdingId?: Id): FishTimelineView | undefined {
     const holding = await db.holdings.get(holdingId);
     if (!holding) return undefined;
 
-    const [events, measurements, memorials] = await Promise.all([
+    const [events, measurements, memorials, notes] = await Promise.all([
       db.lifeEvents.where('holdingId').equals(holdingId).toArray(),
       db.holdingMeasurements.where('holdingId').equals(holdingId).toArray(),
       db.memorials.where('holdingId').equals(holdingId).toArray(),
+      // Spec 046. A dated note is an observation like any other, so it merges
+      // into the same stream rather than living in a section of its own.
+      db.keeperNotes.where('holdingId').equals(holdingId).toArray(),
     ]);
     const media = holding.specimenId
       ? await db.media.where('specimenIds').equals(holding.specimenId).toArray()
@@ -371,7 +376,7 @@ export function useFishTimeline(holdingId?: Id): FishTimelineView | undefined {
 
     return {
       holdingId,
-      entries: fishTimeline({ holdingId, events, media, measurements, memorials }),
+      entries: fishTimeline({ holdingId, events, media, measurements, memorials, notes }),
       anchor: acquisitionAnchor(holding, events, media),
       byMedia: measurementsByMedia(measurements, media),
       quantity: deriveQuantity(holding, events),
@@ -384,4 +389,104 @@ export function useFishTimeline(holdingId?: Id): FishTimelineView | undefined {
         .sort((a, b) => b.on.localeCompare(a.on)),
     };
   }, [holdingId]);
+}
+
+/**
+ * Who lived in a tank and does not now - spec 048.
+ *
+ * The join lives here and the RULES live in `domain/who-lived-here.ts`, which
+ * is pure and tested. This hook only fetches; it decides nothing, so what a
+ * test asserts and what a keeper sees cannot drift apart.
+ */
+export interface FormerResidentView extends FormerResident {
+  scientificName?: string;
+  /** The bundled portrait, when that is what this fish wears. */
+  artUrl?: string;
+}
+
+export function useWhoLivedHere(aquariumId?: Id): FormerResidentView[] | undefined {
+  const raw = useLiveQuery(async () => {
+    if (!aquariumId) return undefined;
+    const [residencies, holdings, memorials, specimens, aquariums, media, prefs] =
+      await Promise.all([
+        db.residencies.toArray(), db.holdings.toArray(), db.memorials.toArray(),
+        db.specimens.toArray(), db.aquariums.toArray(), db.media.toArray(),
+        db.cardPrefs.toArray(),
+      ]);
+
+    const rows = whoLivedHere({
+      aquariumId, residencies, holdings, memorials, specimens, aquariums,
+      // The catalog lives outside `domain/`, so the names are handed in.
+      speciesNames: new Map(
+        [...CATALOG_BY_SPECIES.values()].map((e) => [e.speciesId, e.commonName]),
+      ),
+    });
+
+    /*
+     * Spec 050. THE ART IS RESOLVED HERE, NOT IN `loadTankResidents`, and that
+     * is a boundary rather than a convenience: that function also feeds the
+     * public shared-tank projection, whose whole point (spec 023) is that it
+     * publishes bundled portraits and never the keeper's private photographs.
+     * Teaching it about departed fish would put their pictures one careless
+     * field away from a public page. This hook is inside the account by
+     * construction, so the question cannot arise.
+     *
+     * Precedence is `chooseArt`'s, unchanged since spec 021: this fish's own
+     * photograph where there is one, the bundled portrait otherwise, and an
+     * honest placeholder when neither exists.
+     */
+    const holdingById = new Map(holdings.map((h) => [h.id, h]));
+    const prefFor = new Map(prefs.map((p) => [p.speciesId, p]));
+
+    const out: Array<FormerResidentView & { blob?: Blob }> = [];
+    for (const row of rows) {
+      const holding = holdingById.get(row.holdingId);
+      const speciesId = holding?.speciesId;
+      const entry = speciesId ? CATALOG_BY_SPECIES.get(speciesId) : undefined;
+
+      const ownPhotos = row.specimenId
+        ? media
+          .filter((m) => m.kind === 'photo' && m.specimenIds.includes(row.specimenId!))
+          .sort((a, b) => b.capturedAt.localeCompare(a.capturedAt))
+          .map((m) => m.id)
+        : [];
+
+      const art = chooseArt(entry, ownPhotos, speciesId ? prefFor.get(speciesId) : undefined);
+
+      let blob: Blob | undefined;
+      if (art.kind === 'own') {
+        const m = media.find((x) => x.id === art.mediaId);
+        // Preview: a tile is minmax(150px, 1fr), well past where a 320px
+        // thumbnail stays sharp - spec 036.
+        if (m) blob = await readMediaBlob(m, 'preview');
+      }
+
+      out.push({
+        ...row,
+        scientificName: entry?.scientificName,
+        artUrl: art.kind === 'portrait' ? art.src : undefined,
+        blob,
+      });
+    }
+    return out;
+  }, [aquariumId]);
+
+  // `useBlobUrls` re-mints on every change of identity of the array it is
+  // handed, so this is memoised rather than filtered inline (BUG-13's rule).
+  const withPhotos = useMemo(
+    () => raw?.filter((r): r is typeof r & { blob: Blob } => Boolean(r.blob)),
+    [raw],
+  );
+  const urls = useBlobUrls(withPhotos);
+
+  return useMemo(() => {
+    if (!raw) return undefined;
+    const byId = new Map(urls.map((u) => [u.id, u.url]));
+    // `id` is the residency, which is what `useBlobUrls` was keyed on: a
+    // holding that lived here twice is two tiles and must not share one URL.
+    return raw.map(({ blob: _blob, ...row }) => ({
+      ...row,
+      artUrl: byId.get(row.id) ?? row.artUrl,
+    }));
+  }, [raw, urls]);
 }

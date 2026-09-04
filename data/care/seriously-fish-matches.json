@@ -1,0 +1,3206 @@
+[
+ {
+  "speciesId": "sp_gymnarchus_niloticus",
+  "scientificName": "Gymnarchus niloticus",
+  "slug": "gymnarchus-niloticus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_hoplisoma_adolfoi",
+  "scientificName": "Hoplisoma adolfoi",
+  "slug": "corydoras-adolfoi",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_acanthicus_adonis",
+  "scientificName": "Acanthicus adonis",
+  "slug": "acanthicus-adonis",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_osteogaster_aeneus",
+  "scientificName": "Osteogaster aeneus",
+  "slug": "corydoras-aeneus",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_barbus_fasciolatus",
+  "scientificName": "Barbus fasciolatus",
+  "slug": "barbus-fasciolatus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_anomalochromis_thomasi",
+  "scientificName": "Anomalochromis thomasi",
+  "slug": "anomalochromis-thomasi",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_polypterus_retropinnis",
+  "scientificName": "Polypterus retropinnis",
+  "slug": "polypterus-retropinnis",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_xenomystus_nigri",
+  "scientificName": "Xenomystus nigri",
+  "slug": "xenomystus-nigri",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_hepsetus_odoe",
+  "scientificName": "Hepsetus odoe",
+  "slug": "hepsetus-odoe",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_hydrocynus_goliath",
+  "scientificName": "Hydrocynus goliath",
+  "slug": "hydrocynus-goliath",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_hydrocynus_vittatus",
+  "scientificName": "Hydrocynus vittatus",
+  "slug": "hydrocynus-vittatus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_corydoras_agassizii",
+  "scientificName": "Corydoras agassizii",
+  "slug": "corydoras-agassizii",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_labeo_chrysophekadion",
+  "scientificName": "Labeo chrysophekadion",
+  "slug": "labeo-chrysophekadion",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_melanochromis_auratus",
+  "scientificName": "Melanochromis auratus",
+  "slug": "melanochromis-auratus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_synodontis_greshoffi",
+  "scientificName": "Synodontis greshoffi",
+  "slug": "synodontis-greshoffi",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_labeotropheus_fuelleborni",
+  "scientificName": "Labeotropheus fuelleborni",
+  "slug": "labeotropheus-fuelleborni",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_dimidiochromis_compressiceps",
+  "scientificName": "Dimidiochromis compressiceps",
+  "slug": "dimidiochromis-compressiceps",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_aulonocara_stuartgranti",
+  "scientificName": "Aulonocara stuartgranti",
+  "slug": "aulonocara-stuartgranti",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_protomelas_taeniolatus",
+  "scientificName": "Protomelas taeniolatus",
+  "slug": "protomelas-taeniolatus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_homalopteroides_tweediei",
+  "scientificName": "Homalopteroides tweediei",
+  "slug": "homalopteroides-tweediei",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_atractosteus_spatula",
+  "scientificName": "Atractosteus spatula",
+  "slug": "atractosteus-spatula",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_hyphessobrycon_amapaensis",
+  "scientificName": "Hyphessobrycon amapaensis",
+  "slug": "hyphessobrycon-amapaensis",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_monocirrhus_polyacanthus",
+  "scientificName": "Monocirrhus polyacanthus",
+  "slug": "monocirrhus-polyacanthus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_colomesus_asellus",
+  "scientificName": "Colomesus asellus",
+  "slug": "colomesus-asellus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_jordanella_floridae",
+  "scientificName": "Jordanella floridae",
+  "slug": "jordanella-floridae",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_pterophyllum_altum",
+  "scientificName": "Pterophyllum altum",
+  "slug": "pterophyllum-altum",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_pterophyllum_scalare",
+  "scientificName": "Pterophyllum scalare",
+  "slug": "pterophyllum-scalare",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_apistogramma_agassizii",
+  "scientificName": "Apistogramma agassizii",
+  "slug": "apistogramma-agassizii",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_luciosoma_setigerum",
+  "scientificName": "Luciosoma setigerum",
+  "slug": "luciosoma-setigerum",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_laetacara_araguaiae",
+  "scientificName": "Laetacara araguaiae",
+  "slug": "laetacara-araguaiae",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_gymnogeophagus_balzanii",
+  "scientificName": "Gymnogeophagus balzanii",
+  "slug": "gymnogeophagus-balzanii",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_pseudomystus_siamensis",
+  "scientificName": "Pseudomystus siamensis",
+  "slug": "pseudomystus-siamensis",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_hemibagrus_wyckioides",
+  "scientificName": "Hemibagrus wyckioides",
+  "slug": "hemibagrus-wyckioides",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_monopterus_albus",
+  "scientificName": "Monopterus albus",
+  "slug": "monopterus-albus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_astronotus_ocellatus",
+  "scientificName": "Astronotus ocellatus",
+  "slug": "astronotus-ocellatus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_auriglobus_modestus",
+  "scientificName": "Auriglobus modestus",
+  "slug": "homalopteroides-modestus",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_neoceratodus_forsteri",
+  "scientificName": "Neoceratodus forsteri",
+  "slug": "neoceratodus-forsteri",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_melanotaenia_fluviatilis",
+  "scientificName": "Melanotaenia fluviatilis",
+  "slug": "melanotaenia-fluviatilis",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_badis_badis",
+  "scientificName": "Badis badis",
+  "slug": "badis-badis",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_balantiocheilos_melanopterus",
+  "scientificName": "Balantiocheilos melanopterus",
+  "slug": "balantiocheilos-melanopterus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_toxotes_jaculatrix",
+  "scientificName": "Toxotes jaculatrix",
+  "slug": "toxotes-jaculatrix",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_leporinus_fasciatus",
+  "scientificName": "Leporinus fasciatus",
+  "slug": "leporinus-fasciatus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_corydoras_metae",
+  "scientificName": "Corydoras metae",
+  "slug": "corydoras-metae",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_banjo_catfish",
+  "scientificName": "Bunocephalus coracoideus",
+  "slug": "bunocephalus-coracoideus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_barbodes_semifasciolatus",
+  "scientificName": "Barbodes semifasciolatus",
+  "slug": "barbodes-semifasciolatus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_brachyplatystoma_platynemum",
+  "scientificName": "Brachyplatystoma platynemum",
+  "slug": "brachyplatystoma-platynemum",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_lates_calcarifer",
+  "scientificName": "Lates calcarifer",
+  "slug": "lates-calcarifer",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_nannostomus_espei",
+  "scientificName": "Nannostomus espei",
+  "slug": "nannostomus-espei",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_myloplus_schomburgkii",
+  "scientificName": "Myloplus schomburgkii",
+  "slug": "myleus-schomburgkii",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_baryancistrus_beggini",
+  "scientificName": "Baryancistrus beggini",
+  "slug": "baryancistrus-beggini",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_nannostomus_beckfordi",
+  "scientificName": "Nannostomus beckfordi",
+  "slug": "nannostomus-beckfordi",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_aulonocara_baenschi",
+  "scientificName": "Aulonocara baenschi",
+  "slug": "aulonocara-baenschi",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_betta",
+  "scientificName": "Betta splendens",
+  "slug": "betta-splendens",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_betta_imbellis",
+  "scientificName": "Betta imbellis",
+  "slug": "betta-imbellis",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_vieja_maculicauda",
+  "scientificName": "Vieja maculicauda",
+  "slug": "vieja-maculicauda",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_girardinus_metallicus",
+  "scientificName": "Girardinus metallicus",
+  "slug": "girardinus-metallicus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_hemibagrus_wyckii",
+  "scientificName": "Hemibagrus wyckii",
+  "slug": "hemibagrus-wyckii",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_pangio_oblonga",
+  "scientificName": "Pangio oblonga",
+  "slug": "pangio-oblonga",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_bagrichthys_macracanthus",
+  "scientificName": "Bagrichthys macracanthus",
+  "slug": "bagrichthys-macracanthus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_hyphessobrycon_herbertaxelrodi",
+  "scientificName": "Hyphessobrycon herbertaxelrodi",
+  "slug": "hyphessobrycon-herbertaxelrodi",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_lamprologus_speciosus",
+  "scientificName": "Lamprologus speciosus",
+  "slug": "lamprologus-speciosus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_otopharynx_lithobates",
+  "scientificName": "Otopharynx lithobates",
+  "slug": "otopharynx-lithobates",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_colossoma_macropomum",
+  "scientificName": "Colossoma macropomum",
+  "slug": "colossoma-macropomum",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_megalamphodus_megalopterus",
+  "scientificName": "Megalamphodus megalopterus",
+  "slug": "hyphessobrycon-megalopterus",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_pethia_nigrofasciata",
+  "scientificName": "Pethia nigrofasciata",
+  "slug": "pethia-nigrofasciata",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_gymnocorymbus_ternetzi",
+  "scientificName": "Gymnocorymbus ternetzi",
+  "slug": "gymnocorymbus-ternetzi",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_labeotropheus_trewavasae",
+  "scientificName": "Labeotropheus trewavasae",
+  "slug": "labeotropheus-trewavasae",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_carnegiella_marthae",
+  "scientificName": "Carnegiella marthae",
+  "slug": "carnegiella-marthae",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_wallagonia_micropogon",
+  "scientificName": "Wallagonia micropogon",
+  "slug": "lepidocephalichthys-micropogon",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_hyphessobrycon_erythrostigma",
+  "scientificName": "Hyphessobrycon erythrostigma",
+  "slug": "hyphessobrycon-erythrostigma",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_hyphessobrycon_pyrrhonotus",
+  "scientificName": "Hyphessobrycon pyrrhonotus",
+  "slug": "hyphessobrycon-pyrrhonotus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_astyanax_mexicanus",
+  "scientificName": "Astyanax mexicanus",
+  "slug": "astyanax-mexicanus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_hemichromis_lifalili",
+  "scientificName": "Hemichromis lifalili",
+  "slug": "hemichromis-lifalili",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_aphyocharax_anisitsi",
+  "scientificName": "Aphyocharax anisitsi",
+  "slug": "aphyocharax-anisitsi",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_andinoacara_pulcher_hybrid",
+  "scientificName": "Andinoacara pulcher hybrid",
+  "slug": "andinoacara-pulcher",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_hyphessobrycon_melanostichos",
+  "scientificName": "Hyphessobrycon melanostichos",
+  "slug": "hyphessobrycon-melanostichos",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_apistogramma_eunotus",
+  "scientificName": "Apistogramma eunotus",
+  "slug": "apistogramma-eunotus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_metriaclima_callainos",
+  "scientificName": "Metriaclima callainos",
+  "slug": "maylandia-callainos",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_alestopetersius_smykalai",
+  "scientificName": "Alestopetersius smykalai",
+  "slug": "alestopetersius-smykalai",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_cyrtocara_moorii",
+  "scientificName": "Cyrtocara moorii",
+  "slug": "cyrtocara-moorii",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_stiphodon_semoni",
+  "scientificName": "Stiphodon semoni",
+  "slug": "stiphodon-semoni",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_pseudomugil_gertrudae",
+  "scientificName": "Pseudomugil gertrudae",
+  "slug": "pseudomugil-gertrudae",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_pseudomugil_furcatus",
+  "scientificName": "Pseudomugil furcatus",
+  "slug": "pseudomugil-furcatus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_pseudomugil_signifer",
+  "scientificName": "Pseudomugil signifer",
+  "slug": "pseudomugil-signifer",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_geophagus_argyrostictus",
+  "scientificName": "Geophagus argyrostictus",
+  "slug": "geophagus-argyrostictus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_paracyprichromis_nigripinnis",
+  "scientificName": "Paracyprichromis nigripinnis",
+  "slug": "paracyprichromis-nigripinnis",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_retroculus_lapidifer",
+  "scientificName": "Retroculus lapidifer",
+  "slug": "retroculus-lapidifer",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_knodus_borki",
+  "scientificName": "Knodus borki",
+  "slug": "knodus-borki",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_cetopsis_coecutiens",
+  "scientificName": "Cetopsis coecutiens",
+  "slug": "cetopsis-coecutiens",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_centromochlus_heckelii",
+  "scientificName": "Centromochlus heckelii",
+  "slug": "acarichthys-heckelii",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_melanotaenia_boesemani",
+  "scientificName": "Melanotaenia boesemani",
+  "slug": "melanotaenia-boesemani",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_aguarunichthys_torosus",
+  "scientificName": "Aguarunichthys torosus",
+  "slug": "aguarunichthys-torosus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_apistogramma_borellii",
+  "scientificName": "Apistogramma borellii",
+  "slug": "apistogramma-borellii",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_amia_calva",
+  "scientificName": "Amia calva",
+  "slug": "amia-calva",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_brevibora_exilis",
+  "scientificName": "Brevibora exilis",
+  "slug": "trachelyichthys-exilis",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_corydoras_splendens",
+  "scientificName": "Corydoras splendens",
+  "slug": "corydoras-splendens",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_cichla_brokopondo",
+  "scientificName": "Cichla brokopondo",
+  "slug": "geophagus-brokopondo",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_exodon_paradoxus",
+  "scientificName": "Exodon paradoxus",
+  "slug": "exodon-paradoxus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_steatocranus_casuarius",
+  "scientificName": "Steatocranus casuarius",
+  "slug": "steatocranus-casuarius",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_bumblebee_goby",
+  "scientificName": "Brachygobius doriae",
+  "slug": "brachygobius-doriae",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_astronotus_orbicularis",
+  "scientificName": "Astronotus orbicularis",
+  "slug": "brachychalcinus-orbicularis",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_akysis_prashadi",
+  "scientificName": "Akysis prashadi",
+  "slug": "akysis-prashadi",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_macrognathus_zebrinus",
+  "scientificName": "Macrognathus zebrinus",
+  "slug": "macrognathus-zebrinus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_freshwater_butterflyfish",
+  "scientificName": "Pantodon buchholzi",
+  "slug": "pantodon-buchholzi",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_beaufortia_kweichowensis",
+  "scientificName": "Beaufortia kweichowensis",
+  "slug": "beaufortia-kweichowensis",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_cichla_ocellaris",
+  "scientificName": "Cichla ocellaris",
+  "slug": "cichla-ocellaris",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_corydoras_pantanalensis",
+  "scientificName": "Corydoras pantanalensis",
+  "slug": "corydoras-pantanalensis",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_altolamprologus_calvus",
+  "scientificName": "Altolamprologus calvus",
+  "slug": "altolamprologus-calvus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_hyphessobrycon_rosaceus",
+  "scientificName": "Hyphessobrycon rosaceus",
+  "slug": "hyphessobrycon-rosaceus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_brachyplatystoma_capapretum",
+  "scientificName": "Brachyplatystoma capapretum",
+  "slug": "brachyplatystoma-capapretum",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_paracheirodon_axelrodi",
+  "scientificName": "Paracheirodon axelrodi",
+  "slug": "paracheirodon-axelrodi",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_phractocephalus_hemioliopterus",
+  "scientificName": "Phractocephalus hemioliopterus",
+  "slug": "phractocephalus-hemioliopterus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_synodontis_brichardi",
+  "scientificName": "Synodontis brichardi",
+  "slug": "synodontis-brichardi",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_synodontis_petricola",
+  "scientificName": "Synodontis petricola",
+  "slug": "synodontis-petricola",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_corydoras_julii",
+  "scientificName": "Corydoras julii",
+  "slug": "corydoras-julii",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_synodontis_nigriventris",
+  "scientificName": "Synodontis nigriventris",
+  "slug": "synodontis-nigriventris",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_marosatherina_ladigesi",
+  "scientificName": "Marosatherina ladigesi",
+  "slug": "marosatherina-ladigesi",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_celestichthys_margaritatus",
+  "scientificName": "Celestichthys margaritatus",
+  "slug": "celestichthys-margaritatus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_ambastaia_sidthimunki",
+  "scientificName": "Ambastaia sidthimunki",
+  "slug": "ambastaia-sidthimunki",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_esox_niger",
+  "scientificName": "Esox niger",
+  "slug": "oxydoras-niger",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_systomus_orphoides",
+  "scientificName": "Systomus orphoides",
+  "slug": "systomus-orphoides",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_rohanella_titteya",
+  "scientificName": "Rohanella titteya",
+  "slug": "puntius-titteya",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_boraras_brigittae",
+  "scientificName": "Boraras brigittae",
+  "slug": "boraras-brigittae",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_gyrinocheilus_aymonieri",
+  "scientificName": "Gyrinocheilus aymonieri",
+  "slug": "gyrinocheilus-aymonieri",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_sphaerichthys_osphromenoides",
+  "scientificName": "Sphaerichthys osphromenoides",
+  "slug": "sphaerichthys-osphromenoides",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_mikrogeophagus_ramirezi",
+  "scientificName": "Mikrogeophagus ramirezi",
+  "slug": "mikrogeophagus-ramirezi",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_apistogramma_cacatuoides",
+  "scientificName": "Apistogramma cacatuoides",
+  "slug": "apistogramma-cacatuoides",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_acarichthys_heckelii",
+  "scientificName": "Acarichthys heckelii",
+  "slug": "acarichthys-heckelii",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_copadichromis_borleyi",
+  "scientificName": "Copadichromis borleyi",
+  "slug": "copadichromis-borleyi",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_hypselecara_temporalis",
+  "scientificName": "Hypselecara temporalis",
+  "slug": "hypselecara-temporalis",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_hypsophrys_nicaraguensis",
+  "scientificName": "Hypsophrys nicaraguensis",
+  "slug": "hypsophrys-nicaraguensis",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_amatitlania_nigrofasciata",
+  "scientificName": "Amatitlania nigrofasciata",
+  "slug": "amatitlania-nigrofasciata",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_neolamprologus_leleupi",
+  "scientificName": "Neolamprologus leleupi",
+  "slug": "neolamprologus-leleupi",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_tanichthys_albonubes",
+  "scientificName": "Tanichthys albonubes",
+  "slug": "tanichthys-albonubes",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_epiplatys_annulatus",
+  "scientificName": "Epiplatys annulatus",
+  "slug": "epiplatys-annulatus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_aplocheilus_annulatus",
+  "scientificName": "Aplocheilus annulatus",
+  "slug": "epiplatys-annulatus",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_chitala_ornata",
+  "scientificName": "Chitala ornata",
+  "slug": "chitala-ornata",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_chromobotia_macracanthus",
+  "scientificName": "Chromobotia macracanthus",
+  "slug": "chromobotia-macracanthus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_rineloricaria_parva",
+  "scientificName": "Rineloricaria parva",
+  "slug": "rineloricaria-parva",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_polypterus_congicus",
+  "scientificName": "Polypterus congicus",
+  "slug": "clypeobarbus-congicus",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_nanochromis_parilus",
+  "scientificName": "Nanochromis parilus",
+  "slug": "nanochromis-parilus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_congo_puffer",
+  "scientificName": "Tetraodon miurus",
+  "slug": "tetraodon-miurus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_tetraodon_schoutedeni",
+  "scientificName": "Tetraodon schoutedeni",
+  "slug": "synodontis-schoutedeni",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_phenacogrammus_interruptus",
+  "scientificName": "Phenacogrammus interruptus",
+  "slug": "phenacogrammus-interruptus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_moenkhausia_copei",
+  "scientificName": "Moenkhausia copei",
+  "slug": "corydoras-copei",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_corydoras_aeneus",
+  "scientificName": "Corydoras aeneus",
+  "slug": "corydoras-aeneus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_corydoras_habrosus",
+  "scientificName": "Corydoras habrosus",
+  "slug": "corydoras-habrosus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_corydoras_sterbai",
+  "scientificName": "Corydoras sterbai",
+  "slug": "corydoras-sterbai",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_hoplisoma_concolor",
+  "scientificName": "Hoplisoma concolor",
+  "slug": "corydoras-concolor",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_corydoras_pygmaeus",
+  "scientificName": "Corydoras pygmaeus",
+  "slug": "corydoras-pygmaeus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_trichopsis_vittata",
+  "scientificName": "Trichopsis vittata",
+  "slug": "trichopsis-vittata",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_sphaerichthys_selatanensis",
+  "scientificName": "Sphaerichthys selatanensis",
+  "slug": "sphaerichthys-selatanensis",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_atractosteus_tristoechus",
+  "scientificName": "Atractosteus tristoechus",
+  "slug": "atractosteus-tristoechus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_biotodoma_cupido",
+  "scientificName": "Biotodoma cupido",
+  "slug": "biotodoma-cupido",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_danio_rerio",
+  "scientificName": "Danio rerio",
+  "slug": "danio-rerio",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_botia_dario",
+  "scientificName": "Botia dario",
+  "slug": "botia-dario",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_datnioides_microlepis",
+  "scientificName": "Datnioides microlepis",
+  "slug": "datnioides-microlepis",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_datnioides_undecimradiatus",
+  "scientificName": "Datnioides undecimradiatus",
+  "slug": "datnioides-undecimradiatus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_datnioides_polota",
+  "scientificName": "Datnioides polota",
+  "slug": "datnioides-polota",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_delhezi_bichir",
+  "scientificName": "Polypterus delhezi",
+  "slug": "polypterus-delhezi",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_pseudotropheus_demasoni",
+  "scientificName": "Pseudotropheus demasoni",
+  "slug": "pseudotropheus-demasoni",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_moenkhausia_pittieri",
+  "scientificName": "Moenkhausia pittieri",
+  "slug": "moenkhausia-pittieri",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_symphysodon_aequifasciatus",
+  "scientificName": "Symphysodon aequifasciatus",
+  "slug": "symphysodon-aequifasciatus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_distichodus_sexfasciatus",
+  "scientificName": "Distichodus sexfasciatus",
+  "slug": "distichodus-sexfasciatus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_garra_rufa",
+  "scientificName": "Garra rufa",
+  "slug": "garra-rufa",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_misgurnus_anguillicaudatus",
+  "scientificName": "Misgurnus anguillicaudatus",
+  "slug": "misgurnus-anguillicaudatus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_brachyplatystoma_rousseauxii",
+  "scientificName": "Brachyplatystoma rousseauxii",
+  "slug": "brachyplatystoma-rousseauxii",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_tetraodon_duboisi",
+  "scientificName": "Tetraodon duboisi",
+  "slug": "tropheus-duboisi",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_semilabeo_obscurus",
+  "scientificName": "Semilabeo obscurus",
+  "slug": "bagrichthys-obscurus",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_triportheus_angulatus",
+  "scientificName": "Triportheus angulatus",
+  "slug": "triportheus-angulatus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_boraras_maculatus",
+  "scientificName": "Boraras maculatus",
+  "slug": "boraras-maculatus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_trichogaster_lalius",
+  "scientificName": "Trichogaster lalius",
+  "slug": "trichogaster-lalius",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_carinotetraodon_travancoricus",
+  "scientificName": "Carinotetraodon travancoricus",
+  "slug": "carinotetraodon-travancoricus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_nothobranchius_eggersi",
+  "scientificName": "Nothobranchius eggersi",
+  "slug": "nothobranchius-eggersi",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_electric_blue_acara",
+  "scientificName": "Andinoacara pulcher",
+  "slug": "andinoacara-pulcher",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_electrophorus_electricus",
+  "scientificName": "Electrophorus electricus",
+  "slug": "electrophorus-electricus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_labidochromis_caeruleus",
+  "scientificName": "Labidochromis caeruleus",
+  "slug": "labidochromis-caeruleus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_gnathonemus_petersii",
+  "scientificName": "Gnathonemus petersii",
+  "slug": "gnathonemus-petersii",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_celestichthys_erythromicron",
+  "scientificName": "Celestichthys erythromicron",
+  "slug": "celestichthys-erythromicron",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_brevibora_dorsiocellata",
+  "scientificName": "Brevibora dorsiocellata",
+  "slug": "brevibora-dorsiocellata",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_boulengerochromis_microlepis",
+  "scientificName": "Boulengerochromis microlepis",
+  "slug": "boulengerochromis-microlepis",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_nematobrycon_palmeri",
+  "scientificName": "Nematobrycon palmeri",
+  "slug": "nematobrycon-palmeri",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_inpaichthys_kerri",
+  "scientificName": "Inpaichthys kerri",
+  "slug": "inpaichthys-kerri",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_empire_gudgeon",
+  "scientificName": "Hypseleotris compressa",
+  "slug": "hypseleotris-compressa",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_poecilia_wingei",
+  "scientificName": "Poecilia wingei",
+  "slug": "poecilia-wingei",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_polypterus_endlicheri",
+  "scientificName": "Polypterus endlicheri",
+  "slug": "polypterus-endlicheri-endlicheri",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_synodontis_longirostris",
+  "scientificName": "Synodontis longirostris",
+  "slug": "hemibarbus-longirostris",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_tetraodon_lineatus",
+  "scientificName": "Tetraodon lineatus",
+  "slug": "tetraodon-lineatus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_potamotrygon_falkneri",
+  "scientificName": "Potamotrygon falkneri",
+  "slug": "potamotrygon-falkneri",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_guppy",
+  "scientificName": "Poecilia reticulata",
+  "slug": "poecilia-reticulata",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_vieja_fenestratus",
+  "scientificName": "Vieja fenestratus",
+  "slug": "protomelas-fenestratus",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_tetraodon_biocellatus",
+  "scientificName": "Tetraodon biocellatus",
+  "slug": "tetraodon-biocellatus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_dawkinsia_filamentosa",
+  "scientificName": "Dawkinsia filamentosa",
+  "slug": "dawkinsia-filamentosa",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_stiphodon_maculidorsalis",
+  "scientificName": "Stiphodon maculidorsalis",
+  "slug": "stiphodon-maculidorsalis",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_mastacembelus_erythrotaenia",
+  "scientificName": "Mastacembelus erythrotaenia",
+  "slug": "mastacembelus-erythrotaenia",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_devario_sondhii",
+  "scientificName": "Devario sondhii",
+  "slug": "devario-sondhii",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_thorichthys_meeki",
+  "scientificName": "Thorichthys meeki",
+  "slug": "thorichthys-meeki",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_sorubimichthys_planiceps",
+  "scientificName": "Sorubimichthys planiceps",
+  "slug": "hemibagrus-planiceps",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_crenicichla_multispinosa",
+  "scientificName": "Crenicichla multispinosa",
+  "slug": "herotilapia-multispinosa",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_brachyplatystoma_juruense",
+  "scientificName": "Brachyplatystoma juruense",
+  "slug": "brachyplatystoma-juruense",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_potamotrygon_schroederi",
+  "scientificName": "Potamotrygon schroederi",
+  "slug": "potamotrygon-schroederi",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_cichlasoma_trimaculatum",
+  "scientificName": "Cichlasoma trimaculatum",
+  "slug": "cichlasoma-trimaculatum",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_epalzeorhynchos_kalopterum",
+  "scientificName": "Epalzeorhynchos kalopterum",
+  "slug": "epalzeorhynchos-kalopterum",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_brachygobius_xanthomelas",
+  "scientificName": "Brachygobius xanthomelas",
+  "slug": "brachygobius-xanthomelas",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_mormyrus_longirostris",
+  "scientificName": "Mormyrus longirostris",
+  "slug": "hemibarbus-longirostris",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_cyphotilapia_frontosa",
+  "scientificName": "Cyphotilapia frontosa",
+  "slug": "cyphotilapia-frontosa",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_fundulopanchax_gardneri",
+  "scientificName": "Fundulopanchax gardneri",
+  "slug": "fundulopanchax-gardneri-gardneri",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_geophagus_abalios",
+  "scientificName": "Geophagus abalios",
+  "slug": "geophagus-abalios",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_satanoperca_jurupari",
+  "scientificName": "Satanoperca jurupari",
+  "slug": "satanoperca-jurupari",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_boulengerella_cuvieri",
+  "scientificName": "Boulengerella cuvieri",
+  "slug": "boulengerella-cuvieri",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_pseudopimelodus_bufonius",
+  "scientificName": "Pseudopimelodus bufonius",
+  "slug": "pseudopimelodus-bufonius",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_sphaerichthys_acrostoma",
+  "scientificName": "Sphaerichthys acrostoma",
+  "slug": "sphaerichthys-acrostoma",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_chitala_lopis",
+  "scientificName": "Chitala lopis",
+  "slug": "chitala-lopis",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_osphronemus_goramy",
+  "scientificName": "Osphronemus goramy",
+  "slug": "osphronemus-goramy",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_pangio_myersi",
+  "scientificName": "Pangio myersi",
+  "slug": "pangio-myersi",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_freshwater_needlefish",
+  "scientificName": "Xenentodon cancila",
+  "slug": "xenentodon-cancila",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_macrochirichthys_macrochirus",
+  "scientificName": "Macrochirichthys macrochirus",
+  "slug": "macrochirichthys-macrochirus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_nimbochromis_venustus",
+  "scientificName": "Nimbochromis venustus",
+  "slug": "nimbochromis-venustus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_prionobrama_filigera",
+  "scientificName": "Prionobrama filigera",
+  "slug": "prionobrama-filigera",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_geophagus_mapiritensis",
+  "scientificName": "Geophagus mapiritensis",
+  "slug": "satanoperca-mapiritensis",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_celestichthys_choprae",
+  "scientificName": "Celestichthys choprae",
+  "slug": "celestichthys-choprae",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_trigonostigma_hengeli",
+  "scientificName": "Trigonostigma hengeli",
+  "slug": "trigonostigma-hengeli",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_hemigrammus_erythrozonus",
+  "scientificName": "Hemigrammus erythrozonus",
+  "slug": "hemigrammus-erythrozonus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_sicyopus_zosterophorus",
+  "scientificName": "Sicyopus zosterophorus",
+  "slug": "sicyopus-zosterophorus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_stiphodon_atropurpureus",
+  "scientificName": "Stiphodon atropurpureus",
+  "slug": "stiphodon-atropurpureus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_neolamprologus_sexfasciatus",
+  "scientificName": "Neolamprologus sexfasciatus",
+  "slug": "neolamprologus-sexfasciatus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_lamprologus_ocellatus",
+  "scientificName": "Lamprologus ocellatus",
+  "slug": "lamprologus-ocellatus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_brachydanio_tinwini",
+  "scientificName": "Brachydanio tinwini",
+  "slug": "brachydanio-tinwini",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_hemigrammus_rodwayi",
+  "scientificName": "Hemigrammus rodwayi",
+  "slug": "hemigrammus-rodwayi",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_hoplerythrinus_unitaeniatus",
+  "scientificName": "Hoplerythrinus unitaeniatus",
+  "slug": "hoplerythrinus-unitaeniatus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_dermogenys_pusilla",
+  "scientificName": "Dermogenys pusilla",
+  "slug": "dermogenys-pusilla",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_acrossocheilus_longipinnis",
+  "scientificName": "Acrossocheilus longipinnis",
+  "slug": "brycinus-longipinnis",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_anabas_testudineus",
+  "scientificName": "Anabas testudineus",
+  "slug": "anabas-testudineus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_pethia_gelius",
+  "scientificName": "Pethia gelius",
+  "slug": "pethia-gelius",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_nannacara_anomala",
+  "scientificName": "Nannacara anomala",
+  "slug": "nannacara-anomala",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_leptobarbus_hoevenii",
+  "scientificName": "Leptobarbus hoevenii",
+  "slug": "leptobarbus-hoevenii",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_sarcocheilichthys_parvus",
+  "scientificName": "Sarcocheilichthys parvus",
+  "slug": "aplocheilus-parvus",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_leporacanthicus_heterodon",
+  "scientificName": "Leporacanthicus heterodon",
+  "slug": "leporacanthicus-heterodon",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_carassius_auratus",
+  "scientificName": "Carassius auratus",
+  "slug": "melanochromis-auratus",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_bagarius_yarrelli",
+  "scientificName": "Bagarius yarrelli",
+  "slug": "bagarius-yarrelli",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_trichopodus_trichopterus",
+  "scientificName": "Trichopodus trichopterus",
+  "slug": "trichopodus-trichopterus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_trichopsis_pumila",
+  "scientificName": "Trichopsis pumila",
+  "slug": "trichopsis-pumila",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_trichogaster_chuna",
+  "scientificName": "Trichogaster chuna",
+  "slug": "trichogaster-chuna",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_trichogaster_labiosa",
+  "scientificName": "Trichogaster labiosa",
+  "slug": "trichogaster-labiosa",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_parosphromenus_deissneri",
+  "scientificName": "Parosphromenus deissneri",
+  "slug": "parosphromenus-deissneri",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_aphyocharax_rathbuni",
+  "scientificName": "Aphyocharax rathbuni",
+  "slug": "aphyocharax-rathbuni",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_paracheirodon_simulans",
+  "scientificName": "Paracheirodon simulans",
+  "slug": "paracheirodon-simulans",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_paratilapia_polleni",
+  "scientificName": "Paratilapia polleni",
+  "slug": "paratilapia-polleni",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_tetraodon_nigroviridis",
+  "scientificName": "Tetraodon nigroviridis",
+  "slug": "tetraodon-nigroviridis",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_aequidens_rivulatus",
+  "scientificName": "Aequidens rivulatus",
+  "slug": "andinoacara-rivulatus",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_andinoacara_rivulatus",
+  "scientificName": "Andinoacara rivulatus",
+  "slug": "andinoacara-rivulatus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_herichthys_carpintis",
+  "scientificName": "Herichthys carpintis",
+  "slug": "herichthys-carpintis",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_asterophysus_batrachus",
+  "scientificName": "Asterophysus batrachus",
+  "slug": "asterophysus-batrachus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_hampala_macrolepidota",
+  "scientificName": "Hampala macrolepidota",
+  "slug": "hampala-macrolepidota",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_rasbora_heteromorpha",
+  "scientificName": "Rasbora heteromorpha",
+  "slug": "trigonostigma-heteromorpha",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_trigonostigma_heteromorpha",
+  "scientificName": "Trigonostigma heteromorpha",
+  "slug": "trigonostigma-heteromorpha",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_xiphophorus_maculatus_hybrid",
+  "scientificName": "Xiphophorus maculatus hybrid",
+  "slug": "xiphophorus-maculatus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_potamotrygon_henlei",
+  "scientificName": "Potamotrygon henlei",
+  "slug": "potamotrygon-henlei",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_puntius_pentazona",
+  "scientificName": "Puntius pentazona",
+  "slug": "desmopuntius-pentazona",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_sicyopus_cebuensis",
+  "scientificName": "Sicyopus cebuensis",
+  "slug": "sicyopus-cebuensis",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_hillstream_loach",
+  "scientificName": "Sewellia lineolata",
+  "slug": "sewellia-lineolata",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_myloplus_rubripinnis",
+  "scientificName": "Myloplus rubripinnis",
+  "slug": "myloplus-rubripinnis",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_myloplus_arnoldi",
+  "scientificName": "Myloplus arnoldi",
+  "slug": "copella-arnoldi",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_megalechis_thoracata",
+  "scientificName": "Megalechis thoracata",
+  "slug": "megalechis-thoracata",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_parambassis_pulcinella",
+  "scientificName": "Parambassis pulcinella",
+  "slug": "parambassis-pulcinella",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_hyphessobrycon_amandae",
+  "scientificName": "Hyphessobrycon amandae",
+  "slug": "hyphessobrycon-amandae",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_leptobotia_elongata",
+  "scientificName": "Leptobotia elongata",
+  "slug": "leptobotia-elongata",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_tetraodon_travancoricus",
+  "scientificName": "Tetraodon travancoricus",
+  "slug": "carinotetraodon-travancoricus",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_parambassis_ranga",
+  "scientificName": "Parambassis ranga",
+  "slug": "parambassis-ranga",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_oryzias_dancena",
+  "scientificName": "Oryzias dancena",
+  "slug": "oryzias-dancena",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_indian_sun_catfish",
+  "scientificName": "Horabagrus brachysoma",
+  "slug": "horabagrus-brachysoma",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_pangasianodon_hypophthalmus",
+  "scientificName": "Pangasianodon hypophthalmus",
+  "slug": "pangasionodon-hypophthalmus",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_megalodoras_uranoscopus",
+  "scientificName": "Megalodoras uranoscopus",
+  "slug": "megalodoras-uranoscopus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_jack_dempsey",
+  "scientificName": "Rocio octofasciata",
+  "slug": "rocio-octofasciata",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_liosomadoras_oncinus",
+  "scientificName": "Liosomadoras oncinus",
+  "slug": "liosomadoras-oncinus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_jaguar_cichlid",
+  "scientificName": "Parachromis managuensis",
+  "slug": "parachromis-managuensis",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_scleropages_jardinii",
+  "scientificName": "Scleropages jardinii",
+  "slug": "scleropages-jardinii",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_oryzias_javanicus",
+  "scientificName": "Oryzias javanicus",
+  "slug": "oryzias-javanicus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_metriaclima_lombardoi",
+  "scientificName": "Metriaclima lombardoi",
+  "slug": "pseudotropheus-lombardoi",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_knight_goby",
+  "scientificName": "Stigmatogobius sadanundio",
+  "slug": "stigmatogobius-sadanundio",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_pelvicachromis_pulcher",
+  "scientificName": "Pelvicachromis pulcher",
+  "slug": "pelvicachromis-pulcher",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_pelvicachromis_taeniatus",
+  "scientificName": "Pelvicachromis taeniatus",
+  "slug": "pelvicachromis-taeniatus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_kryptopterus_bicirrhis",
+  "scientificName": "Kryptopterus bicirrhis",
+  "slug": "kryptopterus-bicirrhis",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_ancistrus_ranunculus",
+  "scientificName": "Ancistrus ranunculus",
+  "slug": "ancistrus-ranunculus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_hypancistrus_inspector",
+  "scientificName": "Hypancistrus inspector",
+  "slug": "hypancistrus-inspector",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_leporacanthicus_joselimai",
+  "scientificName": "Leporacanthicus joselimai",
+  "slug": "leporacanthicus-joselimai",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_hypancistrus_zebra",
+  "scientificName": "Hypancistrus zebra",
+  "slug": "hypancistrus-zebra",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_aphyosemion_bivittatum",
+  "scientificName": "Aphyosemion bivittatum",
+  "slug": "aphyosemion-bivittatum",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_melanotaenia_herbertaxelrodi",
+  "scientificName": "Melanotaenia herbertaxelrodi",
+  "slug": "melanotaenia-herbertaxelrodi",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_trigonostigma_espei",
+  "scientificName": "Trigonostigma espei",
+  "slug": "trigonostigma-espei",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_boraras_urophthalmoides",
+  "scientificName": "Boraras urophthalmoides",
+  "slug": "boraras-urophthalmoides",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_hypsibarbus_wetmorei",
+  "scientificName": "Hypsibarbus wetmorei",
+  "slug": "hypsibarbus-wetmorei",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_hyphessobrycon_pulchripinnis",
+  "scientificName": "Hyphessobrycon pulchripinnis",
+  "slug": "hyphessobrycon-pulchripinnis",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_ctenopoma_acutirostre",
+  "scientificName": "Ctenopoma acutirostre",
+  "slug": "ctenopoma-acutirostre",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_dichotomyctere_nigroviridis",
+  "scientificName": "Dichotomyctere nigroviridis",
+  "slug": "tetraodon-nigroviridis",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_sorubim_lima",
+  "scientificName": "Sorubim lima",
+  "slug": "sorubim-lima",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_platynematichthys_notatus",
+  "scientificName": "Platynematichthys notatus",
+  "slug": "heros-notatus",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_corydoras_nanus",
+  "scientificName": "Corydoras nanus",
+  "slug": "microdevario-nanus",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_homaloptera_ogilviei",
+  "scientificName": "Homaloptera ogilviei",
+  "slug": "homaloptera-ogilviei",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_botia_kubotai",
+  "scientificName": "Botia kubotai",
+  "slug": "botia-kubotai",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_botia_striata",
+  "scientificName": "Botia striata",
+  "slug": "botia-striata",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_myxocyprinus_asiaticus",
+  "scientificName": "Myxocyprinus asiaticus",
+  "slug": "myxocyprinus-asiaticus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_corydoras_loxozonus",
+  "scientificName": "Corydoras loxozonus",
+  "slug": "corydoras-loxozonus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_baryancistrus_chrysolomus",
+  "scientificName": "Baryancistrus chrysolomus",
+  "slug": "baryancistrus-chrysolomus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_lutjanus_griseus",
+  "scientificName": "Lutjanus griseus",
+  "slug": "corydoras-griseus",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_leiarius_pictus",
+  "scientificName": "Leiarius pictus",
+  "slug": "leiarius-pictus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_boulengerella_maculata",
+  "scientificName": "Boulengerella maculata",
+  "slug": "boulengerella-maculata",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_carnegiella_strigata",
+  "scientificName": "Carnegiella strigata",
+  "slug": "carnegiella-strigata",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_oxyeleotris_marmorata",
+  "scientificName": "Oxyeleotris marmorata",
+  "slug": "oxyeleotris-marmorata",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_ageneiosus_marmoratus",
+  "scientificName": "Ageneiosus marmoratus",
+  "slug": "ageneiosus-marmoratus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_synodontis_schoutedeni",
+  "scientificName": "Synodontis schoutedeni",
+  "slug": "synodontis-schoutedeni",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_dawkinsia_assimilis",
+  "scientificName": "Dawkinsia assimilis",
+  "slug": "dawkinsia-assimilis",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_pao_suvattii",
+  "scientificName": "Pao suvattii",
+  "slug": "tetraodon-suvattii",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_poecilia_sphenops",
+  "scientificName": "Poecilia sphenops",
+  "slug": "poecilia-sphenops",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_poecilia_latipinna",
+  "scientificName": "Poecilia latipinna",
+  "slug": "poecilia-latipinna",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_cichla_monoculus",
+  "scientificName": "Cichla monoculus",
+  "slug": "cichla-monoculus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_gambusia_affinis",
+  "scientificName": "Gambusia affinis",
+  "slug": "gambusia-affinis",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_hemisynodontis_membranaceus",
+  "scientificName": "Hemisynodontis membranaceus",
+  "slug": "hemisynodontis-membranaceus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_danio_dangila",
+  "scientificName": "Danio dangila",
+  "slug": "danio-dangila",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_tyrannochromis_macrostoma",
+  "scientificName": "Tyrannochromis macrostoma",
+  "slug": "tyrannochromis-macrostoma",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_neolamprologus_multifasciatus",
+  "scientificName": "Neolamprologus multifasciatus",
+  "slug": "neolamprologus-multifasciatus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_panaqolus_albomaculatus",
+  "scientificName": "Panaqolus albomaculatus",
+  "slug": "caecomastacembelus-albomaculatus",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_belonophago_tinanti",
+  "scientificName": "Belonophago tinanti",
+  "slug": "steatocranus-tinanti",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_heros_notatus",
+  "scientificName": "Heros notatus",
+  "slug": "heros-notatus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_neolamprologus_brichardi",
+  "scientificName": "Neolamprologus brichardi",
+  "slug": "neolamprologus-brichardi",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_stiphodon_percnopterygionus",
+  "scientificName": "Stiphodon percnopterygionus",
+  "slug": "stiphodon-percnopterygionus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_neon_tetra",
+  "scientificName": "Paracheirodon innesi",
+  "slug": "paracheirodon-innesi",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_polypterus_bichir_bichir",
+  "scientificName": "Polypterus bichir bichir",
+  "slug": "polypterus-bichir-bichir",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_synodontis_ocellifer",
+  "scientificName": "Synodontis ocellifer",
+  "slug": "synodontis-ocellifer",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_pethia_padamya",
+  "scientificName": "Pethia padamya",
+  "slug": "pethia-padamya",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_hemiancistrus_guahiborum",
+  "scientificName": "Hemiancistrus guahiborum",
+  "slug": "hemiancistrus-guahiborum",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_potamotrygon_orbignyi",
+  "scientificName": "Potamotrygon orbignyi",
+  "slug": "potamotrygon-orbignyi",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_biotodoma_wavrini",
+  "scientificName": "Biotodoma wavrini",
+  "slug": "biotodoma-wavrini",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_cichla_orinocensis",
+  "scientificName": "Cichla orinocensis",
+  "slug": "cichla-orinocensis",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_pimelodus_ornatus",
+  "scientificName": "Pimelodus ornatus",
+  "slug": "pimelodus-ornatus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_microctenopoma_ansorgii",
+  "scientificName": "Microctenopoma ansorgii",
+  "slug": "microctenopoma-ansorgii",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_otocinclus_macrospilus",
+  "scientificName": "Otocinclus macrospilus",
+  "slug": "otocinclus-macrospilus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_panda_cory",
+  "scientificName": "Corydoras panda",
+  "slug": "corydoras-panda",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_apistogramma_panduro",
+  "scientificName": "Apistogramma panduro",
+  "slug": "apistogramma-panduro",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_apistogramma_nijsseni",
+  "scientificName": "Apistogramma nijsseni",
+  "slug": "apistogramma-nijsseni",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_garra_flavatra",
+  "scientificName": "Garra flavatra",
+  "slug": "garra-flavatra",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_yaoshania_pachychilus",
+  "scientificName": "Yaoshania pachychilus",
+  "slug": "yaoshania-pachychilus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_protomyzon_pachychilus",
+  "scientificName": "Protomyzon pachychilus",
+  "slug": "yaoshania-pachychilus",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_macropodus_opercularis",
+  "scientificName": "Macropodus opercularis",
+  "slug": "macropodus-opercularis",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_pterygoplichthys_parnaibae",
+  "scientificName": "Pterygoplichthys parnaibae",
+  "slug": "geophagus-parnaibae",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_hydrolycus_tatauaia",
+  "scientificName": "Hydrolycus tatauaia",
+  "slug": "hydrolycus-tatauaia",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_peacock_gudgeon",
+  "scientificName": "Tateurndina ocellicauda",
+  "slug": "tateurndina-ocellicauda",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_geophagus_brasiliensis",
+  "scientificName": "Geophagus brasiliensis",
+  "slug": "geophagus-brasiliensis",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_brachydanio_albolineatus",
+  "scientificName": "Brachydanio albolineatus",
+  "slug": "corydoras-albolineatus",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_danio_albolineatus",
+  "scientificName": "Danio albolineatus",
+  "slug": "corydoras-albolineatus",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_trichopodus_leerii",
+  "scientificName": "Trichopodus leerii",
+  "slug": "trichopodus-leerii",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_thayeria_boehlkei",
+  "scientificName": "Thayeria boehlkei",
+  "slug": "thayeria-boehlkei",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_corydoras_paleatus",
+  "scientificName": "Corydoras paleatus",
+  "slug": "corydoras-paleatus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_kryptopterus_vitreolus",
+  "scientificName": "Kryptopterus vitreolus",
+  "slug": "kryptopterus-vitreolus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_boraras_merah",
+  "scientificName": "Boraras merah",
+  "slug": "boraras-merah",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_pimelodus_pictus",
+  "scientificName": "Pimelodus pictus",
+  "slug": "pimelodus-pictus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_crenicichla_lugubris",
+  "scientificName": "Crenicichla lugubris",
+  "slug": "crenicichla-lugubris",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_archocentrus_nigrofasciatus",
+  "scientificName": "Archocentrus nigrofasciatus",
+  "slug": "brachydanio-nigrofasciatus",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_pinktail_chalceus",
+  "scientificName": "Chalceus macrolepidotus",
+  "slug": "chalceus-macrolepidotus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_xiphophorus_maculatus",
+  "scientificName": "Xiphophorus maculatus",
+  "slug": "xiphophorus-maculatus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_baryancistrus_xanthellus",
+  "scientificName": "Baryancistrus xanthellus",
+  "slug": "baryancistrus-xanthellus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_leporacanthicus_galaxias",
+  "scientificName": "Leporacanthicus galaxias",
+  "slug": "leporacanthicus-galaxias",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_synodontis_angelicus",
+  "scientificName": "Synodontis angelicus",
+  "slug": "synodontis-angelicus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_papyrocranus_afer",
+  "scientificName": "Papyrocranus afer",
+  "slug": "papyrocranus-afer",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_dianema_longibarbis",
+  "scientificName": "Dianema longibarbis",
+  "slug": "dianema-longibarbis",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_chanodichthys_erythropterus",
+  "scientificName": "Chanodichthys erythropterus",
+  "slug": "macropodus-erythropterus",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_semaprochilodus_taeniurus",
+  "scientificName": "Semaprochilodus taeniurus",
+  "slug": "semaprochilodus-taeniurus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_tetraodon_mbu",
+  "scientificName": "Tetraodon mbu",
+  "slug": "tetraodon-mbu",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_telmatherina_ladigesi",
+  "scientificName": "Telmatherina ladigesi",
+  "slug": "marosatherina-ladigesi",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_herotilapia_multispinosa",
+  "scientificName": "Herotilapia multispinosa",
+  "slug": "herotilapia-multispinosa",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_epalzeorhynchos_frenatum",
+  "scientificName": "Epalzeorhynchos frenatum",
+  "slug": "epalzeorhynchos-frenatum",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_stiphodon_ornatus",
+  "scientificName": "Stiphodon ornatus",
+  "slug": "stiphodon-ornatus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_erythrinus_erythrinus",
+  "scientificName": "Erythrinus erythrinus",
+  "slug": "erythrinus-erythrinus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_melanotaenia_trifasciata",
+  "scientificName": "Melanotaenia trifasciata",
+  "slug": "melanotaenia-trifasciata",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_melanotaenia_splendida_inornata",
+  "scientificName": "Melanotaenia splendida inornata",
+  "slug": "melanotaenia-splendida-inornata",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_melanotaenia_praecox",
+  "scientificName": "Melanotaenia praecox",
+  "slug": "melanotaenia-praecox",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_melanotaenia_parva",
+  "scientificName": "Melanotaenia parva",
+  "slug": "rineloricaria-parva",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_mikrogeophagus_altispinosus",
+  "scientificName": "Mikrogeophagus altispinosus",
+  "slug": "mikrogeophagus-altispinosus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_raphael_catfish",
+  "scientificName": "Platydoras armatulus",
+  "slug": "platydoras-armatulus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_sundadanio_axelrodi",
+  "scientificName": "Sundadanio axelrodi",
+  "slug": "sundadanio-axelrodi",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_microdevario_kubotai",
+  "scientificName": "Microdevario kubotai",
+  "slug": "microdevario-kubotai",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_synaptolaemus_latofasciatus",
+  "scientificName": "Synaptolaemus latofasciatus",
+  "slug": "synaptolaemus-latofasciatus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_leptobarbus_melanopterus",
+  "scientificName": "Leptobarbus melanopterus",
+  "slug": "balantiocheilos-melanopterus",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_rasbora_lacrimula",
+  "scientificName": "Rasbora lacrimula",
+  "slug": "rasbora-lacrimula",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_alestopetersius_brichardi",
+  "scientificName": "Alestopetersius brichardi",
+  "slug": "alestopetersius-brichardi",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_amphilophus_labiatus",
+  "scientificName": "Amphilophus labiatus",
+  "slug": "amphilophus-labiatus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_moenkhausia_sanctaefilomenae",
+  "scientificName": "Moenkhausia sanctaefilomenae",
+  "slug": "moenkhausia-sanctaefilomenae",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_pethia_conchonius",
+  "scientificName": "Pethia conchonius",
+  "slug": "pethia-conchonius",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_glossolepis_incisus",
+  "scientificName": "Glossolepis incisus",
+  "slug": "glossolepis-incisus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_hemichromis_bimaculatus",
+  "scientificName": "Hemichromis bimaculatus",
+  "slug": "hemichromis-bimaculatus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_homaloptera_orthogoniata",
+  "scientificName": "Homaloptera orthogoniata",
+  "slug": "homaloptera-orthogoniata",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_haludaria_fasciata",
+  "scientificName": "Haludaria fasciata",
+  "slug": "haludaria-fasciata",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_hyphessobrycon_sweglesi",
+  "scientificName": "Hyphessobrycon sweglesi",
+  "slug": "hyphessobrycon-sweglesi",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_trimma_rubromaculatus",
+  "scientificName": "Trimma rubromaculatus",
+  "slug": "rhinogobius-rubromaculatus",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_stiphodon_rutilaureus",
+  "scientificName": "Stiphodon rutilaureus",
+  "slug": "stiphodon-rutilaureus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_osphronemus_laticlavius",
+  "scientificName": "Osphronemus laticlavius",
+  "slug": "osphronemus-laticlavius",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_carinotetraodon_irrubesco",
+  "scientificName": "Carinotetraodon irrubesco",
+  "slug": "carinotetraodon-irrubesco",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_rasbora_borapetensis",
+  "scientificName": "Rasbora borapetensis",
+  "slug": "rasbora-borapetensis",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_brycon_cephalus",
+  "scientificName": "Brycon cephalus",
+  "slug": "brycon-cephalus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_mesoheros_festae",
+  "scientificName": "Mesoheros festae",
+  "slug": "cichlasoma-festae",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_metriaclima_estherae",
+  "scientificName": "Metriaclima estherae",
+  "slug": "pseudotropheus-estherae",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_tor_yingjiangensis",
+  "scientificName": "Tor yingjiangensis",
+  "slug": "nemacheilus-yingjiangensis",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_aborichthys_elongatus",
+  "scientificName": "Aborichthys elongatus",
+  "slug": "aborichthys-elongatus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_geophagus_steindachneri",
+  "scientificName": "Geophagus steindachneri",
+  "slug": "geophagus-steindachneri",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_epalzeorhynchos_bicolor",
+  "scientificName": "Epalzeorhynchos bicolor",
+  "slug": "epalzeorhynchos-bicolor",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_oryzias_latipes",
+  "scientificName": "Oryzias latipes",
+  "slug": "oryzias-latipes",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_stiphodon_pelewensis",
+  "scientificName": "Stiphodon pelewensis",
+  "slug": "stiphodon-pelewensis",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_danio_tinwini",
+  "scientificName": "Danio tinwini",
+  "slug": "brachydanio-tinwini",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_oxydoras_niger",
+  "scientificName": "Oxydoras niger",
+  "slug": "oxydoras-niger",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_tetraodon_pustulatus",
+  "scientificName": "Tetraodon pustulatus",
+  "slug": "tetraodon-pustulatus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_rocket_gar",
+  "scientificName": "Ctenolucius hujeta",
+  "slug": "ctenolucius-hujeta",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_ropefish",
+  "scientificName": "Erpetoichthys calabaricus",
+  "slug": "erpetoichthys-calabaricus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_chitala_blanci",
+  "scientificName": "Chitala blanci",
+  "slug": "chitala-blanci",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_leptobotia_pellegrini",
+  "scientificName": "Leptobotia pellegrini",
+  "slug": "leptobotia-pellegrini",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_axelrodia_riesei",
+  "scientificName": "Axelrodia riesei",
+  "slug": "axelrodi-riesei",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_sawbwa_resplendens",
+  "scientificName": "Sawbwa resplendens",
+  "slug": "sawbwa-resplendens",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_hemigrammus_bleheri",
+  "scientificName": "Hemigrammus bleheri",
+  "slug": "hemigrammus-bleheri",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_corydoras_rabauti",
+  "scientificName": "Corydoras rabauti",
+  "slug": "corydoras-rabauti",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_cephalosilurus_fowleri",
+  "scientificName": "Cephalosilurus fowleri",
+  "slug": "corydoras-fowleri",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_oryzias_woworae",
+  "scientificName": "Oryzias woworae",
+  "slug": "oryzias-woworae",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_corydoras_eques",
+  "scientificName": "Corydoras eques",
+  "slug": "corydoras-eques",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_apistogramma_hongsloi",
+  "scientificName": "Apistogramma hongsloi",
+  "slug": "apistogramma-hongsloi",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_melanotaenia_maccullochi",
+  "scientificName": "Melanotaenia maccullochi",
+  "slug": "melanotaenia-maccullochi",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_dawkinsia_rohani",
+  "scientificName": "Dawkinsia rohani",
+  "slug": "dawkinsia-rohani",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_sahyadria_denisonii",
+  "scientificName": "Sahyadria denisonii",
+  "slug": "sahyadria-denisonii",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_nandopsis_salvini",
+  "scientificName": "Nandopsis salvini",
+  "slug": "cichlasoma-salvini",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_sphaerichthys_vaillanti",
+  "scientificName": "Sphaerichthys vaillanti",
+  "slug": "sphaerichthys-vaillanti",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_hyphessobrycon_stegemanni",
+  "scientificName": "Hyphessobrycon stegemanni",
+  "slug": "hyphessobrycon-stegemanni",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_dario_dario",
+  "scientificName": "Dario dario",
+  "slug": "dario-dario",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_scatophagus_argus",
+  "scientificName": "Scatophagus argus",
+  "slug": "channa-argus",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_sciaenochromis_fryeri",
+  "scientificName": "Sciaenochromis fryeri",
+  "slug": "sciaenochromis-fryeri",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_rasbora_trilineata",
+  "scientificName": "Rasbora trilineata",
+  "slug": "rasbora-trilineata",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_potamotrygon_scobina",
+  "scientificName": "Potamotrygon scobina",
+  "slug": "potamotrygon-scobina",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_selenotoca_multifasciata",
+  "scientificName": "Selenotoca multifasciata",
+  "slug": "kichulchoia-multifasciata",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_senegal_bichir",
+  "scientificName": "Polypterus senegalus",
+  "slug": "polypterus-senegalus-senegalus",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_serpenticobitis_octozona",
+  "scientificName": "Serpenticobitis octozona",
+  "slug": "serpenticobitis-octozona",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_heros_efasciatus",
+  "scientificName": "Heros efasciatus",
+  "slug": "heros-efasciatus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_hyalobagrus_flavus",
+  "scientificName": "Hyalobagrus flavus",
+  "slug": "hyalobagrus-flavus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_leiocassis_longirostris",
+  "scientificName": "Leiocassis longirostris",
+  "slug": "hemibarbus-longirostris",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_acnodon_normani",
+  "scientificName": "Acnodon normani",
+  "slug": "acnodon-normani",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_apistogramma_macmasteri",
+  "scientificName": "Apistogramma macmasteri",
+  "slug": "apistogramma-macmasteri",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_pseudoplatystoma_tigrinum",
+  "scientificName": "Pseudoplatystoma tigrinum",
+  "slug": "pseudoplatystoma-tigrinum",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_datnioides_pulcher",
+  "scientificName": "Datnioides pulcher",
+  "slug": "datnioides-pulcher",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_osteoglossum_bicirrhosum",
+  "scientificName": "Osteoglossum bicirrhosum",
+  "slug": "osteoglossum-bicirrhosum",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_vieja_argentea",
+  "scientificName": "Vieja argentea",
+  "slug": "vieja-argentea",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_metynnis_argenteus",
+  "scientificName": "Metynnis argenteus",
+  "slug": "metynnis-argenteus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_crossocheilus_reticulatus",
+  "scientificName": "Crossocheilus reticulatus",
+  "slug": "crossocheilus-reticulatus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_gasteropelecus_sternicla",
+  "scientificName": "Gasteropelecus sternicla",
+  "slug": "gasteropelecus-sternicla",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_pangio_anguillaris",
+  "scientificName": "Pangio anguillaris",
+  "slug": "pangio-anguillaris",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_desmopuntius_hexazona",
+  "scientificName": "Desmopuntius hexazona",
+  "slug": "desmopuntius-hexazona",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_botia_morleti",
+  "scientificName": "Botia morleti",
+  "slug": "yasuhikotakia-morleti",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_corydoras_arcuatus",
+  "scientificName": "Corydoras arcuatus",
+  "slug": "corydoras-arcuatus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_buccochromis_lepturus",
+  "scientificName": "Buccochromis lepturus",
+  "slug": "buccochromis-lepturus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_corydoras_similis",
+  "scientificName": "Corydoras similis",
+  "slug": "corydoras-similis",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_desmopuntius_rhomboocellatus",
+  "scientificName": "Desmopuntius rhomboocellatus",
+  "slug": "desmopuntius-rhomboocellatus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_lepidosiren_paradoxa",
+  "scientificName": "Lepidosiren paradoxa",
+  "slug": "lepidosiren-paradoxa",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_dicrossus_maculatus",
+  "scientificName": "Dicrossus maculatus",
+  "slug": "dicrossus-maculatus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_barbodes_lateristriga",
+  "scientificName": "Barbodes lateristriga",
+  "slug": "barbodes-lateristriga",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_thorichthys_maculipinnis",
+  "scientificName": "Thorichthys maculipinnis",
+  "slug": "akysis-maculipinnis",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_corydoras_hastatus",
+  "scientificName": "Corydoras hastatus",
+  "slug": "corydoras-hastatus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_protopterus_dolloi",
+  "scientificName": "Protopterus dolloi",
+  "slug": "protopterus-dolloi",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_darienheros_calobrensis",
+  "scientificName": "Darienheros calobrensis",
+  "slug": "amphilophus-calobrensis",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_garra_spilota",
+  "scientificName": "Garra spilota",
+  "slug": "garra-spilota",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_agamyxis_pectinifrons",
+  "scientificName": "Agamyxis pectinifrons",
+  "slug": "agamyxis-pectinifrons",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_homaloptera_ocellata",
+  "scientificName": "Homaloptera ocellata",
+  "slug": "betta-ocellata",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_metynnis_maculatus",
+  "scientificName": "Metynnis maculatus",
+  "slug": "metynnis-maculatus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_ancistrus_dolichopterus",
+  "scientificName": "Ancistrus dolichopterus",
+  "slug": "ancistrus-dolichopterus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_potamotrygon_leopoldi",
+  "scientificName": "Potamotrygon leopoldi",
+  "slug": "potamotrygon-leopoldi",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_potamotrygon_motoro",
+  "scientificName": "Potamotrygon motoro",
+  "slug": "potamotrygon-motoro",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_hara_jerdoni",
+  "scientificName": "Hara jerdoni",
+  "slug": "hara-jerdoni",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_boraras_naevus",
+  "scientificName": "Boraras naevus",
+  "slug": "boraras-naevus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_gastromyzon_zebrinus",
+  "scientificName": "Gastromyzon zebrinus",
+  "slug": "gastromyzon-zebrinus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_pangio_semicincta",
+  "scientificName": "Pangio semicincta",
+  "slug": "pangio-semicincta",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_brachydanio_kyathit",
+  "scientificName": "Brachydanio kyathit",
+  "slug": "brachydanio-kyathit",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_geophagus_winemilleri",
+  "scientificName": "Geophagus winemilleri",
+  "slug": "geophagus-winemilleri",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_bagarius_suchus",
+  "scientificName": "Bagarius suchus",
+  "slug": "bagarius-suchus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_xiphophorus_hellerii",
+  "scientificName": "Xiphophorus hellerii",
+  "slug": "xiphophorus-hellerii",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_synodontis_nigrita",
+  "scientificName": "Synodontis nigrita",
+  "slug": "synodontis-nigrita",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_acestrorhynchus_falcatus",
+  "scientificName": "Acestrorhynchus falcatus",
+  "slug": "acestrorhynchus-falcatus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_gastromyzon_ornaticauda",
+  "scientificName": "Gastromyzon ornaticauda",
+  "slug": "parosphromenus-ornaticauda",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_hemigrammus_ocellifer",
+  "scientificName": "Hemigrammus ocellifer",
+  "slug": "hemigrammus-ocellifer",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_puntius_tambraparniei",
+  "scientificName": "Puntius tambraparniei",
+  "slug": "puntius-tambraparniei",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_cichla_temensis",
+  "scientificName": "Cichla temensis",
+  "slug": "cichla-temensis",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_zoogoneticus_tequila",
+  "scientificName": "Zoogoneticus tequila",
+  "slug": "zoogoneticus-tequila",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_pristella_maxillaris",
+  "scientificName": "Pristella maxillaris",
+  "slug": "pristella-maxillaris",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_hyphessobrycon_columbianus",
+  "scientificName": "Hyphessobrycon columbianus",
+  "slug": "hyphessobrycon-columbianus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_hasemania_nana",
+  "scientificName": "Hasemania nana",
+  "slug": "hasemania-nana",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_poecilocharax_weitzmani",
+  "scientificName": "Poecilocharax weitzmani",
+  "slug": "poecilocharax-weitzmani",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_brycinus_longipinnis",
+  "scientificName": "Brycinus longipinnis",
+  "slug": "brycinus-longipinnis",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_teugelsi_bichir",
+  "scientificName": "Polypterus teugelsi",
+  "slug": "polypterus-teugelsi",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_herichthys_cyanoguttatus",
+  "scientificName": "Herichthys cyanoguttatus",
+  "slug": "herichthys-cyanoguttatus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_iriatherina_werneri",
+  "scientificName": "Iriatherina werneri",
+  "slug": "iriatherina-werneri",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_petrochromis_trewavasae",
+  "scientificName": "Petrochromis trewavasae",
+  "slug": "labeotropheus-trewavasae",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_leporacanthicus_triactis",
+  "scientificName": "Leporacanthicus triactis",
+  "slug": "leporacanthicus-triactis",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_apistogramma_trifasciata",
+  "scientificName": "Apistogramma trifasciata",
+  "slug": "apistogramma-trifasciata",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_corydoras_trilineatus",
+  "scientificName": "Corydoras trilineatus",
+  "slug": "corydoras-trilineatus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_puntigrus_tetrazona",
+  "scientificName": "Puntigrus tetrazona",
+  "slug": "puntigrus-tetrazona",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_botia_hymenophysa",
+  "scientificName": "Botia hymenophysa",
+  "slug": "syncrossus-hymenophysa",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_datnioides_campbelli",
+  "scientificName": "Datnioides campbelli",
+  "slug": "datnioides-campbelli",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_parachromis_motaguensis",
+  "scientificName": "Parachromis motaguensis",
+  "slug": "parachromis-motaguensis",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_pseudoplatystoma_fasciatum",
+  "scientificName": "Pseudoplatystoma fasciatum",
+  "slug": "pseudoplatystoma-fasciatum",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_potamotrygon_tigrina",
+  "scientificName": "Potamotrygon tigrina",
+  "slug": "crenicichla-tigrina",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_brachyplatystoma_tigrinum",
+  "scientificName": "Brachyplatystoma tigrinum",
+  "slug": "brachyplatystoma-tigrinum",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_mastacembelus_armatus",
+  "scientificName": "Mastacembelus armatus",
+  "slug": "mastacembelus-armatus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_tenellus_trimaculatus",
+  "scientificName": "Tenellus trimaculatus",
+  "slug": "pseudanos-trimaculatus",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_lepisosteus_oculatus",
+  "scientificName": "Lepisosteus oculatus",
+  "slug": "lepisosteus-oculatus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_atractosteus_tropicus",
+  "scientificName": "Atractosteus tropicus",
+  "slug": "atractosteus-tropicus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_true_parrot_cichlid",
+  "scientificName": "Hoplarchus psittacus",
+  "slug": "colomesus-psittacus",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_brachyplatystoma_filamentosum",
+  "scientificName": "Brachyplatystoma filamentosum",
+  "slug": "brachyplatystoma-filamentosum",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_melanotaenia_lacustris",
+  "scientificName": "Melanotaenia lacustris",
+  "slug": "melanotaenia-lacustris",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_astyanax_bimaculatus",
+  "scientificName": "Astyanax bimaculatus",
+  "slug": "astyanax-bimaculatus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_apistogramma_bitaeniata",
+  "scientificName": "Apistogramma bitaeniata",
+  "slug": "apistogramma-bitaeniata",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_uaru_amphiacanthoides",
+  "scientificName": "Uaru amphiacanthoides",
+  "slug": "uaru-amphiacanthoides",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_brachyplatystoma_vaillantii",
+  "scientificName": "Brachyplatystoma vaillantii",
+  "slug": "brachyplatystoma-vaillantii",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_xiphophorus_variatus",
+  "scientificName": "Xiphophorus variatus",
+  "slug": "xiphophorus-variatus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_lentipes_venustus",
+  "scientificName": "Lentipes venustus",
+  "slug": "nimbochromis-venustus",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_vieja_regani",
+  "scientificName": "Vieja regani",
+  "slug": "vieja-regani",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_apistogramma_viejita",
+  "scientificName": "Apistogramma viejita",
+  "slug": "apistogramma-viejita",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_corydoras_virginiae",
+  "scientificName": "Corydoras virginiae",
+  "slug": "corydoras-virginiae",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_rasbora_vulcanus",
+  "scientificName": "Rasbora vulcanus",
+  "slug": "rasbora-vulcanus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_hyphessobrycon_flammeus",
+  "scientificName": "Hyphessobrycon flammeus",
+  "slug": "hyphessobrycon-flammeus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_polypterus_weeksii",
+  "scientificName": "Polypterus weeksii",
+  "slug": "polypterus-weeksii",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_melanotaenia_australis",
+  "scientificName": "Melanotaenia australis",
+  "slug": "melanotaenia-australis",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_tatia_galaxias",
+  "scientificName": "Tatia galaxias",
+  "slug": "leporacanthicus-galaxias",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_hyphessobrycon_roseus",
+  "scientificName": "Hyphessobrycon roseus",
+  "slug": "hyphessobrycon-roseus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_elopichthys_bambusa",
+  "scientificName": "Elopichthys bambusa",
+  "slug": "elopichthys-bambusa",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_geophagus_pellegrini",
+  "scientificName": "Geophagus pellegrini",
+  "slug": "geophagus-pellegrini",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_yasuhikotakia_modesta",
+  "scientificName": "Yasuhikotakia modesta",
+  "slug": "yasuhikotakia-modesta",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_botia_almorhae",
+  "scientificName": "Botia almorhae",
+  "slug": "botia-almorhae",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_cyphotilapia_gibberosa",
+  "scientificName": "Cyphotilapia gibberosa",
+  "slug": "cyphotilapia-gibberosa",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_gymnotus_pedanopterus",
+  "scientificName": "Gymnotus pedanopterus",
+  "slug": "gymnotus-pedanopterus",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_otocinclus_cocama",
+  "scientificName": "Otocinclus cocama",
+  "slug": "otocinclus-cocama",
+  "how": "exact"
+ },
+ {
+  "speciesId": "sp_piabina_argentea",
+  "scientificName": "Piabina argentea",
+  "slug": "vieja-argentea",
+  "how": "epithet"
+ },
+ {
+  "speciesId": "sp_mesonoemacheilus_triangularis",
+  "scientificName": "Mesonoemacheilus triangularis",
+  "slug": "mesonoemacheilus-triangularis",
+  "how": "exact"
+ }
+]

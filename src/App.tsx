@@ -8,6 +8,8 @@ import IdentifyFlow from './ui/screens/IdentifyFlow';
 import Tanks from './ui/screens/Tanks';
 import TankDetail from './ui/screens/TankDetail';
 import Journal from './ui/screens/Journal';
+import Heaven from './ui/screens/Heaven';
+import HeavenDetail from './ui/screens/HeavenDetail';
 import SpecimenDetail from './ui/screens/SpecimenDetail';
 import Settings from './ui/screens/Settings';
 import SharedTank from './ui/screens/SharedTank';
@@ -84,6 +86,10 @@ function GatedApp() {
           {/* A single tank, in the viewer mode you can hand to a guest. */}
           <Route path="/tanks/:id" element={<TankDetail />} />
           <Route path="/journal" element={<Journal />} />
+          {/* Spec 046. Its OWN route, never an entry in the tank list: a place
+              you go to, which is what the ask was for. */}
+          <Route path="/heaven" element={<Heaven />} />
+          <Route path="/heaven/:id" element={<HeavenDetail />} />
           <Route path="/specimen/:id" element={<SpecimenDetail />} />
           <Route path="/settings" element={<Settings />} />
         </Routes>
