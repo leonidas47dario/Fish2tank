@@ -58,15 +58,19 @@ async function main(): Promise<void> {
     (r) => r.organismKind === 'fish' && r.waterType !== 'marine',
   );
 
-  const { matches, ambiguous, absent } = matchSlugs(addressable, slugs);
+  const { matches, absent } = matchSlugs(addressable, slugs);
 
   console.info('[sf] coverage', {
     sfProfiles: slugs.length,
     addressable: addressable.length,
     exact: matches.filter((m) => m.how === 'exact').length,
-    epithetCandidates: matches.filter((m) => m.how === 'epithet').length,
-    ambiguousEpithet: ambiguous,
+    trinomial: matches.filter((m) => m.how === 'trinomial').length,
+    curated: matches.filter((m) => m.how === 'curated').length,
     noProfile: absent,
+    // Every route is now exact on the parts that identify the animal, so this
+    // is reachable rather than "reachable, minus whatever the guard throws
+    // out" - which is what it meant while the epithet fallback fed it 79
+    // candidates and 74 were a different fish (spec 060).
     reachablePct: `${((100 * matches.length) / addressable.length).toFixed(1)}%`,
   });
 
