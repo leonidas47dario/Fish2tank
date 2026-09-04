@@ -16,6 +16,7 @@ import { summariseTank, type TankResident } from '@/domain/tank-stats';
 import {
   acquisitionAnchor, fishTimeline, measurementsByMedia, type Anchor, type TimelineEntry,
 } from '@/domain/fish-timeline';
+import { whoLivedHere, type FormerResident } from '@/domain/who-lived-here';
 import type { HoldingMeasurement, Id, Media } from '@/domain/types';
 import { useBlobUrl, useBlobUrls } from './blob-url';
 
@@ -387,4 +388,22 @@ export function useFishTimeline(holdingId?: Id): FishTimelineView | undefined {
         .sort((a, b) => b.on.localeCompare(a.on)),
     };
   }, [holdingId]);
+}
+
+/**
+ * Who lived in a tank and does not now - spec 048.
+ *
+ * The join lives here and the RULES live in `domain/who-lived-here.ts`, which
+ * is pure and tested. This hook only fetches; it decides nothing, so what a
+ * test asserts and what a keeper sees cannot drift apart.
+ */
+export function useWhoLivedHere(aquariumId?: Id): FormerResident[] | undefined {
+  return useLiveQuery(async () => {
+    if (!aquariumId) return undefined;
+    const [residencies, holdings, memorials, specimens, aquariums] = await Promise.all([
+      db.residencies.toArray(), db.holdings.toArray(), db.memorials.toArray(),
+      db.specimens.toArray(), db.aquariums.toArray(),
+    ]);
+    return whoLivedHere({ aquariumId, residencies, holdings, memorials, specimens, aquariums });
+  }, [aquariumId]);
 }

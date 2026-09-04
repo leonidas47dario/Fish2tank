@@ -61,9 +61,12 @@ export default function HeavenDetail() {
     const specimenId = memorial.specimenId ?? holding?.specimenId;
     const specimen = specimenId ? await db.specimens.get(specimenId) : undefined;
 
-    const [events, measurements] = await Promise.all([
+    const [events, measurements, residencies] = await Promise.all([
       db.lifeEvents.where('holdingId').equals(memorial.holdingId).toArray(),
       db.holdingMeasurements.where('holdingId').equals(memorial.holdingId).toArray(),
+      // Spec 048. Where it actually lived - a move event records only the
+      // transitions, so a fish that never moved had no tanks at all.
+      db.residencies.where('holdingId').equals(memorial.holdingId).toArray(),
     ]);
     const media = specimenId
       ? await db.media.where('specimenIds').equals(specimenId).toArray()
@@ -71,7 +74,7 @@ export default function HeavenDetail() {
 
     const life = summariseLife({
       holding: { acquiredOn: holding?.acquiredOn },
-      memorial, events, media, measurements,
+      memorial, events, media, measurements, residencies,
     });
 
     // The last photograph, which is the one a keeper looks for. Preview, not
@@ -96,10 +99,12 @@ export default function HeavenDetail() {
         ?? 'A fish',
       species: speciesId ? CATALOG_BY_SPECIES.get(speciesId)?.commonName : undefined,
       // Named, in the order they were lived in. A tank since deleted keeps its
-      // place in the story; it just has no name to show.
+      // place in the story; it just has no name to show, so it is dropped
+      // rather than rendered as an id.
       tankNames: life.tanks
-        .map((t) => tanks.find((a) => a.id === t)?.name)
-        .filter((n): n is string => Boolean(n)),
+        .map((t) => tanks.find((a) => a.id === t))
+        .filter((a): a is NonNullable<typeof a> => Boolean(a))
+        .map((a) => ({ id: a.id, name: a.name })),
     };
   }, [id]);
 
@@ -229,8 +234,17 @@ export default function HeavenDetail() {
           )}
           {page.tankNames.length > 0 && (
             <div className="factlist__row">
-              <dt>{page.tankNames.length === 1 ? 'Lived in' : 'Lived in'}</dt>
-              <dd>{page.tankNames.join(' → ')}</dd>
+              <dt>Lived in</dt>
+              {/* Spec 048 closes the loop: the tank lists the fish that lived
+                  in it, and the memorial names the tanks it lived in. */}
+              <dd>
+                {page.tankNames.map((t, i) => (
+                  <span key={t.id}>
+                    {i > 0 && ' → '}
+                    <Link to={`/tanks/${t.id}`}>{t.name}</Link>
+                  </span>
+                ))}
+              </dd>
             </div>
           )}
           {page.specimenId && (
