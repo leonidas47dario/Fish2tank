@@ -164,7 +164,7 @@ describe('the shipped catalog mart', () => {
       // credit, but every portrait must still carry an attribution link.
       if (s.portrait) {
         expect(s.portrait.attributionUrl).toBeTruthy();
-        expect(['wikimedia', 'vendor', 'web']).toContain(s.portrait.provenance);
+        expect(['wikimedia', 'inaturalist', 'vendor', 'web']).toContain(s.portrait.provenance);
       }
     }
   });

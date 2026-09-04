@@ -15,6 +15,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import {
   fetchSpeciesPortrait, searchCommonsPortrait, isPublishable, type SpeciesImage,
 } from './sources/wikimedia';
+import { fetchInaturalistPortrait } from './sources/inaturalist';
 import { fetchVendorPortrait } from './sources/vendor';
 import { IMAGES_PATH, isBundleable, isBundleableUrl, mergeRows, readRows, toRow, writeRows } from './images-jsonl';
 
@@ -74,8 +75,12 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 /**
  * Routes in preference order.
  *
- * Wikipedia first, then Commons search, then the shop. A stated free licence
- * beats borrowed art whenever both exist, so the order is the policy.
+ * Wikipedia, then Commons search, then iNaturalist, then the shop. A stated
+ * free licence beats borrowed art whenever both exist, so the order is the
+ * policy - and iNaturalist sits above the vendor route for exactly that reason
+ * (spec 058: only cc0/cc-by/cc-by-sa are accepted from it), while sitting below
+ * Commons because a Commons file is curated for the species and an observation
+ * is a snapshot of one animal on one dive.
  */
 async function resolve(species: CatalogRow): Promise<{ image: SpeciesImage; via: string } | undefined> {
   // Two conditions, and they are different questions. isPublishable asks
@@ -92,6 +97,10 @@ async function resolve(species: CatalogRow): Promise<{ image: SpeciesImage; via:
   await sleep(200);
   const commons = await searchCommonsPortrait(species.speciesId, species.scientificName!);
   if (usable(commons)) return { image: commons, via: 'commons' };
+
+  await sleep(200);
+  const inat = await fetchInaturalistPortrait(species.speciesId, species.scientificName!);
+  if (usable(inat)) return { image: inat, via: 'inaturalist' };
 
   for (const url of productUrls(species.speciesId)) {
     await sleep(200);
@@ -120,7 +129,7 @@ async function main() {
   console.log(`  attempting ${wanted.length} without one\n`);
 
   const found: SpeciesImage[] = [];
-  const byRoute: Record<string, number> = { article: 0, commons: 0, vendor: 0 };
+  const byRoute: Record<string, number> = { article: 0, commons: 0, inaturalist: 0, vendor: 0 };
   const missing: string[] = [];
 
   for (const species of wanted) {
