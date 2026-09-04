@@ -119,7 +119,6 @@ export function TankViewer({
         ) : undefined}
       />
       {children}
-      <Coverage stats={stats} />
     </div>
   );
 }
@@ -190,6 +189,26 @@ export function StatRow({ stats }: { stats: TankStats }) {
         <span className="stat__label">
           {stats.estimatedValue === undefined ? 'no market data' : 'est. value'}
         </span>
+        {/*
+          Spec 051. THE CAVEAT BELONGS ON THE NUMBER IT QUALIFIES.
+
+          This used to live in a "What this leaves out" section at the foot of
+          the page, which is gone. Its other note - that unidentified fish sit
+          outside every chart - was redundant with the "Not recorded" bar each
+          chart already draws, and tappable since spec 049. This one was not:
+          nothing else on the page says the estimate covers only part of the
+          tank, so dropping it would leave a money figure presented as the
+          tank's value while covering nineteen of twenty-four fish. That is a
+          plausible number standing in as fact, which P6 forbids.
+
+          Silent when it covers everything - a caveat that is always there is
+          one nobody reads.
+        */}
+        {stats.estimatedValue !== undefined && stats.unvaluedFish > 0 && (
+          <span className="stat__note data">
+            covers {stats.valuedFish} of {stats.fish}
+          </span>
+        )}
       </div>
       {stats.largest && (
         <div className="stat">
@@ -451,19 +470,3 @@ export function ResidentGrid({ residents, renderTile, extraTile, filterSummary }
   );
 }
 
-/** What the dashboard could not speak for. Always shown when it is not zero. */
-export function Coverage({ stats }: { stats: TankStats }) {
-  const notes = [
-    stats.unidentifiedFish > 0
-      && `${stats.unidentifiedFish} of ${stats.fish} fish are recorded by name only and could not be matched to a species, so they are outside every chart above.`,
-    stats.estimatedValue !== undefined && stats.unvaluedFish > 0
-      && `The estimate covers ${stats.valuedFish} of ${stats.fish} fish; the rest have no market listing to price them from.`,
-  ].filter(Boolean) as string[];
-  if (notes.length === 0) return null;
-  return (
-    <section className="card stack">
-      <h2 className="h3">What this leaves out</h2>
-      {notes.map((n) => <p key={n} className="xs muted" style={{ marginBottom: 0 }}>{n}</p>)}
-    </section>
-  );
-}
