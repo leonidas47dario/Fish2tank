@@ -360,10 +360,13 @@ export function useFishTimeline(holdingId?: Id): FishTimelineView | undefined {
     const holding = await db.holdings.get(holdingId);
     if (!holding) return undefined;
 
-    const [events, measurements, memorials] = await Promise.all([
+    const [events, measurements, memorials, notes] = await Promise.all([
       db.lifeEvents.where('holdingId').equals(holdingId).toArray(),
       db.holdingMeasurements.where('holdingId').equals(holdingId).toArray(),
       db.memorials.where('holdingId').equals(holdingId).toArray(),
+      // Spec 046. A dated note is an observation like any other, so it merges
+      // into the same stream rather than living in a section of its own.
+      db.keeperNotes.where('holdingId').equals(holdingId).toArray(),
     ]);
     const media = holding.specimenId
       ? await db.media.where('specimenIds').equals(holding.specimenId).toArray()
@@ -371,7 +374,7 @@ export function useFishTimeline(holdingId?: Id): FishTimelineView | undefined {
 
     return {
       holdingId,
-      entries: fishTimeline({ holdingId, events, media, measurements, memorials }),
+      entries: fishTimeline({ holdingId, events, media, measurements, memorials, notes }),
       anchor: acquisitionAnchor(holding, events, media),
       byMedia: measurementsByMedia(measurements, media),
       quantity: deriveQuantity(holding, events),

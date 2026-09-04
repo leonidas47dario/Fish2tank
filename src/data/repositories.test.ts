@@ -11,6 +11,11 @@ import {
   recordMeasurement,
   deleteMeasurement,
   setAcquiredOn,
+  writeNote,
+  updateNote,
+  deleteNote,
+  updateMemorial,
+  deleteMemorial,
   assertIdentity,
   assessmentHistory,
   awardGolden,
@@ -1919,5 +1924,125 @@ describe('editing a fish that never had an encounter (BUG-17, spec 044)', () => 
 
     expect(await db.encounters.where('specimenId').equals(specimen.id).count()).toBe(0);
     expect((await db.specimens.get(specimen.id))!.nickname).toBe('Panther');
+  });
+});
+
+describe('keeper notes and correcting a memorial (spec 046)', () => {
+  async function aHolding() {
+    const { holding } = await createOpeningBalanceHolding(
+      { aquariumId: 'tank_75g', rawLabel: 'Severum', kind: 'individual', openingQuantity: 1 }, db,
+    );
+    return holding;
+  }
+
+  it('writes a dated note against a LIVING fish', async () => {
+    // FH-5 was asked for as memos on a memorial. Keyed on the holding it works
+    // before anything dies, which is when most of them get written.
+    const h = await aHolding();
+
+    const note = await writeNote(
+      { holdingId: h.id, text: 'Moved him, the barbs were nipping.', writtenOn: '2026-03-02' }, db);
+
+    expect(note.writtenOn).toBe('2026-03-02');
+    expect(await db.memorials.count()).toBe(0);
+    expect((await db.keeperNotes.get(note.id))!.text).toBe('Moved him, the barbs were nipping.');
+  });
+
+  it('DATES THE NOTE TO THE DAY IT IS ABOUT, not the day it was typed', async () => {
+    // The backfilling half of the ask. `createdAt` still records when it was
+    // written, so nothing is lost by letting the two differ.
+    const h = await aHolding();
+
+    const note = await writeNote({ holdingId: h.id, text: 'Arrived tiny.', writtenOn: '2024-01-09' }, db);
+
+    expect(note.writtenOn).toBe('2024-01-09');
+    expect(note.createdAt.slice(0, 4)).not.toBe('2024');
+  });
+
+  it('refuses a note that says nothing', async () => {
+    const h = await aHolding();
+
+    await expect(writeNote({ holdingId: h.id, text: '   ' }, db)).rejects.toThrow(/Write something/);
+    expect(await db.keeperNotes.count()).toBe(0);
+  });
+
+  it('clearing a note deletes it rather than leaving a blank dated row', async () => {
+    const h = await aHolding();
+    const note = await writeNote({ holdingId: h.id, text: 'Something.' }, db);
+
+    await updateNote(note.id, { text: '  ' }, db);
+
+    expect(await db.keeperNotes.get(note.id)).toBeUndefined();
+  });
+
+  it('corrects a note in place, and can be removed outright', async () => {
+    const h = await aHolding();
+    const note = await writeNote({ holdingId: h.id, text: 'Fin rot?' }, db);
+
+    await updateNote(note.id, { text: 'Fin rot, treated.', writtenOn: '2026-03-04' }, db);
+    const after = await db.keeperNotes.get(note.id);
+    expect(after!.text).toBe('Fin rot, treated.');
+    expect(after!.writtenOn).toBe('2026-03-04');
+
+    await deleteNote(note.id, db);
+    expect(await db.keeperNotes.get(note.id)).toBeUndefined();
+    expect(await db.holdings.get(h.id)).toBeDefined();
+  });
+
+  it('PATCHES ONLY THE FIELDS NAMED on a memorial', async () => {
+    // Spec 043's rule: a read-modify-write on a synced table loses one of two
+    // concurrent edits, and every field on the memorial page saves on its own.
+    const h = await aHolding();
+    const mem = await recordDeath(
+      { holdingId: h.id, story: 'Found him this morning.', lesson: 'Test before adding.' }, db);
+
+    await updateMemorial(mem.id, { causeConfidence: 'likely' }, db);
+
+    const after = await db.memorials.get(mem.id);
+    expect(after!.causeConfidence).toBe('likely');
+    expect(after!.story).toBe('Found him this morning.');
+    expect(after!.lesson).toBe('Test before adding.');
+  });
+
+  it('clears a memorial field when the keeper empties it', async () => {
+    const h = await aHolding();
+    const mem = await recordDeath({ holdingId: h.id, story: 'Written badly at 2am.' }, db);
+
+    await updateMemorial(mem.id, { story: null }, db);
+
+    expect((await db.memorials.get(mem.id))!.story).toBeUndefined();
+  });
+
+  it('DELETING A MEMORIAL KEEPS THE FISH, ITS PHOTOGRAPHS AND THE DEATH EVENT', async () => {
+    // ENH-09 settled this for deleting a catch and the two must not disagree:
+    // clearing a mistyped memorial is not a request to resurrect a fish.
+    const h = await aHolding();
+    const specimen = await ensureSpecimenForHolding(h.id, db);
+    await addPhotos({ specimenId: specimen.id, files: [photo()] }, db);
+    const mem = await recordDeath({ holdingId: h.id }, db);
+
+    await deleteMemorial(mem.id, db);
+
+    expect(await db.memorials.get(mem.id)).toBeUndefined();
+    expect(await db.holdings.get(h.id)).toBeDefined();
+    expect(await db.specimens.get(specimen.id)).toBeDefined();
+    expect(await db.media.where('specimenIds').equals(specimen.id).count()).toBe(1);
+    const events = await db.lifeEvents.where('holdingId').equals(h.id).toArray();
+    expect(events.some((e) => e.type === 'deceased')).toBe(true);
+  });
+
+  it('takes the principle written FROM it, and leaves every other principle alone', async () => {
+    // A lesson can outlive the record that taught it - but one sourced from
+    // THIS memorial is a footnote to a record that no longer exists.
+    const h = await aHolding();
+    const mem = await recordDeath({ holdingId: h.id, lesson: 'Quarantine everything.' }, db);
+    await createKeeperPrinciple('Quarantine everything.', { memorialId: mem.id }, db);
+    await createKeeperPrinciple('Feed less than you think.', {}, db);
+
+    const out = await deleteMemorial(mem.id, db);
+
+    expect(out.principles).toBe(1);
+    const left = await db.keeperPrinciples.toArray();
+    expect(left.map((k) => k.text)).toEqual(['Feed less than you think.']);
   });
 });

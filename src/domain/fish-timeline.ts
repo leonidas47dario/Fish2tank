@@ -19,10 +19,11 @@
  * exactly what P6 forbids.
  */
 import type {
-  CalendarDate, Holding, HoldingMeasurement, Id, LifeEvent, Media, Memorial,
+  CalendarDate, Holding, HoldingMeasurement, Id, KeeperNote, LengthMeasurement,
+  LifeEvent, Media, Memorial,
 } from './types';
 
-export type TimelineEntryKind = 'event' | 'photo' | 'measurement' | 'memorial';
+export type TimelineEntryKind = 'event' | 'photo' | 'measurement' | 'note' | 'memorial';
 
 export interface TimelineEntry {
   id: Id;
@@ -32,6 +33,7 @@ export interface TimelineEntry {
   event?: LifeEvent;
   media?: Media;
   measurement?: HoldingMeasurement;
+  note?: KeeperNote;
   memorial?: Memorial;
 }
 
@@ -110,6 +112,8 @@ export function fishTimeline(input: {
   media: Media[];
   measurements: HoldingMeasurement[];
   memorials: Memorial[];
+  /** Spec 046. Dated notes, which are observations like any other. */
+  notes?: KeeperNote[];
 }): TimelineEntry[] {
   const { holdingId } = input;
 
@@ -122,13 +126,18 @@ export function fishTimeline(input: {
     ...input.measurements
       .filter((x) => x.holdingId === holdingId)
       .map((x): TimelineEntry => ({ id: x.id, kind: 'measurement', on: x.observedOn, measurement: x })),
+    ...(input.notes ?? [])
+      .filter((x) => x.holdingId === holdingId)
+      .map((x): TimelineEntry => ({ id: x.id, kind: 'note', on: x.writtenOn, note: x })),
     ...input.memorials
       .filter((x) => x.holdingId === holdingId)
       .map((x): TimelineEntry => ({ id: x.id, kind: 'memorial', on: x.occurredOn, memorial: x })),
   ];
 
+  // A day reads in the order it happened: the event, then what was seen, then
+  // what was measured, then what was written about it, then the ending.
   const rank: Record<TimelineEntryKind, number> = {
-    event: 0, photo: 1, measurement: 2, memorial: 3,
+    event: 0, photo: 1, measurement: 2, note: 3, memorial: 4,
   };
 
   return entries.sort((a, b) =>
@@ -179,4 +188,70 @@ export function lengthSpan(measurements: HoldingMeasurement[]): {
   if (withLength.length === 0) return {};
   if (withLength.length === 1) return { first: withLength[0] };
   return { first: withLength[0], last: withLength[withLength.length - 1] };
+}
+
+
+/**
+ * What a memorial page can say about a life - spec 046.
+ *
+ * PURE, and every field is optional on purpose: a fish with no acquisition
+ * date has no span, and one measured once has no growth. Absent is the honest
+ * answer and the page renders it as absent (P6), rather than reaching for a
+ * plausible substitute.
+ */
+export interface LifeSummary {
+  /** Where the start date came from, so the page can say how sure it is. */
+  anchor?: Anchor;
+  died: CalendarDate;
+  /** Whole days together, only when BOTH ends are real. */
+  days?: number;
+  /** Two sizes, only when there are two measurements. Never a percentage. */
+  grew?: { from: LengthMeasurement; to: LengthMeasurement };
+  /** The last photograph taken, which is the one a keeper looks for. */
+  lastPhoto?: Media;
+  photos: number;
+  /** Tanks lived in, oldest first, deduplicated. */
+  tanks: Id[];
+}
+
+export function summariseLife(input: {
+  holding: Pick<Holding, 'acquiredOn'>;
+  memorial: Memorial;
+  events: LifeEvent[];
+  media: Media[];
+  measurements: HoldingMeasurement[];
+}): LifeSummary {
+  const anchor = acquisitionAnchor(input.holding, input.events, input.media);
+  const span = lengthSpan(input.measurements);
+
+  const photos = [...input.media]
+    .filter((m) => m.kind === 'photo')
+    .sort((a, b) => a.capturedAt.localeCompare(b.capturedAt));
+
+  /*
+   * A lower-bound anchor still gives a span, because "at least this long" is
+   * true and useful - the PAGE says which it is, using `anchor.lowerBound`.
+   * Hiding it would lose a real fact to avoid a wording problem.
+   */
+  const days = daysBetween(anchor?.on, input.memorial.occurredOn);
+
+  const tanks: Id[] = [];
+  for (const e of [...input.events].sort((a, b) => a.occurredOn.localeCompare(b.occurredOn))) {
+    for (const id of [e.fromAquariumId, e.toAquariumId]) {
+      if (id && !tanks.includes(id)) tanks.push(id);
+    }
+  }
+
+  return {
+    anchor,
+    died: input.memorial.occurredOn,
+    days,
+    // Both ends, or nothing. One measurement is a size, not a growth.
+    grew: span.first?.length && span.last?.length
+      ? { from: span.first.length, to: span.last.length }
+      : undefined,
+    lastPhoto: photos[photos.length - 1],
+    photos: photos.length,
+    tanks,
+  };
 }

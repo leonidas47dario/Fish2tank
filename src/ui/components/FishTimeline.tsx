@@ -22,7 +22,11 @@ import type { LifeEventType } from '@/domain/types';
 import { formatLength } from '@/domain/units';
 import { daysBetween, type Anchor } from '@/domain/fish-timeline';
 import type { HoldingMeasurement } from '@/domain/types';
+import { Link } from 'react-router-dom';
 import { MeasurementForm } from './MeasurementForm';
+import { NoteForm } from './NoteForm';
+import { InlineNote } from './InlineField';
+import { deleteNote, updateNote } from '@/data/repositories';
 import type { FishTimelineView } from '../hooks';
 
 /** Past tense, because every one of these already happened. */
@@ -63,7 +67,9 @@ function relativeLabel(on: string, anchor?: Anchor): string | undefined {
   const days = daysBetween(anchor.on, on);
   if (days === undefined || days === 0) return undefined;
   const months = Math.floor(days / 30);
-  const span = months >= 1 ? `${months} month${months === 1 ? '' : 's'}` : `${days} days`;
+  const span = months >= 1
+    ? `${months} month${months === 1 ? '' : 's'}`
+    : `${days} day${days === 1 ? '' : 's'}`;
   return anchor.lowerBound ? `${span} after the first photo` : `+${span}`;
 }
 
@@ -71,9 +77,17 @@ function measurementText(m: HoldingMeasurement): string {
   return formatLength(m.length);
 }
 
-export function FishTimeline({ timeline, title }: {
+export function FishTimeline({ timeline, title, onMemorialPage = false }: {
   timeline: FishTimelineView;
   title: string;
+  /**
+   * Set on `/heaven/:id`, where the story is already printed at the head of
+   * the page - spec 046. Repeating it two sections lower is not emphasis, it
+   * is the reader wondering whether they are two different stories. Off
+   * everywhere else, where the timeline row is the only place it appears and
+   * the row doubles as the way in to the memorial.
+   */
+  onMemorialPage?: boolean;
 }) {
   const { entries, anchor, byMedia, quantity, isGroup } = timeline;
 
@@ -93,7 +107,9 @@ export function FishTimeline({ timeline, title }: {
       <section className="panel">
         <h2 className="sec-head">History</h2>
         <p className="panel__note" style={{ marginTop: 0 }}>
-          Nothing dated yet. A photo or a life event starts the story.
+          Nothing dated yet. A photo, a measurement or a note starts the story —
+          and a note can be dated to the day it is about, so a fish you have
+          kept for years can be written up from the beginning.
         </p>
       <MeasurementForm
         holdingId={timeline.holdingId}
@@ -101,6 +117,7 @@ export function FishTimeline({ timeline, title }: {
         acquiredOn={timeline.acquiredOn}
         isGroup={isGroup}
       />
+      <NoteForm holdingId={timeline.holdingId} />
       </section>
     );
   }
@@ -136,7 +153,11 @@ export function FishTimeline({ timeline, title }: {
                 {entry.kind === 'event' && entry.event && (
                   <>
                     <strong>{EVENT_LABEL[entry.event.type]}</strong>
-                    {entry.event.quantityDelta !== 0 && (
+                    {/* The delta only ever says something about a GROUP. On a
+                        single fish it is always ±1 and distinguishes nothing -
+                        and "Died -1" beside a memorial is a cold way to print
+                        a fact the reader already has (FR-L03). */}
+                    {isGroup && entry.event.quantityDelta !== 0 && (
                       <span className="data xs muted">
                         {' '}{entry.event.quantityDelta > 0 ? '+' : ''}{entry.event.quantityDelta}
                       </span>
@@ -164,10 +185,42 @@ export function FishTimeline({ timeline, title }: {
                   </>
                 )}
 
+                {/*
+                  Spec 046. Edits where it is displayed, like every other fact
+                  on the record since spec 041 - there is no "edit this note"
+                  button, because a page with one says what you can see is not
+                  what you can change. Clearing the text deletes the note:
+                  `updateNote` treats an empty note as a removal, since a dated
+                  entry that says nothing is worse than no entry at all.
+                */}
+                {entry.kind === 'note' && entry.note && (
+                  <>
+                    <InlineNote
+                      label={`Note from ${longDate(entry.on)}`}
+                      value={entry.note.text}
+                      onSave={(v) => updateNote(entry.note!.id, { text: v ?? '' })}
+                    />
+                    <button
+                      type="button"
+                      className="linkbtn xs"
+                      onClick={() => void deleteNote(entry.note!.id)}
+                    >
+                      Remove this note
+                    </button>
+                  </>
+                )}
+
                 {entry.kind === 'memorial' && entry.memorial && (
                   <>
-                    <strong>Remembered</strong>
-                    {entry.memorial.story && (
+                    {/* On any other page this row is the way in to the
+                        memorial, which is the thing the old one-line Journal
+                        entry never had (spec 046). */}
+                    {onMemorialPage
+                      ? <strong>Remembered</strong>
+                      : <Link to={`/heaven/${entry.memorial.id}`}><strong>Remembered</strong></Link>}
+                    {/* The story is printed at the head of the memorial page,
+                        so printing it again here reads as a second story. */}
+                    {entry.memorial.story && !onMemorialPage && (
                       <p className="xs muted" style={{ marginBottom: 0 }}>{entry.memorial.story}</p>
                     )}
                   </>
@@ -184,6 +237,7 @@ export function FishTimeline({ timeline, title }: {
         acquiredOn={timeline.acquiredOn}
         isGroup={isGroup}
       />
+      <NoteForm holdingId={timeline.holdingId} />
     </section>
   );
 }
