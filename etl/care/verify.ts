@@ -15,7 +15,14 @@ import {
   type AggressionRating,
 } from './quote';
 
-export type SourceKind = 'wikipedia' | 'vendor';
+/**
+ * Spec 045 adds `seriouslyfish`, which outranks the other two - see the
+ * precedence note in `ingest-seriously-fish.ts`.
+ */
+export type SourceKind = 'wikipedia' | 'vendor' | 'seriouslyfish';
+
+/** Every source a citation may name. One list, so a new one cannot be half-added. */
+export const SOURCE_KINDS: readonly SourceKind[] = ['wikipedia', 'vendor', 'seriouslyfish'];
 
 export interface SourceDoc {
   kind: SourceKind;
@@ -97,11 +104,11 @@ function checkCitation(
     rejections.push({ field, reason: `quote missing or shorter than ${MIN_QUOTE_CHARS} characters` });
     return undefined;
   }
-  if (source !== 'wikipedia' && source !== 'vendor') {
-    rejections.push({ field, reason: `source must be "wikipedia" or "vendor", got ${JSON.stringify(source)}` });
+  if (typeof source !== 'string' || !SOURCE_KINDS.includes(source as SourceKind)) {
+    rejections.push({ field, reason: `source must be one of ${SOURCE_KINDS.join(', ')}, got ${JSON.stringify(source)}` });
     return undefined;
   }
-  const doc = docs[source];
+  const doc = docs[source as SourceKind];
   if (!doc) {
     rejections.push({ field, reason: `cited ${source} but no ${source} text was cached for this species` });
     return undefined;
