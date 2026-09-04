@@ -62,9 +62,21 @@ export function useCardArt(
     if (art.kind !== 'own') return undefined;
     const media = await db.media.get(art.mediaId);
     if (!media) return undefined;
-    // Preview, not thumbnail: the smallest box this hook feeds is a catalog
-    // tile at ~187px, well past where 320px stays sharp - spec 036.
-    return readMediaBlob(media, 'preview');
+    /*
+     * SPEC 053 CHANGED THIS FROM `preview` TO `thumbnail`.
+     *
+     * The old comment was right about the rule and wrong about the trade. A
+     * catalog tile is ~187 CSS px and `preview` is 1280px on its longest edge
+     * - a full-width photograph decoded into a box a twelfth of its area, for
+     * every own-photo card in a scrolling list. `thumbnail` is 320px: roughly
+     * 16x fewer pixels to decode and about a tenth of the bytes.
+     *
+     * The cost, stated rather than skipped: spec 036 sized 320px for a box of
+     * 107 CSS px (320/3, for a 3x display). At 187 this is 1.7x - sharp on a
+     * 2x screen, softer than before on a 3x one. Accepted for a list that
+     * scrolls; anything drawn large still asks for `preview`.
+     */
+    return readMediaBlob(media, 'thumbnail');
   }, [art.kind === 'own' ? art.mediaId : undefined]);
 
   return { art, ownUrl: useBlobUrl(blob) };

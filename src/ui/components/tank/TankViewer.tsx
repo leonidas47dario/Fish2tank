@@ -17,6 +17,17 @@
  */
 import { Fragment, useState, type ReactNode } from 'react';
 import { AGGRESSION_LABEL, forDisplay, type TankResident, type TankStats } from '@/domain/tank-stats';
+import { TileArt } from '../TileArt';
+import type { Id } from '@/domain/types';
+
+/**
+ * A resident as a SCREEN draws it - spec 053.
+ *
+ * `ownMediaId` is the keeper's own photograph of this exact fish, which the
+ * owner's hook supplies and the shared page never does: `TankResident` is what
+ * a projection publishes, and spec 023 keeps private photos out of it.
+ */
+export type ViewerResident = TankResident & { ownMediaId?: Id };
 import {
   applyTankFilter, countFish, isEmptyFilter, toggleFilter,
   type TankFilter, type TankFilterDimension,
@@ -38,7 +49,7 @@ interface Selectable {
 
 export interface TankViewerProps {
   tankName: string;
-  residents: TankResident[];
+  residents: ViewerResident[];
   stats: TankStats;
   /**
    * What a resident tile does when tapped, or nothing for a plain tile.
@@ -47,7 +58,7 @@ export interface TankViewerProps {
    * shared page intercepts the tap to offer an account. Neither behaviour
    * belongs in here.
    */
-  renderTile?: (resident: TankResident, content: ReactNode) => ReactNode;
+  renderTile?: (resident: ViewerResident, content: ReactNode) => ReactNode;
   /**
    * One more tile at the end of the grid. This is the owner's "Add a fish",
    * which has to sit *inside* the grid rather than under it - "add a fish"
@@ -354,12 +365,21 @@ export function Temperament({ stats, selected, onSelect }: { stats: TankStats } 
 
 
 /** What one fish looks like on the grid. Shared so both callers agree. */
-export function ResidentTileContent({ resident }: { resident: TankResident }) {
+export function ResidentTileContent({ resident }: { resident: ViewerResident }) {
   return (
     <>
-      {resident.artUrl
-        ? <img className="tank-tile__art" src={resident.artUrl} alt="" loading="lazy" />
-        : <span className="tank-tile__art tank-tile__art--empty" aria-hidden="true">◍</span>}
+      {/*
+        Spec 053. The keeper's own photograph loads through `TileArt`, which
+        owns one media at one size and paints the box before the picture
+        arrives - so the grid appears at once rather than after every blob has
+        been read. `artUrl` is the bundled portrait, or on the shared page an
+        ordinary http URL, and both are already instant.
+      */}
+      {resident.ownMediaId
+        ? <TileArt mediaId={resident.ownMediaId} className="tank-tile__art" />
+        : resident.artUrl
+          ? <img className="tank-tile__art" src={resident.artUrl} alt="" loading="lazy" />
+          : <span className="tank-tile__art tank-tile__art--empty" aria-hidden="true">◍</span>}
       <span className="tank-tile__body">
         <strong>{resident.commonName}</strong>
         {resident.quantity > 1 && <span className="muted data"> ×{resident.quantity}</span>}
@@ -379,7 +399,7 @@ export function ResidentTileContent({ resident }: { resident: TankResident }) {
  * link at all.
  */
 export function ResidentGrid({ residents, renderTile, extraTile, filterSummary }: {
-  residents: TankResident[];
+  residents: ViewerResident[];
   renderTile?: TankViewerProps['renderTile'];
   extraTile?: ReactNode;
   /** Spec 049. What the filter is showing, and the way out of it. */

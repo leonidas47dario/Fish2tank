@@ -62,10 +62,11 @@ export function matchesFilter(resident: TankResident, filter: TankFilter): boole
   return true;
 }
 
-export function applyTankFilter(
-  residents: TankResident[],
+/** Generic for the reason `forDisplay` is - see the note there. */
+export function applyTankFilter<T extends TankResident>(
+  residents: T[],
   filter: TankFilter,
-): TankResident[] {
+): T[] {
   if (isEmptyFilter(filter)) return residents;
   return residents.filter((r) => matchesFilter(r, filter));
 }
@@ -77,6 +78,6 @@ export function applyTankFilter(
  * is six fish - and a grid that said "showing 1 of 24" while displaying six
  * animals would disagree with the stat tile directly above it.
  */
-export function countFish(residents: TankResident[]): number {
+export function countFish(residents: readonly TankResident[]): number {
   return residents.reduce((n, r) => n + r.quantity, 0);
 }
