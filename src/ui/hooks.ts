@@ -216,37 +216,38 @@ export function useMediaUrl(media: Media | undefined, size: RenditionSize) {
  * projection simply declines to, leaving the bundled portrait in place.
  */
 export function useTankResidents(aquariumId: string | undefined) {
-  const raw = useLiveQuery(async () => {
-    const loaded = await loadTankResidents(aquariumId);
-    if (!loaded) return undefined;
-
-    // Only the blobs actually going on screen, keyed by holding so two
-    // holdings sharing one specimen's photo each get their own URL.
-    const ownBlobs: Array<{ id: Id; blob: Blob }> = [];
-    for (const { holdingId, mediaId } of loaded.ownArt) {
-      const m = await db.media.get(mediaId);
-      if (!m) continue;
-      // Preview: a tank tile is minmax(150px, 1fr), well past where a 320px
-      // thumbnail stays sharp - spec 036.
-      const blob = await readMediaBlob(m, 'preview');
-      if (blob) ownBlobs.push({ id: holdingId, blob });
-    }
-    return { ...loaded, ownBlobs };
-  }, [aquariumId]);
-
-  const urls = useBlobUrls(raw?.ownBlobs);
+  const raw = useLiveQuery(async () => loadTankResidents(aquariumId), [aquariumId]);
 
   return useMemo(() => {
     if (!raw) return undefined;
-    const byHolding = new Map(urls.map((u) => [u.id, u.url]));
+    /*
+     * SPEC 053. THIS USED TO READ EVERY FISH'S PHOTOGRAPH HERE, in a serial
+     * loop inside the live query above, at `preview` (1280px). Nothing on the
+     * screen - not the stat tiles, not the charts, not one fish - rendered
+     * until the last blob of the last fish had been read out of IndexedDB and
+     * decoded. Twenty-four photographed fish was twenty-four sequential reads
+     * before the first pixel.
+     *
+     * Now it hands each tile the MEDIA ID it should draw and `TileArt` does
+     * the rest, independently and lazily - which is the only thing that made
+     * the shared page feel fast.
+     *
+     * The id goes on THIS type and never on `TankResident`, which is the
+     * object a shared-tank projection publishes: spec 023 keeps the keeper's
+     * own photo out of it, reporting `ownArt` separately for exactly that
+     * reason. `publishTank` calls `loadTankResidents` directly and never
+     * touches this hook, so a private media id cannot reach a snapshot by this
+     * route - not a rule to remember, a type that does not have the field.
+     */
+    const byHolding = new Map(raw.ownArt.map((a) => [a.holdingId, a.mediaId]));
     return {
       aquarium: raw.aquarium,
       residents: raw.residents.map((r) => ({
         ...r,
-        artUrl: byHolding.get(r.holding.id) ?? r.artUrl,
+        ownMediaId: byHolding.get(r.holding.id),
       })),
     };
-  }, [raw, urls]);
+  }, [raw]);
 }
 
 /**

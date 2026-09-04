@@ -28,8 +28,8 @@ import { CATALOG, type CatalogSpecies } from '@/data/catalog';
 import { identifyFromText } from '@/data/identify';
 import { formatVolume } from '@/domain/units';
 import type { Aquarium, StockingState } from '@/domain/types';
-import { forDisplay, summariseTank, type TankResident, type TankStats } from '@/domain/tank-stats';
-import { TankViewer } from '../components/tank/TankViewer';
+import { forDisplay, summariseTank, type TankStats } from '@/domain/tank-stats';
+import { TankViewer, type ViewerResident } from '../components/tank/TankViewer';
 import { useTankResidents, useWhoLivedHere } from '../hooks';
 import { WhoLivedHere } from '../components/WhoLivedHere';
 
@@ -117,7 +117,7 @@ export default function TankDetail() {
  */
 function OwnerTankView({ aquarium, residents, stats, editing, allTanks }: {
   aquarium: Aquarium;
-  residents: TankResident[];
+  residents: ViewerResident[];
   stats: TankStats;
   editing: boolean;
   allTanks: Array<{ id: string; name: string }>;
@@ -200,7 +200,7 @@ function OwnerTankView({ aquarium, residents, stats, editing, allTanks }: {
  * now different buttons, worded so nobody reaches for the wrong one.
  */
 function ResidentEditor({ resident, aquarium, allTanks, onDone }: {
-  resident: TankResident;
+  resident: ViewerResident;
   aquarium: Aquarium;
   allTanks: Array<{ id: string; name: string }>;
   onDone: () => void;
