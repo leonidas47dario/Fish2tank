@@ -20,7 +20,7 @@
  */
 import type {
   CalendarDate, Holding, HoldingMeasurement, Id, KeeperNote, LengthMeasurement,
-  LifeEvent, Media, Memorial,
+  LifeEvent, Media, Memorial, Residency,
 } from './types';
 
 export type TimelineEntryKind = 'event' | 'photo' | 'measurement' | 'note' | 'memorial';
@@ -210,7 +210,17 @@ export interface LifeSummary {
   /** The last photograph taken, which is the one a keeper looks for. */
   lastPhoto?: Media;
   photos: number;
-  /** Tanks lived in, oldest first, deduplicated. */
+  /**
+   * Tanks lived in, oldest first, deduplicated.
+   *
+   * FROM RESIDENCIES, NOT FROM MOVE EVENTS. Spec 046 read `fromAquariumId` and
+   * `toAquariumId` off the life events, which records only the MOVES - so a
+   * fish that lived in one tank its whole life and never moved had no tanks at
+   * all, and the memorial page simply omitted the row. Residencies are what
+   * actually record where a fish lived; a move is the transition between two
+   * of them. Found by spec 048, which needed this row to link back to the
+   * tank.
+   */
   tanks: Id[];
 }
 
@@ -220,6 +230,8 @@ export function summariseLife(input: {
   events: LifeEvent[];
   media: Media[];
   measurements: HoldingMeasurement[];
+  /** Where it actually lived. See `LifeSummary.tanks`. */
+  residencies?: Residency[];
 }): LifeSummary {
   const anchor = acquisitionAnchor(input.holding, input.events, input.media);
   const span = lengthSpan(input.measurements);
@@ -236,10 +248,9 @@ export function summariseLife(input: {
   const days = daysBetween(anchor?.on, input.memorial.occurredOn);
 
   const tanks: Id[] = [];
-  for (const e of [...input.events].sort((a, b) => a.occurredOn.localeCompare(b.occurredOn))) {
-    for (const id of [e.fromAquariumId, e.toAquariumId]) {
-      if (id && !tanks.includes(id)) tanks.push(id);
-    }
+  for (const r of [...(input.residencies ?? [])]
+    .sort((a, b) => a.startDate.localeCompare(b.startDate) || a.id.localeCompare(b.id))) {
+    if (!tanks.includes(r.aquariumId)) tanks.push(r.aquariumId);
   }
 
   return {

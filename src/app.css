@@ -2224,3 +2224,26 @@ select.inline-input { cursor: pointer; }
   border-radius: var(--radius-control);
   background: var(--color-surface-raised);
 }
+
+/* Who lived here - spec 048. A list of animals, deliberately not a table of
+   figures: no counts, no rates, nothing to compare one tank against another. */
+.livedhere { gap: var(--space-3); }
+.livedhere__row {
+  display: grid;
+  grid-template-columns: 1.5rem 1fr;
+  gap: var(--space-2);
+  align-items: start;
+}
+.livedhere__mark {
+  display: grid;
+  place-items: center;
+  padding-top: 2px;
+  color: var(--color-faint);
+}
+.livedhere__dash { font-size: var(--size-sm); }
+.livedhere__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}

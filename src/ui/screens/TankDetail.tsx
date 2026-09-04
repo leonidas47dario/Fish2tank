@@ -30,7 +30,8 @@ import { formatVolume } from '@/domain/units';
 import type { Aquarium, StockingState } from '@/domain/types';
 import { forDisplay, summariseTank, type TankResident, type TankStats } from '@/domain/tank-stats';
 import { TankViewer } from '../components/tank/TankViewer';
-import { useTankResidents } from '../hooks';
+import { useTankResidents, useWhoLivedHere } from '../hooks';
+import { WhoLivedHere } from '../components/WhoLivedHere';
 
 export default function TankDetail() {
   const { id } = useParams<{ id: string }>();
@@ -38,6 +39,9 @@ export default function TankDetail() {
   const [editing, setEditing] = useState(false);
   const data = useTankResidents(id);
   const allTanks = useLiveQuery(() => db.aquariums.toArray(), []);
+  /* Spec 048. Hooks before the early returns, always - React counts them per
+     render and a conditional one is error #310. */
+  const formerResidents = useWhoLivedHere(id);
 
   if (data === undefined) return <p className="muted">Loading…</p>;
   if (!data) return <p className="empty">No such tank.</p>;
@@ -90,6 +94,11 @@ export default function TankDetail() {
         editing={editing}
         allTanks={allTanks ?? []}
       />
+
+      {/* Spec 048. Below the tank itself, because it is about the tank's past
+          and the dashboard is about its present - and outside the edit switch,
+          because reading who lived here is not editing anything. */}
+      <WhoLivedHere rows={formerResidents} tankName={aquarium.name} />
 
       {editing && <TankLifecycle aquarium={aquarium} />}
     </div>
