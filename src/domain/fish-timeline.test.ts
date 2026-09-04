@@ -299,15 +299,39 @@ describe('summariseLife', () => {
 
   it('lists the tanks lived in, oldest first and without repeats', () => {
     const out = summariseLife({
-      holding: {}, memorial, media: [], measurements: [],
-      events: [
-        event({ id: 'e1', type: 'acquired', occurredOn: '2026-01-03', toAquariumId: 'tank_a' }),
-        event({ id: 'e2', type: 'moved', occurredOn: '2026-02-20', fromAquariumId: 'tank_a', toAquariumId: 'tank_b' }),
-        event({ id: 'e3', type: 'moved', occurredOn: '2026-03-01', fromAquariumId: 'tank_b', toAquariumId: 'tank_a' }),
+      holding: {}, memorial, media: [], measurements: [], events: [],
+      residencies: [
+        { id: 'r1', holdingId: 'hold_1', aquariumId: 'tank_a', startDate: '2026-01-03', endDate: '2026-02-20' },
+        { id: 'r2', holdingId: 'hold_1', aquariumId: 'tank_b', startDate: '2026-02-20', endDate: '2026-03-01' },
+        { id: 'r3', holdingId: 'hold_1', aquariumId: 'tank_a', startDate: '2026-03-01' },
       ],
     });
 
     expect(out.tanks).toEqual(['tank_a', 'tank_b']);
+  });
+
+  it('FINDS THE TANK OF A FISH THAT NEVER MOVED', () => {
+    /*
+     * Spec 046 read the tanks off the life events' `fromAquariumId` and
+     * `toAquariumId`, which record only the MOVES. So a fish that lived in one
+     * tank its whole life had no tanks at all and the memorial page simply
+     * omitted the row - which is most fish. Found by spec 048, which needed
+     * that row to link back to the tank.
+     */
+    const out = summariseLife({
+      holding: {}, memorial, media: [], measurements: [], events: [],
+      residencies: [
+        { id: 'r1', holdingId: 'hold_1', aquariumId: 'tank_a', startDate: '2024-03-11', endDate: '2026-02-20' },
+      ],
+    });
+
+    expect(out.tanks).toEqual(['tank_a']);
+  });
+
+  it('says nothing about tanks when nothing recorded one', () => {
+    const out = summariseLife({ holding: {}, memorial, media: [], measurements: [], events: [] });
+
+    expect(out.tanks).toEqual([]);
   });
 });
 
