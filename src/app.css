@@ -2224,3 +2224,71 @@ select.inline-input { cursor: pointer; }
   border-radius: var(--radius-control);
   background: var(--color-surface-raised);
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Filtering the tank from its dashboard - spec 049
+
+   NFR-06: selection is never signalled by colour alone. A selected bar
+   carries a ring AND its label goes bold, and `aria-pressed` carries it for
+   anyone not looking at the screen.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* A tappable bar is a <button>, which arrives with a UA background, border,
+   padding and centred text. Reset to the row it replaces, so an interactive
+   chart is pixel-identical to a static one until it is selected. */
+.watercolumn__band--tappable,
+.bars__row--tappable,
+.legend__btn {
+  background: none;
+  border: 0;
+  padding: var(--space-1) var(--space-2);
+  margin: 0 calc(var(--space-2) * -1);
+  width: auto;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  border-radius: var(--radius-control);
+  min-height: 0;
+}
+.legend__btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--size-xs);
+}
+.watercolumn__band--tappable:hover:not(:disabled),
+.bars__row--tappable:hover:not(:disabled),
+.legend__btn:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--color-border) 35%, transparent);
+}
+.watercolumn__band--tappable.is-on,
+.bars__row--tappable.is-on,
+.legend__btn.is-on {
+  /* The ring, not a fill: a filled row would compete with the bar inside it
+     for the same "this one" meaning. */
+  box-shadow: inset 0 0 0 var(--border-width) var(--color-primary);
+  background: color-mix(in oklab, var(--color-primary) 12%, transparent);
+}
+/* The second cue. Colour alone would fail in greyscale and for anyone who
+   cannot tell the ring from the row's own border. */
+.watercolumn__band--tappable.is-on .watercolumn__label,
+.bars__row--tappable.is-on .bars__label,
+.legend__btn.is-on { font-weight: var(--weight-bold); color: var(--color-text); }
+
+/* The stacked bar stays decorative - a 6px sliver is nobody's tap target -
+   but it still shows which segment the legend selected. */
+.segbar__seg.is-on { outline: var(--border-width) solid var(--color-text); outline-offset: 1px; }
+
+.tankfilter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  font-size: var(--size-sm);
+}
+.tankfilter__what { color: var(--color-muted); min-width: 0; }

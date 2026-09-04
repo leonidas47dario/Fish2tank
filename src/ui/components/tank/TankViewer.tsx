@@ -15,8 +15,26 @@
  * the original point of the viewer, and it is now enforced by the module
  * boundary rather than by a docstring.
  */
-import { Fragment, type ReactNode } from 'react';
+import { Fragment, useState, type ReactNode } from 'react';
 import { AGGRESSION_LABEL, forDisplay, type TankResident, type TankStats } from '@/domain/tank-stats';
+import {
+  applyTankFilter, countFish, isEmptyFilter, toggleFilter,
+  type TankFilter, type TankFilterDimension,
+} from '@/domain/tank-filter';
+
+/**
+ * What a chart needs to be tappable - spec 049.
+ *
+ * Absent means the chart is static, which is what the shared page's
+ * server-rendered snapshot and any future read-only surface get. A static
+ * chart keeps the `role="img"` summary it has always had; an interactive one
+ * MUST NOT have it, because `role="img"` collapses its whole subtree and a
+ * button inside one is unreachable to a screen reader.
+ */
+interface Selectable {
+  selected?: string;
+  onSelect?: (dimension: TankFilterDimension, value: string) => void;
+}
 
 export interface TankViewerProps {
   tankName: string;
@@ -43,6 +61,15 @@ export interface TankViewerProps {
 export function TankViewer({
   tankName, residents, stats, renderTile, extraTile, children,
 }: TankViewerProps) {
+  /*
+   * Spec 049. A filter is a question you are asking right now, not a setting,
+   * so it lives in component state and clears on leaving. Nothing is
+   * persisted, and nothing about the tank is written.
+   */
+  const [filter, setFilter] = useState<TankFilter>({});
+  const select = (dimension: TankFilterDimension, value: string) =>
+    setFilter((f) => toggleFilter(f, dimension, value));
+
   // An empty tank still needs its way in, or a new tank is a dead end.
   if (stats.fish === 0) {
     return (
@@ -54,15 +81,87 @@ export function TankViewer({
     );
   }
 
+  const shown = applyTankFilter(residents, filter);
+  const filtering = !isEmptyFilter(filter);
+
   return (
     <div className="stack">
       <StatRow stats={stats} />
-      <WaterColumn stats={stats} />
-      <Temperament stats={stats} />
-      <GrowsInto residents={residents} />
-      <ResidentGrid residents={residents} renderTile={renderTile} extraTile={extraTile} />
+      {/*
+        THE CHARTS KEEP THEIR WHOLE-TANK NUMBERS while a filter is on. Redrawing
+        them for the filtered set was the tempting version and is worse on a
+        phone: the bar you meant to press next would move or vanish under your
+        finger, and clearing back out would mean hunting for a control whose
+        position had changed. Stable bars, a highlighted selection, and a count
+        on the grid answer the same question without the ground moving.
+      */}
+      <WaterColumn stats={stats} selected={filter.zone} onSelect={select} />
+      <Temperament stats={stats} selected={filter.aggression} onSelect={select} />
+      <GrowsInto residents={residents} selected={filter.speciesId} onSelect={select} />
+      <ResidentGrid
+        residents={shown}
+        renderTile={renderTile}
+        // Hidden while filtering: "add a fish" inside a filtered grid would
+        // add one that the filter may immediately hide again.
+        extraTile={filtering ? undefined : extraTile}
+        filterSummary={filtering ? (
+          <FilterSummary
+            filter={filter}
+            stats={stats}
+            // The name comes from the matched fish rather than from a second
+            // catalog lookup: the viewer takes props only, and the residents
+            // already carry the name the grid draws.
+            speciesName={shown.find((r) => r.speciesId === filter.speciesId)?.commonName}
+            shownFish={countFish(shown)}
+            totalFish={stats.fish}
+            onClear={() => setFilter({})}
+          />
+        ) : undefined}
+      />
       {children}
       <Coverage stats={stats} />
+    </div>
+  );
+}
+
+/**
+ * What is being shown, and the one way out.
+ *
+ * There is never a filtered grid without a visible reason for it: a grid
+ * showing three of twenty-four fish with nothing saying why is indistinguishable
+ * from a tank that lost twenty-one.
+ */
+function FilterSummary({ filter, stats, speciesName, shownFish, totalFish, onClear }: {
+  filter: TankFilter;
+  stats: TankStats;
+  speciesName?: string;
+  shownFish: number;
+  totalFish: number;
+  onClear: () => void;
+}) {
+  const labels = [
+    stats.byZone.find((z) => z.key === filter.zone)?.label,
+    filter.aggression
+      && (filter.aggression === 'unknown'
+        ? 'Not rated'
+        : AGGRESSION_LABEL[filter.aggression as keyof typeof AGGRESSION_LABEL]),
+    /*
+     * Named, not "one species". The grid below is often scrolled out of view
+     * on a phone by the time this line is read, and a summary that will not
+     * say what it is filtering to is not a summary. Falls back only when the
+     * selection matches nothing, where there is no name to give.
+     */
+    filter.speciesId && (speciesName ?? 'one species'),
+  ].filter(Boolean) as string[];
+
+  return (
+    <div className="tankfilter" role="status">
+      <span className="tankfilter__what">
+        Showing <span className="data">{shownFish}</span> of{' '}
+        <span className="data">{totalFish}</span>
+        {labels.length > 0 && <> — {labels.join(' · ')}</>}
+      </span>
+      <button type="button" className="chip" onClick={onClear}>Clear</button>
     </div>
   );
 }
@@ -111,22 +210,51 @@ export function StatRow({ stats }: { stats: TankStats }) {
  * shows - and it is the one chart here whose meaning a guest gets instantly
  * without reading a legend, because it is shaped like the thing on the wall.
  */
-export function WaterColumn({ stats }: { stats: TankStats }) {
+export function WaterColumn({ stats, selected, onSelect }: { stats: TankStats } & Selectable) {
   const max = Math.max(...stats.byZone.map((z) => z.fish));
+
+  /*
+   * Spec 049. `role="img"` COLLAPSES ITS SUBTREE, so a button inside one is
+   * never announced. An interactive chart therefore drops it and each band
+   * carries its own label and pressed state; a static one keeps the summary it
+   * has always had, so the shared page loses nothing.
+   */
+  const interactive = Boolean(onSelect);
+  const wrap = interactive
+    ? {}
+    : { role: 'img', 'aria-label': stats.byZone.map((z) => `${z.label}: ${z.fish} fish`).join(', ') };
+
   return (
     <section className="card stack">
       <h2>Where they swim</h2>
-      <div className="watercolumn" role="img"
-        aria-label={stats.byZone.map((z) => `${z.label}: ${z.fish} fish`).join(', ')}>
-        {stats.byZone.map((z) => (
-          <div key={z.key} className="watercolumn__band">
-            <span className="watercolumn__label">{z.label}</span>
-            <span className="watercolumn__track">
-              <span className="watercolumn__fill" style={{ width: `${(z.fish / max) * 100}%` }} />
-            </span>
-            <span className="watercolumn__value data">{z.fish}</span>
-          </div>
-        ))}
+      <div className="watercolumn" {...wrap}>
+        {stats.byZone.map((z) => {
+          const on = selected === z.key;
+          const body = (
+            <>
+              <span className="watercolumn__label">{z.label}</span>
+              <span className="watercolumn__track">
+                <span className="watercolumn__fill" style={{ width: `${(z.fish / max) * 100}%` }} />
+              </span>
+              <span className="watercolumn__value data">{z.fish}</span>
+            </>
+          );
+          if (!interactive) {
+            return <div key={z.key} className="watercolumn__band">{body}</div>;
+          }
+          return (
+            <button
+              key={z.key}
+              type="button"
+              className={`watercolumn__band watercolumn__band--tappable${on ? ' is-on' : ''}`}
+              aria-pressed={on}
+              aria-label={`${z.label}, ${z.fish} fish`}
+              onClick={() => onSelect!('zone', z.key)}
+            >
+              {body}
+            </button>
+          );
+        })}
       </div>
     </section>
   );
@@ -147,26 +275,57 @@ const AGGRESSION_TONE: Record<string, string> = {
   unknown: 'insufficient-data',
 };
 
-export function Temperament({ stats }: { stats: TankStats }) {
+export function Temperament({ stats, selected, onSelect }: { stats: TankStats } & Selectable) {
   if (stats.byAggression.length === 0) return null;
+  const interactive = Boolean(onSelect);
+  const nameOf = (key: string) => (key === 'unknown'
+    ? 'Not rated'
+    : AGGRESSION_LABEL[key as keyof typeof AGGRESSION_LABEL]);
+
   return (
     <section className="card stack">
       <h2>Temperament</h2>
+
+      {/* The stacked bar stays decorative even when interactive: a 6px sliver
+          is not a tap target anybody can hit, and the legend row beneath it
+          carries the same selection at a size a thumb can land on. */}
       <div className="segbar" role="img"
         aria-label={stats.byAggression.map((a) => `${a.label}: ${a.fish} fish`).join(', ')}>
         {stats.byAggression.map((a) => (
-          <span key={a.key} className={`segbar__seg segbar__seg--${AGGRESSION_TONE[a.key]}`}
-            style={{ flexGrow: a.fish }} />
+          <span
+            key={a.key}
+            className={`segbar__seg segbar__seg--${AGGRESSION_TONE[a.key]}${selected === a.key ? ' is-on' : ''}`}
+            style={{ flexGrow: a.fish }}
+          />
         ))}
       </div>
+
       <ul className="legend">
-        {stats.byAggression.map((a) => (
-          <li key={a.key}>
-            <span className={`legend__swatch legend__swatch--${AGGRESSION_TONE[a.key]}`} aria-hidden="true" />
-            {a.key === 'unknown' ? 'Not rated' : AGGRESSION_LABEL[a.key as keyof typeof AGGRESSION_LABEL]}
-            <span className="muted data"> {a.fish}</span>
-          </li>
-        ))}
+        {stats.byAggression.map((a) => {
+          const on = selected === a.key;
+          const body = (
+            <>
+              <span className={`legend__swatch legend__swatch--${AGGRESSION_TONE[a.key]}`} aria-hidden="true" />
+              {nameOf(a.key)}
+              <span className="muted data"> {a.fish}</span>
+            </>
+          );
+          return (
+            <li key={a.key}>
+              {interactive ? (
+                <button
+                  type="button"
+                  className={`legend__btn${on ? ' is-on' : ''}`}
+                  aria-pressed={on}
+                  aria-label={`${nameOf(a.key)}, ${a.fish} fish`}
+                  onClick={() => onSelect!('aggression', a.key)}
+                >
+                  {body}
+                </button>
+              ) : body}
+            </li>
+          );
+        })}
       </ul>
     </section>
   );
@@ -179,7 +338,9 @@ export function Temperament({ stats }: { stats: TankStats }) {
  * useful thing a keeper can show a guest, because the two-inch fish in front
  * of them is a fourteen-inch fish later.
  */
-export function GrowsInto({ residents }: { residents: TankResident[] }) {
+export function GrowsInto({ residents, selected, onSelect }: {
+  residents: TankResident[];
+} & Selectable) {
   const withSize = residents.filter((r) => r.adultSizeIn !== undefined)
     .sort((a, b) => b.adultSizeIn! - a.adultSizeIn!);
   const sized = withSize.slice(0, 8);
@@ -195,15 +356,35 @@ export function GrowsInto({ residents }: { residents: TankResident[] }) {
           : 'Adult size each of these reaches.'}
       </p>
       <div className="bars">
-        {sized.map((r) => (
-          <div key={r.holding.id} className="bars__row">
-            <span className="bars__label">{r.commonName}</span>
-            <span className="bars__track">
-              <span className="bars__fill" style={{ width: `${(r.adultSizeIn! / max) * 100}%` }} />
-            </span>
-            <span className="bars__value data">{Math.round(r.adultSizeIn!)}″</span>
-          </div>
-        ))}
+        {sized.map((r) => {
+          const body = (
+            <>
+              <span className="bars__label">{r.commonName}</span>
+              <span className="bars__track">
+                <span className="bars__fill" style={{ width: `${(r.adultSizeIn! / max) * 100}%` }} />
+              </span>
+              <span className="bars__value data">{Math.round(r.adultSizeIn!)}″</span>
+            </>
+          );
+          // A row with no species has nothing to filter TO: the grid keys on
+          // speciesId, so an unresolved label would select nothing at all.
+          if (!onSelect || !r.speciesId) {
+            return <div key={r.holding.id} className="bars__row">{body}</div>;
+          }
+          const on = selected === r.speciesId;
+          return (
+            <button
+              key={r.holding.id}
+              type="button"
+              className={`bars__row bars__row--tappable${on ? ' is-on' : ''}`}
+              aria-pressed={on}
+              aria-label={`${r.commonName}, ${Math.round(r.adultSizeIn!)} inches grown`}
+              onClick={() => onSelect('speciesId', r.speciesId!)}
+            >
+              {body}
+            </button>
+          );
+        })}
       </div>
     </section>
   );
@@ -234,15 +415,23 @@ export function ResidentTileContent({ resident }: { resident: TankResident }) {
  * is the honest default: a dead link in front of a guest is worse than no
  * link at all.
  */
-export function ResidentGrid({ residents, renderTile, extraTile }: {
+export function ResidentGrid({ residents, renderTile, extraTile, filterSummary }: {
   residents: TankResident[];
   renderTile?: TankViewerProps['renderTile'];
   extraTile?: ReactNode;
+  /** Spec 049. What the filter is showing, and the way out of it. */
+  filterSummary?: ReactNode;
 }) {
   const shown = forDisplay(residents);
   return (
     <section className="stack">
       <h2>Who lives here</h2>
+      {filterSummary}
+      {/* A combination that matches nothing says so. An empty grid under a
+          heading reads as an empty tank. */}
+      {filterSummary && shown.length === 0 && (
+        <p className="empty muted">No fish match that. Clear the filter to see them all.</p>
+      )}
       <div className="tank-grid">
         {/* A Fragment, not a wrapper element: `.tank-grid` lays out its DIRECT
             children, so anything in between would collapse the grid. */}
