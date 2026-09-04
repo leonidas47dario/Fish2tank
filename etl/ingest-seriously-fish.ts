@@ -26,6 +26,7 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { parseSeriouslyFish, type SfProfile } from './sources/seriously-fish';
 import { sfTextPath, type SlugMatch } from './care/seriously-fish-slugs';
+import { sameFish } from './care/seriously-fish-aliases';
 import { inRange, quoteFound } from './care/quote';
 
 const MATCHES = 'data/care/seriously-fish-matches.json';
@@ -78,11 +79,19 @@ function main(): void {
     const p: SfProfile = parseSeriouslyFish(text);
 
     /*
-     * The wrong-animal guard. An exact slug match is our own binomial, so a
-     * page stating a different one means SF redirected; an epithet candidate
-     * was never more than a proposal. Either way the page decides.
+     * The wrong-animal guard. The page decides: a slug match is a proposal, and
+     * a page stating a different binomial means it is a different fish.
+     *
+     * SPEC 060 ADDED ONE EXCEPTION AND KEPT IT NARROW. Some pages state a
+     * genuine synonym rather than a redirect - SF calls the zebra danio
+     * `Brachydanio rerio` - and rejecting those loses real care data for no
+     * safety. `sameFish` consults a curated, cited list and nothing else; it is
+     * deliberately not a taxonomy service, because the automatic version of
+     * this was measured and mapped a dwarf gourami onto a banded one.
      */
-    if (p.statedBinomial && binomialOf(p.statedBinomial) !== binomialOf(m.scientificName)) {
+    if (p.statedBinomial
+      && binomialOf(p.statedBinomial) !== binomialOf(m.scientificName)
+      && !sameFish(p.statedBinomial, m.scientificName)) {
       buckets.wrongAnimal += 1;
       rejections.push({
         speciesId: m.speciesId, field: 'binomial',
