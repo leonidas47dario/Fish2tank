@@ -79,9 +79,49 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // Portraits are part of the library, so they are precached: a catalog that
-        // cannot draw itself offline has failed the core promise (NFR-02).
+        /*
+         * THE CORE portraits are precached, the TAIL is not - spec 059.
+         *
+         * Precaching every portrait was measured at 984 files and 20.8 MB, 83%
+         * of a 25.1 MB install that every device paid before the app worked
+         * offline at all, a stranger opening a share link included. Spec 058
+         * then took coverage from 989 species to 2,027, which would have made
+         * that roughly 46 MB.
+         *
+         * The split is by directory because this manifest is built from the
+         * OUTPUT, where a bundled asset's name is a content hash - there is no
+         * way to say "precache these two hundred" from here otherwise. The core
+         * lives in `src/data/seed/assets/portraits` and arrives as a hashed
+         * asset; the tail is copied verbatim from `public/portraits`, which is
+         * what `globIgnores` excludes and `runtimeCaching` picks up below.
+         *
+         * NFR-02 IS NARROWED BY THIS, and the spec says so rather than leaving
+         * it to be discovered: the promise moves from "the whole catalog draws
+         * offline" to "the core draws offline, and so does everything you have
+         * looked at".
+         */
         globPatterns: ['**/*.{js,css,html,svg,png,jpg,woff2}'],
+        globIgnores: ['portraits/**'],
+        runtimeCaching: [{
+          urlPattern: ({ url }) => url.pathname.includes('/portraits/'),
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'portraits-tail',
+            /*
+             * A portrait is immutable for as long as its species id is - the
+             * file is only rewritten when the ETL replaces the photograph - so
+             * CacheFirst never revalidates and a replacement is stale until the
+             * entry ages out. 30 days is the deliberate ceiling on that.
+             *
+             * maxEntries bounds the disk this can take: 1,827 tail portraits at
+             * the measured 21.6 KB mean is ~39 MB if a keeper somehow opened
+             * every one, so the cap is what keeps "browse the whole catalog"
+             * from quietly costing more than the precache did.
+             */
+            expiration: { maxEntries: 600, maxAgeSeconds: 30 * 24 * 60 * 60 },
+            cacheableResponse: { statuses: [0, 200] },
+          },
+        }],
         /*
          * ~1MB of portraits pushed past the 2MiB default; spec 056's care
          * backfill pushed the app bundle itself past 4MiB.
