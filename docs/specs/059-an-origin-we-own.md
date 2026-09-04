@@ -1,8 +1,9 @@
 # 059 — An origin we own
 
-**Status:** proposed. Nothing here is built, and the decision in "What has to be
-decided first" is not taken.
-**Date:** 2026-09-04.
+**Status:** direction approved, not built. The four decisions below were taken
+on 2026-09-04 and are recorded in "The decisions, taken". No migration step has
+been started.
+**Date:** 2026-09-04. Decisions recorded the same day.
 **Touches:** FR-R14, FR-A01, FR-A03, NFR-02, NFR-03, NFR-04.
 **Introduces:** ENH-22.
 **Related:** BUG-04 (which this would retire structurally), ENH-18 (which this
@@ -45,11 +46,18 @@ cannot is one product capability and three pieces of retired debt:
 3. **The service-worker scope hack goes.** `vite.config.ts:17`'s
    `navigateFallbackDenylist` exists only because staging lives *underneath*
    production's path on one origin.
-4. **CORS configuration goes.** Site and Worker on one origin removes
-   `ALLOWED_ORIGINS` (twice), `r2-cors.json`, and `r2-cors-production.json`.
+4. **CORS configuration goes** — *only with a custom domain*, which decision 2
+   below declined. Site and Worker on one origin would remove `ALLOWED_ORIGINS`
+   (twice), `r2-cors.json`, and `r2-cors-production.json`. On `*.pages.dev` the
+   Worker stays cross-origin and **every one of those files survives the move**,
+   pointing at new hostnames instead of being deleted.
 
 That is the case. It is a real case, and it is not "make the repo private."
 Whoever approves this should be approving *that*.
+
+**As decided, item 4 is off the table and the case rests on items 1–3.** That
+is a smaller case than the one this section opens with, and it is the one that
+was actually approved. See "The decisions, taken".
 
 ## What this actually is: an origin migration
 
@@ -146,7 +154,11 @@ about.
   it is *not* a reason to do this. It can happen before, after, or never.
 - ENH-18's share-link preview. This makes it cheap; it does not build it.
 - Any change to what syncs (FR-A01) or to the Worker's authorisation model.
-- Custom-domain purchase, if the `*.pages.dev` hostnames prove sufficient.
+- A custom domain, and therefore the CORS removal and the ENH-18 simplification
+  that depend on one. Declined in decision 2; revisitable later without
+  redoing anything here, since a custom domain can be added to a Pages project
+  after the fact.
+- Making `/uat/` reachable by anyone but the repo owner (decision 3).
 
 ## Design
 
@@ -173,14 +185,32 @@ asserting production's database name has not moved stays exactly as it is.
 
 ### Hostnames
 
+Per decision 2, `*.pages.dev` only — no custom domain.
+
 | Tier | Host | Access |
 |---|---|---|
-| production | Pages project, root path | public |
-| staging | Pages project, separate hostname | Cloudflare Access |
+| production | `<project>.pages.dev`, root path | public |
+| staging | a distinct `*.pages.dev` hostname | Cloudflare Access, one seat |
 
 Staging on its own hostname is what retires BUG-04 and the
 `navigateFallbackDenylist` hack together: separate origins cannot share an
-IndexedDB, and neither service worker's scope contains the other.
+IndexedDB, and neither service worker's scope contains the other. That much
+holds regardless of the domain decision.
+
+**The one thing that must be verified before step 1, because the whole approved
+case rests on it.** Decision 1 approved this migration *for* the gated UAT, and
+decision 2 declined the custom domain that would put staging on a zone we
+control. Cloudflare Pages does offer Access protection for non-production
+deployments on `*.pages.dev`, but this has **not been verified here**, and the
+exact shape matters: whether it covers a stable named branch alias (not only
+per-commit preview URLs), and whether the protected hostname stays stable
+enough to be the review gate FR-R14 requires — a URL that changes per
+deployment is not a place you can send someone to review a build.
+
+If it turns out Access cannot gate a stable `*.pages.dev` hostname, decisions 1
+and 2 are in direct conflict and one of them has to give: buy the domain, or
+stop, because items 2 and 3 alone do not justify an origin migration. **Verify
+this first, before any project is created.**
 
 ### Order of operations, and why this order
 
@@ -236,8 +266,13 @@ Before production moves, and on production's real data:
 8. `ALLOWED_ORIGINS`, both `r2-cors*.json` files, `worker/src/index.test.ts`,
    and the Dexie Cloud origin whitelist name the new origins, and a note in
    `docs/RELEASING.md` records that the Dexie one lives outside this repo.
+   These files are **edited, not deleted** — decision 2 keeps the Worker
+   cross-origin.
 9. `docs/RELEASING.md`'s branch/URL table and its two "why" sections describe
    what is actually deployed, including the redirector.
+10. Access challenges an unauthenticated request to the staging hostname, at a
+    URL that is the same one on the next deployment. A gate you have to look up
+    after every build is not a gate anyone will use.
 
 ## Alternatives rejected
 
@@ -264,18 +299,60 @@ would silently withdraw a guarantee the code makes on purpose.
 and the media path are already Cloudflare, and a single origin shared with the
 Worker is most of the CORS win.
 
-## What has to be decided first
+## The decisions, taken
 
-These are for the repo owner, and none of them are implementation details:
+Put as four questions on 2026-09-04. Recorded with their consequences, because
+two of them shrink this spec and one of them creates a dependency.
 
-1. **Is the gated UAT worth this?** If the honest answer is "we mainly wanted
-   the repo private," take GitHub Pro and close this spec unbuilt.
-2. **Custom domain, or `*.pages.dev`?** A custom domain is what allows the
-   Worker to share an origin with the site — the CORS win and most of ENH-18's
-   simplification depend on it. Without one, this spec delivers the gated UAT
-   and the retired BUG-04 workaround, and little else.
-3. **Who needs to reach staging?** Access seats are per person, and the answer
-   changes whether the free tier is sufficient.
+### 1. Migrate, and skip GitHub Pro
+
+The gated UAT and the retired debt were judged worth it. **Repo visibility
+becomes a separate decision, taken any time or never** — Cloudflare Pages builds
+from a private repository on its free tier, so nothing here forces or blocks it.
+
+The consequence worth naming: the question that started this
+(*"make my repo private"*) is now **not answered by this spec at all**, and is
+not scheduled. If privacy becomes urgent before this migration lands, GitHub Pro
+is still the fast path and still costs $4.
+
+### 2. `*.pages.dev`, no custom domain
+
+Declines item 4 of the case above. The Worker stays cross-origin, so all five
+allowlists survive the move rather than disappearing, and ENH-18 stays exactly
+as expensive as it is today.
+
+**This makes the approved case items 1–3 only:** a gated UAT, BUG-04 retired
+structurally, and the service-worker denylist hack retired. That is a real but
+noticeably smaller return than the section at the top of this spec describes,
+and it is the one that was approved.
+
+It also creates the verification dependency in "Hostnames" above: the gated UAT
+is the *reason* for decision 1, and decision 2 removes the domain that would
+most obviously deliver it. Check that Access can hold a stable `*.pages.dev`
+hostname before creating anything.
+
+A custom domain can be added to a Pages project later without redoing this
+work, so this is a deferral rather than a foreclosure.
+
+### 3. One person needs staging
+
+The repo owner only. One Access seat, comfortably inside any free allowance, and
+the identity question is trivial — an email one-time-pin or a Google login. No
+seat-count verification needed, which removes one of the three unverified vendor
+numbers below.
+
+### 4. Fix the `deploy.yml` bug now, in its own PR
+
+Taken as a separate change on its own branch, per `CLAUDE.md`'s one-PR-per-
+feature rule. It is a latent bug today rather than a live one — decision 1 leaves
+the repository public — but it is one line, it is certain to fire the moment
+visibility changes, and it belongs to neither hosting option. Filed as BUG-19.
+
+### What is still not decided
+
+**When any of this gets built.** The direction is approved; no step has been
+started, and step 1 should not begin until the Access-on-`pages.dev` question
+above is answered.
 
 ## Numbers used here, and where they came from
 
@@ -293,10 +370,17 @@ must be checked against current pricing before it is relied on, because this
 project has shipped a stated-as-fact estimate that was wrong by 3× before:
 
 - GitHub Pro's monthly Actions allowance for private repositories (~3,000 min).
-- Cloudflare Pages' free build allowance (~500 builds/month).
-- Cloudflare Access' free seat count (~50).
+  **No longer load-bearing** — decision 1 leaves the repo public for now.
+- Cloudflare Pages' free build allowance (~500 builds/month). Ten deploys in a
+  day has been observed here, so this is worth checking rather than assuming.
+- Cloudflare Access' free seat count (~50). **No longer load-bearing** —
+  decision 3 needs one seat.
 
-## Prerequisite, independent of this spec
+And one thing that is neither measured nor quoted, but **assumed and load-bearing**:
+that Cloudflare Access can gate a stable `*.pages.dev` hostname. See "Hostnames".
+It is the single assumption that, if wrong, invalidates the approved plan.
+
+## Prerequisite, independent of this spec (BUG-19)
 
 `.github/workflows/deploy.yml:41` tests for the `uat` branch with an
 **unauthenticated** `git ls-remote`. On a private repository that call fails,
