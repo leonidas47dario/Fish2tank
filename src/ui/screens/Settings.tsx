@@ -34,6 +34,7 @@ import { SETTINGS_SECTIONS, initiallyOpen, sectionDomId } from './settings-secti
 import { exportArchive } from '@/data/portability/export';
 import { importArchive } from '@/data/portability/import';
 import { eraseEverything } from '@/data/portability/erase';
+import { resetMediaCache } from '../media-cache';
 import { revokeEveryShare } from '@/data/share/revoke-all';
 
 /**
@@ -457,6 +458,14 @@ function ErasePanel() {
       }
 
       const result = await eraseEverything(db);
+      /*
+       * Spec 055. The media cache holds object URLs, and an object URL pins its
+       * Blob in this document until revoked - so up to forty photographs would
+       * survive an erase in memory, after the rows they came from were gone.
+       * "The user asked for the record to be gone" (deletedRecords' own note)
+       * applies to the bytes still on screen too.
+       */
+      resetMediaCache();
       setNote(
         `Erased ${result.total} records${result.userSpeciesRemoved > 0
           ? `, including ${result.userSpeciesRemoved} species you added`

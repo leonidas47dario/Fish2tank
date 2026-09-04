@@ -17,6 +17,7 @@
  * between a leak and a blank picture.
  */
 import { useEffect, useState } from 'react';
+import { acquire, release } from './media-cache';
 import type { Id } from '@/domain/types';
 
 /** Long enough for a paint, short enough that nothing accumulates. */
@@ -74,4 +75,39 @@ export function useBlobUrls<T extends { id: Id; blob: Blob }>(
   }, [items]);
 
   return urls;
+}
+
+/**
+ * The same, but the URL SURVIVES A REMOUNT - spec 055.
+ *
+ * `useBlobUrl` above mints a fresh URL for every Blob it is handed, and
+ * `useLiveQuery` hands back a new Blob object on every re-run. A new object URL
+ * is a new cache key to the browser, so the identical bytes were decoded again
+ * on every mount and on every unrelated write to a table the query read.
+ *
+ * This asks `media-cache.ts` for the URL instead, keyed by what the picture IS
+ * rather than by which Blob object happens to be in hand. A remount gets the
+ * same string back, so the browser reuses its decoded image; the cache decides
+ * when the bytes are actually freed, and is reference-counted so it can never
+ * revoke one that is still on screen.
+ */
+export function useCachedBlobUrl(
+  key: string | undefined,
+  blob: Blob | undefined,
+): string | undefined {
+  const [url, setUrl] = useState<string>();
+
+  useEffect(() => {
+    if (!key || !blob) {
+      setUrl(undefined);
+      return;
+    }
+    setUrl(acquire(key, blob));
+    /* Release rather than revoke. Reaching zero users does not free anything -
+       that is what makes the next mount cheap - it only makes the URL eligible
+       to age out of the cache's bounded idle list. */
+    return () => release(key);
+  }, [key, blob]);
+
+  return url;
 }

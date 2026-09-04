@@ -20,7 +20,8 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/data/db';
 import { readMediaBlob } from '@/data/media/read';
 import type { RenditionSize } from '@/data/media/renditions';
-import { useBlobUrl } from '../blob-url';
+import { useCachedBlobUrl } from '../blob-url';
+import { mediaCacheKey } from '../media-cache';
 import type { Id } from '@/domain/types';
 
 export function TileArt({ mediaId, alt = '', size = 'thumbnail', className }: {
@@ -41,7 +42,9 @@ export function TileArt({ mediaId, alt = '', size = 'thumbnail', className }: {
     return (await readMediaBlob(media, size)) ?? null;
   }, [mediaId, size]);
 
-  const url = useBlobUrl(blob ?? undefined);
+  /* Spec 055. Keyed by what the picture IS, so scrolling away and back reuses
+     the same URL and the browser reuses its decoded image. */
+  const url = useCachedBlobUrl(mediaCacheKey(mediaId, size), blob ?? undefined);
 
   // The box is drawn whether or not the picture has arrived, so the grid does
   // not reflow underneath the reader when it does.

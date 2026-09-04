@@ -24,7 +24,8 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/data/db';
 import { readMediaBlob } from '@/data/media/read';
 import { resolveCardArt, type CardArt, type CatalogCard } from '@/data/catalog';
-import { useBlobUrl } from '../blob-url';
+import { useCachedBlobUrl } from '../blob-url';
+import { mediaCacheKey } from '../media-cache';
 import { FishIcon, ImageBrokenIcon, LockIcon } from './Icons';
 
 /**
@@ -79,7 +80,15 @@ export function useCardArt(
     return readMediaBlob(media, 'thumbnail');
   }, [art.kind === 'own' ? art.mediaId : undefined]);
 
-  return { art, ownUrl: useBlobUrl(blob) };
+  /*
+   * Spec 055. This was `useBlobUrl(blob)`, which minted a NEW object URL on
+   * every mount and on every re-run of the query above - and `useLiveQuery`
+   * re-runs on any write to a table it read. A new URL is a new cache key, so
+   * one photograph finishing its sync re-decoded every own-photo card on the
+   * catalog at once. Keyed by the picture, the same string comes back.
+   */
+  const key = art.kind === 'own' ? mediaCacheKey(art.mediaId, 'thumbnail') : undefined;
+  return { art, ownUrl: useCachedBlobUrl(key, blob) };
 }
 
 interface Props {
