@@ -24,7 +24,8 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/data/db';
 import { readMediaBlob } from '@/data/media/read';
 import { resolveCardArt, type CardArt, type CatalogCard } from '@/data/catalog';
-import { useBlobUrl } from '../blob-url';
+import { useCachedBlobUrl } from '../blob-url';
+import { mediaCacheKey } from '../media-cache';
 import { FishIcon, ImageBrokenIcon, LockIcon } from './Icons';
 
 /**
@@ -62,12 +63,32 @@ export function useCardArt(
     if (art.kind !== 'own') return undefined;
     const media = await db.media.get(art.mediaId);
     if (!media) return undefined;
-    // Preview, not thumbnail: the smallest box this hook feeds is a catalog
-    // tile at ~187px, well past where 320px stays sharp - spec 036.
-    return readMediaBlob(media, 'preview');
+    /*
+     * SPEC 053 CHANGED THIS FROM `preview` TO `thumbnail`.
+     *
+     * The old comment was right about the rule and wrong about the trade. A
+     * catalog tile is ~187 CSS px and `preview` is 1280px on its longest edge
+     * - a full-width photograph decoded into a box a twelfth of its area, for
+     * every own-photo card in a scrolling list. `thumbnail` is 320px: roughly
+     * 16x fewer pixels to decode and about a tenth of the bytes.
+     *
+     * The cost, stated rather than skipped: spec 036 sized 320px for a box of
+     * 107 CSS px (320/3, for a 3x display). At 187 this is 1.7x - sharp on a
+     * 2x screen, softer than before on a 3x one. Accepted for a list that
+     * scrolls; anything drawn large still asks for `preview`.
+     */
+    return readMediaBlob(media, 'thumbnail');
   }, [art.kind === 'own' ? art.mediaId : undefined]);
 
-  return { art, ownUrl: useBlobUrl(blob) };
+  /*
+   * Spec 055. This was `useBlobUrl(blob)`, which minted a NEW object URL on
+   * every mount and on every re-run of the query above - and `useLiveQuery`
+   * re-runs on any write to a table it read. A new URL is a new cache key, so
+   * one photograph finishing its sync re-decoded every own-photo card on the
+   * catalog at once. Keyed by the picture, the same string comes back.
+   */
+  const key = art.kind === 'own' ? mediaCacheKey(art.mediaId, 'thumbnail') : undefined;
+  return { art, ownUrl: useCachedBlobUrl(key, blob) };
 }
 
 interface Props {

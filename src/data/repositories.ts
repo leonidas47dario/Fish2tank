@@ -19,6 +19,7 @@ import type {
   IdentificationAssertion,
   Instant,
   HoldingMeasurement,
+  KeeperNote,
   LengthMeasurement,
   LifeEvent,
   Media,
@@ -1948,15 +1949,35 @@ export interface RecordMeasurementInput {
 }
 
 /**
- * Record how big a fish is on a given day - spec 037.
+ * Record how big a fish is on a given day - spec 037, revised by spec 047.
+ *
+ * A (HOLDING, DAY) PAIR HOLDS AT MOST ONE MEASUREMENT. This was an `add`, so
+ * every save minted a row and the form was **the only way to correct a
+ * measurement while being unable to correct anything**: a mistyped length
+ * produced a second row beside the first, and the timeline then printed two
+ * contradictory sizes under one date with nothing to say which was meant.
+ * Reported with a screenshot showing 1.5in, 1.5in and 4in on one day.
+ *
+ * That is not an ambiguity, it is a record of something that did not happen.
+ * P6 forbids inventing a number; printing two where one was measured is the
+ * same failure from the other direction.
+ *
+ * So this replaces every row for that day rather than appending, and returns
+ * the survivor. Legacy duplicates collapse the first time a day is touched -
+ * nothing sweeps the table on upgrade, because a migration that picked one of
+ * three numbers would be choosing on the keeper's behalf which was true.
+ *
+ * WHOLESALE, INCLUDING THE PHOTO LINK AND THE NOTE. A note left attached to a
+ * number it was not written about is a small lie of the same kind. The form
+ * prefills from the existing row so this reads as an edit rather than a
+ * silent overwrite.
+ *
+ * A HOLDING CAN BE A GROUP, and this is one row per day for a group too.
+ * `HoldingMeasurement` names the holding and never an individual, so two rows
+ * on one day for a group of six are unattributable - see spec 047.
  *
  * REFUSES AN EMPTY OBSERVATION. A row with no length records that somebody
- * opened a form, which is not a fact about a fish, and it would then sit in
- * the timeline as a dated entry saying nothing.
- *
- * A holding can be a GROUP, and then this is a measurement of one of them on
- * that day. Nothing here averages anything; see the note on
- * `HoldingMeasurement`.
+ * opened a form, which is not a fact about a fish.
  */
 export async function recordMeasurement(
   input: RecordMeasurementInput,
@@ -1978,12 +1999,55 @@ export async function recordMeasurement(
     createdAt: nowIso(),
   };
 
-  await database.holdingMeasurements.add(measurement);
+  /*
+   * The read and the write are in one transaction, for the reason spec 044
+   * settled for `updateCatch`: two saves racing outside one would each see no
+   * existing row and both insert, which is the duplicate this exists to stop.
+   */
+  const replaced = await database.transaction(
+    'rw',
+    [database.holdingMeasurements],
+    async () => {
+      const sameDay = await database.holdingMeasurements
+        .where('holdingId').equals(input.holdingId).toArray();
+      const clashes = sameDay.filter((m) => m.observedOn === input.observedOn);
+      if (clashes.length > 0) {
+        await database.holdingMeasurements.bulkDelete(clashes.map((m) => m.id));
+      }
+      await database.holdingMeasurements.add(measurement);
+      return clashes.length;
+    },
+  );
+
   console.info('[timeline] measurement recorded', {
     holdingId: input.holdingId, observedOn: input.observedOn,
-    length: input.length.value, fromPhoto: Boolean(input.mediaId),
+    length: input.length.value, fromPhoto: Boolean(input.mediaId), replaced,
   });
   return measurement;
+}
+
+/**
+ * What a day already says about this fish, or nothing - spec 047.
+ *
+ * The form reads this to prefill, so choosing a date that already has a
+ * measurement reads as editing that measurement rather than as a replace that
+ * happens invisibly on save.
+ */
+export async function measurementOn(
+  holdingId: Id,
+  observedOn: CalendarDate,
+  database: DB = db,
+): Promise<HoldingMeasurement | undefined> {
+  const rows = await database.holdingMeasurements
+    .where('holdingId').equals(holdingId).toArray();
+  /*
+   * Newest wins where a day carries several from before this rule existed, so
+   * the form offers the most recent thing the keeper said rather than the
+   * oldest. The save then collapses the rest.
+   */
+  return rows
+    .filter((m) => m.observedOn === observedOn)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
 }
 
 /** Remove one observation. Nothing else depends on it, so nothing cascades. */
@@ -2008,6 +2072,129 @@ export async function setAcquiredOn(
   if (!holding) throw new Error(`Unknown holding ${holdingId}`);
   await database.holdings.update(holdingId, { acquiredOn });
   console.info('[timeline] acquisition date set', { holdingId, acquiredOn: acquiredOn ?? null });
+}
+
+// ---------------------------------------------------------------------------
+// Keeper notes (spec 046, FH-5)
+// ---------------------------------------------------------------------------
+
+/**
+ * Write a dated note about a fish.
+ *
+ * Keyed on the holding, so it lands in the timeline in date order and works
+ * for a living fish as readily as for a memorial - see `KeeperNote`.
+ *
+ * REFUSES AN EMPTY NOTE, for the same reason `recordMeasurement` refuses an
+ * empty observation: a dated entry that says nothing is worse than no entry,
+ * because the timeline then carries a row the reader has to work out.
+ */
+export async function writeNote(
+  input: { holdingId: Id; text: string; writtenOn?: CalendarDate },
+  database: DB = db,
+): Promise<KeeperNote> {
+  const holding = await database.holdings.get(input.holdingId);
+  if (!holding) throw new Error(`Unknown holding ${input.holdingId}`);
+  const text = input.text.trim();
+  if (!text) throw new Error('Write something first.');
+
+  const note: KeeperNote = {
+    id: newId('note'),
+    holdingId: input.holdingId,
+    writtenOn: input.writtenOn ?? today(),
+    text,
+    createdAt: nowIso(),
+  };
+  await database.keeperNotes.add(note);
+  console.info('[heaven] note written', { holdingId: input.holdingId, on: note.writtenOn });
+  return note;
+}
+
+/** Remove one note. Nothing depends on it, so nothing cascades. */
+export async function deleteNote(id: Id, database: DB = db): Promise<void> {
+  await database.keeperNotes.delete(id);
+  console.info('[heaven] note deleted', { id });
+}
+
+/** Correct a note in place, or its date. Empty text is a delete, not a blank. */
+export async function updateNote(
+  id: Id,
+  patch: { text?: string; writtenOn?: CalendarDate },
+  database: DB = db,
+): Promise<void> {
+  const next: Record<string, unknown> = {};
+  if (patch.text !== undefined) {
+    const text = patch.text.trim();
+    if (!text) return deleteNote(id, database);
+    next.text = text;
+  }
+  if (patch.writtenOn !== undefined) next.writtenOn = patch.writtenOn;
+  if (Object.keys(next).length === 0) return;
+  await database.keeperNotes.update(id, next);
+}
+
+/**
+ * Correct a memorial after the fact - FH-7.
+ *
+ * Only the fields named, for the reason spec 043 established: a
+ * read-modify-write on a synced table loses one of two concurrent edits, and
+ * every field on this page saves on its own.
+ */
+export async function updateMemorial(
+  id: Id,
+  patch: {
+    occurredOn?: CalendarDate;
+    story?: string | null;
+    lesson?: string | null;
+    suspectedContributors?: string[];
+    causeConfidence?: Memorial['causeConfidence'];
+  },
+  database: DB = db,
+): Promise<void> {
+  const next: Record<string, unknown> = {};
+  const put = (key: string, value: unknown) => {
+    if (value !== undefined) next[key] = value === null ? undefined : value;
+  };
+  put('occurredOn', patch.occurredOn);
+  put('story', patch.story);
+  put('lesson', patch.lesson);
+  put('suspectedContributors', patch.suspectedContributors);
+  put('causeConfidence', patch.causeConfidence);
+  if (Object.keys(next).length === 0) return;
+  await database.memorials.update(id, next as Partial<Memorial>);
+  console.info('[heaven] memorial corrected', { id, fields: Object.keys(next) });
+}
+
+/**
+ * Remove the record of a death - FH-7. NOT the fish.
+ *
+ * Its memos and the principles written FROM it go with it. The fish, its tank
+ * history, its photographs and the `deceased` life event all stay: somebody
+ * clearing a mistyped memorial is not asking to resurrect a fish or lose its
+ * pictures. That is the rule ENH-09 settled for deleting a catch, and the two
+ * must not disagree.
+ *
+ * A principle with no source, or one sourced from a different fish, stays. A
+ * lesson can outlive the record that taught it.
+ */
+export async function deleteMemorial(
+  id: Id,
+  database: DB = db,
+): Promise<{ principles: number }> {
+  const memorial = await database.memorials.get(id);
+  if (!memorial) return { principles: 0 };
+
+  const principles = (await database.keeperPrinciples.toArray())
+    .filter((k) => k.sourceMemorialId === id);
+
+  await database.transaction('rw', [database.memorials, database.keeperPrinciples], async () => {
+    await database.keeperPrinciples.bulkDelete(principles.map((k) => k.id));
+    await database.memorials.delete(id);
+  });
+
+  console.info('[heaven] memorial deleted', {
+    id, principles: principles.length, holdingKept: memorial.holdingId,
+  });
+  return { principles: principles.length };
 }
 
 /** Remove a tank's photo, leaving the tank itself alone. */

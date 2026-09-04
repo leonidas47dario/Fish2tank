@@ -52,6 +52,8 @@ const isScarcityBand = (v: string | undefined): v is MarketScarcityBand =>
 const SOURCE_LABEL: Record<string, string> = {
   wikipedia: 'Wikipedia',
   vendor: 'store listing',
+  // Spec 045.
+  seriouslyfish: 'Seriously Fish',
 };
 
 /**
@@ -211,12 +213,29 @@ export default function SpeciesDetail() {
    * rest of the record beneath the list. */
   const profile = [
     species.adultSizeIn !== undefined
-      && { k: 'Adult size', v: `${Math.round(species.adultSizeIn * 10) / 10}"`, field: 'adultSizeIn' as const },
+      && {
+        k: 'Adult size',
+        /* Spec 045: the basis travels with the figure. Without it the number
+           means nose-to-tail-tip for some fish and nose-to-tail-base for
+           others, and nothing on the screen says which. */
+        v: `${Math.round(species.adultSizeIn * 10) / 10}"${
+          species.lengthBasis === 'SL' ? ' standard length'
+            : species.lengthBasis === 'TL' ? ' total length' : ''}`,
+        field: 'adultSizeIn' as CareField,
+      },
     species.minVolumeGal !== undefined
-      && { k: 'Minimum tank', v: formatVolume({ value: species.minVolumeGal, unit: 'gal' }), field: 'minVolumeGal' as const },
-    species.aggression && { k: 'Temperament', v: species.aggression, field: 'aggression' as const },
+      && { k: 'Minimum tank', v: formatVolume({ value: species.minVolumeGal, unit: 'gal' }), field: 'minVolumeGal' as CareField },
+    // The footprint, which a volume alone does not give: a 14-gallon tall is
+    // not a 24x12 base, and a bottom-dweller cares about the base.
+    species.tankBaseLengthIn !== undefined && species.tankBaseWidthIn !== undefined
+      && { k: 'Tank footprint', v: `${species.tankBaseLengthIn}" × ${species.tankBaseWidthIn}"`, field: 'tankBaseIn' as CareField },
+    species.aggression && { k: 'Temperament', v: species.aggression, field: 'aggression' as CareField },
     species.tempMinC !== undefined && species.tempMaxC !== undefined
-      && { k: 'Temperature', v: `${species.tempMinC}–${species.tempMaxC}°C`, field: 'tempC' as const },
+      && { k: 'Temperature', v: `${species.tempMinC}–${species.tempMaxC}°C`, field: 'tempC' as CareField },
+    species.phMin !== undefined && species.phMax !== undefined
+      && { k: 'pH', v: `${species.phMin}–${species.phMax}`, field: 'ph' as CareField },
+    species.hardnessMinDgh !== undefined && species.hardnessMaxDgh !== undefined
+      && { k: 'Hardness', v: `${species.hardnessMinDgh}–${species.hardnessMaxDgh} dGH`, field: 'hardnessDgh' as CareField },
     species.predationTags.length > 0 && { k: 'Predation', v: species.predationTags.join(', ') },
     species.waterZone && { k: 'Water column', v: species.waterZone.replace('-', ' ') },
   ].filter((r): r is { k: string; v: string; field?: CareField } => Boolean(r));
@@ -314,6 +333,33 @@ export default function SpeciesDetail() {
           </p>
         )}
       </section>
+
+      {/*
+        --- Difficulty, spec 045 ------------------------------------------
+
+        FENCED OFF FROM THE SOURCED FIGURES ON PURPOSE, in its own panel and
+        labelled in words. Every value in "What we know" is a measurement with
+        a sentence behind it that you can open; these six are Seriously Fish's
+        editorial judgement with no sentence behind them at all. Rendering them
+        in the same list would make an opinion look like a measurement, which
+        is the one thing the whole quote gate exists to prevent.
+      */}
+      {species.difficulty && species.difficulty.length > 0 && (
+        <section className="panel">
+          <h2 className="sec-head">Difficulty</h2>
+          <p className="panel__note panel__note--tight" style={{ marginTop: 0 }}>
+            Seriously Fish's rating, not a measured figure.
+          </p>
+          <dl className="kv">
+            {species.difficulty.map((d) => (
+              <div key={d.measure} style={{ display: 'contents' }}>
+                <dt style={{ textTransform: 'capitalize' }}>{d.measure}</dt>
+                <dd>{d.word}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      )}
 
       {/* --- Card art choice --------------------------------------------- */}
       <section className="panel">

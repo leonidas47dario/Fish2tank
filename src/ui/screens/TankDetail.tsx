@@ -28,9 +28,11 @@ import { CATALOG, type CatalogSpecies } from '@/data/catalog';
 import { identifyFromText } from '@/data/identify';
 import { formatVolume } from '@/domain/units';
 import type { Aquarium, StockingState } from '@/domain/types';
-import { forDisplay, summariseTank, type TankResident, type TankStats } from '@/domain/tank-stats';
-import { TankViewer } from '../components/tank/TankViewer';
-import { useTankResidents } from '../hooks';
+import { forDisplay, summariseTank, type TankStats } from '@/domain/tank-stats';
+import { tankFormPatch } from '@/domain/tank-form';
+import { TankViewer, type ViewerResident } from '../components/tank/TankViewer';
+import { useTankResidents, useWhoLivedHere } from '../hooks';
+import { WhoLivedHere } from '../components/WhoLivedHere';
 
 export default function TankDetail() {
   const { id } = useParams<{ id: string }>();
@@ -38,6 +40,9 @@ export default function TankDetail() {
   const [editing, setEditing] = useState(false);
   const data = useTankResidents(id);
   const allTanks = useLiveQuery(() => db.aquariums.toArray(), []);
+  /* Spec 048. Hooks before the early returns, always - React counts them per
+     render and a conditional one is error #310. */
+  const formerResidents = useWhoLivedHere(id);
 
   if (data === undefined) return <p className="muted">Loading…</p>;
   if (!data) return <p className="empty">No such tank.</p>;
@@ -91,6 +96,11 @@ export default function TankDetail() {
         allTanks={allTanks ?? []}
       />
 
+      {/* Spec 048. Below the tank itself, because it is about the tank's past
+          and the dashboard is about its present - and outside the edit switch,
+          because reading who lived here is not editing anything. */}
+      <WhoLivedHere rows={formerResidents} tankName={aquarium.name} />
+
       {editing && <TankLifecycle aquarium={aquarium} />}
     </div>
   );
@@ -108,7 +118,7 @@ export default function TankDetail() {
  */
 function OwnerTankView({ aquarium, residents, stats, editing, allTanks }: {
   aquarium: Aquarium;
-  residents: TankResident[];
+  residents: ViewerResident[];
   stats: TankStats;
   editing: boolean;
   allTanks: Array<{ id: string; name: string }>;
@@ -191,7 +201,7 @@ function OwnerTankView({ aquarium, residents, stats, editing, allTanks }: {
  * now different buttons, worded so nobody reaches for the wrong one.
  */
 function ResidentEditor({ resident, aquarium, allTanks, onDone }: {
-  resident: TankResident;
+  resident: ViewerResident;
   aquarium: Aquarium;
   allTanks: Array<{ id: string; name: string }>;
   onDone: () => void;
@@ -330,7 +340,16 @@ function TankProfile({ aquarium }: { aquarium: Aquarium }) {
           {open ? 'Done' : 'Edit'}
         </button>
       </div>
-      {open && <TankForm aquarium={aquarium} onDone={() => setOpen(false)} />}
+      {/*
+        BUG-09. KEYED ON THE TANK. `useState(initial)` reads its argument only
+        on first mount, so a form reused across two tanks - or mounted before
+        the tank had loaded - keeps the first tank's boxes, and blank boxes are
+        indistinguishable from "the keeper cleared this". The key forces a
+        remount, so the boxes always start from the tank on screen. The domain
+        rule cannot protect against this and must not try: blanking a box is a
+        real answer.
+      */}
+      {open && <TankForm key={aquarium.id} aquarium={aquarium} onDone={() => setOpen(false)} />}
       {!aquarium.volume && (
         <p className="xs warn" style={{ marginBottom: 0 }}>
           Without a volume and footprint this tank can only ever return “Not enough data”.
@@ -588,20 +607,20 @@ function TankForm({ aquarium, onDone }: { aquarium: Aquarium; onDone: () => void
 
   const trimmed = name.trim();
 
+  /*
+   * BUG-09. This used to hand `update()` all four fields on every save, and
+   * Dexie DELETES a property given `undefined` - so an edit to the name took
+   * the footprint with it whenever a box was blank, and the footprint is what
+   * the swim-space and minimum-footprint screening rules read. It also wrote
+   * `unit: 'in'` and `unit: 'gal'` regardless of what was stored, relabelling
+   * a centimetre or litre figure rather than converting it.
+   *
+   * Both rules now live in `domain/tank-form.ts`, pure and tested. This only
+   * applies the patch, and an empty patch writes nothing at all.
+   */
   async function save() {
-    const dims = l && w && h
-      ? {
-          length: { value: Number(l), unit: 'in' as const },
-          width: { value: Number(w), unit: 'in' as const },
-          height: { value: Number(h), unit: 'in' as const },
-        }
-      : undefined;
-    await db.aquariums.update(aquarium.id, {
-      name: trimmed,
-      volume: gallons ? { value: Number(gallons), unit: 'gal' } : undefined,
-      dimensions: dims,
-      stockingState: stocking || undefined,
-    });
+    const patch = tankFormPatch({ name, gallons, length: l, width: w, height: h, stocking }, aquarium);
+    if (Object.keys(patch).length > 0) await db.aquariums.update(aquarium.id, patch);
     onDone();
   }
 

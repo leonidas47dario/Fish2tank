@@ -14,9 +14,19 @@
  * BOTH MEASURES ARE OPTIONAL AND ONE IS REQUIRED. `recordMeasurement` refuses
  * an empty observation; this disables the button rather than letting someone
  * find that out by pressing it.
+ *
+ * SPEC 047: THE DATE IS THE KEY, AND CHOOSING ONE THAT ALREADY HAS A SIZE
+ * LOADS IT. `recordMeasurement` now replaces a day's measurement rather than
+ * appending, which is what makes correcting a historical number possible at
+ * all - but a replace that happened invisibly on save would be a worse form
+ * than the one that appended. So picking a date fills the length, the unit,
+ * the photo and the note back in, and the button says "Update" rather than
+ * "Save". The mechanism the keeper asked for is the thing the screen appears
+ * to do.
  */
-import { useState } from 'react';
-import { recordMeasurement, setAcquiredOn } from '@/data/repositories';
+import { useEffect, useState } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { measurementOn, recordMeasurement, setAcquiredOn } from '@/data/repositories';
 import type { Id, LengthUnit } from '@/domain/types';
 
 /** `2026-02-14` for today, in the reader's own timezone rather than UTC. */
@@ -44,6 +54,32 @@ export function MeasurementForm({ holdingId, photos, acquiredOn, isGroup }: {
   const [acq, setAcq] = useState(acquiredOn ?? '');
   const [acqBusy, setAcqBusy] = useState(false);
 
+  /** What this day already says, or nothing. Re-read whenever the date moves. */
+  const existing = useLiveQuery(() => measurementOn(holdingId, on), [holdingId, on]);
+
+  /*
+   * Load it into the fields, and clear them again on a date with nothing.
+   *
+   * Keyed on the measurement's id rather than on the object: `useLiveQuery`
+   * hands back a fresh object on every write to the table, and depending on
+   * that would stamp the stored values back over what the keeper was typing
+   * the moment anything else saved.
+   */
+  const existingId = existing?.id;
+  useEffect(() => {
+    if (existing) {
+      setLength(String(existing.length.value));
+      setLengthUnit(existing.length.unit);
+      setMediaId(existing.mediaId ?? '');
+      setNote(existing.note ?? '');
+    } else {
+      setLength(''); setMediaId(''); setNote('');
+    }
+    setSaved(false);
+    // `existing` itself is deliberately not a dependency; see above.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [existingId, on]);
+
   const lengthValue = Number.parseFloat(length);
   const hasLength = length.trim() !== '' && Number.isFinite(lengthValue) && lengthValue > 0;
 
@@ -59,7 +95,8 @@ export function MeasurementForm({ holdingId, photos, acquiredOn, isGroup }: {
         mediaId: mediaId || undefined,
         note: note.trim() || undefined,
       });
-      setLength(''); setNote(''); setMediaId('');
+      // NOT cleared: the day still holds this measurement, and blanking the
+      // fields would make a saved row look like an unsaved one.
       setSaved(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not save that measurement.');
@@ -144,8 +181,15 @@ export function MeasurementForm({ holdingId, photos, acquiredOn, isGroup }: {
 
       <button type="button" className="btn--primary" style={{ gridColumn: '1 / -1' }}
         disabled={busy || !hasLength} onClick={() => void save()}>
-        {busy ? 'Saving…' : 'Save measurement'}
+        {busy ? 'Saving…' : existing ? 'Update the measurement' : 'Save measurement'}
       </button>
+      {existing && (
+        <p className="panel__note panel__note--tight" style={{ gridColumn: '1 / -1' }}>
+          {/* Said before the save, not discovered after it. A day holds one
+              size, so this replaces what is there rather than adding to it. */}
+          This day already has a size. Saving replaces it.
+        </p>
+      )}
       {!hasLength && (
         <p className="panel__note panel__note--tight" style={{ gridColumn: '1 / -1' }}>
           Enter a length.

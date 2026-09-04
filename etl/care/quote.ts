@@ -44,9 +44,25 @@ export function normalizeForMatch(s: string): string {
 }
 
 /** Is this sentence actually in the text we cached for this species? */
+/**
+ * A table cell is evidence too - spec 045.
+ *
+ * The 12-character floor exists because a fragment like "is 4" proves nothing:
+ * it appears in any long text by accident. That reasoning is about PROSE. A
+ * labelled figure - `pH 5.0-7.5`, `Hardness 1-12 dGH` - is ten characters and
+ * is STRONGER evidence than a sentence, because the label names the field and
+ * the number is the value, with no room for either to be about something else.
+ *
+ * So the floor is conditional on shape: a quote that reads as `label figure`
+ * (a word, then a number, and nothing else of substance) may be shorter. Free
+ * text still has to clear twelve.
+ */
+const TABLE_CELL = /^[A-Za-z][A-Za-z ]{1,20}\s*~?\s*\d/;
+
 export function quoteFound(quote: string, sourceText: string): boolean {
   const q = normalizeForMatch(quote);
-  if (q.length < 12) return false; // too short to be evidence of anything
+  const floor = TABLE_CELL.test(quote.trim()) ? 4 : 12;
+  if (q.length < floor) return false; // too short to be evidence of anything
   return normalizeForMatch(sourceText).includes(q);
 }
 
@@ -316,6 +332,16 @@ export const PLAUSIBLE = {
   // which re-derives the value from the quote; this is only a backstop.
   'min_volume_gal': { min: 1, max: 10000 },
   'temp_c': { min: 4, max: 40 },
+  /*
+   * Spec 045's new fields. pH is bounded by the scale itself; freshwater
+   * aquarium sources never legitimately state outside 3-10, and a figure
+   * outside it is a mis-read cell rather than a remarkable fish.
+   */
+  'ph': { min: 3, max: 10 },
+  /* dGH. Rift lake hard water reaches the low 30s; 0 is real (blackwater). */
+  'hardness_dgh': { min: 0, max: 40 },
+  /* A tank base edge, in inches. Under a foot is a nano; 240 in is 20 ft. */
+  'tank_base_in': { min: 6, max: 240 },
 } as const;
 
 export function inRange(kind: keyof typeof PLAUSIBLE, value: number): boolean {

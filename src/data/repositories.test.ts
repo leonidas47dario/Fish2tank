@@ -9,8 +9,14 @@ import {
   addPhotos,
   deletePhoto,
   recordMeasurement,
+  measurementOn,
   deleteMeasurement,
   setAcquiredOn,
+  writeNote,
+  updateNote,
+  deleteNote,
+  updateMemorial,
+  deleteMemorial,
   assertIdentity,
   assessmentHistory,
   awardGolden,
@@ -1919,5 +1925,247 @@ describe('editing a fish that never had an encounter (BUG-17, spec 044)', () => 
 
     expect(await db.encounters.where('specimenId').equals(specimen.id).count()).toBe(0);
     expect((await db.specimens.get(specimen.id))!.nickname).toBe('Panther');
+  });
+});
+
+describe('keeper notes and correcting a memorial (spec 046)', () => {
+  async function aHolding() {
+    const { holding } = await createOpeningBalanceHolding(
+      { aquariumId: 'tank_75g', rawLabel: 'Severum', kind: 'individual', openingQuantity: 1 }, db,
+    );
+    return holding;
+  }
+
+  it('writes a dated note against a LIVING fish', async () => {
+    // FH-5 was asked for as memos on a memorial. Keyed on the holding it works
+    // before anything dies, which is when most of them get written.
+    const h = await aHolding();
+
+    const note = await writeNote(
+      { holdingId: h.id, text: 'Moved him, the barbs were nipping.', writtenOn: '2026-03-02' }, db);
+
+    expect(note.writtenOn).toBe('2026-03-02');
+    expect(await db.memorials.count()).toBe(0);
+    expect((await db.keeperNotes.get(note.id))!.text).toBe('Moved him, the barbs were nipping.');
+  });
+
+  it('DATES THE NOTE TO THE DAY IT IS ABOUT, not the day it was typed', async () => {
+    // The backfilling half of the ask. `createdAt` still records when it was
+    // written, so nothing is lost by letting the two differ.
+    const h = await aHolding();
+
+    const note = await writeNote({ holdingId: h.id, text: 'Arrived tiny.', writtenOn: '2024-01-09' }, db);
+
+    expect(note.writtenOn).toBe('2024-01-09');
+    expect(note.createdAt.slice(0, 4)).not.toBe('2024');
+  });
+
+  it('refuses a note that says nothing', async () => {
+    const h = await aHolding();
+
+    await expect(writeNote({ holdingId: h.id, text: '   ' }, db)).rejects.toThrow(/Write something/);
+    expect(await db.keeperNotes.count()).toBe(0);
+  });
+
+  it('clearing a note deletes it rather than leaving a blank dated row', async () => {
+    const h = await aHolding();
+    const note = await writeNote({ holdingId: h.id, text: 'Something.' }, db);
+
+    await updateNote(note.id, { text: '  ' }, db);
+
+    expect(await db.keeperNotes.get(note.id)).toBeUndefined();
+  });
+
+  it('corrects a note in place, and can be removed outright', async () => {
+    const h = await aHolding();
+    const note = await writeNote({ holdingId: h.id, text: 'Fin rot?' }, db);
+
+    await updateNote(note.id, { text: 'Fin rot, treated.', writtenOn: '2026-03-04' }, db);
+    const after = await db.keeperNotes.get(note.id);
+    expect(after!.text).toBe('Fin rot, treated.');
+    expect(after!.writtenOn).toBe('2026-03-04');
+
+    await deleteNote(note.id, db);
+    expect(await db.keeperNotes.get(note.id)).toBeUndefined();
+    expect(await db.holdings.get(h.id)).toBeDefined();
+  });
+
+  it('PATCHES ONLY THE FIELDS NAMED on a memorial', async () => {
+    // Spec 043's rule: a read-modify-write on a synced table loses one of two
+    // concurrent edits, and every field on the memorial page saves on its own.
+    const h = await aHolding();
+    const mem = await recordDeath(
+      { holdingId: h.id, story: 'Found him this morning.', lesson: 'Test before adding.' }, db);
+
+    await updateMemorial(mem.id, { causeConfidence: 'likely' }, db);
+
+    const after = await db.memorials.get(mem.id);
+    expect(after!.causeConfidence).toBe('likely');
+    expect(after!.story).toBe('Found him this morning.');
+    expect(after!.lesson).toBe('Test before adding.');
+  });
+
+  it('clears a memorial field when the keeper empties it', async () => {
+    const h = await aHolding();
+    const mem = await recordDeath({ holdingId: h.id, story: 'Written badly at 2am.' }, db);
+
+    await updateMemorial(mem.id, { story: null }, db);
+
+    expect((await db.memorials.get(mem.id))!.story).toBeUndefined();
+  });
+
+  it('DELETING A MEMORIAL KEEPS THE FISH, ITS PHOTOGRAPHS AND THE DEATH EVENT', async () => {
+    // ENH-09 settled this for deleting a catch and the two must not disagree:
+    // clearing a mistyped memorial is not a request to resurrect a fish.
+    const h = await aHolding();
+    const specimen = await ensureSpecimenForHolding(h.id, db);
+    await addPhotos({ specimenId: specimen.id, files: [photo()] }, db);
+    const mem = await recordDeath({ holdingId: h.id }, db);
+
+    await deleteMemorial(mem.id, db);
+
+    expect(await db.memorials.get(mem.id)).toBeUndefined();
+    expect(await db.holdings.get(h.id)).toBeDefined();
+    expect(await db.specimens.get(specimen.id)).toBeDefined();
+    expect(await db.media.where('specimenIds').equals(specimen.id).count()).toBe(1);
+    const events = await db.lifeEvents.where('holdingId').equals(h.id).toArray();
+    expect(events.some((e) => e.type === 'deceased')).toBe(true);
+  });
+
+  it('takes the principle written FROM it, and leaves every other principle alone', async () => {
+    // A lesson can outlive the record that taught it - but one sourced from
+    // THIS memorial is a footnote to a record that no longer exists.
+    const h = await aHolding();
+    const mem = await recordDeath({ holdingId: h.id, lesson: 'Quarantine everything.' }, db);
+    await createKeeperPrinciple('Quarantine everything.', { memorialId: mem.id }, db);
+    await createKeeperPrinciple('Feed less than you think.', {}, db);
+
+    const out = await deleteMemorial(mem.id, db);
+
+    expect(out.principles).toBe(1);
+    const left = await db.keeperPrinciples.toArray();
+    expect(left.map((k) => k.text)).toEqual(['Feed less than you think.']);
+  });
+});
+
+describe('a day holds one size (spec 047)', () => {
+  async function aHolding() {
+    const { holding } = await createOpeningBalanceHolding(
+      { aquariumId: 'tank_75g', rawLabel: 'Redfin Cactus Pleco', kind: 'individual', openingQuantity: 1 }, db,
+    );
+    return holding;
+  }
+
+  it('RECORDING A DAY THAT ALREADY HAS A SIZE REPLACES IT', async () => {
+    // The bug this fixes: `add` minted a row every save, so the only way to
+    // correct a measurement could not correct anything.
+    const h = await aHolding();
+    await recordMeasurement(
+      { holdingId: h.id, observedOn: '2026-09-03', length: { value: 1.5, unit: 'in' } }, db);
+
+    await recordMeasurement(
+      { holdingId: h.id, observedOn: '2026-09-03', length: { value: 2.8, unit: 'in' } }, db);
+
+    const rows = await db.holdingMeasurements.toArray();
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.length.value).toBe(2.8);
+  });
+
+  it('collapses several legacy rows on one day the first time it is touched', async () => {
+    // Exactly the reported screenshot: 1.5in, 1.5in and 4in under one date.
+    // Written straight to the table, since the repository can no longer
+    // produce this state.
+    const h = await aHolding();
+    for (const value of [1.5, 1.5, 4]) {
+      await db.holdingMeasurements.add({
+        id: newId('meas'), holdingId: h.id, observedOn: '2026-09-03',
+        length: { value, unit: 'in' }, createdAt: new Date().toISOString(),
+      });
+    }
+
+    await recordMeasurement(
+      { holdingId: h.id, observedOn: '2026-09-03', length: { value: 2.8, unit: 'in' } }, db);
+
+    const rows = await db.holdingMeasurements.toArray();
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.length.value).toBe(2.8);
+  });
+
+  it('replaces WHOLESALE - the old note and photo link do not survive', async () => {
+    // A note left attached to a number it was not written about is a lie of
+    // the same kind as inventing the number.
+    const h = await aHolding();
+    const specimen = await ensureSpecimenForHolding(h.id, db);
+    const [shot] = await addPhotos({ specimenId: specimen.id, files: [photo()] }, db);
+    await recordMeasurement({
+      holdingId: h.id, observedOn: '2026-09-03', length: { value: 1.5, unit: 'in' },
+      mediaId: shot!.id, note: 'read off the photo',
+    }, db);
+
+    await recordMeasurement(
+      { holdingId: h.id, observedOn: '2026-09-03', length: { value: 2.8, unit: 'in' } }, db);
+
+    const rows = await db.holdingMeasurements.toArray();
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.note).toBeUndefined();
+    expect(rows[0]!.mediaId).toBeUndefined();
+  });
+
+  it('LEAVES OTHER DAYS ALONE', async () => {
+    // The whole point of the series: a fish measured three times has a growth
+    // story. Replacing across dates would destroy it.
+    const h = await aHolding();
+    await recordMeasurement(
+      { holdingId: h.id, observedOn: '2024-03-12', length: { value: 1.1, unit: 'in' } }, db);
+    await recordMeasurement(
+      { holdingId: h.id, observedOn: '2026-01-04', length: { value: 1.9, unit: 'in' } }, db);
+
+    await recordMeasurement(
+      { holdingId: h.id, observedOn: '2026-01-04', length: { value: 2.2, unit: 'in' } }, db);
+
+    const rows = (await db.holdingMeasurements.toArray())
+      .sort((a, b) => a.observedOn.localeCompare(b.observedOn));
+    expect(rows.map((r) => [r.observedOn, r.length.value]))
+      .toEqual([['2024-03-12', 1.1], ['2026-01-04', 2.2]]);
+  });
+
+  it('leaves ANOTHER FISH measured on the same day alone', async () => {
+    // The key is (holding, day), not the day.
+    const mine = await aHolding();
+    const theirs = await aHolding();
+    await recordMeasurement(
+      { holdingId: mine.id, observedOn: '2026-09-03', length: { value: 1.5, unit: 'in' } }, db);
+    await recordMeasurement(
+      { holdingId: theirs.id, observedOn: '2026-09-03', length: { value: 9, unit: 'in' } }, db);
+
+    await recordMeasurement(
+      { holdingId: mine.id, observedOn: '2026-09-03', length: { value: 2.8, unit: 'in' } }, db);
+
+    const rows = await db.holdingMeasurements.toArray();
+    expect(rows).toHaveLength(2);
+    expect(rows.find((r) => r.holdingId === theirs.id)!.length.value).toBe(9);
+  });
+
+  it('measurementOn reads back what a day says, and nothing for a day it does not', async () => {
+    const h = await aHolding();
+    await recordMeasurement(
+      { holdingId: h.id, observedOn: '2026-09-03', length: { value: 2.8, unit: 'in' } }, db);
+
+    expect((await measurementOn(h.id, '2026-09-03', db))!.length.value).toBe(2.8);
+    expect(await measurementOn(h.id, '2026-09-04', db)).toBeUndefined();
+  });
+
+  it('measurementOn offers the NEWEST of several legacy rows', async () => {
+    // So the form prefills with the most recent thing the keeper said, rather
+    // than the oldest. The save then collapses the rest.
+    const h = await aHolding();
+    for (const [value, at] of [[1.5, '2026-09-03T09:00:00.000Z'], [4, '2026-09-03T11:00:00.000Z']] as const) {
+      await db.holdingMeasurements.add({
+        id: newId('meas'), holdingId: h.id, observedOn: '2026-09-03',
+        length: { value, unit: 'in' }, createdAt: at,
+      });
+    }
+
+    expect((await measurementOn(h.id, '2026-09-03', db))!.length.value).toBe(4);
   });
 });

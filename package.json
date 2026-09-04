@@ -32,7 +32,9 @@
     "plates": "node scripts/derive-plates.mjs",
     "synonyms:propose": "tsx etl/propose-synonyms.ts",
     "genera:classify": "tsx etl/classify-genera.ts",
-    "repair:holdings": "tsx etl/repair-duplicate-holdings.ts"
+    "repair:holdings": "tsx etl/repair-duplicate-holdings.ts",
+    "sf:fetch": "tsx etl/fetch-seriously-fish.ts",
+    "sf:ingest": "tsx etl/ingest-seriously-fish.ts"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",

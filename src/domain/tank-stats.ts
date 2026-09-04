@@ -165,8 +165,15 @@ export function summariseTank(residents: TankResident[]): TankStats {
   };
 }
 
-/** Residents ordered for display: biggest first, unidentified last. */
-export function forDisplay(residents: TankResident[]): TankResident[] {
+/**
+ * Residents ordered for display: biggest first, unidentified last.
+ *
+ * GENERIC so a caller's own fields survive the sort. The screen's resident
+ * carries `ownMediaId` (spec 053) and returning a bare `TankResident[]` would
+ * erase it from the type while leaving it on the object - which type-checks,
+ * because the field is optional, and is true only by accident.
+ */
+export function forDisplay<T extends TankResident>(residents: T[]): T[] {
   return [...residents].sort((a, b) => {
     if (Boolean(a.speciesId) !== Boolean(b.speciesId)) return a.speciesId ? -1 : 1;
     return (b.adultSizeIn ?? 0) - (a.adultSizeIn ?? 0)

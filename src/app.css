@@ -1307,6 +1307,9 @@ summary.factor::-webkit-details-marker { display: none; }
 }
 .stat__value { font-size: var(--size-xl); line-height: 1.1; color: var(--color-text); }
 .stat__label { font-size: var(--size-xs); color: var(--color-muted); }
+/* The denominator, under the number it qualifies - spec 051. Fainter than the
+   label, because it is a caveat on the figure rather than what the figure is. */
+.stat__note { font-size: var(--size-xs); color: var(--color-faint); }
 
 /* Water column. Bands stack in the order the fish occupy them, so position
    carries the meaning and no colour ramp is needed. */
@@ -2112,4 +2115,235 @@ select.inline-input { cursor: pointer; }
 @media (max-width: 22rem) {
   .factlist > div,
   .factlist__row { grid-template-columns: 1fr; gap: 0; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Fish Heaven - spec 046
+
+   Differentiation lives in four places rather than one, because a single
+   tinted header is a decoration and wears off: its own route, a wing mark, a
+   header that reads as a SPAN OF TIME where a tank header reads as capacity,
+   and the words. Nothing here is a tank card with a different colour.
+
+   FR-L03 sets the ceiling on how much this may do: "a gentle, dignified tone
+   rather than a stats-heavy reward screen". So no badge, no ribbon, no tinted
+   banner - the difference is in the shape of the layout and the restraint.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.heaven-card {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: var(--space-3);
+  align-items: center;
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+}
+.heaven-card__art {
+  display: grid; place-items: center;
+  width: 96px; height: 96px;
+  background: var(--color-surface-raised);
+  color: var(--color-faint);
+}
+/* 96px, which is inside spec 036's rule that a thumbnail suits a box of
+   107 CSS px or less - so this loads the 320px rendition, not the original. */
+.heaven-card__art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.heaven-card__body {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: var(--space-2) var(--space-2) var(--space-2) 0;
+  min-width: 0;
+}
+/* One line of it. The whole story is on the page behind the card, and a card
+   that grows with the length of somebody's grief makes the list unreadable. */
+.heaven-card__story {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.heaven-hero { margin: 0; }
+.heaven-hero img {
+  display: block; width: 100%; height: auto;
+  max-height: 60vh; object-fit: cover;
+  background: var(--color-surface-raised);
+}
+.heaven-hero figcaption { padding: var(--space-2) var(--space-4) 0; }
+
+/* The span of time, at the head. Data font, because these are dates. */
+.heaven-span {
+  color: var(--color-muted);
+  font-family: var(--font-data);
+  font-size: var(--size-sm);
+  margin: var(--space-2) 0 0;
+}
+
+/* A note sits at the same weight as a photograph or a measurement: it is one
+   more dated observation, not a special kind of entry. */
+.timeline__row--note::before { background: var(--color-faint); }
+
+/* A destructive action that must not read like a control. "Remove this note"
+   sat as a full ghost button under every note, which made the row look like a
+   form with a submit button rather than a sentence somebody wrote. */
+.linkbtn {
+  /* Block, so it takes its own line. Inline it ran straight into the value
+     above it - "4inRemove this measurement" - which reads as one word. */
+  display: block;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin-top: var(--space-1);
+  color: var(--color-faint);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  min-height: 0;
+}
+.linkbtn:hover:not(:disabled) { color: var(--color-text); }
+
+/* A size that can show the photograph it was read from - spec 047. */
+.timeline__size {
+  /* Overrides `.linkbtn`'s block: a size sits IN the sentence, beside
+     "Photographed —" or "one of them", rather than starting a line. */
+  display: inline-block;
+  text-decoration: none;
+  color: inherit;
+  text-align: left;
+}
+.timeline__size .xs { color: var(--color-faint); }
+.timeline__size:hover:not(:disabled) { color: var(--color-primary); }
+/* The photograph itself, revealed under the row. Full column width, which is
+   why it reads the preview rendition rather than the thumbnail. */
+.timeline__shot {
+  margin: var(--space-2) 0 0;
+}
+.timeline__shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 50vh;
+  object-fit: contain;
+  border-radius: var(--radius-control);
+  background: var(--color-surface-raised);
+}
+
+/*
+ * Who lived here before - spec 048, given faces by spec 050.
+ *
+ * A grid of the same tiles as the resident grid above, deliberately: the fish
+ * you lost should not be in a plainer format than the fish you still have. The
+ * differences are the two that carry meaning - dimmed, because these are not
+ * residents, and a wing mark where a death happened here.
+ */
+.departed-tile { display: flex; flex-direction: column; }
+.departed-tile:hover { opacity: 1; border-color: var(--color-primary); }
+/* The facts block sits under the name, inside the same padded body. */
+.departed__facts {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 0;
+}
+.departed__end {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--color-muted);
+}
+.departed__end svg { flex: none; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Filtering the tank from its dashboard - spec 049
+
+   NFR-06: selection is never signalled by colour alone. A selected bar
+   carries a ring AND its label goes bold, and `aria-pressed` carries it for
+   anyone not looking at the screen.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* A tappable bar is a <button>, which arrives with a UA background, border,
+   padding and centred text. Reset to the row it replaces, so an interactive
+   chart is pixel-identical to a static one until it is selected. */
+.watercolumn__band--tappable,
+.bars__row--tappable,
+.legend__btn {
+  background: none;
+  border: 0;
+  padding: var(--space-1) var(--space-2);
+  margin: 0 calc(var(--space-2) * -1);
+  width: auto;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  border-radius: var(--radius-control);
+  min-height: 0;
+}
+.legend__btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--size-xs);
+}
+.watercolumn__band--tappable:hover:not(:disabled),
+.bars__row--tappable:hover:not(:disabled),
+.legend__btn:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--color-border) 35%, transparent);
+}
+.watercolumn__band--tappable.is-on,
+.bars__row--tappable.is-on,
+.legend__btn.is-on {
+  /* The ring, not a fill: a filled row would compete with the bar inside it
+     for the same "this one" meaning. */
+  box-shadow: inset 0 0 0 var(--border-width) var(--color-primary);
+  background: color-mix(in oklab, var(--color-primary) 12%, transparent);
+}
+/* The second cue. Colour alone would fail in greyscale and for anyone who
+   cannot tell the ring from the row's own border. */
+.watercolumn__band--tappable.is-on .watercolumn__label,
+.bars__row--tappable.is-on .bars__label,
+.legend__btn.is-on { font-weight: var(--weight-bold); color: var(--color-text); }
+
+/* The stacked bar stays decorative - a 6px sliver is nobody's tap target -
+   but it still shows which segment the legend selected. */
+.segbar__seg.is-on { outline: var(--border-width) solid var(--color-text); outline-offset: 1px; }
+
+.tankfilter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  font-size: var(--size-sm);
+}
+.tankfilter__what { color: var(--color-muted); min-width: 0; }
+
+
+/*
+ * The dashboard, made short enough to see past - spec 052.
+ *
+ * The two charts were two full cards with h2 headings; they are now two
+ * compact groups in one. On a 390px screen that is the difference between the
+ * charts and the first row of fish being on the same screen or not, which was
+ * the whole complaint: a filter you cannot watch work does not read as a
+ * filter.
+ */
+.mixcard { gap: var(--space-3); }
+.mixcard__hint { order: -1; }
+.mixgroup { gap: var(--space-2); }
+.mixgroup__head {
+  font-size: var(--size-sm);
+  color: var(--color-muted);
+  font-weight: var(--weight-medium);
+  margin: 0;
+}
+/* Tighter than the standalone cards were: the bands carry the height. */
+.mixgroup .watercolumn { gap: 2px; }
+.mixgroup .watercolumn__track { height: 18px; }
+.mixgroup + .mixgroup {
+  padding-top: var(--space-3);
+  border-top: var(--border-width) solid var(--color-border);
 }

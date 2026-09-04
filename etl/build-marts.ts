@@ -138,26 +138,76 @@ function applyCareBackfill(
     sources[field] = { source: v.source, ...(v.sourceUrl ? { url: v.sourceUrl } : {}) };
   };
 
+  /*
+   * PRECEDENCE, spec 045. Wikipedia and vendor text only ever FILL A GAP -
+   * that is what the backfill was built to do. Seriously Fish OVERRIDES,
+   * including over the 47 curated profiles, which is the decision the spec
+   * records as taken deliberately: all 47 are already complete on these
+   * fields, so "SF fills the gaps" would have been a no-op, and what SF can
+   * actually do to them is disagree.
+   *
+   * Every such disagreement is printed by `sf:ingest` and kept in
+   * `data/care/seriously-fish-overrides.json` with both figures, so a change
+   * to a hand-written value is readable before it lands rather than
+   * discovered afterwards.
+   */
+  const wins = (v: { source: string } | undefined, current: unknown) =>
+    Boolean(v) && (current === undefined || v!.source === 'seriouslyfish');
+
   const out = { ...row };
-  if (out.adultSizeIn === undefined && care.adultSizeIn) {
-    out.adultSizeIn = care.adultSizeIn.value;
-    credit('adultSizeIn', care.adultSizeIn);
+  if (wins(care.adultSizeIn, out.adultSizeIn)) {
+    out.adultSizeIn = care.adultSizeIn!.value;
+    credit('adultSizeIn', care.adultSizeIn!);
   }
-  if (out.minVolumeGal === undefined && care.minVolumeGal) {
-    out.minVolumeGal = care.minVolumeGal.value;
-    credit('minVolumeGal', care.minVolumeGal);
+  if (wins(care.minVolumeGal, out.minVolumeGal)) {
+    out.minVolumeGal = care.minVolumeGal!.value;
+    credit('minVolumeGal', care.minVolumeGal!);
   }
-  if (out.aggression === undefined && care.aggression) {
-    out.aggression = care.aggression.value;
-    credit('aggression', care.aggression);
+  if (wins(care.aggression, out.aggression)) {
+    out.aggression = care.aggression!.value;
+    credit('aggression', care.aggression!);
   }
-  if (out.tempMinC === undefined && out.tempMaxC === undefined && care.tempC) {
+  if (care.tempC && (out.tempMinC === undefined || care.tempC.source === 'seriouslyfish')) {
     out.tempMinC = care.tempC.value.min;
     out.tempMaxC = care.tempC.value.max;
     credit('tempC', care.tempC);
   }
 
-  return { ...out, careSources: Object.keys(sources).length ? sources : undefined };
+  /*
+   * Spec 045's new fields. SF is their only source, so there is nothing to
+   * outrank - they are simply carried, with their credit.
+   *
+   * TYPED RATHER THAN A `Record<string, unknown>` SPREAD, which is how the
+   * first version silently lost them: the values were computed correctly and
+   * the mart row picks its keys explicitly, so a spread of untyped extras
+   * type-checked and emitted nothing.
+   */
+  const extra: {
+    lengthBasis?: 'SL' | 'TL' | 'unstated';
+    phMin?: number; phMax?: number;
+    hardnessMinDgh?: number; hardnessMaxDgh?: number;
+    tankBaseLengthIn?: number; tankBaseWidthIn?: number;
+    difficulty?: Array<{ measure: string; word: string }>;
+  } = {};
+
+  if (care.lengthBasis) extra.lengthBasis = care.lengthBasis;
+  if (care.ph) {
+    extra.phMin = care.ph.value.min; extra.phMax = care.ph.value.max;
+    credit('ph', care.ph);
+  }
+  if (care.hardnessDgh) {
+    extra.hardnessMinDgh = care.hardnessDgh.value.min;
+    extra.hardnessMaxDgh = care.hardnessDgh.value.max;
+    credit('hardnessDgh', care.hardnessDgh);
+  }
+  if (care.tankBaseIn) {
+    extra.tankBaseLengthIn = care.tankBaseIn.value.length;
+    extra.tankBaseWidthIn = care.tankBaseIn.value.width;
+    credit('tankBaseIn', care.tankBaseIn);
+  }
+  if (care.difficulty) extra.difficulty = care.difficulty.measures;
+
+  return { ...out, ...extra, careSources: Object.keys(sources).length ? sources : undefined };
 }
 
 /**
@@ -314,6 +364,20 @@ async function main() {
       aggression: cared.aggression,
       tempMinC: cared.tempMinC,
       tempMaxC: cared.tempMaxC,
+      /*
+       * Spec 045's fields. Listed explicitly because this object is a
+       * WHITELIST, not a spread - which is the right shape (a warehouse column
+       * cannot leak into the bundle by being added upstream) and is also why
+       * `mergeCare` computing these was not enough on its own: they were
+       * derived correctly and then dropped on the way out.
+       */
+      ...(cared.lengthBasis !== undefined ? { lengthBasis: cared.lengthBasis } : {}),
+      ...(cared.phMin !== undefined ? { phMin: cared.phMin, phMax: cared.phMax } : {}),
+      ...(cared.hardnessMinDgh !== undefined
+        ? { hardnessMinDgh: cared.hardnessMinDgh, hardnessMaxDgh: cared.hardnessMaxDgh } : {}),
+      ...(cared.tankBaseLengthIn !== undefined
+        ? { tankBaseLengthIn: cared.tankBaseLengthIn, tankBaseWidthIn: cared.tankBaseWidthIn } : {}),
+      ...(cared.difficulty !== undefined ? { difficulty: cared.difficulty } : {}),
       predationTags: split(r.predation_tags),
       ...(nn(r.water_type) ? { waterType: nn(r.water_type) as WaterType } : {}),
       // A backfilled species is no longer "no care profile yet", and saying so
