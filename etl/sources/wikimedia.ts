@@ -29,7 +29,7 @@ const USER_AGENT =
   'Fish2TankResearch/0.1 (personal aquarium field guide; +https://github.com/leonidas47dario/Fish2tank)';
 
 /** Where a portrait came from, and therefore how it must be credited. */
-export type Provenance = 'wikimedia' | 'vendor' | 'web';
+export type Provenance = 'wikimedia' | 'inaturalist' | 'vendor' | 'web';
 
 export interface SpeciesImage {
   speciesId: string;
