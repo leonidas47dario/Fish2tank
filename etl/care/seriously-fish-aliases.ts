@@ -1,7 +1,7 @@
 /**
- * Curated Seriously Fish correspondences - spec 060.
+ * Curated Seriously Fish correspondences - spec 063.
  *
- * WHY A TABLE AND NOT A RULE. Spec 060 removed the unique-epithet fallback,
+ * WHY A TABLE AND NOT A RULE. Spec 063 removed the unique-epithet fallback,
  * which was wrong 94% of the time because it tested whether an epithet was
  * unique in SF's slug set rather than whether the fish was ours. What replaces
  * it is an exact trinomial rule plus this file: the cases a rule cannot reach
@@ -38,7 +38,7 @@ export const SF_SLUG_ALIASES: readonly SfAlias[] = [
     binomial: 'Axelrodia riesei',
     slug: 'axelrodi-riesei',
     source: "SF's own slug drops the final 'a' from the genus; the page states "
-      + '"Axelrodia riesei". Reached before spec 060 only by the epithet fallback.',
+      + '"Axelrodia riesei". Reached before spec 063 only by the epithet fallback.',
   },
   {
     binomial: 'Darienheros calobrensis',

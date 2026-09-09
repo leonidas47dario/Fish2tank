@@ -70,7 +70,7 @@ async function main(): Promise<void> {
     // Every route is now exact on the parts that identify the animal, so this
     // is reachable rather than "reachable, minus whatever the guard throws
     // out" - which is what it meant while the epithet fallback fed it 79
-    // candidates and 74 were a different fish (spec 060).
+    // candidates and 74 were a different fish (spec 063).
     reachablePct: `${((100 * matches.length) / addressable.length).toFixed(1)}%`,
   });
 

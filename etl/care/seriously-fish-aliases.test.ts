@@ -1,5 +1,5 @@
 /**
- * Spec 060. These tables exist because a rule could not reach these cases, so
+ * Spec 063. These tables exist because a rule could not reach these cases, so
  * what has to be guarded is the thing a table can get wrong: an entry nobody
  * checked, and a match that is too generous.
  */
@@ -50,14 +50,14 @@ describe('sameFish', () => {
   });
 
   it('REFUSES two species that merely look related', () => {
-    // Spec 056 rejected these and spec 060 does not overturn it: bivittatum and
+    // Spec 056 rejected these and spec 063 does not overturn it: bivittatum and
     // bitaeniatum are different Aphyosemion, and SF folding N. brichardi into
     // N. pulcher is contested rather than settled.
     expect(sameFish('Aphyosemion bivittatum', 'Aphyosemion bitaeniatum')).toBe(false);
     expect(sameFish('Neolamprologus brichardi', 'Neolamprologus pulcher')).toBe(false);
   });
 
-  it('REFUSES the epithet collisions that motivated spec 060', () => {
+  it('REFUSES the epithet collisions that motivated spec 063', () => {
     expect(sameFish('Esox niger', 'Oxydoras niger')).toBe(false);
     expect(sameFish('Carassius auratus', 'Melanochromis auratus')).toBe(false);
   });

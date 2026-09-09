@@ -24,7 +24,7 @@ export interface SlugMatch {
   slug: string;
   /**
    * How the slug was arrived at. All three are exact on the parts that
-   * identify the animal - spec 060 removed the one that was not.
+   * identify the animal - spec 063 removed the one that was not.
    *
    * `trinomial` is SF filing a species under its nominate subspecies
    * (`polypterus-endlicheri-endlicheri`); GENUS AND EPITHET BOTH have to match,
@@ -41,7 +41,7 @@ export function matchSlugs(
   const set = new Set(slugs);
 
   /*
-   * SPEC 060 REMOVED AN EPITHET INDEX FROM HERE, and the reason is worth
+   * SPEC 063 REMOVED AN EPITHET INDEX FROM HERE, and the reason is worth
    * keeping so nobody rebuilds it.
    *
    * It matched our binomial to any SF slug sharing its epithet, provided that

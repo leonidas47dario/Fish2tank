@@ -82,7 +82,7 @@ function main(): void {
      * The wrong-animal guard. The page decides: a slug match is a proposal, and
      * a page stating a different binomial means it is a different fish.
      *
-     * SPEC 060 ADDED ONE EXCEPTION AND KEPT IT NARROW. Some pages state a
+     * SPEC 063 ADDED ONE EXCEPTION AND KEPT IT NARROW. Some pages state a
      * genuine synonym rather than a redirect - SF calls the zebra danio
      * `Brachydanio rerio` - and rejecting those loses real care data for no
      * safety. `sameFish` consults a curated, cited list and nothing else; it is
