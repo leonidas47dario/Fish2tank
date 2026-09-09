@@ -58,7 +58,9 @@ export default defineConfig({
       // register() that never reloads, which made a new deploy show up only on
       // the second visit. See the note there.
       injectRegister: null,
-      includeAssets: ['favicon.svg'],
+      // Not matched by `globPatterns` (which reads the built output), so they
+      // are named here or they never reach the precache.
+      includeAssets: ['favicon.png', 'apple-touch-icon.png'],
       manifest: {
         // Distinguishable on the home screen, so an installed staging build
         // is never mistaken for production.
