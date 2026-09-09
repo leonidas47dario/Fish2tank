@@ -1,6 +1,6 @@
 {
  "schemaVersion": 1,
- "builtAt": "2026-09-04T06:18:48.567Z",
+ "builtAt": "2026-09-04T14:36:35.225Z",
  "species": [
   {
    "speciesId": "sp_aborichthys_elongatus",
@@ -11449,6 +11449,88 @@
    }
   },
   {
+   "speciesId": "sp_cuckoo_catfish",
+   "minVolumeGal": {
+    "value": 29,
+    "quote": "Volume ~108 litres ~29 US gal",
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/synodontis-multipunctata/"
+   },
+   "adultSizeIn": {
+    "value": 6,
+    "quote": "Standard length 150 mm SL 6 in SL",
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/synodontis-multipunctata/"
+   },
+   "lengthBasis": "SL",
+   "tempC": {
+    "value": {
+     "min": 24,
+     "max": 28
+    },
+    "quote": "Temp 24–28 °C",
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/synodontis-multipunctata/"
+   },
+   "ph": {
+    "value": {
+     "min": 7.5,
+     "max": 8.5
+    },
+    "quote": "pH 7.5–8.5",
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/synodontis-multipunctata/"
+   },
+   "hardnessDgh": {
+    "value": {
+     "min": 15,
+     "max": 35
+    },
+    "quote": "Hardness 15–35 dGH",
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/synodontis-multipunctata/"
+   },
+   "tankBaseIn": {
+    "value": {
+     "length": 48,
+     "width": 12
+    },
+    "quote": "Tank base 120 × 30 cm 48 × 12 in",
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/synodontis-multipunctata/"
+   },
+   "difficulty": {
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/synodontis-multipunctata/",
+    "measures": [
+     {
+      "measure": "space",
+      "word": "large tank"
+     },
+     {
+      "measure": "water",
+      "word": "mild adjustment"
+     },
+     {
+      "measure": "temp",
+      "word": "steady heat"
+     },
+     {
+      "measure": "temperament",
+      "word": "unknown"
+     },
+     {
+      "measure": "social",
+      "word": "shoal"
+     },
+     {
+      "measure": "compatibility",
+      "word": "unknown"
+     }
+    ]
+   }
+  },
+  {
    "speciesId": "sp_cyphotilapia_frontosa",
    "adultSizeIn": {
     "value": 10,
@@ -11858,9 +11940,82 @@
    "speciesId": "sp_danio_rerio",
    "adultSizeIn": {
     "value": 2,
-    "quote": "The zebrafish can reach up to 4-5 cm in length",
-    "source": "wikipedia",
-    "sourceUrl": "https://en.wikipedia.org/wiki/Zebrafish"
+    "quote": "Standard length 50 mm SL 2.0 in SL",
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/danio-rerio/"
+   },
+   "minVolumeGal": {
+    "value": 21,
+    "quote": "Volume ~81 litres ~21 US gal",
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/danio-rerio/"
+   },
+   "lengthBasis": "SL",
+   "tempC": {
+    "value": {
+     "min": 18,
+     "max": 25
+    },
+    "quote": "Temp 18–25 °C",
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/danio-rerio/"
+   },
+   "ph": {
+    "value": {
+     "min": 6,
+     "max": 8
+    },
+    "quote": "pH 6.0–8.0",
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/danio-rerio/"
+   },
+   "hardnessDgh": {
+    "value": {
+     "min": 5,
+     "max": 20
+    },
+    "quote": "Hardness 5–20 dGH",
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/danio-rerio/"
+   },
+   "tankBaseIn": {
+    "value": {
+     "length": 36,
+     "width": 12
+    },
+    "quote": "Tank base 90 × 30 cm 36 × 12 in",
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/danio-rerio/"
+   },
+   "difficulty": {
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/danio-rerio/",
+    "measures": [
+     {
+      "measure": "space",
+      "word": "large tank"
+     },
+     {
+      "measure": "water",
+      "word": "tap water"
+     },
+     {
+      "measure": "temp",
+      "word": "unfussy"
+     },
+     {
+      "measure": "temperament",
+      "word": "peaceful"
+     },
+     {
+      "measure": "social",
+      "word": "shoal"
+     },
+     {
+      "measure": "compatibility",
+      "word": "community tank"
+     }
+    ]
    }
   },
   {
@@ -12680,10 +12835,83 @@
   {
    "speciesId": "sp_dekeyseria_picta",
    "adultSizeIn": {
-    "value": 5.1,
-    "quote": "This species reaches a standard length of 13 cm",
-    "source": "wikipedia",
-    "sourceUrl": "https://en.wikipedia.org/wiki/Dekeyseria_picta"
+    "value": 6,
+    "quote": "Standard length 140 mm SL 6 in SL",
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/dekeyseria-brachyura/"
+   },
+   "minVolumeGal": {
+    "value": 29,
+    "quote": "Volume ~108 litres ~29 US gal",
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/dekeyseria-brachyura/"
+   },
+   "lengthBasis": "SL",
+   "tempC": {
+    "value": {
+     "min": 25,
+     "max": 28
+    },
+    "quote": "Temp 25–28 °C",
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/dekeyseria-brachyura/"
+   },
+   "ph": {
+    "value": {
+     "min": 5.6,
+     "max": 7
+    },
+    "quote": "pH 5.6–7.0",
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/dekeyseria-brachyura/"
+   },
+   "hardnessDgh": {
+    "value": {
+     "min": 2,
+     "max": 12
+    },
+    "quote": "Hardness 2–12 dGH",
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/dekeyseria-brachyura/"
+   },
+   "tankBaseIn": {
+    "value": {
+     "length": 48,
+     "width": 12
+    },
+    "quote": "Tank base 120 × 30 cm 48 × 12 in",
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/dekeyseria-brachyura/"
+   },
+   "difficulty": {
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/dekeyseria-brachyura/",
+    "measures": [
+     {
+      "measure": "space",
+      "word": "large tank"
+     },
+     {
+      "measure": "water",
+      "word": "tap water"
+     },
+     {
+      "measure": "temp",
+      "word": "steady heat"
+     },
+     {
+      "measure": "temperament",
+      "word": "unknown"
+     },
+     {
+      "measure": "social",
+      "word": "unknown"
+     },
+     {
+      "measure": "compatibility",
+      "word": "unknown"
+     }
+    ]
    }
   },
   {
@@ -15581,6 +15809,88 @@
      {
       "measure": "social",
       "word": "in a pair"
+     },
+     {
+      "measure": "compatibility",
+      "word": "not a community"
+     }
+    ]
+   }
+  },
+  {
+   "speciesId": "sp_geophagus_tapajos",
+   "minVolumeGal": {
+    "value": 80,
+    "quote": "Volume ~304 litres ~80 US gal",
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/geophagus-sp-pindare/"
+   },
+   "adultSizeIn": {
+    "value": 6,
+    "quote": "Standard length 150 mm SL 6 in SL",
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/geophagus-sp-pindare/"
+   },
+   "lengthBasis": "SL",
+   "tempC": {
+    "value": {
+     "min": 26,
+     "max": 29
+    },
+    "quote": "Temp 26–29 °C",
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/geophagus-sp-pindare/"
+   },
+   "ph": {
+    "value": {
+     "min": 6,
+     "max": 7
+    },
+    "quote": "pH 6.0–7.0",
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/geophagus-sp-pindare/"
+   },
+   "hardnessDgh": {
+    "value": {
+     "min": 1,
+     "max": 8
+    },
+    "quote": "Hardness 1–8 dGH",
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/geophagus-sp-pindare/"
+   },
+   "tankBaseIn": {
+    "value": {
+     "length": 60,
+     "width": 18
+    },
+    "quote": "Tank base 150 × 45 cm 60 × 18 in",
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/geophagus-sp-pindare/"
+   },
+   "difficulty": {
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/geophagus-sp-pindare/",
+    "measures": [
+     {
+      "measure": "space",
+      "word": "very large tank"
+     },
+     {
+      "measure": "water",
+      "word": "mild adjustment"
+     },
+     {
+      "measure": "temp",
+      "word": "steady heat"
+     },
+     {
+      "measure": "temperament",
+      "word": "peaceful"
+     },
+     {
+      "measure": "social",
+      "word": "shoal"
      },
      {
       "measure": "compatibility",
@@ -24660,6 +24970,88 @@
    }
   },
   {
+   "speciesId": "sp_melanotaenia_splendida",
+   "minVolumeGal": {
+    "value": 29,
+    "quote": "Volume ~108 litres ~29 US gal",
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/melanotaenia-splendida-inornata/"
+   },
+   "adultSizeIn": {
+    "value": 6,
+    "quote": "Standard length 150 mm SL 6 in SL",
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/melanotaenia-splendida-inornata/"
+   },
+   "lengthBasis": "SL",
+   "tempC": {
+    "value": {
+     "min": 26,
+     "max": 33
+    },
+    "quote": "Temp 26–33 °C",
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/melanotaenia-splendida-inornata/"
+   },
+   "ph": {
+    "value": {
+     "min": 6.5,
+     "max": 8
+    },
+    "quote": "pH 6.5–8.0",
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/melanotaenia-splendida-inornata/"
+   },
+   "hardnessDgh": {
+    "value": {
+     "min": 8,
+     "max": 20
+    },
+    "quote": "Hardness 8–20 dGH",
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/melanotaenia-splendida-inornata/"
+   },
+   "tankBaseIn": {
+    "value": {
+     "length": 48,
+     "width": 12
+    },
+    "quote": "Tank base 120 × 30 cm 48 × 12 in",
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/melanotaenia-splendida-inornata/"
+   },
+   "difficulty": {
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/melanotaenia-splendida-inornata/",
+    "measures": [
+     {
+      "measure": "space",
+      "word": "large tank"
+     },
+     {
+      "measure": "water",
+      "word": "tap water"
+     },
+     {
+      "measure": "temp",
+      "word": "unfussy"
+     },
+     {
+      "measure": "temperament",
+      "word": "peaceful"
+     },
+     {
+      "measure": "social",
+      "word": "shoal"
+     },
+     {
+      "measure": "compatibility",
+      "word": "unknown"
+     }
+    ]
+   }
+  },
+  {
    "speciesId": "sp_melanotaenia_splendida_inornata",
    "minVolumeGal": {
     "value": 29,
@@ -28820,19 +29212,83 @@
   {
    "speciesId": "sp_pao_palembangensis",
    "adultSizeIn": {
-    "value": 7.6,
-    "quote": "Pao palembangensis grows to a length of 19.4 cm SL",
-    "source": "wikipedia",
-    "sourceUrl": "https://en.wikipedia.org/wiki/Pao_palembangensis"
+    "value": 8,
+    "quote": "Standard length 195 mm SL 8 in SL",
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/tetraodon-palembangensis/"
    },
    "tempC": {
     "value": {
      "min": 24,
      "max": 28
     },
-    "quote": "Living in alkalescent, warm (24–28°), and slow-flowing rivers",
-    "source": "wikipedia",
-    "sourceUrl": "https://en.wikipedia.org/wiki/Pao_palembangensis"
+    "quote": "Temp 24–28 °C",
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/tetraodon-palembangensis/"
+   },
+   "minVolumeGal": {
+    "value": 29,
+    "quote": "Volume ~108 litres ~29 US gal",
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/tetraodon-palembangensis/"
+   },
+   "lengthBasis": "SL",
+   "ph": {
+    "value": {
+     "min": 6.8,
+     "max": 7.6
+    },
+    "quote": "pH 6.8–7.6",
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/tetraodon-palembangensis/"
+   },
+   "hardnessDgh": {
+    "value": {
+     "min": 8,
+     "max": 20
+    },
+    "quote": "Hardness 8–20 dGH",
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/tetraodon-palembangensis/"
+   },
+   "tankBaseIn": {
+    "value": {
+     "length": 48,
+     "width": 12
+    },
+    "quote": "Tank base 120 × 30 cm 48 × 12 in",
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/tetraodon-palembangensis/"
+   },
+   "difficulty": {
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/tetraodon-palembangensis/",
+    "measures": [
+     {
+      "measure": "space",
+      "word": "large tank"
+     },
+     {
+      "measure": "water",
+      "word": "mild adjustment"
+     },
+     {
+      "measure": "temp",
+      "word": "steady heat"
+     },
+     {
+      "measure": "temperament",
+      "word": "unknown"
+     },
+     {
+      "measure": "social",
+      "word": "unknown"
+     },
+     {
+      "measure": "compatibility",
+      "word": "unknown"
+     }
+    ]
    }
   },
   {
@@ -33523,9 +33979,82 @@
    "speciesId": "sp_puntius_tambraparniei",
    "adultSizeIn": {
     "value": 5,
-    "quote": "This species can reach a length of 12.8 cm SL",
-    "source": "wikipedia",
-    "sourceUrl": "https://en.wikipedia.org/wiki/Dawkinsia_tambraparniei"
+    "quote": "Standard length 130 mm SL 5 in SL",
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/puntius-tambraparniei/"
+   },
+   "minVolumeGal": {
+    "value": 64,
+    "quote": "Volume ~243 litres ~64 US gal",
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/puntius-tambraparniei/"
+   },
+   "lengthBasis": "SL",
+   "tempC": {
+    "value": {
+     "min": 18,
+     "max": 25
+    },
+    "quote": "Temp 18–25 °C",
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/puntius-tambraparniei/"
+   },
+   "ph": {
+    "value": {
+     "min": 6,
+     "max": 8
+    },
+    "quote": "pH 6.0–8.0",
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/puntius-tambraparniei/"
+   },
+   "hardnessDgh": {
+    "value": {
+     "min": 2,
+     "max": 15
+    },
+    "quote": "Hardness 2–15 dGH",
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/puntius-tambraparniei/"
+   },
+   "tankBaseIn": {
+    "value": {
+     "length": 48,
+     "width": 18
+    },
+    "quote": "Tank base 120 × 45 cm 48 × 18 in",
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/puntius-tambraparniei/"
+   },
+   "difficulty": {
+    "source": "seriouslyfish",
+    "sourceUrl": "https://www.seriouslyfish.com/species/puntius-tambraparniei/",
+    "measures": [
+     {
+      "measure": "space",
+      "word": "large tank"
+     },
+     {
+      "measure": "water",
+      "word": "tap water"
+     },
+     {
+      "measure": "temp",
+      "word": "unfussy"
+     },
+     {
+      "measure": "temperament",
+      "word": "unknown"
+     },
+     {
+      "measure": "social",
+      "word": "shoal"
+     },
+     {
+      "measure": "compatibility",
+      "word": "community tank"
+     }
+    ]
    }
   },
   {
