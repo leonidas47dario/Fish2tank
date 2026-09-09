@@ -101,19 +101,66 @@ describe('matching our catalog to SF slugs (spec 045)', () => {
     );
     expect(matches).toEqual([
       { speciesId: 'a', scientificName: 'Trigonostigma heteromorpha', slug: 'trigonostigma-heteromorpha', how: 'exact' },
-      { speciesId: 'b', scientificName: 'Hoplisoma adolfoi', slug: 'corydoras-adolfoi', how: 'epithet' },
     ]);
   });
 
-  it('REFUSES AN AMBIGUOUS EPITHET rather than picking one', () => {
-    // `niger` is Esox niger, a pickerel, and Oxydoras niger, a catfish. This
-    // is the case where a guess ships care data from the wrong animal.
-    const { matches, ambiguous } = matchSlugs(
+  it('REFUSES A SHARED EPITHET even when only one slug carries it', () => {
+    /*
+     * Spec 060, and the case the old test missed.
+     *
+     * It asserted this refusal with TWO `niger` slugs, which the epithet
+     * fallback declined as ambiguous - so it passed while proving only the
+     * safe case. With ONE slug the fallback took it, and the real run shows
+     * that was the common case: 79 candidates, 74 a different animal.
+     *
+     * `Esox niger` is a pickerel; `Oxydoras niger` is a catfish. That "niger"
+     * appears exactly once on seriouslyfish.com is not evidence they are the
+     * same fish.
+     */
+    const { matches, absent } = matchSlugs(
       [{ speciesId: 'a', scientificName: 'Esox niger' }],
-      ['oxydoras-niger', 'melanochromis-niger'],
+      ['oxydoras-niger'],
     );
     expect(matches).toEqual([]);
-    expect(ambiguous).toBe(1);
+    expect(absent).toBe(1);
+  });
+
+  it('takes a trinomial slug only when the genus matches too', () => {
+    // SF files some species under the nominate subspecies. Requiring both
+    // parts is what makes this a rule rather than the guess it replaced.
+    const { matches } = matchSlugs(
+      [
+        { speciesId: 'a', scientificName: 'Polypterus endlicheri' },
+        { speciesId: 'b', scientificName: 'Erpetoichthys endlicheri' },
+      ],
+      ['polypterus-endlicheri-endlicheri'],
+    );
+    expect(matches).toEqual([
+      {
+        speciesId: 'a', scientificName: 'Polypterus endlicheri',
+        slug: 'polypterus-endlicheri-endlicheri', how: 'trinomial',
+      },
+    ]);
+  });
+
+  it('uses a curated correspondence where no rule can reach', () => {
+    // SF's slug drops a letter from the genus, so neither half matches.
+    const { matches } = matchSlugs(
+      [{ speciesId: 'a', scientificName: 'Axelrodia riesei' }],
+      ['axelrodi-riesei'],
+    );
+    expect(matches).toEqual([
+      { speciesId: 'a', scientificName: 'Axelrodia riesei', slug: 'axelrodi-riesei', how: 'curated' },
+    ]);
+  });
+
+  it('does not invent a curated slug SF does not actually publish', () => {
+    const { matches, absent } = matchSlugs(
+      [{ speciesId: 'a', scientificName: 'Axelrodia riesei' }],
+      ['some-other-fish'],
+    );
+    expect(matches).toEqual([]);
+    expect(absent).toBe(1);
   });
 
   it('counts a species SF has never written about', () => {

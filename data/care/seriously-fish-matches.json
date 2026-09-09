@@ -6,22 +6,10 @@
   "how": "exact"
  },
  {
-  "speciesId": "sp_hoplisoma_adolfoi",
-  "scientificName": "Hoplisoma adolfoi",
-  "slug": "corydoras-adolfoi",
-  "how": "epithet"
- },
- {
   "speciesId": "sp_acanthicus_adonis",
   "scientificName": "Acanthicus adonis",
   "slug": "acanthicus-adonis",
   "how": "exact"
- },
- {
-  "speciesId": "sp_osteogaster_aeneus",
-  "scientificName": "Osteogaster aeneus",
-  "slug": "corydoras-aeneus",
-  "how": "epithet"
  },
  {
   "speciesId": "sp_barbus_fasciolatus",
@@ -210,10 +198,10 @@
   "how": "exact"
  },
  {
-  "speciesId": "sp_auriglobus_modestus",
-  "scientificName": "Auriglobus modestus",
-  "slug": "homalopteroides-modestus",
-  "how": "epithet"
+  "speciesId": "sp_dekeyseria_picta",
+  "scientificName": "Dekeyseria picta",
+  "slug": "dekeyseria-brachyura",
+  "how": "curated"
  },
  {
   "speciesId": "sp_neoceratodus_forsteri",
@@ -286,12 +274,6 @@
   "scientificName": "Nannostomus espei",
   "slug": "nannostomus-espei",
   "how": "exact"
- },
- {
-  "speciesId": "sp_myloplus_schomburgkii",
-  "scientificName": "Myloplus schomburgkii",
-  "slug": "myleus-schomburgkii",
-  "how": "epithet"
  },
  {
   "speciesId": "sp_baryancistrus_beggini",
@@ -378,12 +360,6 @@
   "how": "exact"
  },
  {
-  "speciesId": "sp_megalamphodus_megalopterus",
-  "scientificName": "Megalamphodus megalopterus",
-  "slug": "hyphessobrycon-megalopterus",
-  "how": "epithet"
- },
- {
   "speciesId": "sp_pethia_nigrofasciata",
   "scientificName": "Pethia nigrofasciata",
   "slug": "pethia-nigrofasciata",
@@ -406,12 +382,6 @@
   "scientificName": "Carnegiella marthae",
   "slug": "carnegiella-marthae",
   "how": "exact"
- },
- {
-  "speciesId": "sp_wallagonia_micropogon",
-  "scientificName": "Wallagonia micropogon",
-  "slug": "lepidocephalichthys-micropogon",
-  "how": "epithet"
  },
  {
   "speciesId": "sp_hyphessobrycon_erythrostigma",
@@ -460,12 +430,6 @@
   "scientificName": "Apistogramma eunotus",
   "slug": "apistogramma-eunotus",
   "how": "exact"
- },
- {
-  "speciesId": "sp_metriaclima_callainos",
-  "scientificName": "Metriaclima callainos",
-  "slug": "maylandia-callainos",
-  "how": "epithet"
  },
  {
   "speciesId": "sp_alestopetersius_smykalai",
@@ -534,12 +498,6 @@
   "how": "exact"
  },
  {
-  "speciesId": "sp_centromochlus_heckelii",
-  "scientificName": "Centromochlus heckelii",
-  "slug": "acarichthys-heckelii",
-  "how": "epithet"
- },
- {
   "speciesId": "sp_melanotaenia_boesemani",
   "scientificName": "Melanotaenia boesemani",
   "slug": "melanotaenia-boesemani",
@@ -564,22 +522,10 @@
   "how": "exact"
  },
  {
-  "speciesId": "sp_brevibora_exilis",
-  "scientificName": "Brevibora exilis",
-  "slug": "trachelyichthys-exilis",
-  "how": "epithet"
- },
- {
   "speciesId": "sp_corydoras_splendens",
   "scientificName": "Corydoras splendens",
   "slug": "corydoras-splendens",
   "how": "exact"
- },
- {
-  "speciesId": "sp_cichla_brokopondo",
-  "scientificName": "Cichla brokopondo",
-  "slug": "geophagus-brokopondo",
-  "how": "epithet"
  },
  {
   "speciesId": "sp_exodon_paradoxus",
@@ -598,12 +544,6 @@
   "scientificName": "Brachygobius doriae",
   "slug": "brachygobius-doriae",
   "how": "exact"
- },
- {
-  "speciesId": "sp_astronotus_orbicularis",
-  "scientificName": "Astronotus orbicularis",
-  "slug": "brachychalcinus-orbicularis",
-  "how": "epithet"
  },
  {
   "speciesId": "sp_akysis_prashadi",
@@ -714,22 +654,10 @@
   "how": "exact"
  },
  {
-  "speciesId": "sp_esox_niger",
-  "scientificName": "Esox niger",
-  "slug": "oxydoras-niger",
-  "how": "epithet"
- },
- {
   "speciesId": "sp_systomus_orphoides",
   "scientificName": "Systomus orphoides",
   "slug": "systomus-orphoides",
   "how": "exact"
- },
- {
-  "speciesId": "sp_rohanella_titteya",
-  "scientificName": "Rohanella titteya",
-  "slug": "puntius-titteya",
-  "how": "epithet"
  },
  {
   "speciesId": "sp_boraras_brigittae",
@@ -810,12 +738,6 @@
   "how": "exact"
  },
  {
-  "speciesId": "sp_aplocheilus_annulatus",
-  "scientificName": "Aplocheilus annulatus",
-  "slug": "epiplatys-annulatus",
-  "how": "epithet"
- },
- {
   "speciesId": "sp_chitala_ornata",
   "scientificName": "Chitala ornata",
   "slug": "chitala-ornata",
@@ -834,12 +756,6 @@
   "how": "exact"
  },
  {
-  "speciesId": "sp_polypterus_congicus",
-  "scientificName": "Polypterus congicus",
-  "slug": "clypeobarbus-congicus",
-  "how": "epithet"
- },
- {
   "speciesId": "sp_nanochromis_parilus",
   "scientificName": "Nanochromis parilus",
   "slug": "nanochromis-parilus",
@@ -852,22 +768,10 @@
   "how": "exact"
  },
  {
-  "speciesId": "sp_tetraodon_schoutedeni",
-  "scientificName": "Tetraodon schoutedeni",
-  "slug": "synodontis-schoutedeni",
-  "how": "epithet"
- },
- {
   "speciesId": "sp_phenacogrammus_interruptus",
   "scientificName": "Phenacogrammus interruptus",
   "slug": "phenacogrammus-interruptus",
   "how": "exact"
- },
- {
-  "speciesId": "sp_moenkhausia_copei",
-  "scientificName": "Moenkhausia copei",
-  "slug": "corydoras-copei",
-  "how": "epithet"
  },
  {
   "speciesId": "sp_corydoras_aeneus",
@@ -886,12 +790,6 @@
   "scientificName": "Corydoras sterbai",
   "slug": "corydoras-sterbai",
   "how": "exact"
- },
- {
-  "speciesId": "sp_hoplisoma_concolor",
-  "scientificName": "Hoplisoma concolor",
-  "slug": "corydoras-concolor",
-  "how": "epithet"
  },
  {
   "speciesId": "sp_corydoras_pygmaeus",
@@ -916,6 +814,12 @@
   "scientificName": "Atractosteus tristoechus",
   "slug": "atractosteus-tristoechus",
   "how": "exact"
+ },
+ {
+  "speciesId": "sp_cuckoo_catfish",
+  "scientificName": "Synodontis multipunctatus",
+  "slug": "synodontis-multipunctata",
+  "how": "curated"
  },
  {
   "speciesId": "sp_biotodoma_cupido",
@@ -1000,18 +904,6 @@
   "scientificName": "Brachyplatystoma rousseauxii",
   "slug": "brachyplatystoma-rousseauxii",
   "how": "exact"
- },
- {
-  "speciesId": "sp_tetraodon_duboisi",
-  "scientificName": "Tetraodon duboisi",
-  "slug": "tropheus-duboisi",
-  "how": "epithet"
- },
- {
-  "speciesId": "sp_semilabeo_obscurus",
-  "scientificName": "Semilabeo obscurus",
-  "slug": "bagrichthys-obscurus",
-  "how": "epithet"
  },
  {
   "speciesId": "sp_triportheus_angulatus",
@@ -1113,13 +1005,7 @@
   "speciesId": "sp_polypterus_endlicheri",
   "scientificName": "Polypterus endlicheri",
   "slug": "polypterus-endlicheri-endlicheri",
-  "how": "epithet"
- },
- {
-  "speciesId": "sp_synodontis_longirostris",
-  "scientificName": "Synodontis longirostris",
-  "slug": "hemibarbus-longirostris",
-  "how": "epithet"
+  "how": "trinomial"
  },
  {
   "speciesId": "sp_tetraodon_lineatus",
@@ -1138,12 +1024,6 @@
   "scientificName": "Poecilia reticulata",
   "slug": "poecilia-reticulata",
   "how": "exact"
- },
- {
-  "speciesId": "sp_vieja_fenestratus",
-  "scientificName": "Vieja fenestratus",
-  "slug": "protomelas-fenestratus",
-  "how": "epithet"
  },
  {
   "speciesId": "sp_tetraodon_biocellatus",
@@ -1182,18 +1062,6 @@
   "how": "exact"
  },
  {
-  "speciesId": "sp_sorubimichthys_planiceps",
-  "scientificName": "Sorubimichthys planiceps",
-  "slug": "hemibagrus-planiceps",
-  "how": "epithet"
- },
- {
-  "speciesId": "sp_crenicichla_multispinosa",
-  "scientificName": "Crenicichla multispinosa",
-  "slug": "herotilapia-multispinosa",
-  "how": "epithet"
- },
- {
   "speciesId": "sp_brachyplatystoma_juruense",
   "scientificName": "Brachyplatystoma juruense",
   "slug": "brachyplatystoma-juruense",
@@ -1224,12 +1092,6 @@
   "how": "exact"
  },
  {
-  "speciesId": "sp_mormyrus_longirostris",
-  "scientificName": "Mormyrus longirostris",
-  "slug": "hemibarbus-longirostris",
-  "how": "epithet"
- },
- {
   "speciesId": "sp_cyphotilapia_frontosa",
   "scientificName": "Cyphotilapia frontosa",
   "slug": "cyphotilapia-frontosa",
@@ -1239,7 +1101,13 @@
   "speciesId": "sp_fundulopanchax_gardneri",
   "scientificName": "Fundulopanchax gardneri",
   "slug": "fundulopanchax-gardneri-gardneri",
-  "how": "epithet"
+  "how": "trinomial"
+ },
+ {
+  "speciesId": "sp_geophagus_tapajos",
+  "scientificName": "Geophagus sp.",
+  "slug": "geophagus-sp-pindare",
+  "how": "trinomial"
  },
  {
   "speciesId": "sp_geophagus_abalios",
@@ -1314,12 +1182,6 @@
   "how": "exact"
  },
  {
-  "speciesId": "sp_geophagus_mapiritensis",
-  "scientificName": "Geophagus mapiritensis",
-  "slug": "satanoperca-mapiritensis",
-  "how": "epithet"
- },
- {
   "speciesId": "sp_celestichthys_choprae",
   "scientificName": "Celestichthys choprae",
   "slug": "celestichthys-choprae",
@@ -1386,12 +1248,6 @@
   "how": "exact"
  },
  {
-  "speciesId": "sp_acrossocheilus_longipinnis",
-  "scientificName": "Acrossocheilus longipinnis",
-  "slug": "brycinus-longipinnis",
-  "how": "epithet"
- },
- {
   "speciesId": "sp_anabas_testudineus",
   "scientificName": "Anabas testudineus",
   "slug": "anabas-testudineus",
@@ -1416,22 +1272,10 @@
   "how": "exact"
  },
  {
-  "speciesId": "sp_sarcocheilichthys_parvus",
-  "scientificName": "Sarcocheilichthys parvus",
-  "slug": "aplocheilus-parvus",
-  "how": "epithet"
- },
- {
   "speciesId": "sp_leporacanthicus_heterodon",
   "scientificName": "Leporacanthicus heterodon",
   "slug": "leporacanthicus-heterodon",
   "how": "exact"
- },
- {
-  "speciesId": "sp_carassius_auratus",
-  "scientificName": "Carassius auratus",
-  "slug": "melanochromis-auratus",
-  "how": "epithet"
  },
  {
   "speciesId": "sp_bagarius_yarrelli",
@@ -1494,12 +1338,6 @@
   "how": "exact"
  },
  {
-  "speciesId": "sp_aequidens_rivulatus",
-  "scientificName": "Aequidens rivulatus",
-  "slug": "andinoacara-rivulatus",
-  "how": "epithet"
- },
- {
   "speciesId": "sp_andinoacara_rivulatus",
   "scientificName": "Andinoacara rivulatus",
   "slug": "andinoacara-rivulatus",
@@ -1524,12 +1362,6 @@
   "how": "exact"
  },
  {
-  "speciesId": "sp_rasbora_heteromorpha",
-  "scientificName": "Rasbora heteromorpha",
-  "slug": "trigonostigma-heteromorpha",
-  "how": "epithet"
- },
- {
   "speciesId": "sp_trigonostigma_heteromorpha",
   "scientificName": "Trigonostigma heteromorpha",
   "slug": "trigonostigma-heteromorpha",
@@ -1546,12 +1378,6 @@
   "scientificName": "Potamotrygon henlei",
   "slug": "potamotrygon-henlei",
   "how": "exact"
- },
- {
-  "speciesId": "sp_puntius_pentazona",
-  "scientificName": "Puntius pentazona",
-  "slug": "desmopuntius-pentazona",
-  "how": "epithet"
  },
  {
   "speciesId": "sp_sicyopus_cebuensis",
@@ -1572,16 +1398,16 @@
   "how": "exact"
  },
  {
-  "speciesId": "sp_myloplus_arnoldi",
-  "scientificName": "Myloplus arnoldi",
-  "slug": "copella-arnoldi",
-  "how": "epithet"
- },
- {
   "speciesId": "sp_megalechis_thoracata",
   "scientificName": "Megalechis thoracata",
   "slug": "megalechis-thoracata",
   "how": "exact"
+ },
+ {
+  "speciesId": "sp_pao_palembangensis",
+  "scientificName": "Pao palembangensis",
+  "slug": "tetraodon-palembangensis",
+  "how": "curated"
  },
  {
   "speciesId": "sp_parambassis_pulcinella",
@@ -1602,12 +1428,6 @@
   "how": "exact"
  },
  {
-  "speciesId": "sp_tetraodon_travancoricus",
-  "scientificName": "Tetraodon travancoricus",
-  "slug": "carinotetraodon-travancoricus",
-  "how": "epithet"
- },
- {
   "speciesId": "sp_parambassis_ranga",
   "scientificName": "Parambassis ranga",
   "slug": "parambassis-ranga",
@@ -1624,12 +1444,6 @@
   "scientificName": "Horabagrus brachysoma",
   "slug": "horabagrus-brachysoma",
   "how": "exact"
- },
- {
-  "speciesId": "sp_pangasianodon_hypophthalmus",
-  "scientificName": "Pangasianodon hypophthalmus",
-  "slug": "pangasionodon-hypophthalmus",
-  "how": "epithet"
  },
  {
   "speciesId": "sp_megalodoras_uranoscopus",
@@ -1666,12 +1480,6 @@
   "scientificName": "Oryzias javanicus",
   "slug": "oryzias-javanicus",
   "how": "exact"
- },
- {
-  "speciesId": "sp_metriaclima_lombardoi",
-  "scientificName": "Metriaclima lombardoi",
-  "slug": "pseudotropheus-lombardoi",
-  "how": "epithet"
  },
  {
   "speciesId": "sp_knight_goby",
@@ -1764,28 +1572,10 @@
   "how": "exact"
  },
  {
-  "speciesId": "sp_dichotomyctere_nigroviridis",
-  "scientificName": "Dichotomyctere nigroviridis",
-  "slug": "tetraodon-nigroviridis",
-  "how": "epithet"
- },
- {
   "speciesId": "sp_sorubim_lima",
   "scientificName": "Sorubim lima",
   "slug": "sorubim-lima",
   "how": "exact"
- },
- {
-  "speciesId": "sp_platynematichthys_notatus",
-  "scientificName": "Platynematichthys notatus",
-  "slug": "heros-notatus",
-  "how": "epithet"
- },
- {
-  "speciesId": "sp_corydoras_nanus",
-  "scientificName": "Corydoras nanus",
-  "slug": "microdevario-nanus",
-  "how": "epithet"
  },
  {
   "speciesId": "sp_homaloptera_ogilviei",
@@ -1822,12 +1612,6 @@
   "scientificName": "Baryancistrus chrysolomus",
   "slug": "baryancistrus-chrysolomus",
   "how": "exact"
- },
- {
-  "speciesId": "sp_lutjanus_griseus",
-  "scientificName": "Lutjanus griseus",
-  "slug": "corydoras-griseus",
-  "how": "epithet"
  },
  {
   "speciesId": "sp_leiarius_pictus",
@@ -1870,12 +1654,6 @@
   "scientificName": "Dawkinsia assimilis",
   "slug": "dawkinsia-assimilis",
   "how": "exact"
- },
- {
-  "speciesId": "sp_pao_suvattii",
-  "scientificName": "Pao suvattii",
-  "slug": "tetraodon-suvattii",
-  "how": "epithet"
  },
  {
   "speciesId": "sp_poecilia_sphenops",
@@ -1924,18 +1702,6 @@
   "scientificName": "Neolamprologus multifasciatus",
   "slug": "neolamprologus-multifasciatus",
   "how": "exact"
- },
- {
-  "speciesId": "sp_panaqolus_albomaculatus",
-  "scientificName": "Panaqolus albomaculatus",
-  "slug": "caecomastacembelus-albomaculatus",
-  "how": "epithet"
- },
- {
-  "speciesId": "sp_belonophago_tinanti",
-  "scientificName": "Belonophago tinanti",
-  "slug": "steatocranus-tinanti",
-  "how": "epithet"
  },
  {
   "speciesId": "sp_heros_notatus",
@@ -2052,22 +1818,10 @@
   "how": "exact"
  },
  {
-  "speciesId": "sp_protomyzon_pachychilus",
-  "scientificName": "Protomyzon pachychilus",
-  "slug": "yaoshania-pachychilus",
-  "how": "epithet"
- },
- {
   "speciesId": "sp_macropodus_opercularis",
   "scientificName": "Macropodus opercularis",
   "slug": "macropodus-opercularis",
   "how": "exact"
- },
- {
-  "speciesId": "sp_pterygoplichthys_parnaibae",
-  "scientificName": "Pterygoplichthys parnaibae",
-  "slug": "geophagus-parnaibae",
-  "how": "epithet"
  },
  {
   "speciesId": "sp_hydrolycus_tatauaia",
@@ -2086,18 +1840,6 @@
   "scientificName": "Geophagus brasiliensis",
   "slug": "geophagus-brasiliensis",
   "how": "exact"
- },
- {
-  "speciesId": "sp_brachydanio_albolineatus",
-  "scientificName": "Brachydanio albolineatus",
-  "slug": "corydoras-albolineatus",
-  "how": "epithet"
- },
- {
-  "speciesId": "sp_danio_albolineatus",
-  "scientificName": "Danio albolineatus",
-  "slug": "corydoras-albolineatus",
-  "how": "epithet"
  },
  {
   "speciesId": "sp_trichopodus_leerii",
@@ -2142,12 +1884,6 @@
   "how": "exact"
  },
  {
-  "speciesId": "sp_archocentrus_nigrofasciatus",
-  "scientificName": "Archocentrus nigrofasciatus",
-  "slug": "brachydanio-nigrofasciatus",
-  "how": "epithet"
- },
- {
   "speciesId": "sp_pinktail_chalceus",
   "scientificName": "Chalceus macrolepidotus",
   "slug": "chalceus-macrolepidotus",
@@ -2190,12 +1926,6 @@
   "how": "exact"
  },
  {
-  "speciesId": "sp_chanodichthys_erythropterus",
-  "scientificName": "Chanodichthys erythropterus",
-  "slug": "macropodus-erythropterus",
-  "how": "epithet"
- },
- {
   "speciesId": "sp_semaprochilodus_taeniurus",
   "scientificName": "Semaprochilodus taeniurus",
   "slug": "semaprochilodus-taeniurus",
@@ -2206,12 +1936,6 @@
   "scientificName": "Tetraodon mbu",
   "slug": "tetraodon-mbu",
   "how": "exact"
- },
- {
-  "speciesId": "sp_telmatherina_ladigesi",
-  "scientificName": "Telmatherina ladigesi",
-  "slug": "marosatherina-ladigesi",
-  "how": "epithet"
  },
  {
   "speciesId": "sp_herotilapia_multispinosa",
@@ -2256,12 +1980,6 @@
   "how": "exact"
  },
  {
-  "speciesId": "sp_melanotaenia_parva",
-  "scientificName": "Melanotaenia parva",
-  "slug": "rineloricaria-parva",
-  "how": "epithet"
- },
- {
   "speciesId": "sp_mikrogeophagus_altispinosus",
   "scientificName": "Mikrogeophagus altispinosus",
   "slug": "mikrogeophagus-altispinosus",
@@ -2290,12 +2008,6 @@
   "scientificName": "Synaptolaemus latofasciatus",
   "slug": "synaptolaemus-latofasciatus",
   "how": "exact"
- },
- {
-  "speciesId": "sp_leptobarbus_melanopterus",
-  "scientificName": "Leptobarbus melanopterus",
-  "slug": "balantiocheilos-melanopterus",
-  "how": "epithet"
  },
  {
   "speciesId": "sp_rasbora_lacrimula",
@@ -2358,12 +2070,6 @@
   "how": "exact"
  },
  {
-  "speciesId": "sp_trimma_rubromaculatus",
-  "scientificName": "Trimma rubromaculatus",
-  "slug": "rhinogobius-rubromaculatus",
-  "how": "epithet"
- },
- {
   "speciesId": "sp_stiphodon_rutilaureus",
   "scientificName": "Stiphodon rutilaureus",
   "slug": "stiphodon-rutilaureus",
@@ -2394,24 +2100,6 @@
   "how": "exact"
  },
  {
-  "speciesId": "sp_mesoheros_festae",
-  "scientificName": "Mesoheros festae",
-  "slug": "cichlasoma-festae",
-  "how": "epithet"
- },
- {
-  "speciesId": "sp_metriaclima_estherae",
-  "scientificName": "Metriaclima estherae",
-  "slug": "pseudotropheus-estherae",
-  "how": "epithet"
- },
- {
-  "speciesId": "sp_tor_yingjiangensis",
-  "scientificName": "Tor yingjiangensis",
-  "slug": "nemacheilus-yingjiangensis",
-  "how": "epithet"
- },
- {
   "speciesId": "sp_aborichthys_elongatus",
   "scientificName": "Aborichthys elongatus",
   "slug": "aborichthys-elongatus",
@@ -2440,12 +2128,6 @@
   "scientificName": "Stiphodon pelewensis",
   "slug": "stiphodon-pelewensis",
   "how": "exact"
- },
- {
-  "speciesId": "sp_danio_tinwini",
-  "scientificName": "Danio tinwini",
-  "slug": "brachydanio-tinwini",
-  "how": "epithet"
  },
  {
   "speciesId": "sp_oxydoras_niger",
@@ -2487,7 +2169,7 @@
   "speciesId": "sp_axelrodia_riesei",
   "scientificName": "Axelrodia riesei",
   "slug": "axelrodi-riesei",
-  "how": "epithet"
+  "how": "curated"
  },
  {
   "speciesId": "sp_sawbwa_resplendens",
@@ -2506,12 +2188,6 @@
   "scientificName": "Corydoras rabauti",
   "slug": "corydoras-rabauti",
   "how": "exact"
- },
- {
-  "speciesId": "sp_cephalosilurus_fowleri",
-  "scientificName": "Cephalosilurus fowleri",
-  "slug": "corydoras-fowleri",
-  "how": "epithet"
  },
  {
   "speciesId": "sp_oryzias_woworae",
@@ -2550,12 +2226,6 @@
   "how": "exact"
  },
  {
-  "speciesId": "sp_nandopsis_salvini",
-  "scientificName": "Nandopsis salvini",
-  "slug": "cichlasoma-salvini",
-  "how": "epithet"
- },
- {
   "speciesId": "sp_sphaerichthys_vaillanti",
   "scientificName": "Sphaerichthys vaillanti",
   "slug": "sphaerichthys-vaillanti",
@@ -2572,12 +2242,6 @@
   "scientificName": "Dario dario",
   "slug": "dario-dario",
   "how": "exact"
- },
- {
-  "speciesId": "sp_scatophagus_argus",
-  "scientificName": "Scatophagus argus",
-  "slug": "channa-argus",
-  "how": "epithet"
  },
  {
   "speciesId": "sp_sciaenochromis_fryeri",
@@ -2598,16 +2262,10 @@
   "how": "exact"
  },
  {
-  "speciesId": "sp_selenotoca_multifasciata",
-  "scientificName": "Selenotoca multifasciata",
-  "slug": "kichulchoia-multifasciata",
-  "how": "epithet"
- },
- {
   "speciesId": "sp_senegal_bichir",
   "scientificName": "Polypterus senegalus",
   "slug": "polypterus-senegalus-senegalus",
-  "how": "epithet"
+  "how": "trinomial"
  },
  {
   "speciesId": "sp_serpenticobitis_octozona",
@@ -2626,12 +2284,6 @@
   "scientificName": "Hyalobagrus flavus",
   "slug": "hyalobagrus-flavus",
   "how": "exact"
- },
- {
-  "speciesId": "sp_leiocassis_longirostris",
-  "scientificName": "Leiocassis longirostris",
-  "slug": "hemibarbus-longirostris",
-  "how": "epithet"
  },
  {
   "speciesId": "sp_acnodon_normani",
@@ -2700,12 +2352,6 @@
   "how": "exact"
  },
  {
-  "speciesId": "sp_botia_morleti",
-  "scientificName": "Botia morleti",
-  "slug": "yasuhikotakia-morleti",
-  "how": "epithet"
- },
- {
   "speciesId": "sp_corydoras_arcuatus",
   "scientificName": "Corydoras arcuatus",
   "slug": "corydoras-arcuatus",
@@ -2748,12 +2394,6 @@
   "how": "exact"
  },
  {
-  "speciesId": "sp_thorichthys_maculipinnis",
-  "scientificName": "Thorichthys maculipinnis",
-  "slug": "akysis-maculipinnis",
-  "how": "epithet"
- },
- {
   "speciesId": "sp_corydoras_hastatus",
   "scientificName": "Corydoras hastatus",
   "slug": "corydoras-hastatus",
@@ -2769,7 +2409,7 @@
   "speciesId": "sp_darienheros_calobrensis",
   "scientificName": "Darienheros calobrensis",
   "slug": "amphilophus-calobrensis",
-  "how": "epithet"
+  "how": "curated"
  },
  {
   "speciesId": "sp_garra_spilota",
@@ -2782,12 +2422,6 @@
   "scientificName": "Agamyxis pectinifrons",
   "slug": "agamyxis-pectinifrons",
   "how": "exact"
- },
- {
-  "speciesId": "sp_homaloptera_ocellata",
-  "scientificName": "Homaloptera ocellata",
-  "slug": "betta-ocellata",
-  "how": "epithet"
  },
  {
   "speciesId": "sp_metynnis_maculatus",
@@ -2874,12 +2508,6 @@
   "how": "exact"
  },
  {
-  "speciesId": "sp_gastromyzon_ornaticauda",
-  "scientificName": "Gastromyzon ornaticauda",
-  "slug": "parosphromenus-ornaticauda",
-  "how": "epithet"
- },
- {
   "speciesId": "sp_hemigrammus_ocellifer",
   "scientificName": "Hemigrammus ocellifer",
   "slug": "hemigrammus-ocellifer",
@@ -2952,12 +2580,6 @@
   "how": "exact"
  },
  {
-  "speciesId": "sp_petrochromis_trewavasae",
-  "scientificName": "Petrochromis trewavasae",
-  "slug": "labeotropheus-trewavasae",
-  "how": "epithet"
- },
- {
   "speciesId": "sp_leporacanthicus_triactis",
   "scientificName": "Leporacanthicus triactis",
   "slug": "leporacanthicus-triactis",
@@ -2982,12 +2604,6 @@
   "how": "exact"
  },
  {
-  "speciesId": "sp_botia_hymenophysa",
-  "scientificName": "Botia hymenophysa",
-  "slug": "syncrossus-hymenophysa",
-  "how": "epithet"
- },
- {
   "speciesId": "sp_datnioides_campbelli",
   "scientificName": "Datnioides campbelli",
   "slug": "datnioides-campbelli",
@@ -3006,12 +2622,6 @@
   "how": "exact"
  },
  {
-  "speciesId": "sp_potamotrygon_tigrina",
-  "scientificName": "Potamotrygon tigrina",
-  "slug": "crenicichla-tigrina",
-  "how": "epithet"
- },
- {
   "speciesId": "sp_brachyplatystoma_tigrinum",
   "scientificName": "Brachyplatystoma tigrinum",
   "slug": "brachyplatystoma-tigrinum",
@@ -3024,12 +2634,6 @@
   "how": "exact"
  },
  {
-  "speciesId": "sp_tenellus_trimaculatus",
-  "scientificName": "Tenellus trimaculatus",
-  "slug": "pseudanos-trimaculatus",
-  "how": "epithet"
- },
- {
   "speciesId": "sp_lepisosteus_oculatus",
   "scientificName": "Lepisosteus oculatus",
   "slug": "lepisosteus-oculatus",
@@ -3040,12 +2644,6 @@
   "scientificName": "Atractosteus tropicus",
   "slug": "atractosteus-tropicus",
   "how": "exact"
- },
- {
-  "speciesId": "sp_true_parrot_cichlid",
-  "scientificName": "Hoplarchus psittacus",
-  "slug": "colomesus-psittacus",
-  "how": "epithet"
  },
  {
   "speciesId": "sp_brachyplatystoma_filamentosum",
@@ -3078,6 +2676,12 @@
   "how": "exact"
  },
  {
+  "speciesId": "sp_melanotaenia_splendida",
+  "scientificName": "Melanotaenia splendida",
+  "slug": "melanotaenia-splendida-inornata",
+  "how": "trinomial"
+ },
+ {
   "speciesId": "sp_brachyplatystoma_vaillantii",
   "scientificName": "Brachyplatystoma vaillantii",
   "slug": "brachyplatystoma-vaillantii",
@@ -3088,12 +2692,6 @@
   "scientificName": "Xiphophorus variatus",
   "slug": "xiphophorus-variatus",
   "how": "exact"
- },
- {
-  "speciesId": "sp_lentipes_venustus",
-  "scientificName": "Lentipes venustus",
-  "slug": "nimbochromis-venustus",
-  "how": "epithet"
  },
  {
   "speciesId": "sp_vieja_regani",
@@ -3136,12 +2734,6 @@
   "scientificName": "Melanotaenia australis",
   "slug": "melanotaenia-australis",
   "how": "exact"
- },
- {
-  "speciesId": "sp_tatia_galaxias",
-  "scientificName": "Tatia galaxias",
-  "slug": "leporacanthicus-galaxias",
-  "how": "epithet"
  },
  {
   "speciesId": "sp_hyphessobrycon_roseus",
@@ -3190,12 +2782,6 @@
   "scientificName": "Otocinclus cocama",
   "slug": "otocinclus-cocama",
   "how": "exact"
- },
- {
-  "speciesId": "sp_piabina_argentea",
-  "scientificName": "Piabina argentea",
-  "slug": "vieja-argentea",
-  "how": "epithet"
  },
  {
   "speciesId": "sp_mesonoemacheilus_triangularis",
