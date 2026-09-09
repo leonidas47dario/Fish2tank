@@ -1,7 +1,7 @@
 /**
  * Which portraits ship inside the bundle, and which are fetched when looked at.
  *
- * Spec 059. `import.meta.glob` is eager and Workbox precaches every emitted
+ * Spec 062. `import.meta.glob` is eager and Workbox precaches every emitted
  * `.jpg`, so before this every device downloaded every portrait before the app
  * worked offline - measured at 984 files, 20.8 MB, 98.7% of the precache
  * entries. Spec 058 then took coverage from 989 species to 2,027, which would

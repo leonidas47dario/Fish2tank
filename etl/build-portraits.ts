@@ -110,7 +110,7 @@ async function main() {
   mkdirSync(TAIL_DIR, { recursive: true });
 
   /*
-   * RECONCILE RATHER THAN REBUILD - spec 059.
+   * RECONCILE RATHER THAN REBUILD - spec 062.
    *
    * This used to `rmSync` the whole directory and re-download every row, which
    * at 2,027 rows is a two-hour run to change nothing, and an interrupted one

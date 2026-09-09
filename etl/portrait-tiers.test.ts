@@ -1,5 +1,5 @@
 /**
- * Spec 059. What the split has to get right is not the arithmetic - it is that
+ * Spec 062. What the split has to get right is not the arithmetic - it is that
  * two runs over the same data agree, because a bundled/tail disagreement shows
  * up as a diff of thousands of files that means nothing.
  */

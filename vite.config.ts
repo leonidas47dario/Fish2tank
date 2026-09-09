@@ -80,7 +80,7 @@ export default defineConfig({
       },
       workbox: {
         /*
-         * THE CORE portraits are precached, the TAIL is not - spec 059.
+         * THE CORE portraits are precached, the TAIL is not - spec 062.
          *
          * Precaching every portrait was measured at 984 files and 20.8 MB, 83%
          * of a 25.1 MB install that every device paid before the app worked

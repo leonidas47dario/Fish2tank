@@ -124,14 +124,14 @@ const BUNDLED_PORTRAITS = import.meta.glob('./seed/assets/portraits/*.jpg', {
 
 /**
  * Species whose portrait is served from `public/portraits/` rather than bundled
- * - spec 059. Ids only, so the cost is a list of strings rather than 1,800
+ * - spec 062. Ids only, so the cost is a list of strings rather than 1,800
  * images: ~36 KB raw and far less gzipped, against the 20.8 MB of precache the
  * split removes.
  */
 const TAIL_PORTRAITS = new Set(portraitTail as string[]);
 
 /**
- * The URL for a species' portrait, from whichever tier holds it (spec 059).
+ * The URL for a species' portrait, from whichever tier holds it (spec 062).
  *
  * A CORE portrait is bundled, hashed and precached, so this returns the built
  * asset URL and the picture is there offline on a fresh install.
