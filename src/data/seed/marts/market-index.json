@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "builtAt": "2026-08-30T04:59:26.849Z",
+  "builtAt": "2026-09-10T02:08:25.049Z",
   "minimumSampleCount": 3,
   "sources": [
     {
@@ -10,7 +10,7 @@
       "currency": "USD",
       "waterType": "freshwater",
       "listingsFetched": 331,
-      "retrievedAt": "2026-08-30T04:58:46.922Z"
+      "retrievedAt": "2026-09-10T02:07:41.183Z"
     },
     {
       "id": "j4-flowerhorns",
@@ -19,7 +19,7 @@
       "currency": "USD",
       "waterType": "freshwater",
       "listingsFetched": 633,
-      "retrievedAt": "2026-08-30T04:58:46.922Z"
+      "retrievedAt": "2026-09-10T02:07:41.183Z"
     },
     {
       "id": "predatory-fins",
@@ -28,7 +28,7 @@
       "currency": "USD",
       "waterType": "freshwater",
       "listingsFetched": 2429,
-      "retrievedAt": "2026-08-30T04:58:46.922Z"
+      "retrievedAt": "2026-09-10T02:07:41.183Z"
     },
     {
       "id": "petsmart",
@@ -39,7 +39,7 @@
       "dataScope": "listings",
       "waterType": "freshwater",
       "listingsFetched": 254,
-      "retrievedAt": "2026-08-30T04:58:46.922Z"
+      "retrievedAt": "2026-09-10T02:07:41.183Z"
     },
     {
       "id": "imperial-tropicals",
@@ -48,7 +48,7 @@
       "currency": "USD",
       "waterType": "freshwater",
       "listingsFetched": 4123,
-      "retrievedAt": "2026-08-30T04:58:46.922Z"
+      "retrievedAt": "2026-09-10T02:07:41.183Z"
     },
     {
       "id": "aquatic-arts",
@@ -57,7 +57,7 @@
       "currency": "USD",
       "waterType": "freshwater",
       "listingsFetched": 5127,
-      "retrievedAt": "2026-08-30T04:58:46.922Z"
+      "retrievedAt": "2026-09-10T02:07:41.183Z"
     },
     {
       "id": "aquarium-coop",
@@ -66,7 +66,7 @@
       "currency": "USD",
       "waterType": "freshwater",
       "listingsFetched": 375,
-      "retrievedAt": "2026-08-30T04:58:46.922Z"
+      "retrievedAt": "2026-09-10T02:07:41.183Z"
     },
     {
       "id": "flip-aquatics",
@@ -75,7 +75,7 @@
       "currency": "USD",
       "waterType": "freshwater",
       "listingsFetched": 1701,
-      "retrievedAt": "2026-08-30T04:58:46.922Z"
+      "retrievedAt": "2026-09-10T02:07:41.183Z"
     },
     {
       "id": "aquahuna",
@@ -84,7 +84,7 @@
       "currency": "USD",
       "waterType": "freshwater",
       "listingsFetched": 704,
-      "retrievedAt": "2026-08-30T04:58:46.922Z"
+      "retrievedAt": "2026-09-10T02:07:41.183Z"
     },
     {
       "id": "nu-aqua",
@@ -94,7 +94,7 @@
       "currency": "USD",
       "waterType": "freshwater",
       "listingsFetched": 1222,
-      "retrievedAt": "2026-08-30T04:58:46.922Z"
+      "retrievedAt": "2026-09-10T02:07:41.183Z"
     },
     {
       "id": "liveaquaria",
@@ -103,7 +103,7 @@
       "currency": "USD",
       "waterType": "mixed",
       "listingsFetched": 7714,
-      "retrievedAt": "2026-08-30T04:58:46.922Z"
+      "retrievedAt": "2026-09-10T02:07:41.183Z"
     }
   ],
   "partial": [
@@ -3044,35 +3044,70 @@
         "latest": "2026-08-06"
       }
     },
-    "sp_rocio_octofasciatum": {
-      "speciesId": "sp_rocio_octofasciatum",
-      "comparableCount": 4,
-      "totalListings": 10,
-      "inStock": 5,
-      "soldOut": 5,
+    "sp_jack_dempsey": {
+      "speciesId": "sp_jack_dempsey",
+      "comparableCount": 14,
+      "totalListings": 23,
+      "inStock": 9,
+      "soldOut": 14,
       "price": {
-        "median": 13.99,
+        "median": 26.5,
         "min": 10,
-        "max": 25,
+        "max": 85,
         "currency": "USD"
       },
       "sizeRangeIn": {
-        "min": 1.5,
-        "max": 2.5
+        "min": 1.25,
+        "max": 6.5
       },
       "priceBySize": [
         {
           "sizeIn": 1,
-          "medianPrice": 11.5,
-          "listings": 2
+          "medianPrice": 15.5,
+          "listings": 4
         },
         {
           "sizeIn": 2,
-          "medianPrice": 20,
+          "medianPrice": 25,
+          "listings": 6
+        },
+        {
+          "sizeIn": 4,
+          "medianPrice": 40,
           "listings": 2
+        },
+        {
+          "sizeIn": 5,
+          "medianPrice": 55,
+          "listings": 1
+        },
+        {
+          "sizeIn": 6,
+          "medianPrice": 85,
+          "listings": 1
         }
       ],
       "stores": [
+        {
+          "storeId": "predatory-fins",
+          "listings": 8,
+          "inStock": 0,
+          "medianPrice": 31.5,
+          "productUrl": "https://www.predatoryfins.com/products/pink-jack-dempsey-cichlid-rocio-octofasciata",
+          "productInStock": false,
+          "productPrice": 25,
+          "productSizeLabel": "2 inches"
+        },
+        {
+          "storeId": "imperial-tropicals",
+          "listings": 4,
+          "inStock": 3,
+          "medianPrice": 27.49,
+          "productUrl": "https://imperialtropicals.com/products/copy-of-green-texas-cichlid-carpintis-escondido",
+          "productInStock": true,
+          "productPrice": 12.99,
+          "productSizeLabel": "1-2\" Unsexed"
+        },
         {
           "storeId": "liveaquaria",
           "listings": 4,
@@ -3084,6 +3119,16 @@
           "productSizeLabel": "Default Title"
         },
         {
+          "storeId": "aquatic-arts",
+          "listings": 3,
+          "inStock": 2,
+          "medianPrice": 0,
+          "productUrl": "https://aquaticarts.com/products/electric-blue-jack-dempsey-cichlid",
+          "productInStock": true,
+          "productPrice": 14.99,
+          "productSizeLabel": "1 Fish"
+        },
+        {
           "storeId": "global-exoticquatics",
           "listings": 2,
           "inStock": 1,
@@ -3092,16 +3137,6 @@
           "productInStock": true,
           "productPrice": 10,
           "productSizeLabel": "1.5-1.75 inch"
-        },
-        {
-          "storeId": "imperial-tropicals",
-          "listings": 2,
-          "inStock": 1,
-          "medianPrice": 13.99,
-          "productUrl": "https://imperialtropicals.com/products/copy-of-green-texas-cichlid-carpintis-escondido",
-          "productInStock": true,
-          "productPrice": 12.99,
-          "productSizeLabel": "1-2\" Unsexed"
         },
         {
           "storeId": "j4-flowerhorns",
@@ -3125,7 +3160,7 @@
         }
       ],
       "listedBetween": {
-        "earliest": "2016-10-20",
+        "earliest": "2015-12-08",
         "latest": "2026-02-14"
       }
     },
@@ -4395,48 +4430,12 @@
     },
     "sp_sturisomatichthys_panamensis": {
       "speciesId": "sp_sturisomatichthys_panamensis",
-      "comparableCount": 3,
-      "totalListings": 8,
-      "inStock": 2,
-      "soldOut": 6,
-      "price": {
-        "median": 24.99,
-        "min": 9.99,
-        "max": 34.99,
-        "currency": "USD"
-      },
-      "sizeRangeIn": {
-        "min": 2.5,
-        "max": 5.5
-      },
-      "priceBySize": [
-        {
-          "sizeIn": 2,
-          "medianPrice": 9.99,
-          "listings": 1
-        },
-        {
-          "sizeIn": 4,
-          "medianPrice": 24.99,
-          "listings": 1
-        },
-        {
-          "sizeIn": 5,
-          "medianPrice": 34.99,
-          "listings": 1
-        }
-      ],
+      "comparableCount": 0,
+      "totalListings": 4,
+      "inStock": 1,
+      "soldOut": 3,
+      "priceBySize": [],
       "stores": [
-        {
-          "storeId": "imperial-tropicals",
-          "listings": 3,
-          "inStock": 0,
-          "medianPrice": 24.99,
-          "productUrl": "https://imperialtropicals.com/products/royal-farlowella-sturisomatichthys-aureus",
-          "productInStock": false,
-          "productPrice": 9.99,
-          "productSizeLabel": "2-3\" Unsexed IMP Captive Bred"
-        },
         {
           "storeId": "j4-flowerhorns",
           "listings": 2,
@@ -4456,16 +4455,6 @@
           "productInStock": false,
           "productPrice": 15.99,
           "productSizeLabel": "1 Fish"
-        },
-        {
-          "storeId": "aquahuna",
-          "listings": 1,
-          "inStock": 1,
-          "medianPrice": 0,
-          "productUrl": "https://www.aquahuna.com/products/royal-farlowella-2-pack",
-          "productInStock": true,
-          "productPrice": 11,
-          "productSizeLabel": "Default Title"
         }
       ],
       "listedBetween": {
@@ -6175,110 +6164,6 @@
       "listedBetween": {
         "earliest": "2021-07-14",
         "latest": "2026-05-13"
-      }
-    },
-    "sp_pethia_conchonius": {
-      "speciesId": "sp_pethia_conchonius",
-      "comparableCount": 3,
-      "totalListings": 16,
-      "inStock": 5,
-      "soldOut": 11,
-      "price": {
-        "median": 4.99,
-        "min": 4.99,
-        "max": 6.99,
-        "currency": "USD"
-      },
-      "sizeRangeIn": {
-        "min": 1.5,
-        "max": 2.5
-      },
-      "priceBySize": [
-        {
-          "sizeIn": 1,
-          "medianPrice": 4.99,
-          "listings": 2
-        },
-        {
-          "sizeIn": 2,
-          "medianPrice": 6.99,
-          "listings": 1
-        }
-      ],
-      "stores": [
-        {
-          "storeId": "imperial-tropicals",
-          "listings": 6,
-          "inStock": 1,
-          "medianPrice": 4.99,
-          "productUrl": "https://imperialtropicals.com/products/rosy-barb",
-          "productInStock": true,
-          "productPrice": 4.99,
-          "productSizeLabel": "1-2\" Unsexed"
-        },
-        {
-          "storeId": "aquatic-arts",
-          "listings": 5,
-          "inStock": 2,
-          "medianPrice": 0,
-          "productUrl": "https://aquaticarts.com/products/red-glass-barb-pethia-conchonius-tank-bred",
-          "productInStock": true,
-          "productPrice": 13.49,
-          "productSizeLabel": "School of 3 (USA Bred)"
-        },
-        {
-          "storeId": "j4-flowerhorns",
-          "listings": 1,
-          "inStock": 0,
-          "medianPrice": 0,
-          "productUrl": "https://www.j4flowerhorns.com/products/untitled-apr25_20-32",
-          "productInStock": false,
-          "productPrice": 9,
-          "productSizeLabel": "Default Title"
-        },
-        {
-          "storeId": "petsmart",
-          "listings": 1,
-          "inStock": 0,
-          "medianPrice": 0,
-          "productUrl": "https://www.petsmart.com/fish/live-fish/goldfish-betta-and-more/rosy-barb-4033445.html",
-          "productInStock": false,
-          "productPrice": 2.37
-        },
-        {
-          "storeId": "aquahuna",
-          "listings": 1,
-          "inStock": 1,
-          "medianPrice": 0,
-          "productUrl": "https://www.aquahuna.com/products/rosy-barb",
-          "productInStock": true,
-          "productPrice": 5,
-          "productSizeLabel": "Default Title"
-        },
-        {
-          "storeId": "nu-aqua",
-          "listings": 1,
-          "inStock": 0,
-          "medianPrice": 0,
-          "productUrl": "https://nuaquashop.com/products/rosy-barb",
-          "productInStock": false,
-          "productPrice": 6.79,
-          "productSizeLabel": "Default Title"
-        },
-        {
-          "storeId": "liveaquaria",
-          "listings": 1,
-          "inStock": 1,
-          "medianPrice": 0,
-          "productUrl": "https://www.liveaquaria.com/products/rosy-barb-male",
-          "productInStock": true,
-          "productPrice": 29.99,
-          "productSizeLabel": "6 Pack"
-        }
-      ],
-      "listedBetween": {
-        "earliest": "2024-12-03",
-        "latest": "2026-08-20"
       }
     },
     "sp_megalamphodus_megalopterus": {
@@ -8399,10 +8284,10 @@
     },
     "sp_nematobrycon_palmeri": {
       "speciesId": "sp_nematobrycon_palmeri",
-      "comparableCount": 1,
-      "totalListings": 33,
-      "inStock": 9,
-      "soldOut": 24,
+      "comparableCount": 0,
+      "totalListings": 20,
+      "inStock": 5,
+      "soldOut": 15,
       "priceBySize": [],
       "stores": [
         {
@@ -8416,16 +8301,6 @@
           "productSizeLabel": "School of 3"
         },
         {
-          "storeId": "imperial-tropicals",
-          "listings": 11,
-          "inStock": 4,
-          "medianPrice": 7.99,
-          "productUrl": "https://imperialtropicals.com/products/black-emperor-tetra-nematobrycon-palmeri",
-          "productInStock": true,
-          "productPrice": 34.99,
-          "productSizeLabel": "(3-Pack) 1-2\" Unsexed"
-        },
-        {
           "storeId": "j4-flowerhorns",
           "listings": 2,
           "inStock": 0,
@@ -8436,34 +8311,14 @@
           "productSizeLabel": "Default Title"
         },
         {
-          "storeId": "flip-aquatics",
-          "listings": 2,
-          "inStock": 0,
-          "medianPrice": 0,
-          "productUrl": "https://flipaquatics.com/products/black-emperor-tetra",
-          "productInStock": false,
-          "productPrice": 4.99,
-          "productSizeLabel": "Imported"
-        },
-        {
-          "storeId": "aquahuna",
+          "storeId": "imperial-tropicals",
           "listings": 2,
           "inStock": 2,
           "medianPrice": 0,
-          "productUrl": "https://www.aquahuna.com/products/black-emperor-tetra-8-pack",
+          "productUrl": "https://imperialtropicals.com/products/black-emperor-tetra-nematobrycon-palmeri",
           "productInStock": true,
-          "productPrice": 3.75,
-          "productSizeLabel": "Default Title"
-        },
-        {
-          "storeId": "nu-aqua",
-          "listings": 2,
-          "inStock": 1,
-          "medianPrice": 0,
-          "productUrl": "https://nuaquashop.com/products/rainbow-emperor-tetra",
-          "productInStock": true,
-          "productPrice": 5.94,
-          "productSizeLabel": "Default Title"
+          "productPrice": 34.99,
+          "productSizeLabel": "(3-Pack) 1-2\" Unsexed"
         },
         {
           "storeId": "liveaquaria",
@@ -8474,11 +8329,31 @@
           "productInStock": true,
           "productPrice": 29.99,
           "productSizeLabel": "6 Pack"
+        },
+        {
+          "storeId": "flip-aquatics",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 0,
+          "productUrl": "https://flipaquatics.com/products/black-emperor-tetra",
+          "productInStock": false,
+          "productPrice": 4.99,
+          "productSizeLabel": "Imported"
+        },
+        {
+          "storeId": "aquahuna",
+          "listings": 1,
+          "inStock": 1,
+          "medianPrice": 0,
+          "productUrl": "https://www.aquahuna.com/products/black-emperor-tetra-8-pack",
+          "productInStock": true,
+          "productPrice": 3.75,
+          "productSizeLabel": "Default Title"
         }
       ],
       "listedBetween": {
-        "earliest": "2019-08-04",
-        "latest": "2026-07-23"
+        "earliest": "2021-07-14",
+        "latest": "2026-01-22"
       }
     },
     "sp_nothobranchius_guentheri": {
@@ -10661,23 +10536,23 @@
         "latest": "2024-09-19"
       }
     },
-    "sp_bamboo_shrimp": {
-      "speciesId": "sp_bamboo_shrimp",
+    "sp_atyopsis_spinipes": {
+      "speciesId": "sp_atyopsis_spinipes",
       "comparableCount": 0,
-      "totalListings": 4,
-      "inStock": 4,
-      "soldOut": 0,
+      "totalListings": 10,
+      "inStock": 5,
+      "soldOut": 5,
       "priceBySize": [],
       "stores": [
         {
-          "storeId": "liveaquaria",
-          "listings": 2,
-          "inStock": 2,
+          "storeId": "aquatic-arts",
+          "listings": 8,
+          "inStock": 3,
           "medianPrice": 0,
-          "productUrl": "https://www.liveaquaria.com/products/singapore-flower-shrimp",
+          "productUrl": "https://aquaticarts.com/products/large-bamboo-shrimp",
           "productInStock": true,
-          "productPrice": 30.99,
-          "productSizeLabel": "3 Pack"
+          "productPrice": 19.99,
+          "productSizeLabel": "1 Shrimp"
         },
         {
           "storeId": "j4-flowerhorns",
@@ -10702,7 +10577,7 @@
       ],
       "listedBetween": {
         "earliest": "2019-03-31",
-        "latest": "2026-01-13"
+        "latest": "2024-09-14"
       }
     },
     "sp_pelvicachromis_pulcher": {
@@ -10800,14 +10675,24 @@
         "latest": "2026-08-10"
       }
     },
-    "sp_kissing_gourami": {
-      "speciesId": "sp_kissing_gourami",
+    "sp_helostoma_temmincki": {
+      "speciesId": "sp_helostoma_temmincki",
       "comparableCount": 0,
-      "totalListings": 1,
-      "inStock": 0,
+      "totalListings": 3,
+      "inStock": 2,
       "soldOut": 1,
       "priceBySize": [],
       "stores": [
+        {
+          "storeId": "liveaquaria",
+          "listings": 2,
+          "inStock": 2,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/kissing-gourami",
+          "productInStock": true,
+          "productPrice": 29.99,
+          "productSizeLabel": "3 Pack"
+        },
         {
           "storeId": "j4-flowerhorns",
           "listings": 1,
@@ -10821,7 +10706,7 @@
       ],
       "listedBetween": {
         "earliest": "2024-06-26",
-        "latest": "2024-06-26"
+        "latest": "2026-01-06"
       }
     },
     "sp_macrognathus_siamensis": {
@@ -11683,14 +11568,24 @@
         "latest": "2023-10-18"
       }
     },
-    "sp_tetraodon_biocellatus": {
-      "speciesId": "sp_tetraodon_biocellatus",
+    "sp_dichotomyctere_ocellatus": {
+      "speciesId": "sp_dichotomyctere_ocellatus",
       "comparableCount": 0,
-      "totalListings": 2,
-      "inStock": 0,
-      "soldOut": 2,
+      "totalListings": 3,
+      "inStock": 2,
+      "soldOut": 1,
       "priceBySize": [],
       "stores": [
+        {
+          "storeId": "aquatic-arts",
+          "listings": 2,
+          "inStock": 2,
+          "medianPrice": 0,
+          "productUrl": "https://aquaticarts.com/products/figure-8-puffer-dichotomyctere-ocellatus",
+          "productInStock": true,
+          "productPrice": 7.99,
+          "productSizeLabel": "1 Fish"
+        },
         {
           "storeId": "j4-flowerhorns",
           "listings": 1,
@@ -11700,21 +11595,11 @@
           "productInStock": false,
           "productPrice": 12,
           "productSizeLabel": "Default Title"
-        },
-        {
-          "storeId": "liveaquaria",
-          "listings": 1,
-          "inStock": 0,
-          "medianPrice": 0,
-          "productUrl": "https://www.liveaquaria.com/products/figure-8-puffer",
-          "productInStock": false,
-          "productPrice": 12.99,
-          "productSizeLabel": "Default Title"
         }
       ],
       "listedBetween": {
         "earliest": "2023-10-13",
-        "latest": "2026-01-08"
+        "latest": "2026-08-12"
       }
     },
     "sp_pangasianodon_hypophthalmus": {
@@ -12343,10 +12228,10 @@
     },
     "sp_symphysodon_aequifasciatus": {
       "speciesId": "sp_symphysodon_aequifasciatus",
-      "comparableCount": 37,
-      "totalListings": 41,
-      "inStock": 2,
-      "soldOut": 39,
+      "comparableCount": 41,
+      "totalListings": 48,
+      "inStock": 4,
+      "soldOut": 44,
       "price": {
         "median": 85,
         "min": 24.99,
@@ -12360,23 +12245,23 @@
       "priceBySize": [
         {
           "sizeIn": 1,
-          "medianPrice": 37.49,
-          "listings": 2
+          "medianPrice": 49.99,
+          "listings": 3
         },
         {
           "sizeIn": 2,
-          "medianPrice": 52.49,
-          "listings": 6
+          "medianPrice": 59.99,
+          "listings": 7
         },
         {
           "sizeIn": 3,
-          "medianPrice": 64.99,
-          "listings": 5
+          "medianPrice": 62.49,
+          "listings": 6
         },
         {
           "sizeIn": 4,
           "medianPrice": 85,
-          "listings": 11
+          "listings": 12
         },
         {
           "sizeIn": 5,
@@ -12402,7 +12287,7 @@
         },
         {
           "storeId": "imperial-tropicals",
-          "listings": 14,
+          "listings": 16,
           "inStock": 0,
           "medianPrice": 59.99,
           "productUrl": "https://imperialtropicals.com/products/blue-diamond-discus-symphysodon-aequifasciata",
@@ -12412,13 +12297,23 @@
         },
         {
           "storeId": "liveaquaria",
-          "listings": 3,
-          "inStock": 0,
+          "listings": 6,
+          "inStock": 2,
           "medianPrice": 0,
-          "productUrl": "https://www.liveaquaria.com/products/royal-blue-discus",
+          "productUrl": "https://www.liveaquaria.com/products/blue-diamond-discus-3-wysiwyg",
+          "productInStock": true,
+          "productPrice": 129.99,
+          "productSizeLabel": "Default Title"
+        },
+        {
+          "storeId": "global-exoticquatics",
+          "listings": 2,
+          "inStock": 0,
+          "medianPrice": 50,
+          "productUrl": "https://globalexoticquatics.com/products/blue-turquoise-discus",
           "productInStock": false,
-          "productPrice": 89.99,
-          "productSizeLabel": "S - 2\" to 3\""
+          "productPrice": 50,
+          "productSizeLabel": "4-4.5 inch"
         },
         {
           "storeId": "aquatic-arts",
@@ -12524,9 +12419,9 @@
     "sp_xiphophorus_hellerii": {
       "speciesId": "sp_xiphophorus_hellerii",
       "comparableCount": 8,
-      "totalListings": 102,
-      "inStock": 26,
-      "soldOut": 76,
+      "totalListings": 112,
+      "inStock": 27,
+      "soldOut": 85,
       "price": {
         "median": 9.99,
         "min": 3.99,
@@ -12581,6 +12476,16 @@
           "productSizeLabel": "1-2\" Female"
         },
         {
+          "storeId": "flip-aquatics",
+          "listings": 11,
+          "inStock": 1,
+          "medianPrice": 0,
+          "productUrl": "https://flipaquatics.com/products/red-wag-hi-fin-swordtail",
+          "productInStock": true,
+          "productPrice": 9.99,
+          "productSizeLabel": "Imported"
+        },
+        {
           "storeId": "predatory-fins",
           "listings": 2,
           "inStock": 0,
@@ -12589,16 +12494,6 @@
           "productInStock": false,
           "productPrice": 55,
           "productSizeLabel": "1.5 - 2 inches (Pair 1M+1F)"
-        },
-        {
-          "storeId": "flip-aquatics",
-          "listings": 1,
-          "inStock": 0,
-          "medianPrice": 0,
-          "productUrl": "https://flipaquatics.com/products/green-swordtail",
-          "productInStock": false,
-          "productPrice": 9.99,
-          "productSizeLabel": "Imported"
         },
         {
           "storeId": "nu-aqua",
@@ -13193,8 +13088,8 @@
     "sp_barbodes_semifasciolatus": {
       "speciesId": "sp_barbodes_semifasciolatus",
       "comparableCount": 1,
-      "totalListings": 15,
-      "inStock": 6,
+      "totalListings": 16,
+      "inStock": 7,
       "soldOut": 9,
       "priceBySize": [],
       "stores": [
@@ -13238,6 +13133,16 @@
           "productPrice": 2.99
         },
         {
+          "storeId": "flip-aquatics",
+          "listings": 1,
+          "inStock": 1,
+          "medianPrice": 0,
+          "productUrl": "https://flipaquatics.com/products/gold-barb-puntius-sachsii",
+          "productInStock": true,
+          "productPrice": 5.99,
+          "productSizeLabel": "Imported"
+        },
+        {
           "storeId": "aquahuna",
           "listings": 1,
           "inStock": 1,
@@ -13270,7 +13175,7 @@
       ],
       "listedBetween": {
         "earliest": "2019-03-07",
-        "latest": "2026-04-22"
+        "latest": "2026-06-05"
       }
     },
     "sp_rohanella_titteya": {
@@ -16384,13 +16289,13 @@
     },
     "sp_myleus_setiger": {
       "speciesId": "sp_myleus_setiger",
-      "comparableCount": 4,
-      "totalListings": 4,
+      "comparableCount": 6,
+      "totalListings": 6,
       "inStock": 0,
-      "soldOut": 4,
+      "soldOut": 6,
       "price": {
-        "median": 97.5,
-        "min": 64.99,
+        "median": 75,
+        "min": 49.99,
         "max": 150,
         "currency": "USD"
       },
@@ -16410,9 +16315,14 @@
           "listings": 1
         },
         {
-          "sizeIn": 4,
-          "medianPrice": 110,
+          "sizeIn": 3,
+          "medianPrice": 49.99,
           "listings": 1
+        },
+        {
+          "sizeIn": 4,
+          "medianPrice": 85,
+          "listings": 2
         },
         {
           "sizeIn": 5,
@@ -16433,9 +16343,9 @@
         },
         {
           "storeId": "imperial-tropicals",
-          "listings": 1,
+          "listings": 3,
           "inStock": 0,
-          "medianPrice": 64.99,
+          "medianPrice": 59.99,
           "productUrl": "https://imperialtropicals.com/products/sailfin-red-hook-silver-dollar-myleus-setiger",
           "productInStock": false,
           "productPrice": 64.99,
@@ -16443,7 +16353,7 @@
         }
       ],
       "listedBetween": {
-        "earliest": "2024-10-20",
+        "earliest": "2021-11-11",
         "latest": "2026-01-29"
       }
     },
@@ -18252,9 +18162,9 @@
     "sp_hoplisoma_adolfoi": {
       "speciesId": "sp_hoplisoma_adolfoi",
       "comparableCount": 2,
-      "totalListings": 15,
+      "totalListings": 16,
       "inStock": 0,
-      "soldOut": 15,
+      "soldOut": 16,
       "priceBySize": [],
       "stores": [
         {
@@ -18286,11 +18196,21 @@
           "productInStock": false,
           "productPrice": 18,
           "productSizeLabel": ".75 inches"
+        },
+        {
+          "storeId": "flip-aquatics",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 0,
+          "productUrl": "https://flipaquatics.com/products/adolfoi-cory-corydoras-adolfoi",
+          "productInStock": false,
+          "productPrice": 24.99,
+          "productSizeLabel": "Imported"
         }
       ],
       "listedBetween": {
         "earliest": "2021-07-14",
-        "latest": "2024-12-19"
+        "latest": "2025-09-02"
       }
     },
     "sp_synaptolaemus_latofasciatus": {
@@ -19582,86 +19502,6 @@
         "latest": "2023-08-19"
       }
     },
-    "sp_jack_dempsey": {
-      "speciesId": "sp_jack_dempsey",
-      "comparableCount": 10,
-      "totalListings": 13,
-      "inStock": 4,
-      "soldOut": 9,
-      "price": {
-        "median": 37.5,
-        "min": 16,
-        "max": 85,
-        "currency": "USD"
-      },
-      "sizeRangeIn": {
-        "min": 1.25,
-        "max": 6.5
-      },
-      "priceBySize": [
-        {
-          "sizeIn": 1,
-          "medianPrice": 29,
-          "listings": 2
-        },
-        {
-          "sizeIn": 2,
-          "medianPrice": 26.5,
-          "listings": 4
-        },
-        {
-          "sizeIn": 4,
-          "medianPrice": 40,
-          "listings": 2
-        },
-        {
-          "sizeIn": 5,
-          "medianPrice": 55,
-          "listings": 1
-        },
-        {
-          "sizeIn": 6,
-          "medianPrice": 85,
-          "listings": 1
-        }
-      ],
-      "stores": [
-        {
-          "storeId": "predatory-fins",
-          "listings": 8,
-          "inStock": 0,
-          "medianPrice": 31.5,
-          "productUrl": "https://www.predatoryfins.com/products/pink-jack-dempsey-cichlid-rocio-octofasciata",
-          "productInStock": false,
-          "productPrice": 25,
-          "productSizeLabel": "2 inches"
-        },
-        {
-          "storeId": "aquatic-arts",
-          "listings": 3,
-          "inStock": 2,
-          "medianPrice": 0,
-          "productUrl": "https://aquaticarts.com/products/electric-blue-jack-dempsey-cichlid",
-          "productInStock": true,
-          "productPrice": 14.99,
-          "productSizeLabel": "1 Fish"
-        },
-        {
-          "storeId": "imperial-tropicals",
-          "listings": 2,
-          "inStock": 2,
-          "medianPrice": 42.49,
-          "productUrl": "https://imperialtropicals.com/products/electric-blue-jack-dempsey",
-          "productInStock": true,
-          "productPrice": 39.99,
-          "productSizeLabel": "1-2\" Unsexed"
-        }
-      ],
-      "listedBetween": {
-        "earliest": "2015-12-08",
-        "latest": "2023-10-04"
-      }
-    },
     "sp_acipenser_baerii": {
       "speciesId": "sp_acipenser_baerii",
       "comparableCount": 1,
@@ -19889,14 +19729,14 @@
     },
     "sp_myloplus_schomburgkii": {
       "speciesId": "sp_myloplus_schomburgkii",
-      "comparableCount": 22,
-      "totalListings": 33,
-      "inStock": 7,
-      "soldOut": 26,
+      "comparableCount": 13,
+      "totalListings": 19,
+      "inStock": 4,
+      "soldOut": 15,
       "price": {
-        "median": 38,
-        "min": 5.99,
-        "max": 150,
+        "median": 45,
+        "min": 19.99,
+        "max": 75,
         "currency": "USD"
       },
       "sizeRangeIn": {
@@ -19906,23 +19746,23 @@
       "priceBySize": [
         {
           "sizeIn": 1,
-          "medianPrice": 22.49,
-          "listings": 6
+          "medianPrice": 27.5,
+          "listings": 4
         },
         {
           "sizeIn": 2,
-          "medianPrice": 33.99,
-          "listings": 6
+          "medianPrice": 38,
+          "listings": 4
         },
         {
           "sizeIn": 3,
           "medianPrice": 46.5,
-          "listings": 4
+          "listings": 2
         },
         {
           "sizeIn": 4,
-          "medianPrice": 75,
-          "listings": 5
+          "medianPrice": 70,
+          "listings": 2
         },
         {
           "sizeIn": 5,
@@ -19933,9 +19773,9 @@
       "stores": [
         {
           "storeId": "predatory-fins",
-          "listings": 12,
+          "listings": 9,
           "inStock": 1,
-          "medianPrice": 51.5,
+          "medianPrice": 45,
           "productUrl": "https://www.predatoryfins.com/products/blackberry-silver-dollar-myleus-schomburgkii-sp",
           "productInStock": true,
           "productPrice": 30,
@@ -19943,43 +19783,13 @@
         },
         {
           "storeId": "imperial-tropicals",
-          "listings": 12,
+          "listings": 6,
           "inStock": 1,
-          "medianPrice": 19.99,
+          "medianPrice": 47.49,
           "productUrl": "https://imperialtropicals.com/products/blackberry-silver-dollar-metynnis-schomburgkii",
           "productInStock": true,
           "productPrice": 64.99,
           "productSizeLabel": "1-2\" Unsexed"
-        },
-        {
-          "storeId": "j4-flowerhorns",
-          "listings": 3,
-          "inStock": 1,
-          "medianPrice": 0,
-          "productUrl": "https://www.j4flowerhorns.com/products/myleus-cf-torquatus-silver-dollar-1",
-          "productInStock": true,
-          "productPrice": 13.99,
-          "productSizeLabel": "Default Title"
-        },
-        {
-          "storeId": "aquatic-arts",
-          "listings": 2,
-          "inStock": 2,
-          "medianPrice": 0,
-          "productUrl": "https://aquaticarts.com/products/black-berry-silver-dollar-metynnis-sp-tank-bred",
-          "productInStock": true,
-          "productPrice": 59.99,
-          "productSizeLabel": "3 Fish"
-        },
-        {
-          "storeId": "aquahuna",
-          "listings": 2,
-          "inStock": 1,
-          "medianPrice": 0,
-          "productUrl": "https://www.aquahuna.com/products/blackberry-silver-dollar-tetra",
-          "productInStock": true,
-          "productPrice": 28,
-          "productSizeLabel": "Default Title"
         },
         {
           "storeId": "liveaquaria",
@@ -19990,10 +19800,30 @@
           "productInStock": true,
           "productPrice": 47.99,
           "productSizeLabel": "S - 1\" to 2\""
+        },
+        {
+          "storeId": "j4-flowerhorns",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 0,
+          "productUrl": "https://www.j4flowerhorns.com/products/thin-bar-silver-dollar-fish-2-2-5",
+          "productInStock": false,
+          "productPrice": 25,
+          "productSizeLabel": "Default Title"
+        },
+        {
+          "storeId": "aquahuna",
+          "listings": 1,
+          "inStock": 1,
+          "medianPrice": 0,
+          "productUrl": "https://www.aquahuna.com/products/blackberry-silver-dollar-tetra",
+          "productInStock": true,
+          "productPrice": 28,
+          "productSizeLabel": "Default Title"
         }
       ],
       "listedBetween": {
-        "earliest": "2019-12-01",
+        "earliest": "2021-05-04",
         "latest": "2026-07-13"
       }
     },
@@ -21334,13 +21164,13 @@
     },
     "sp_panaque_armbrusteri": {
       "speciesId": "sp_panaque_armbrusteri",
-      "comparableCount": 14,
-      "totalListings": 14,
+      "comparableCount": 19,
+      "totalListings": 20,
       "inStock": 2,
-      "soldOut": 12,
+      "soldOut": 18,
       "price": {
-        "median": 180,
-        "min": 45,
+        "median": 165,
+        "min": 35.95,
         "max": 850,
         "currency": "USD"
       },
@@ -21351,8 +21181,8 @@
       "priceBySize": [
         {
           "sizeIn": 2,
-          "medianPrice": 114.99,
-          "listings": 3
+          "medianPrice": 87,
+          "listings": 4
         },
         {
           "sizeIn": 3,
@@ -21371,13 +21201,18 @@
         },
         {
           "sizeIn": 6,
-          "medianPrice": 275,
-          "listings": 1
+          "medianPrice": 175,
+          "listings": 2
+        },
+        {
+          "sizeIn": 7,
+          "medianPrice": 159.99,
+          "listings": 2
         },
         {
           "sizeIn": 8,
-          "medianPrice": 295,
-          "listings": 1
+          "medianPrice": 272.5,
+          "listings": 2
         },
         {
           "sizeIn": 10,
@@ -21403,17 +21238,27 @@
         },
         {
           "storeId": "imperial-tropicals",
-          "listings": 2,
+          "listings": 6,
           "inStock": 2,
           "medianPrice": 119.99,
           "productUrl": "https://imperialtropicals.com/products/l027b-platinum-royal-pleco-panaque-armbrusteri",
           "productInStock": true,
           "productPrice": 124.99,
           "productSizeLabel": "3-4\" Unsexed Rio Xingu"
+        },
+        {
+          "storeId": "nu-aqua",
+          "listings": 2,
+          "inStock": 0,
+          "medianPrice": 35.95,
+          "productUrl": "https://nuaquashop.com/products/l191-royal-pleco-s",
+          "productInStock": false,
+          "productPrice": 35.95,
+          "productSizeLabel": "2-2.5\""
         }
       ],
       "listedBetween": {
-        "earliest": "2021-09-04",
+        "earliest": "2016-01-22",
         "latest": "2026-08-27"
       }
     },
@@ -22555,23 +22400,23 @@
         "latest": "2026-07-30"
       }
     },
-    "sp_devario_aequipinnatus": {
-      "speciesId": "sp_devario_aequipinnatus",
+    "sp_danio_aequipinnatus": {
+      "speciesId": "sp_danio_aequipinnatus",
       "comparableCount": 1,
-      "totalListings": 9,
-      "inStock": 2,
-      "soldOut": 7,
+      "totalListings": 6,
+      "inStock": 4,
+      "soldOut": 2,
       "priceBySize": [],
       "stores": [
         {
-          "storeId": "aquatic-arts",
-          "listings": 5,
-          "inStock": 0,
+          "storeId": "liveaquaria",
+          "listings": 2,
+          "inStock": 2,
           "medianPrice": 0,
-          "productUrl": "https://aquaticarts.com/products/giant-danio",
-          "productInStock": false,
-          "productPrice": 17.99,
-          "productSizeLabel": "School of 3"
+          "productUrl": "https://www.liveaquaria.com/products/giant-danio",
+          "productInStock": true,
+          "productPrice": 29.99,
+          "productSizeLabel": "6 Pack"
         },
         {
           "storeId": "global-exoticquatics",
@@ -22961,24 +22806,14 @@
         "latest": "2026-08-10"
       }
     },
-    "sp_moenkhausia_pittieri": {
-      "speciesId": "sp_moenkhausia_pittieri",
+    "sp_moenkausia_pittieri": {
+      "speciesId": "sp_moenkausia_pittieri",
       "comparableCount": 0,
-      "totalListings": 11,
-      "inStock": 7,
+      "totalListings": 9,
+      "inStock": 5,
       "soldOut": 4,
       "priceBySize": [],
       "stores": [
-        {
-          "storeId": "aquatic-arts",
-          "listings": 4,
-          "inStock": 4,
-          "medianPrice": 0,
-          "productUrl": "https://aquaticarts.com/products/diamond-tetra",
-          "productInStock": true,
-          "productPrice": 14.44,
-          "productSizeLabel": "School of 3"
-        },
         {
           "storeId": "nu-aqua",
           "listings": 3,
@@ -22998,6 +22833,16 @@
           "productInStock": true,
           "productPrice": 11.99,
           "productSizeLabel": "(3 Pack) 1-2\" Unsexed"
+        },
+        {
+          "storeId": "liveaquaria",
+          "listings": 2,
+          "inStock": 2,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/diamond-tetra",
+          "productInStock": true,
+          "productPrice": 24.99,
+          "productSizeLabel": "6 Pack"
         },
         {
           "storeId": "global-exoticquatics",
@@ -23022,7 +22867,7 @@
       ],
       "listedBetween": {
         "earliest": "2015-12-09",
-        "latest": "2026-03-15"
+        "latest": "2026-02-22"
       }
     },
     "sp_danio_rerio": {
@@ -23108,49 +22953,119 @@
         "latest": "2026-08-20"
       }
     },
-    "sp_spiney_eel": {
-      "speciesId": "sp_spiney_eel",
-      "comparableCount": 3,
-      "totalListings": 7,
-      "inStock": 1,
-      "soldOut": 6,
+    "sp_mastacembelus_erythrotaenia": {
+      "speciesId": "sp_mastacembelus_erythrotaenia",
+      "comparableCount": 14,
+      "totalListings": 22,
+      "inStock": 3,
+      "soldOut": 19,
       "price": {
-        "median": 100,
-        "min": 69.99,
-        "max": 100,
+        "median": 107.5,
+        "min": 36,
+        "max": 1000,
         "currency": "USD"
       },
       "sizeRangeIn": {
-        "min": 8,
-        "max": 14
+        "min": 4,
+        "max": 23
       },
       "priceBySize": [
         {
+          "sizeIn": 4,
+          "medianPrice": 36,
+          "listings": 1
+        },
+        {
+          "sizeIn": 5,
+          "medianPrice": 48,
+          "listings": 1
+        },
+        {
+          "sizeIn": 6,
+          "medianPrice": 65,
+          "listings": 1
+        },
+        {
+          "sizeIn": 7,
+          "medianPrice": 75,
+          "listings": 1
+        },
+        {
           "sizeIn": 8,
-          "medianPrice": 69.99,
+          "medianPrice": 95,
+          "listings": 1
+        },
+        {
+          "sizeIn": 10,
+          "medianPrice": 115,
+          "listings": 1
+        },
+        {
+          "sizeIn": 11,
+          "medianPrice": 695,
           "listings": 1
         },
         {
           "sizeIn": 13,
-          "medianPrice": 100,
-          "listings": 1
+          "medianPrice": 132.5,
+          "listings": 2
         },
         {
           "sizeIn": 14,
           "medianPrice": 100,
           "listings": 1
+        },
+        {
+          "sizeIn": 15,
+          "medianPrice": 1000,
+          "listings": 1
+        },
+        {
+          "sizeIn": 16,
+          "medianPrice": 325,
+          "listings": 1
+        },
+        {
+          "sizeIn": 20,
+          "medianPrice": 400,
+          "listings": 1
+        },
+        {
+          "sizeIn": 23,
+          "medianPrice": 450,
+          "listings": 1
         }
       ],
       "stores": [
         {
-          "storeId": "j4-flowerhorns",
-          "listings": 5,
+          "storeId": "predatory-fins",
+          "listings": 12,
           "inStock": 1,
-          "medianPrice": 100,
-          "productUrl": "https://www.j4flowerhorns.com/products/fire-eel",
+          "medianPrice": 140,
+          "productUrl": "https://www.predatoryfins.com/products/fire-eel-mastacembelus-erythrotaenia",
           "productInStock": true,
-          "productPrice": 75,
-          "productSizeLabel": "8-10"
+          "productPrice": 165,
+          "productSizeLabel": "13 - 14 inches"
+        },
+        {
+          "storeId": "j4-flowerhorns",
+          "listings": 6,
+          "inStock": 2,
+          "medianPrice": 100,
+          "productUrl": "https://www.j4flowerhorns.com/products/xanthic-fire-eel-8-12",
+          "productInStock": true,
+          "productPrice": 550,
+          "productSizeLabel": "Default Title"
+        },
+        {
+          "storeId": "liveaquaria",
+          "listings": 3,
+          "inStock": 0,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/fire-eel",
+          "productInStock": false,
+          "productPrice": 26.99,
+          "productSizeLabel": "S - 2\" to 5\""
         },
         {
           "storeId": "global-exoticquatics",
@@ -23161,20 +23076,10 @@
           "productInStock": false,
           "productPrice": 100,
           "productSizeLabel": "12-14 in"
-        },
-        {
-          "storeId": "imperial-tropicals",
-          "listings": 1,
-          "inStock": 0,
-          "medianPrice": 69.99,
-          "productUrl": "https://imperialtropicals.com/products/fire-eel-mastacembelus-erythrotaenia",
-          "productInStock": false,
-          "productPrice": 69.99,
-          "productSizeLabel": "7-9” Unsexed"
         }
       ],
       "listedBetween": {
-        "earliest": "2021-03-09",
+        "earliest": "2021-09-04",
         "latest": "2026-03-14"
       }
     },
@@ -23637,22 +23542,127 @@
         "latest": "2026-05-24"
       }
     },
-    "sp_pseudomugil_gertrudae": {
-      "speciesId": "sp_pseudomugil_gertrudae",
+    "sp_metynnis_argenteus": {
+      "speciesId": "sp_metynnis_argenteus",
+      "comparableCount": 9,
+      "totalListings": 15,
+      "inStock": 4,
+      "soldOut": 11,
+      "price": {
+        "median": 19.99,
+        "min": 5.99,
+        "max": 150,
+        "currency": "USD"
+      },
+      "sizeRangeIn": {
+        "min": 1.5,
+        "max": 4.5
+      },
+      "priceBySize": [
+        {
+          "sizeIn": 1,
+          "medianPrice": 7.99,
+          "listings": 2
+        },
+        {
+          "sizeIn": 2,
+          "medianPrice": 10.99,
+          "listings": 2
+        },
+        {
+          "sizeIn": 3,
+          "medianPrice": 59,
+          "listings": 2
+        },
+        {
+          "sizeIn": 4,
+          "medianPrice": 125,
+          "listings": 3
+        }
+      ],
+      "stores": [
+        {
+          "storeId": "imperial-tropicals",
+          "listings": 6,
+          "inStock": 0,
+          "medianPrice": 10.99,
+          "productUrl": "https://imperialtropicals.com/products/silver-dollar-metynnis-hypsauchen",
+          "productInStock": false,
+          "productPrice": 5.99,
+          "productSizeLabel": "1-2\" Unsexed Captive Bred"
+        },
+        {
+          "storeId": "predatory-fins",
+          "listings": 3,
+          "inStock": 0,
+          "medianPrice": 125,
+          "productUrl": "https://www.predatoryfins.com/products/green-tiger-zebra-silver-dollar-metynnis-sp",
+          "productInStock": false,
+          "productPrice": 98,
+          "productSizeLabel": "3 inches"
+        },
+        {
+          "storeId": "j4-flowerhorns",
+          "listings": 2,
+          "inStock": 1,
+          "medianPrice": 0,
+          "productUrl": "https://www.j4flowerhorns.com/products/myleus-cf-torquatus-silver-dollar-1",
+          "productInStock": true,
+          "productPrice": 13.99,
+          "productSizeLabel": "Default Title"
+        },
+        {
+          "storeId": "aquatic-arts",
+          "listings": 2,
+          "inStock": 2,
+          "medianPrice": 0,
+          "productUrl": "https://aquaticarts.com/products/black-berry-silver-dollar-metynnis-sp-tank-bred",
+          "productInStock": true,
+          "productPrice": 59.99,
+          "productSizeLabel": "3 Fish"
+        },
+        {
+          "storeId": "aquahuna",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 0,
+          "productUrl": "https://www.aquahuna.com/products/silver-dollar-tetra",
+          "productInStock": false,
+          "productPrice": 7,
+          "productSizeLabel": "Default Title"
+        },
+        {
+          "storeId": "liveaquaria",
+          "listings": 1,
+          "inStock": 1,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/silver-dollar",
+          "productInStock": true,
+          "productPrice": 47.99,
+          "productSizeLabel": "S - 1\" to 2\""
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2019-12-01",
+        "latest": "2026-05-17"
+      }
+    },
+    "sp_pseudomugil_furcatus": {
+      "speciesId": "sp_pseudomugil_furcatus",
       "comparableCount": 0,
-      "totalListings": 13,
+      "totalListings": 8,
       "inStock": 6,
-      "soldOut": 7,
+      "soldOut": 2,
       "priceBySize": [],
       "stores": [
         {
           "storeId": "aquatic-arts",
-          "listings": 9,
+          "listings": 4,
           "inStock": 4,
           "medianPrice": 0,
-          "productUrl": "https://aquaticarts.com/products/gertrudes-spotted-blue-eye-rainbowfish",
+          "productUrl": "https://aquaticarts.com/products/blue-eye-forktail-rainbowfish",
           "productInStock": true,
-          "productPrice": 17.99,
+          "productPrice": 19.99,
           "productSizeLabel": "School of 3"
         },
         {
@@ -23691,23 +23701,23 @@
         "latest": "2026-02-05"
       }
     },
-    "sp_trichopodus_leerii": {
-      "speciesId": "sp_trichopodus_leerii",
+    "sp_trichopodus_leeri": {
+      "speciesId": "sp_trichopodus_leeri",
       "comparableCount": 1,
-      "totalListings": 7,
-      "inStock": 2,
-      "soldOut": 5,
+      "totalListings": 8,
+      "inStock": 0,
+      "soldOut": 8,
       "priceBySize": [],
       "stores": [
         {
-          "storeId": "liveaquaria",
-          "listings": 2,
-          "inStock": 2,
+          "storeId": "aquatic-arts",
+          "listings": 3,
+          "inStock": 0,
           "medianPrice": 0,
-          "productUrl": "https://www.liveaquaria.com/products/pearl-gourami",
-          "productInStock": true,
-          "productPrice": 25.99,
-          "productSizeLabel": "3 Pack"
+          "productUrl": "https://aquaticarts.com/products/pearl-gourami",
+          "productInStock": false,
+          "productPrice": 5.99,
+          "productSizeLabel": "1 Fish"
         },
         {
           "storeId": "j4-flowerhorns",
@@ -24026,14 +24036,14 @@
     },
     "sp_panaque_nigrolineatus": {
       "speciesId": "sp_panaque_nigrolineatus",
-      "comparableCount": 19,
-      "totalListings": 24,
+      "comparableCount": 14,
+      "totalListings": 18,
       "inStock": 0,
-      "soldOut": 24,
+      "soldOut": 18,
       "price": {
-        "median": 39.99,
+        "median": 36.5,
         "min": 19.99,
-        "max": 249.99,
+        "max": 195,
         "currency": "USD"
       },
       "sizeRangeIn": {
@@ -24048,8 +24058,8 @@
         },
         {
           "sizeIn": 2,
-          "medianPrice": 29.99,
-          "listings": 5
+          "medianPrice": 28.99,
+          "listings": 4
         },
         {
           "sizeIn": 3,
@@ -24060,21 +24070,6 @@
           "sizeIn": 4,
           "medianPrice": 45,
           "listings": 3
-        },
-        {
-          "sizeIn": 6,
-          "medianPrice": 74.99,
-          "listings": 1
-        },
-        {
-          "sizeIn": 7,
-          "medianPrice": 159.99,
-          "listings": 2
-        },
-        {
-          "sizeIn": 8,
-          "medianPrice": 249.99,
-          "listings": 1
         },
         {
           "sizeIn": 9,
@@ -24089,16 +24084,6 @@
       ],
       "stores": [
         {
-          "storeId": "imperial-tropicals",
-          "listings": 10,
-          "inStock": 0,
-          "medianPrice": 42.49,
-          "productUrl": "https://imperialtropicals.com/products/l-190-royal-pleco-panaque-nigrolineatus-plecostomus",
-          "productInStock": false,
-          "productPrice": 29.99,
-          "productSizeLabel": "2-3\" Unsexed"
-        },
-        {
           "storeId": "predatory-fins",
           "listings": 8,
           "inStock": 0,
@@ -24109,6 +24094,16 @@
           "productSizeLabel": "2 inches"
         },
         {
+          "storeId": "imperial-tropicals",
+          "listings": 6,
+          "inStock": 0,
+          "medianPrice": 32.49,
+          "productUrl": "https://imperialtropicals.com/products/l-190-royal-pleco-panaque-nigrolineatus-plecostomus",
+          "productInStock": false,
+          "productPrice": 29.99,
+          "productSizeLabel": "2-3\" Unsexed"
+        },
+        {
           "storeId": "aquatic-arts",
           "listings": 3,
           "inStock": 0,
@@ -24117,16 +24112,6 @@
           "productInStock": false,
           "productPrice": 34.99,
           "productSizeLabel": "1 Juvenile"
-        },
-        {
-          "storeId": "nu-aqua",
-          "listings": 2,
-          "inStock": 0,
-          "medianPrice": 35.95,
-          "productUrl": "https://nuaquashop.com/products/l191-royal-pleco-s",
-          "productInStock": false,
-          "productPrice": 35.95,
-          "productSizeLabel": "2-2.5\""
         },
         {
           "storeId": "j4-flowerhorns",
@@ -24140,7 +24125,7 @@
         }
       ],
       "listedBetween": {
-        "earliest": "2016-01-22",
+        "earliest": "2020-11-10",
         "latest": "2025-10-02"
       }
     },
@@ -24206,121 +24191,6 @@
       "listedBetween": {
         "earliest": "2021-05-05",
         "latest": "2026-01-07"
-      }
-    },
-    "sp_mastacembelus_erythrotaenia": {
-      "speciesId": "sp_mastacembelus_erythrotaenia",
-      "comparableCount": 12,
-      "totalListings": 16,
-      "inStock": 2,
-      "soldOut": 14,
-      "price": {
-        "median": 140,
-        "min": 36,
-        "max": 1000,
-        "currency": "USD"
-      },
-      "sizeRangeIn": {
-        "min": 4,
-        "max": 23
-      },
-      "priceBySize": [
-        {
-          "sizeIn": 4,
-          "medianPrice": 36,
-          "listings": 1
-        },
-        {
-          "sizeIn": 5,
-          "medianPrice": 48,
-          "listings": 1
-        },
-        {
-          "sizeIn": 6,
-          "medianPrice": 65,
-          "listings": 1
-        },
-        {
-          "sizeIn": 7,
-          "medianPrice": 75,
-          "listings": 1
-        },
-        {
-          "sizeIn": 8,
-          "medianPrice": 95,
-          "listings": 1
-        },
-        {
-          "sizeIn": 10,
-          "medianPrice": 115,
-          "listings": 1
-        },
-        {
-          "sizeIn": 11,
-          "medianPrice": 695,
-          "listings": 1
-        },
-        {
-          "sizeIn": 13,
-          "medianPrice": 165,
-          "listings": 1
-        },
-        {
-          "sizeIn": 15,
-          "medianPrice": 1000,
-          "listings": 1
-        },
-        {
-          "sizeIn": 16,
-          "medianPrice": 325,
-          "listings": 1
-        },
-        {
-          "sizeIn": 20,
-          "medianPrice": 400,
-          "listings": 1
-        },
-        {
-          "sizeIn": 23,
-          "medianPrice": 450,
-          "listings": 1
-        }
-      ],
-      "stores": [
-        {
-          "storeId": "predatory-fins",
-          "listings": 12,
-          "inStock": 1,
-          "medianPrice": 140,
-          "productUrl": "https://www.predatoryfins.com/products/fire-eel-mastacembelus-erythrotaenia",
-          "productInStock": true,
-          "productPrice": 165,
-          "productSizeLabel": "13 - 14 inches"
-        },
-        {
-          "storeId": "liveaquaria",
-          "listings": 3,
-          "inStock": 0,
-          "medianPrice": 0,
-          "productUrl": "https://www.liveaquaria.com/products/fire-eel",
-          "productInStock": false,
-          "productPrice": 26.99,
-          "productSizeLabel": "S - 2\" to 5\""
-        },
-        {
-          "storeId": "j4-flowerhorns",
-          "listings": 1,
-          "inStock": 1,
-          "medianPrice": 0,
-          "productUrl": "https://www.j4flowerhorns.com/products/xanthic-fire-eel-8-12",
-          "productInStock": true,
-          "productPrice": 550,
-          "productSizeLabel": "Default Title"
-        }
-      ],
-      "listedBetween": {
-        "earliest": "2021-09-04",
-        "latest": "2026-01-09"
       }
     },
     "sp_hypancistrus_inspector": {
@@ -24618,35 +24488,50 @@
         "latest": "2026-04-16"
       }
     },
-    "sp_hypancistrus_debilittera": {
-      "speciesId": "sp_hypancistrus_debilittera",
-      "comparableCount": 4,
+    "sp_hypancistrus_debilitetra": {
+      "speciesId": "sp_hypancistrus_debilitetra",
+      "comparableCount": 7,
       "totalListings": 8,
       "inStock": 0,
       "soldOut": 8,
       "price": {
-        "median": 17.49,
+        "median": 19.99,
         "min": 14.99,
-        "max": 24.99,
+        "max": 38,
         "currency": "USD"
       },
       "sizeRangeIn": {
-        "min": 1.5,
-        "max": 2.5
+        "min": 1.13,
+        "max": 3.25
       },
       "priceBySize": [
         {
           "sizeIn": 1,
-          "medianPrice": 17.49,
-          "listings": 2
+          "medianPrice": 18,
+          "listings": 3
         },
         {
           "sizeIn": 2,
-          "medianPrice": 19.99,
-          "listings": 2
+          "medianPrice": 24.99,
+          "listings": 3
+        },
+        {
+          "sizeIn": 3,
+          "medianPrice": 38,
+          "listings": 1
         }
       ],
       "stores": [
+        {
+          "storeId": "predatory-fins",
+          "listings": 3,
+          "inStock": 0,
+          "medianPrice": 28,
+          "productUrl": "https://www.predatoryfins.com/products/l129-colombian-zebra-pleco-hypancistrus-debilitetra",
+          "productInStock": false,
+          "productPrice": 18,
+          "productSizeLabel": "1 - 1.25 inches"
+        },
         {
           "storeId": "imperial-tropicals",
           "listings": 3,
@@ -24656,16 +24541,6 @@
           "productInStock": false,
           "productPrice": 14.99,
           "productSizeLabel": "1-2\" Unsexed Captive Bred"
-        },
-        {
-          "storeId": "aquatic-arts",
-          "listings": 3,
-          "inStock": 0,
-          "medianPrice": 0,
-          "productUrl": "https://aquaticarts.com/products/l129-colombian-zebra-pleco-hypancistrus-debilittera",
-          "productInStock": false,
-          "productPrice": 34.99,
-          "productSizeLabel": "1 Adult"
         },
         {
           "storeId": "j4-flowerhorns",
@@ -24823,23 +24698,43 @@
         "latest": "2026-05-22"
       }
     },
-    "sp_moenkhausia_heikoi": {
-      "speciesId": "sp_moenkhausia_heikoi",
+    "sp_hyphessobrycon_herbertaxelrodi": {
+      "speciesId": "sp_hyphessobrycon_herbertaxelrodi",
       "comparableCount": 1,
-      "totalListings": 11,
-      "inStock": 6,
-      "soldOut": 5,
+      "totalListings": 24,
+      "inStock": 14,
+      "soldOut": 10,
       "priceBySize": [],
       "stores": [
         {
+          "storeId": "aquatic-arts",
+          "listings": 8,
+          "inStock": 4,
+          "medianPrice": 0,
+          "productUrl": "https://aquaticarts.com/products/black-neon-tetra",
+          "productInStock": true,
+          "productPrice": 6.99,
+          "productSizeLabel": "School of 3"
+        },
+        {
           "storeId": "imperial-tropicals",
-          "listings": 3,
-          "inStock": 0,
+          "listings": 5,
+          "inStock": 2,
           "medianPrice": 24.99,
-          "productUrl": "https://imperialtropicals.com/products/xingu-black-neon-tetra",
-          "productInStock": false,
-          "productPrice": 24.99,
-          "productSizeLabel": "1-2\" Unsexed"
+          "productUrl": "https://imperialtropicals.com/products/black-neon-tetra-hyphessobrycon-herbertaxelrodi",
+          "productInStock": true,
+          "productPrice": 9.99,
+          "productSizeLabel": "(3 Pack) 1-2\" Unsexed"
+        },
+        {
+          "storeId": "liveaquaria",
+          "listings": 5,
+          "inStock": 4,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/black-neon-tetra",
+          "productInStock": true,
+          "productPrice": 49.99,
+          "productSizeLabel": "S - 1/2\" to 3/4\""
         },
         {
           "storeId": "nu-aqua",
@@ -24850,16 +24745,6 @@
           "productInStock": true,
           "productPrice": 2.12,
           "productSizeLabel": "Single"
-        },
-        {
-          "storeId": "aquatic-arts",
-          "listings": 2,
-          "inStock": 2,
-          "medianPrice": 0,
-          "productUrl": "https://aquaticarts.com/products/xingu-black-neon-tetra-moenkhausia-heikoi-brazil",
-          "productInStock": true,
-          "productPrice": 59.99,
-          "productSizeLabel": "School of 3"
         },
         {
           "storeId": "petsmart",
@@ -24892,8 +24777,8 @@
         }
       ],
       "listedBetween": {
-        "earliest": "2018-02-27",
-        "latest": "2026-02-26"
+        "earliest": "2015-12-09",
+        "latest": "2026-02-03"
       }
     },
     "sp_anubias_barteri": {
@@ -26034,23 +25919,33 @@
         "latest": "2026-06-03"
       }
     },
-    "sp_knodus_borki": {
-      "speciesId": "sp_knodus_borki",
+    "sp_boehlkea_fredcochui": {
+      "speciesId": "sp_boehlkea_fredcochui",
       "comparableCount": 0,
-      "totalListings": 9,
-      "inStock": 3,
-      "soldOut": 6,
+      "totalListings": 13,
+      "inStock": 8,
+      "soldOut": 5,
       "priceBySize": [],
       "stores": [
         {
-          "storeId": "imperial-tropicals",
-          "listings": 3,
-          "inStock": 0,
+          "storeId": "liveaquaria",
+          "listings": 5,
+          "inStock": 3,
           "medianPrice": 0,
-          "productUrl": "https://imperialtropicals.com/products/blue-tetra-knodus-borki",
-          "productInStock": false,
-          "productPrice": 9.99,
-          "productSizeLabel": "(3 Pack) 1-2\" Unsexed"
+          "productUrl": "https://www.liveaquaria.com/products/blue-tetra",
+          "productInStock": true,
+          "productPrice": 29.99,
+          "productSizeLabel": "6 Pack"
+        },
+        {
+          "storeId": "aquatic-arts",
+          "listings": 4,
+          "inStock": 4,
+          "medianPrice": 0,
+          "productUrl": "https://aquaticarts.com/products/blue-king-tetra",
+          "productInStock": true,
+          "productPrice": 11.99,
+          "productSizeLabel": "School of 3"
         },
         {
           "storeId": "flip-aquatics",
@@ -26061,16 +25956,6 @@
           "productInStock": true,
           "productPrice": 6.99,
           "productSizeLabel": "Imported"
-        },
-        {
-          "storeId": "liveaquaria",
-          "listings": 2,
-          "inStock": 2,
-          "medianPrice": 0,
-          "productUrl": "https://www.liveaquaria.com/products/glofish-cosmic-blue-tetra",
-          "productInStock": true,
-          "productPrice": 39.99,
-          "productSizeLabel": "3 Pack"
         },
         {
           "storeId": "petsmart",
@@ -26094,7 +25979,7 @@
       ],
       "listedBetween": {
         "earliest": "2020-07-29",
-        "latest": "2026-01-09"
+        "latest": "2026-02-14"
       }
     },
     "sp_pseudotropheus_demasoni": {
@@ -27328,9 +27213,9 @@
     "sp_moenkhausia_sanctaefilomenae": {
       "speciesId": "sp_moenkhausia_sanctaefilomenae",
       "comparableCount": 1,
-      "totalListings": 5,
-      "inStock": 0,
-      "soldOut": 5,
+      "totalListings": 11,
+      "inStock": 4,
+      "soldOut": 7,
       "priceBySize": [],
       "stores": [
         {
@@ -27344,6 +27229,26 @@
           "productSizeLabel": "School of 3"
         },
         {
+          "storeId": "imperial-tropicals",
+          "listings": 3,
+          "inStock": 3,
+          "medianPrice": 0,
+          "productUrl": "https://imperialtropicals.com/products/red-eye-tetra",
+          "productInStock": true,
+          "productPrice": 11.99,
+          "productSizeLabel": "(3 Pack) 1-2\" Unsexed"
+        },
+        {
+          "storeId": "nu-aqua",
+          "listings": 2,
+          "inStock": 1,
+          "medianPrice": 0,
+          "productUrl": "https://nuaquashop.com/products/african-red-eye-tetra-l",
+          "productInStock": true,
+          "productPrice": 10.19,
+          "productSizeLabel": "Default Title"
+        },
+        {
           "storeId": "predatory-fins",
           "listings": 1,
           "inStock": 0,
@@ -27352,11 +27257,21 @@
           "productInStock": false,
           "productPrice": 4,
           "productSizeLabel": "1.5 - 2 inches"
+        },
+        {
+          "storeId": "aquahuna",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 0,
+          "productUrl": "https://www.aquahuna.com/products/red-eye-tetra",
+          "productInStock": false,
+          "productPrice": 2.7,
+          "productSizeLabel": "Default Title"
         }
       ],
       "listedBetween": {
-        "earliest": "2022-05-18",
-        "latest": "2026-03-18"
+        "earliest": "2015-12-09",
+        "latest": "2026-06-23"
       }
     },
     "sp_cherax_mosessalossa": {
@@ -31827,14 +31742,14 @@
     },
     "sp_myloplus_rubripinnis": {
       "speciesId": "sp_myloplus_rubripinnis",
-      "comparableCount": 6,
-      "totalListings": 6,
+      "comparableCount": 4,
+      "totalListings": 4,
       "inStock": 0,
-      "soldOut": 6,
+      "soldOut": 4,
       "price": {
-        "median": 47.49,
+        "median": 39.99,
         "min": 18,
-        "max": 59.99,
+        "max": 54.99,
         "currency": "USD"
       },
       "sizeRangeIn": {
@@ -31849,25 +31764,25 @@
         },
         {
           "sizeIn": 3,
-          "medianPrice": 44.99,
-          "listings": 3
+          "medianPrice": 31.5,
+          "listings": 2
         },
         {
           "sizeIn": 4,
-          "medianPrice": 57.49,
-          "listings": 2
+          "medianPrice": 54.99,
+          "listings": 1
         }
       ],
       "stores": [
         {
           "storeId": "imperial-tropicals",
-          "listings": 5,
+          "listings": 3,
           "inStock": 0,
-          "medianPrice": 49.99,
-          "productUrl": "https://imperialtropicals.com/products/blue-hook-silver-dollar-myloplus-cf-schomburgkii",
+          "medianPrice": 44.99,
+          "productUrl": "https://imperialtropicals.com/products/red-hook-silver-dollar-myloplus-rubripinnis",
           "productInStock": false,
-          "productPrice": 49.99,
-          "productSizeLabel": "3-4” Unsexed"
+          "productPrice": 34.99,
+          "productSizeLabel": "2-3\" Unsexed"
         },
         {
           "storeId": "predatory-fins",
@@ -31882,7 +31797,7 @@
       ],
       "listedBetween": {
         "earliest": "2021-01-08",
-        "latest": "2021-11-11"
+        "latest": "2021-09-04"
       }
     },
     "sp_uaru_fernandezyepezi": {
@@ -36424,56 +36339,6 @@
         "latest": "2021-05-04"
       }
     },
-    "sp_hypancistrus_debilitetra": {
-      "speciesId": "sp_hypancistrus_debilitetra",
-      "comparableCount": 3,
-      "totalListings": 3,
-      "inStock": 0,
-      "soldOut": 3,
-      "price": {
-        "median": 28,
-        "min": 18,
-        "max": 38,
-        "currency": "USD"
-      },
-      "sizeRangeIn": {
-        "min": 1.13,
-        "max": 3.25
-      },
-      "priceBySize": [
-        {
-          "sizeIn": 1,
-          "medianPrice": 18,
-          "listings": 1
-        },
-        {
-          "sizeIn": 2,
-          "medianPrice": 28,
-          "listings": 1
-        },
-        {
-          "sizeIn": 3,
-          "medianPrice": 38,
-          "listings": 1
-        }
-      ],
-      "stores": [
-        {
-          "storeId": "predatory-fins",
-          "listings": 3,
-          "inStock": 0,
-          "medianPrice": 28,
-          "productUrl": "https://www.predatoryfins.com/products/l129-colombian-zebra-pleco-hypancistrus-debilitetra",
-          "productInStock": false,
-          "productPrice": 18,
-          "productSizeLabel": "1 - 1.25 inches"
-        }
-      ],
-      "listedBetween": {
-        "earliest": "2021-05-04",
-        "latest": "2021-05-04"
-      }
-    },
     "sp_baryancistrus_beggini": {
       "speciesId": "sp_baryancistrus_beggini",
       "comparableCount": 2,
@@ -40207,6 +40072,30 @@
         "latest": "2026-05-15"
       }
     },
+    "sp_knodus_borki": {
+      "speciesId": "sp_knodus_borki",
+      "comparableCount": 0,
+      "totalListings": 3,
+      "inStock": 0,
+      "soldOut": 3,
+      "priceBySize": [],
+      "stores": [
+        {
+          "storeId": "imperial-tropicals",
+          "listings": 3,
+          "inStock": 0,
+          "medianPrice": 0,
+          "productUrl": "https://imperialtropicals.com/products/blue-tetra-knodus-borki",
+          "productInStock": false,
+          "productPrice": 9.99,
+          "productSizeLabel": "(3 Pack) 1-2\" Unsexed"
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2021-09-27",
+        "latest": "2021-09-27"
+      }
+    },
     "sp_aphyocharax_rathbuni": {
       "speciesId": "sp_aphyocharax_rathbuni",
       "comparableCount": 0,
@@ -40805,12 +40694,22 @@
     },
     "sp_inpaichthys_kerri": {
       "speciesId": "sp_inpaichthys_kerri",
-      "comparableCount": 0,
-      "totalListings": 13,
-      "inStock": 7,
-      "soldOut": 6,
+      "comparableCount": 1,
+      "totalListings": 26,
+      "inStock": 11,
+      "soldOut": 15,
       "priceBySize": [],
       "stores": [
+        {
+          "storeId": "imperial-tropicals",
+          "listings": 11,
+          "inStock": 4,
+          "medianPrice": 7.99,
+          "productUrl": "https://imperialtropicals.com/products/blue-emperor-tetra-inpaichthys-kerri",
+          "productInStock": true,
+          "productPrice": 11.99,
+          "productSizeLabel": "(3 Pack) 0.5-1\" Unsexed"
+        },
         {
           "storeId": "aquatic-arts",
           "listings": 9,
@@ -40822,39 +40721,39 @@
           "productSizeLabel": "School of 3"
         },
         {
-          "storeId": "imperial-tropicals",
-          "listings": 2,
-          "inStock": 2,
-          "medianPrice": 0,
-          "productUrl": "https://imperialtropicals.com/products/blue-emperor-tetra-inpaichthys-kerri",
-          "productInStock": true,
-          "productPrice": 11.99,
-          "productSizeLabel": "(3 Pack) 0.5-1\" Unsexed"
-        },
-        {
           "storeId": "flip-aquatics",
-          "listings": 1,
+          "listings": 2,
           "inStock": 0,
           "medianPrice": 0,
-          "productUrl": "https://flipaquatics.com/products/blue-emperor-kerri-tetra",
+          "productUrl": "https://flipaquatics.com/products/emperor-tetra",
           "productInStock": false,
-          "productPrice": 6.99,
+          "productPrice": 5.99,
           "productSizeLabel": "Imported"
         },
         {
           "storeId": "aquahuna",
-          "listings": 1,
-          "inStock": 1,
+          "listings": 2,
+          "inStock": 2,
           "medianPrice": 0,
           "productUrl": "https://www.aquahuna.com/products/blue-emperor-tetra",
           "productInStock": true,
           "productPrice": 3.5,
           "productSizeLabel": "Default Title"
+        },
+        {
+          "storeId": "nu-aqua",
+          "listings": 2,
+          "inStock": 1,
+          "medianPrice": 0,
+          "productUrl": "https://nuaquashop.com/products/rainbow-emperor-tetra",
+          "productInStock": true,
+          "productPrice": 5.94,
+          "productSizeLabel": "Default Title"
         }
       ],
       "listedBetween": {
         "earliest": "2019-08-04",
-        "latest": "2024-12-16"
+        "latest": "2026-07-23"
       }
     },
     "sp_carinotetraodon_travancoricus": {
@@ -40997,6 +40896,30 @@
       "listedBetween": {
         "earliest": "2021-03-09",
         "latest": "2021-07-14"
+      }
+    },
+    "sp_spiney_eel": {
+      "speciesId": "sp_spiney_eel",
+      "comparableCount": 1,
+      "totalListings": 1,
+      "inStock": 0,
+      "soldOut": 1,
+      "priceBySize": [],
+      "stores": [
+        {
+          "storeId": "imperial-tropicals",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 69.99,
+          "productUrl": "https://imperialtropicals.com/products/fire-eel-mastacembelus-erythrotaenia",
+          "productInStock": false,
+          "productPrice": 69.99,
+          "productSizeLabel": "7-9” Unsexed"
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2021-03-09",
+        "latest": "2021-03-09"
       }
     },
     "sp_megalamphodus_erythrostigmus": {
@@ -41711,14 +41634,24 @@
         "latest": "2025-12-31"
       }
     },
-    "sp_danio_choprai": {
-      "speciesId": "sp_danio_choprai",
+    "sp_celestichthys_choprae": {
+      "speciesId": "sp_celestichthys_choprae",
       "comparableCount": 0,
-      "totalListings": 7,
-      "inStock": 2,
+      "totalListings": 10,
+      "inStock": 5,
       "soldOut": 5,
       "priceBySize": [],
       "stores": [
+        {
+          "storeId": "aquatic-arts",
+          "listings": 4,
+          "inStock": 4,
+          "medianPrice": 0,
+          "productUrl": "https://aquaticarts.com/products/glowlight-danio",
+          "productInStock": true,
+          "productPrice": 18.99,
+          "productSizeLabel": "School of 3"
+        },
         {
           "storeId": "nu-aqua",
           "listings": 3,
@@ -41728,16 +41661,6 @@
           "productInStock": false,
           "productPrice": 4.24,
           "productSizeLabel": "Single"
-        },
-        {
-          "storeId": "liveaquaria",
-          "listings": 2,
-          "inStock": 2,
-          "medianPrice": 0,
-          "productUrl": "https://www.liveaquaria.com/products/glowlight-danio-2",
-          "productInStock": true,
-          "productPrice": 5.99,
-          "productSizeLabel": "FW: Glowlight Danio"
         },
         {
           "storeId": "imperial-tropicals",
@@ -41758,6 +41681,16 @@
           "productInStock": false,
           "productPrice": 4,
           "productSizeLabel": "Default Title"
+        },
+        {
+          "storeId": "liveaquaria",
+          "listings": 1,
+          "inStock": 1,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/glowlight-danio-2",
+          "productInStock": true,
+          "productPrice": 5.99,
+          "productSizeLabel": "FW: Glowlight Danio"
         }
       ],
       "listedBetween": {
@@ -43432,50 +43365,6 @@
         "latest": "2026-02-14"
       }
     },
-    "sp_hyphessobrycon_herbertaxelrodi": {
-      "speciesId": "sp_hyphessobrycon_herbertaxelrodi",
-      "comparableCount": 0,
-      "totalListings": 15,
-      "inStock": 10,
-      "soldOut": 5,
-      "priceBySize": [],
-      "stores": [
-        {
-          "storeId": "aquatic-arts",
-          "listings": 8,
-          "inStock": 4,
-          "medianPrice": 0,
-          "productUrl": "https://aquaticarts.com/products/black-neon-tetra",
-          "productInStock": true,
-          "productPrice": 6.99,
-          "productSizeLabel": "School of 3"
-        },
-        {
-          "storeId": "liveaquaria",
-          "listings": 5,
-          "inStock": 4,
-          "medianPrice": 0,
-          "productUrl": "https://www.liveaquaria.com/products/black-neon-tetra",
-          "productInStock": true,
-          "productPrice": 49.99,
-          "productSizeLabel": "S - 1/2\" to 3/4\""
-        },
-        {
-          "storeId": "imperial-tropicals",
-          "listings": 2,
-          "inStock": 2,
-          "medianPrice": 0,
-          "productUrl": "https://imperialtropicals.com/products/black-neon-tetra-hyphessobrycon-herbertaxelrodi",
-          "productInStock": true,
-          "productPrice": 9.99,
-          "productSizeLabel": "(3 Pack) 1-2\" Unsexed"
-        }
-      ],
-      "listedBetween": {
-        "earliest": "2015-12-09",
-        "latest": "2026-01-09"
-      }
-    },
     "sp_holopristis_ocellifer": {
       "speciesId": "sp_holopristis_ocellifer",
       "comparableCount": 0,
@@ -44106,28 +43995,38 @@
         "latest": "2026-08-21"
       }
     },
-    "sp_dichotomyctere_ocellatus": {
-      "speciesId": "sp_dichotomyctere_ocellatus",
+    "sp_pethia_conchonius": {
+      "speciesId": "sp_pethia_conchonius",
       "comparableCount": 0,
-      "totalListings": 2,
-      "inStock": 2,
-      "soldOut": 0,
+      "totalListings": 6,
+      "inStock": 3,
+      "soldOut": 3,
       "priceBySize": [],
       "stores": [
         {
           "storeId": "aquatic-arts",
-          "listings": 2,
+          "listings": 5,
           "inStock": 2,
           "medianPrice": 0,
-          "productUrl": "https://aquaticarts.com/products/figure-8-puffer-dichotomyctere-ocellatus",
+          "productUrl": "https://aquaticarts.com/products/red-glass-barb-pethia-conchonius-tank-bred",
           "productInStock": true,
-          "productPrice": 7.99,
-          "productSizeLabel": "1 Fish"
+          "productPrice": 13.49,
+          "productSizeLabel": "School of 3 (USA Bred)"
+        },
+        {
+          "storeId": "liveaquaria",
+          "listings": 1,
+          "inStock": 1,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/rosy-barb-male",
+          "productInStock": true,
+          "productPrice": 29.99,
+          "productSizeLabel": "6 Pack"
         }
       ],
       "listedBetween": {
-        "earliest": "2026-08-12",
-        "latest": "2026-08-12"
+        "earliest": "2025-07-31",
+        "latest": "2026-08-20"
       }
     },
     "sp_aphyosemion_bivittatum": {
@@ -44181,9 +44080,9 @@
     "sp_protomyzon_pachychilus": {
       "speciesId": "sp_protomyzon_pachychilus",
       "comparableCount": 0,
-      "totalListings": 3,
+      "totalListings": 5,
       "inStock": 0,
-      "soldOut": 3,
+      "soldOut": 5,
       "priceBySize": [],
       "stores": [
         {
@@ -44197,6 +44096,26 @@
           "productSizeLabel": "School of 3"
         },
         {
+          "storeId": "aquahuna",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 0,
+          "productUrl": "https://www.aquahuna.com/products/panda-loach",
+          "productInStock": false,
+          "productPrice": 13.5,
+          "productSizeLabel": "Default Title"
+        },
+        {
+          "storeId": "nu-aqua",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 0,
+          "productUrl": "https://nuaquashop.com/products/panda-loach",
+          "productInStock": false,
+          "productPrice": 21.04,
+          "productSizeLabel": "Default Title"
+        },
+        {
           "storeId": "liveaquaria",
           "listings": 1,
           "inStock": 0,
@@ -44208,7 +44127,7 @@
         }
       ],
       "listedBetween": {
-        "earliest": "2026-01-07",
+        "earliest": "2023-06-01",
         "latest": "2026-07-09"
       }
     },
@@ -44424,6 +44343,30 @@
         "latest": "2026-03-20"
       }
     },
+    "sp_moenkhausia_pittieri": {
+      "speciesId": "sp_moenkhausia_pittieri",
+      "comparableCount": 0,
+      "totalListings": 4,
+      "inStock": 4,
+      "soldOut": 0,
+      "priceBySize": [],
+      "stores": [
+        {
+          "storeId": "aquatic-arts",
+          "listings": 4,
+          "inStock": 4,
+          "medianPrice": 0,
+          "productUrl": "https://aquaticarts.com/products/diamond-tetra",
+          "productInStock": true,
+          "productPrice": 14.44,
+          "productSizeLabel": "School of 3"
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2026-03-15",
+        "latest": "2026-03-15"
+      }
+    },
     "sp_brotia_herculea": {
       "speciesId": "sp_brotia_herculea",
       "comparableCount": 0,
@@ -44514,6 +44457,30 @@
       "listedBetween": {
         "earliest": "2026-02-27",
         "latest": "2026-02-27"
+      }
+    },
+    "sp_moenkhausia_heikoi": {
+      "speciesId": "sp_moenkhausia_heikoi",
+      "comparableCount": 0,
+      "totalListings": 2,
+      "inStock": 2,
+      "soldOut": 0,
+      "priceBySize": [],
+      "stores": [
+        {
+          "storeId": "aquatic-arts",
+          "listings": 2,
+          "inStock": 2,
+          "medianPrice": 0,
+          "productUrl": "https://aquaticarts.com/products/xingu-black-neon-tetra-moenkhausia-heikoi-brazil",
+          "productInStock": true,
+          "productPrice": 59.99,
+          "productSizeLabel": "School of 3"
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2026-02-26",
+        "latest": "2026-02-26"
       }
     },
     "sp_hyphessobrycon_amapaensis": {
@@ -45052,60 +45019,6 @@
       "listedBetween": {
         "earliest": "2015-12-14",
         "latest": "2026-04-18"
-      }
-    },
-    "sp_moenkhausia_sanctaefilomene": {
-      "speciesId": "sp_moenkhausia_sanctaefilomene",
-      "comparableCount": 0,
-      "totalListings": 7,
-      "inStock": 5,
-      "soldOut": 2,
-      "priceBySize": [],
-      "stores": [
-        {
-          "storeId": "imperial-tropicals",
-          "listings": 3,
-          "inStock": 3,
-          "medianPrice": 0,
-          "productUrl": "https://imperialtropicals.com/products/red-eye-tetra",
-          "productInStock": true,
-          "productPrice": 11.99,
-          "productSizeLabel": "(3 Pack) 1-2\" Unsexed"
-        },
-        {
-          "storeId": "nu-aqua",
-          "listings": 2,
-          "inStock": 1,
-          "medianPrice": 0,
-          "productUrl": "https://nuaquashop.com/products/african-red-eye-tetra-l",
-          "productInStock": true,
-          "productPrice": 10.19,
-          "productSizeLabel": "Default Title"
-        },
-        {
-          "storeId": "aquahuna",
-          "listings": 1,
-          "inStock": 0,
-          "medianPrice": 0,
-          "productUrl": "https://www.aquahuna.com/products/red-eye-tetra",
-          "productInStock": false,
-          "productPrice": 2.7,
-          "productSizeLabel": "Default Title"
-        },
-        {
-          "storeId": "liveaquaria",
-          "listings": 1,
-          "inStock": 1,
-          "medianPrice": 0,
-          "productUrl": "https://www.liveaquaria.com/products/red-eye-tetra",
-          "productInStock": true,
-          "productPrice": 24.99,
-          "productSizeLabel": "12 Pack"
-        }
-      ],
-      "listedBetween": {
-        "earliest": "2015-12-09",
-        "latest": "2026-06-23"
       }
     },
     "sp_terminalia_catappa": {
@@ -47976,6 +47889,30 @@
         "latest": "2026-06-18"
       }
     },
+    "sp_pseudomugil_gertrudae": {
+      "speciesId": "sp_pseudomugil_gertrudae",
+      "comparableCount": 0,
+      "totalListings": 9,
+      "inStock": 4,
+      "soldOut": 5,
+      "priceBySize": [],
+      "stores": [
+        {
+          "storeId": "aquatic-arts",
+          "listings": 9,
+          "inStock": 4,
+          "medianPrice": 0,
+          "productUrl": "https://aquaticarts.com/products/gertrudes-spotted-blue-eye-rainbowfish",
+          "productInStock": true,
+          "productPrice": 17.99,
+          "productSizeLabel": "School of 3"
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2021-07-14",
+        "latest": "2023-11-03"
+      }
+    },
     "sp_brevibora_exilis": {
       "speciesId": "sp_brevibora_exilis",
       "comparableCount": 0,
@@ -48656,6 +48593,30 @@
       "listedBetween": {
         "earliest": "2023-03-26",
         "latest": "2026-01-15"
+      }
+    },
+    "sp_hypancistrus_debilittera": {
+      "speciesId": "sp_hypancistrus_debilittera",
+      "comparableCount": 0,
+      "totalListings": 3,
+      "inStock": 0,
+      "soldOut": 3,
+      "priceBySize": [],
+      "stores": [
+        {
+          "storeId": "aquatic-arts",
+          "listings": 3,
+          "inStock": 0,
+          "medianPrice": 0,
+          "productUrl": "https://aquaticarts.com/products/l129-colombian-zebra-pleco-hypancistrus-debilittera",
+          "productInStock": false,
+          "productPrice": 34.99,
+          "productSizeLabel": "1 Adult"
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2023-03-22",
+        "latest": "2023-03-22"
       }
     },
     "sp_helanthium_bolivianus": {
@@ -49964,54 +49925,6 @@
         "latest": "2026-01-15"
       }
     },
-    "sp_pseudomugil_furcatus": {
-      "speciesId": "sp_pseudomugil_furcatus",
-      "comparableCount": 0,
-      "totalListings": 4,
-      "inStock": 4,
-      "soldOut": 0,
-      "priceBySize": [],
-      "stores": [
-        {
-          "storeId": "aquatic-arts",
-          "listings": 4,
-          "inStock": 4,
-          "medianPrice": 0,
-          "productUrl": "https://aquaticarts.com/products/blue-eye-forktail-rainbowfish",
-          "productInStock": true,
-          "productPrice": 19.99,
-          "productSizeLabel": "School of 3"
-        }
-      ],
-      "listedBetween": {
-        "earliest": "2021-07-14",
-        "latest": "2021-07-14"
-      }
-    },
-    "sp_atyopsis_spinipes": {
-      "speciesId": "sp_atyopsis_spinipes",
-      "comparableCount": 0,
-      "totalListings": 8,
-      "inStock": 3,
-      "soldOut": 5,
-      "priceBySize": [],
-      "stores": [
-        {
-          "storeId": "aquatic-arts",
-          "listings": 8,
-          "inStock": 3,
-          "medianPrice": 0,
-          "productUrl": "https://aquaticarts.com/products/large-bamboo-shrimp",
-          "productInStock": true,
-          "productPrice": 19.99,
-          "productSizeLabel": "1 Shrimp"
-        }
-      ],
-      "listedBetween": {
-        "earliest": "2021-07-14",
-        "latest": "2021-07-14"
-      }
-    },
     "sp_echinodorus_amazonicus": {
       "speciesId": "sp_echinodorus_amazonicus",
       "comparableCount": 0,
@@ -50766,40 +50679,6 @@
         "latest": "2026-01-14"
       }
     },
-    "sp_boehlkea_fredcochui": {
-      "speciesId": "sp_boehlkea_fredcochui",
-      "comparableCount": 0,
-      "totalListings": 7,
-      "inStock": 5,
-      "soldOut": 2,
-      "priceBySize": [],
-      "stores": [
-        {
-          "storeId": "aquatic-arts",
-          "listings": 4,
-          "inStock": 4,
-          "medianPrice": 0,
-          "productUrl": "https://aquaticarts.com/products/blue-king-tetra",
-          "productInStock": true,
-          "productPrice": 11.99,
-          "productSizeLabel": "School of 3"
-        },
-        {
-          "storeId": "liveaquaria",
-          "listings": 3,
-          "inStock": 1,
-          "medianPrice": 0,
-          "productUrl": "https://www.liveaquaria.com/products/blue-tetra",
-          "productInStock": true,
-          "productPrice": 29.99,
-          "productSizeLabel": "6 Pack"
-        }
-      ],
-      "listedBetween": {
-        "earliest": "2021-07-14",
-        "latest": "2026-02-14"
-      }
-    },
     "sp_septaria_porcellana": {
       "speciesId": "sp_septaria_porcellana",
       "comparableCount": 0,
@@ -50895,9 +50774,9 @@
     "sp_yaoshania_pachychilus": {
       "speciesId": "sp_yaoshania_pachychilus",
       "comparableCount": 0,
-      "totalListings": 6,
+      "totalListings": 4,
       "inStock": 0,
-      "soldOut": 6,
+      "soldOut": 4,
       "priceBySize": [],
       "stores": [
         {
@@ -50909,31 +50788,11 @@
           "productInStock": false,
           "productPrice": 59.99,
           "productSizeLabel": "School of 3"
-        },
-        {
-          "storeId": "aquahuna",
-          "listings": 1,
-          "inStock": 0,
-          "medianPrice": 0,
-          "productUrl": "https://www.aquahuna.com/products/panda-loach",
-          "productInStock": false,
-          "productPrice": 13.5,
-          "productSizeLabel": "Default Title"
-        },
-        {
-          "storeId": "nu-aqua",
-          "listings": 1,
-          "inStock": 0,
-          "medianPrice": 0,
-          "productUrl": "https://nuaquashop.com/products/panda-loach",
-          "productInStock": false,
-          "productPrice": 21.04,
-          "productSizeLabel": "Default Title"
         }
       ],
       "listedBetween": {
         "earliest": "2021-07-14",
-        "latest": "2025-06-14"
+        "latest": "2021-07-14"
       }
     },
     "sp_vittina_jovis": {
@@ -51884,30 +51743,6 @@
         "latest": "2021-07-14"
       }
     },
-    "sp_trichopodus_leeri": {
-      "speciesId": "sp_trichopodus_leeri",
-      "comparableCount": 0,
-      "totalListings": 3,
-      "inStock": 0,
-      "soldOut": 3,
-      "priceBySize": [],
-      "stores": [
-        {
-          "storeId": "aquatic-arts",
-          "listings": 3,
-          "inStock": 0,
-          "medianPrice": 0,
-          "productUrl": "https://aquaticarts.com/products/pearl-gourami",
-          "productInStock": false,
-          "productPrice": 5.99,
-          "productSizeLabel": "1 Fish"
-        }
-      ],
-      "listedBetween": {
-        "earliest": "2021-07-14",
-        "latest": "2021-07-14"
-      }
-    },
     "sp_stiphodon_semoni": {
       "speciesId": "sp_stiphodon_semoni",
       "comparableCount": 0,
@@ -52212,30 +52047,6 @@
       "listedBetween": {
         "earliest": "2017-05-31",
         "latest": "2026-01-15"
-      }
-    },
-    "sp_celestichthys_choprae": {
-      "speciesId": "sp_celestichthys_choprae",
-      "comparableCount": 0,
-      "totalListings": 4,
-      "inStock": 4,
-      "soldOut": 0,
-      "priceBySize": [],
-      "stores": [
-        {
-          "storeId": "aquatic-arts",
-          "listings": 4,
-          "inStock": 4,
-          "medianPrice": 0,
-          "productUrl": "https://aquaticarts.com/products/glowlight-danio",
-          "productInStock": true,
-          "productPrice": 18.99,
-          "productSizeLabel": "School of 3"
-        }
-      ],
-      "listedBetween": {
-        "earliest": "2021-07-14",
-        "latest": "2021-07-14"
       }
     },
     "sp_jordanella_floridae": {
@@ -52839,6 +52650,30 @@
           "productInStock": false,
           "productPrice": 44.99,
           "productSizeLabel": "Group of 3"
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2021-07-14",
+        "latest": "2021-07-14"
+      }
+    },
+    "sp_devario_aequipinnatus": {
+      "speciesId": "sp_devario_aequipinnatus",
+      "comparableCount": 0,
+      "totalListings": 5,
+      "inStock": 0,
+      "soldOut": 5,
+      "priceBySize": [],
+      "stores": [
+        {
+          "storeId": "aquatic-arts",
+          "listings": 5,
+          "inStock": 0,
+          "medianPrice": 0,
+          "productUrl": "https://aquaticarts.com/products/giant-danio",
+          "productInStock": false,
+          "productPrice": 17.99,
+          "productSizeLabel": "School of 3"
         }
       ],
       "listedBetween": {
@@ -61197,14 +61032,14 @@
     "sp_tubastrea_micrantha": {
       "speciesId": "sp_tubastrea_micrantha",
       "comparableCount": 0,
-      "totalListings": 7,
+      "totalListings": 4,
       "inStock": 0,
-      "soldOut": 7,
+      "soldOut": 4,
       "priceBySize": [],
       "stores": [
         {
           "storeId": "liveaquaria",
-          "listings": 7,
+          "listings": 4,
           "inStock": 0,
           "medianPrice": 0,
           "productUrl": "https://www.liveaquaria.com/products/tube-coral-black",
@@ -62675,6 +62510,30 @@
           "productInStock": false,
           "productPrice": 24.99,
           "productSizeLabel": "S - Less than 3/4\""
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2026-02-14",
+        "latest": "2026-02-14"
+      }
+    },
+    "sp_tubastrea_aurea": {
+      "speciesId": "sp_tubastrea_aurea",
+      "comparableCount": 0,
+      "totalListings": 4,
+      "inStock": 0,
+      "soldOut": 4,
+      "priceBySize": [],
+      "stores": [
+        {
+          "storeId": "liveaquaria",
+          "listings": 4,
+          "inStock": 0,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/tube-coral-yellow",
+          "productInStock": false,
+          "productPrice": 49.99,
+          "productSizeLabel": "Small"
         }
       ],
       "listedBetween": {
@@ -65535,30 +65394,6 @@
       ],
       "listedBetween": {
         "earliest": "2025-12-24",
-        "latest": "2026-02-14"
-      }
-    },
-    "sp_tubastrea_aurea": {
-      "speciesId": "sp_tubastrea_aurea",
-      "comparableCount": 0,
-      "totalListings": 1,
-      "inStock": 0,
-      "soldOut": 1,
-      "priceBySize": [],
-      "stores": [
-        {
-          "storeId": "liveaquaria",
-          "listings": 1,
-          "inStock": 0,
-          "medianPrice": 0,
-          "productUrl": "https://www.liveaquaria.com/products/tube-coral-orange",
-          "productInStock": false,
-          "productPrice": 59.99,
-          "productSizeLabel": "Tube Coral Orange (Tonga) - Small"
-        }
-      ],
-      "listedBetween": {
-        "earliest": "2026-02-14",
         "latest": "2026-02-14"
       }
     },
@@ -68730,8 +68565,8 @@
         "latest": "2026-01-19"
       }
     },
-    "sp_urotrygon_chilensis": {
-      "speciesId": "sp_urotrygon_chilensis",
+    "sp_taeniura_lymma": {
+      "speciesId": "sp_taeniura_lymma",
       "comparableCount": 0,
       "totalListings": 6,
       "inStock": 0,
@@ -68778,8 +68613,8 @@
         "latest": "2026-01-19"
       }
     },
-    "sp_taeniura_lymma": {
-      "speciesId": "sp_taeniura_lymma",
+    "sp_urotrygon_chilensis": {
+      "speciesId": "sp_urotrygon_chilensis",
       "comparableCount": 0,
       "totalListings": 3,
       "inStock": 0,
@@ -68791,10 +68626,10 @@
           "listings": 3,
           "inStock": 0,
           "medianPrice": 0,
-          "productUrl": "https://www.liveaquaria.com/products/blue-dot-stingray-expert-only",
+          "productUrl": "https://www.liveaquaria.com/products/chilean-round-stingray-expert-only",
           "productInStock": false,
-          "productPrice": 297.99,
-          "productSizeLabel": "Indo Pacific"
+          "productPrice": 109.99,
+          "productSizeLabel": "S - 3\" to 4\""
         }
       ],
       "listedBetween": {
@@ -68853,24 +68688,24 @@
     "sp_doryrhamphus_janssi": {
       "speciesId": "sp_doryrhamphus_janssi",
       "comparableCount": 0,
-      "totalListings": 1,
-      "inStock": 0,
-      "soldOut": 1,
+      "totalListings": 4,
+      "inStock": 1,
+      "soldOut": 3,
       "priceBySize": [],
       "stores": [
         {
           "storeId": "liveaquaria",
-          "listings": 1,
-          "inStock": 0,
+          "listings": 4,
+          "inStock": 1,
           "medianPrice": 0,
-          "productUrl": "https://www.liveaquaria.com/products/janss-pipefish-expert-only",
-          "productInStock": false,
-          "productPrice": 39.99,
-          "productSizeLabel": "Default Title"
+          "productUrl": "https://www.liveaquaria.com/products/dragonface-pipefish-expert-only",
+          "productInStock": true,
+          "productPrice": 69.99,
+          "productSizeLabel": "L - 4\" to 5\""
         }
       ],
       "listedBetween": {
-        "earliest": "2026-01-19",
+        "earliest": "2025-12-08",
         "latest": "2026-01-19"
       }
     },
@@ -68901,24 +68736,24 @@
     "sp_dunckerocampus_dactyliophorus": {
       "speciesId": "sp_dunckerocampus_dactyliophorus",
       "comparableCount": 0,
-      "totalListings": 6,
-      "inStock": 1,
-      "soldOut": 5,
+      "totalListings": 3,
+      "inStock": 0,
+      "soldOut": 3,
       "priceBySize": [],
       "stores": [
         {
           "storeId": "liveaquaria",
-          "listings": 6,
-          "inStock": 1,
+          "listings": 3,
+          "inStock": 0,
           "medianPrice": 0,
-          "productUrl": "https://www.liveaquaria.com/products/dragonface-pipefish-expert-only",
-          "productInStock": true,
-          "productPrice": 69.99,
-          "productSizeLabel": "L - 4\" to 5\""
+          "productUrl": "https://www.liveaquaria.com/products/banded-pipefish-expert-only",
+          "productInStock": false,
+          "productPrice": 34.99,
+          "productSizeLabel": "S - 2\" to 3\""
         }
       ],
       "listedBetween": {
-        "earliest": "2025-12-08",
+        "earliest": "2026-01-19",
         "latest": "2026-01-19"
       }
     },
@@ -70218,6 +70053,30 @@
         "latest": "2026-01-13"
       }
     },
+    "sp_bamboo_shrimp": {
+      "speciesId": "sp_bamboo_shrimp",
+      "comparableCount": 0,
+      "totalListings": 2,
+      "inStock": 2,
+      "soldOut": 0,
+      "priceBySize": [],
+      "stores": [
+        {
+          "storeId": "liveaquaria",
+          "listings": 2,
+          "inStock": 2,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/singapore-flower-shrimp",
+          "productInStock": true,
+          "productPrice": 30.99,
+          "productSizeLabel": "3 Pack"
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2026-01-13",
+        "latest": "2026-01-13"
+      }
+    },
     "sp_atya_gabonensi": {
       "speciesId": "sp_atya_gabonensi",
       "comparableCount": 0,
@@ -70307,30 +70166,6 @@
           "productInStock": true,
           "productPrice": 15.99,
           "productSizeLabel": "Default Title"
-        }
-      ],
-      "listedBetween": {
-        "earliest": "2026-01-09",
-        "latest": "2026-01-09"
-      }
-    },
-    "sp_metynnis_argenteus": {
-      "speciesId": "sp_metynnis_argenteus",
-      "comparableCount": 0,
-      "totalListings": 1,
-      "inStock": 1,
-      "soldOut": 0,
-      "priceBySize": [],
-      "stores": [
-        {
-          "storeId": "liveaquaria",
-          "listings": 1,
-          "inStock": 1,
-          "medianPrice": 0,
-          "productUrl": "https://www.liveaquaria.com/products/silver-dollar",
-          "productInStock": true,
-          "productPrice": 47.99,
-          "productSizeLabel": "S - 1\" to 2\""
         }
       ],
       "listedBetween": {
@@ -70626,6 +70461,30 @@
         "latest": "2026-01-09"
       }
     },
+    "sp_moenkhausia_sanctaefilomene": {
+      "speciesId": "sp_moenkhausia_sanctaefilomene",
+      "comparableCount": 0,
+      "totalListings": 1,
+      "inStock": 1,
+      "soldOut": 0,
+      "priceBySize": [],
+      "stores": [
+        {
+          "storeId": "liveaquaria",
+          "listings": 1,
+          "inStock": 1,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/red-eye-tetra",
+          "productInStock": true,
+          "productPrice": 24.99,
+          "productSizeLabel": "12 Pack"
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2026-01-09",
+        "latest": "2026-01-09"
+      }
+    },
     "sp_hyphessobrycon_callistus": {
       "speciesId": "sp_hyphessobrycon_callistus",
       "comparableCount": 0,
@@ -70691,30 +70550,6 @@
           "productInStock": true,
           "productPrice": 1.99,
           "productSizeLabel": "Default Title"
-        }
-      ],
-      "listedBetween": {
-        "earliest": "2026-01-09",
-        "latest": "2026-01-09"
-      }
-    },
-    "sp_moenkausia_pittieri": {
-      "speciesId": "sp_moenkausia_pittieri",
-      "comparableCount": 0,
-      "totalListings": 2,
-      "inStock": 2,
-      "soldOut": 0,
-      "priceBySize": [],
-      "stores": [
-        {
-          "storeId": "liveaquaria",
-          "listings": 2,
-          "inStock": 2,
-          "medianPrice": 0,
-          "productUrl": "https://www.liveaquaria.com/products/diamond-tetra",
-          "productInStock": true,
-          "productPrice": 24.99,
-          "productSizeLabel": "6 Pack"
         }
       ],
       "listedBetween": {
@@ -71134,6 +70969,30 @@
         "latest": "2026-01-08"
       }
     },
+    "sp_tetraodon_biocellatus": {
+      "speciesId": "sp_tetraodon_biocellatus",
+      "comparableCount": 0,
+      "totalListings": 1,
+      "inStock": 0,
+      "soldOut": 1,
+      "priceBySize": [],
+      "stores": [
+        {
+          "storeId": "liveaquaria",
+          "listings": 1,
+          "inStock": 0,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/figure-8-puffer",
+          "productInStock": false,
+          "productPrice": 12.99,
+          "productSizeLabel": "Default Title"
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2026-01-08",
+        "latest": "2026-01-08"
+      }
+    },
     "sp_botia_hymenophysa": {
       "speciesId": "sp_botia_hymenophysa",
       "comparableCount": 0,
@@ -71377,14 +71236,14 @@
     "sp_cinachyra_alloclada": {
       "speciesId": "sp_cinachyra_alloclada",
       "comparableCount": 0,
-      "totalListings": 2,
+      "totalListings": 9,
       "inStock": 0,
-      "soldOut": 2,
+      "soldOut": 9,
       "priceBySize": [],
       "stores": [
         {
           "storeId": "liveaquaria",
-          "listings": 2,
+          "listings": 9,
           "inStock": 0,
           "medianPrice": 0,
           "productUrl": "https://www.liveaquaria.com/products/yellow-ball-sponge-expert-only",
@@ -71401,20 +71260,20 @@
     "sp_psuedaxinella_lunaecharta": {
       "speciesId": "sp_psuedaxinella_lunaecharta",
       "comparableCount": 0,
-      "totalListings": 11,
+      "totalListings": 4,
       "inStock": 0,
-      "soldOut": 11,
+      "soldOut": 4,
       "priceBySize": [],
       "stores": [
         {
           "storeId": "liveaquaria",
-          "listings": 11,
+          "listings": 4,
           "inStock": 0,
           "medianPrice": 0,
-          "productUrl": "https://www.liveaquaria.com/products/tree-sponge-expert-only",
+          "productUrl": "https://www.liveaquaria.com/products/red-ball-sponge-expert-only",
           "productInStock": false,
-          "productPrice": 61.99,
-          "productSizeLabel": "S - less than 2\""
+          "productPrice": 29.99,
+          "productSizeLabel": "S - 1-1/2\" to 2-1/2\""
         }
       ],
       "listedBetween": {
@@ -71566,8 +71425,8 @@
         "latest": "2026-01-06"
       }
     },
-    "sp_helostoma_temmincki": {
-      "speciesId": "sp_helostoma_temmincki",
+    "sp_trichopodus_leerii": {
+      "speciesId": "sp_trichopodus_leerii",
       "comparableCount": 0,
       "totalListings": 2,
       "inStock": 2,
@@ -71579,9 +71438,9 @@
           "listings": 2,
           "inStock": 2,
           "medianPrice": 0,
-          "productUrl": "https://www.liveaquaria.com/products/kissing-gourami",
+          "productUrl": "https://www.liveaquaria.com/products/pearl-gourami",
           "productInStock": true,
-          "productPrice": 29.99,
+          "productPrice": 25.99,
           "productSizeLabel": "3 Pack"
         }
       ],
@@ -71830,6 +71689,30 @@
         "latest": "2026-01-05"
       }
     },
+    "sp_danio_choprai": {
+      "speciesId": "sp_danio_choprai",
+      "comparableCount": 0,
+      "totalListings": 1,
+      "inStock": 1,
+      "soldOut": 0,
+      "priceBySize": [],
+      "stores": [
+        {
+          "storeId": "liveaquaria",
+          "listings": 1,
+          "inStock": 1,
+          "medianPrice": 0,
+          "productUrl": "https://www.liveaquaria.com/products/glowlight-danio",
+          "productInStock": true,
+          "productPrice": 35.99,
+          "productSizeLabel": "6 Pack"
+        }
+      ],
+      "listedBetween": {
+        "earliest": "2026-01-05",
+        "latest": "2026-01-05"
+      }
+    },
     "sp_danio_frankei": {
       "speciesId": "sp_danio_frankei",
       "comparableCount": 0,
@@ -71847,30 +71730,6 @@
           "productInStock": false,
           "productPrice": 39.99,
           "productSizeLabel": "12 Pack"
-        }
-      ],
-      "listedBetween": {
-        "earliest": "2026-01-05",
-        "latest": "2026-01-05"
-      }
-    },
-    "sp_danio_aequipinnatus": {
-      "speciesId": "sp_danio_aequipinnatus",
-      "comparableCount": 0,
-      "totalListings": 2,
-      "inStock": 2,
-      "soldOut": 0,
-      "priceBySize": [],
-      "stores": [
-        {
-          "storeId": "liveaquaria",
-          "listings": 2,
-          "inStock": 2,
-          "medianPrice": 0,
-          "productUrl": "https://www.liveaquaria.com/products/giant-danio",
-          "productInStock": true,
-          "productPrice": 29.99,
-          "productSizeLabel": "6 Pack"
         }
       ],
       "listedBetween": {
