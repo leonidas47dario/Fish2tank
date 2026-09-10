@@ -202,6 +202,22 @@ async function main() {
   let bytes = 0;
 
   /**
+   * Record which species the app should look for under `public/portraits/`.
+   *
+   * WRITTEN AS THE RUN GOES, not only at the end. This file is the app's only
+   * index of the tail - `portraitAsset` returns undefined for anything absent
+   * from it - so a run that downloads 300 portraits and is then interrupted
+   * used to leave 300 images on disk, in the build, and invisible. That
+   * happened twice here, killed by session pauses, and both times the fix was
+   * to regenerate this by hand afterwards. A crash should not need a human to
+   * notice it.
+   */
+  const writeManifest = () => {
+    const tail = [...present(TAIL_DIR)].sort();
+    writeFileSync(TAIL_MANIFEST, `${JSON.stringify(tail, null, 0)}\n`);
+  };
+
+  /**
    * Fetch one row's image, downscale it in Chromium and write it to its tier.
    *
    * Extracted so the retry-after-a-browser-crash path runs exactly the same
@@ -273,7 +289,7 @@ async function main() {
     // Already on disk in the tier it belongs to. This is what makes a re-run
     // free rather than a two-hour no-op.
     if (have.has(row.species_id)) { skipped += 1; continue; }
-    if (sinceRecycle >= RECYCLE_EVERY) { await renew(); }
+    if (sinceRecycle >= RECYCLE_EVERY) { await renew(); writeManifest(); }
     sinceRecycle += 1;
     process.stdout.write(`  ${row.species_id.padEnd(28)}`);
     try {
@@ -318,10 +334,9 @@ async function main() {
   console.log(`  removed     ${removed}`);
   console.log(`  failed      ${failed}`);
   console.log(`  new bytes   ${(bytes / 1e6).toFixed(2)} MB  (avg ${(bytes / Math.max(1, saved) / 1024).toFixed(0)}KB)`);
-  const tail = [...present(TAIL_DIR)].sort();
-  writeFileSync(TAIL_MANIFEST, `${JSON.stringify(tail, null, 0)}\n`);
+  writeManifest();
   console.log(`  core        ${present(CORE_DIR).size} in ${CORE_DIR}/  (bundled and precached)`);
-  console.log(`  tail        ${tail.length} in ${TAIL_DIR}/  (fetched on first view)`);
+  console.log(`  tail        ${present(TAIL_DIR).size} in ${TAIL_DIR}/  (fetched on first view)`);
   console.log(`  wrote       ${TAIL_MANIFEST}`);
 }
 
