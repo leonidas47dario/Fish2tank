@@ -13,7 +13,7 @@
 import { db as defaultDb, type Fish2TankDB } from '../db';
 import { loadTankResidents } from '../tank-residents';
 import { BUILD_ID, CLOUD_DATABASE_URL, DEPLOYMENT, MEDIA_WORKER_URL } from '@/build-info';
-import { viewableBlobKey } from '../media/renditions';
+import { publishableKeyFor } from './publishable';
 import { buildSnapshot, fingerprintOf, type PublicSnapshot, type SharedSnapshot } from './snapshot';
 import { forgetShare, recordShare, shareFor } from './shares';
 import type { Id } from '@/domain/types';
@@ -120,15 +120,18 @@ export async function publishTank(
         ...identity, photoMediaId: loaded.aquarium.photoMediaId,
       });
     } else {
-      // Spec 029: the preview where one exists, the original otherwise. A
-      // guest is sent the smallest honest copy, not the keeper's 3.6 MB
-      // original; `viewableBlobKey` falls back on its own for any photo
-      // already small enough not to have a rendition.
-      const key = viewableBlobKey(media);
-      const present = await headBlob(key, {
-        workerUrl, accessToken, doFetch,
-      });
-      if (present) {
+      /*
+       * Spec 064: never the original. The preview where one exists - which is
+       * canvas-derived and so carries no EXIF - and a stripped copy derived on
+       * the spot for any photo small enough never to have earned a preview.
+       * That fallback used to upload the keeper's file byte for byte, GPS tag
+       * and all (NFR-04).
+       */
+      const key = await publishableKeyFor(media, database);
+      const present = key
+        ? await headBlob(key, { workerUrl, accessToken, doFetch })
+        : false;
+      if (present && key) {
         tankPhotoBlobKey = key;
       } else {
         warnings.push(
@@ -160,10 +163,12 @@ export async function publishTank(
   await Promise.all(loaded.ownArt.map(async ({ holdingId, mediaId }) => {
     const media = await database.media.get(mediaId);
     if (!media) return;
-    // Spec 029, as above: preview first, original as the honest fallback.
-    const key = viewableBlobKey(media);
-    const present = await headBlob(key, { workerUrl, accessToken, doFetch });
-    if (present) {
+    // Spec 064, as above: a stripped derivative, never the original.
+    const key = await publishableKeyFor(media, database);
+    const present = key
+      ? await headBlob(key, { workerUrl, accessToken, doFetch })
+      : false;
+    if (present && key) {
       residentPhotoKeys.set(holdingId, key);
     } else {
       unsyncedPhotos += 1;

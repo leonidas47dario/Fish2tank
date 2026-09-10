@@ -153,8 +153,16 @@ describe('publishTank', () => {
 
 describe('publishTank and the tank photo', () => {
   beforeEach(async () => {
+    /*
+     * A preview, deliberately - spec 064. A 3.6 MB original is over
+     * PREVIEW_EDGE so it HAS one, and that is the photo this suite is about:
+     * these tests are checking the HEAD-before-publish rule, not the strip.
+     * Without the preview key they would exercise the strip path instead and
+     * fail for a reason that has nothing to do with what they assert.
+     */
     await db.media.add({
       id: 'media_1', kind: 'photo', specimenIds: [], originalBlobKey: 'blob_tank',
+      previewBlobKey: 'blob_tank_preview',
       originalBytes: 3_600_000, mimeType: 'image/jpeg',
       capturedAt: '2026-01-03T00:00:00.000Z', syncState: 'synced',
     } as Media);
@@ -168,7 +176,7 @@ describe('publishTank and the tank photo', () => {
     expect(result.warnings).toEqual([]);
     const sent = worker.calls.find((c) => c.method === 'POST' && c.url.endsWith('/shared'))!;
     const snapshot = JSON.parse(sent.body!) as { allowedBlobKeys: string[] };
-    expect(snapshot.allowedBlobKeys).toEqual(['blob_tank']);
+    expect(snapshot.allowedBlobKeys).toEqual(['blob_tank_preview']);
     expect((await shareFor('aq_1', db))?.photoIncluded).toBe(true);
   });
 
