@@ -45,6 +45,8 @@ function fakeWorker(over: {
   read?: () => Response;
   del?: () => Response;
   head?: () => Response;
+  /** The unfurlable preview, `/p/:token` - spec 054. */
+  preview?: () => Response;
 } = {}) {
   const calls: Array<{ method: string; url: string; body?: string }> = [];
   const published: Record<string, unknown> = {};
@@ -54,6 +56,13 @@ function fakeWorker(over: {
     const method = init?.method ?? 'GET';
     calls.push({ method, url, body: init?.body ? String(init.body) : undefined });
 
+    if (/\/p\/[^/]+$/.test(url)) {
+      // Default: the route is live and returns HTML, which is what a deployed
+      // Worker does. The tests that matter override it.
+      return over.preview?.() ?? new Response('<html></html>', {
+        status: 200, headers: { 'content-type': 'text/html; charset=utf-8' },
+      });
+    }
     if (url.endsWith('/head')) {
       return over.head?.() ?? Response.json({ present: true, bytes: 10 });
     }
@@ -92,7 +101,11 @@ describe('publishTank', () => {
     const result = await publishTank('aq_1', deps(worker.impl));
 
     expect(result.token).toMatch(/^[0-9a-f-]{36}$/);
-    expect(result.url).toContain(`#/share/${result.token}`);
+    // Spec 054: the Worker's preview route, so the link unfurls as the tank.
+    // The fragment form is still what a person lands on, and is still what
+    // this returns when the Worker does not serve the preview - see "the link
+    // a keeper is handed" below.
+    expect(result.url).toContain(`/p/${result.token}`);
     expect(result.warnings).toEqual([]);
 
     const record = await shareFor('aq_1', db);
@@ -235,5 +248,43 @@ describe('revokeTank', () => {
     const worker = fakeWorker();
     await expect(revokeTank('aq_1', deps(worker.impl))).resolves.toBeUndefined();
     expect(worker.calls).toHaveLength(0);
+  });
+});
+
+describe('the link a keeper is handed', () => {
+  /*
+   * Spec 054 routes share links through the Worker, but the site and the
+   * Worker deploy separately - so there is a window where the app is new and
+   * the Worker is old. On 2026-09-10 that window was real in uat: the Worker
+   * deploy failed on an expired Cloudflare token and every new share link
+   * would have been a JSON 404.
+   */
+  it('hands out the preview URL when the Worker actually serves it', async () => {
+    const worker = fakeWorker({
+      preview: () => new Response('<html></html>', {
+        status: 200, headers: { 'content-type': 'text/html; charset=utf-8' },
+      }),
+    });
+    const result = await publishTank('aq_1', deps(worker.impl));
+    expect(result.url).toMatch(/\/p\//);
+  });
+
+  it('FALLS BACK to the app link when the preview route is not deployed yet', async () => {
+    const worker = fakeWorker({
+      preview: () => Response.json({ error: 'no such route' }, { status: 404 }),
+    });
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const result = await publishTank('aq_1', deps(worker.impl));
+    expect(result.url).toMatch(/#\/share\//);
+    expect(result.url).not.toMatch(/\/p\//);
+    warn.mockRestore();
+  });
+
+  it('falls back rather than throwing when the preview route cannot be reached', async () => {
+    const worker = fakeWorker({ preview: () => { throw new Error('offline'); } });
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const result = await publishTank('aq_1', deps(worker.impl));
+    expect(result.url).toMatch(/#\/share\//);
+    warn.mockRestore();
   });
 });

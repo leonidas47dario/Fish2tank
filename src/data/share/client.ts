@@ -268,9 +268,59 @@ export async function publishTank(
     photoCount: residentPhotoKeys.size,
   }, database);
 
-  const url = shareUrlFor(token);
+  /*
+   * NEVER HAND OUT A LINK THAT DOES NOT ANSWER.
+   *
+   * `shareUrlFor` returns the Worker's preview route (spec 054), and the site
+   * and the Worker deploy SEPARATELY - `deploy-worker.yml` is
+   * `workflow_dispatch` only. So there is a real window where the app has been
+   * updated and the Worker has not, and in that window every link a keeper
+   * handed out was a JSON 404. That is not hypothetical: it happened in uat on
+   * 2026-09-10, when the Worker deploy failed on an expired Cloudflare token
+   * and the site shipped anyway.
+   *
+   * The same discipline the readback above already uses, applied one step
+   * further out: check the thing the keeper is about to send, and fall back to
+   * the Pages URL if it is not there. `#/share/:token` has always worked and
+   * always will, so the fallback is a real link rather than a degraded one.
+   *
+   * It self-heals: the next publish after the Worker deploys returns the
+   * preview URL with no code change and no second decision.
+   */
+  const url = await bestShareUrl(token, workerUrl, doFetch, identity);
   console.info('[share] publish -> ok', { ...identity, token, url, warnings: warnings.length });
   return { token, url, warnings };
+}
+
+/**
+ * The preview URL when the Worker actually serves it, the Pages URL otherwise.
+ *
+ * A HEAD would be cheaper, but the route is only interesting if it returns
+ * HTML - an old Worker answers `/p/:token` with a JSON 404, and a 404 is
+ * exactly what has to be caught here.
+ */
+async function bestShareUrl(
+  token: string,
+  workerUrl: string,
+  doFetch: typeof fetch,
+  identity: Record<string, unknown>,
+): Promise<string> {
+  const preview = shareUrlFor(token, workerUrl);
+  const fallback = shareUrlFor(token, '');
+  if (preview === fallback) return fallback;
+
+  try {
+    const res = await doFetch(preview);
+    if (res.ok && (res.headers.get('content-type') ?? '').includes('text/html')) return preview;
+    console.warn('[share] preview route not live, handing out the app link instead', {
+      ...identity, token, status: res.status,
+    });
+  } catch (cause) {
+    console.warn('[share] preview route unreachable, handing out the app link instead', {
+      ...identity, token, cause: String(cause),
+    });
+  }
+  return fallback;
 }
 
 /**
