@@ -24,6 +24,7 @@ const env: Env = {
   ENVIRONMENT: 'uat',
   R2_ACCESS_KEY_ID: 'test-key',
   R2_SECRET_ACCESS_KEY: 'test-secret',
+  APP_BASE_URL: 'https://leonidas47dario.github.io/Fish2tank/uat/',
 };
 
 /** A validation response for a token issued by the database we expect. */
@@ -401,5 +402,76 @@ describe('share: publishing and revoking', () => {
     withManifest(MANIFEST, 'ryan@example.com');
     const res = await worker.fetch(req('DELETE', '/shared/tok-abcdef12'), env);
     expect(res.status).toBe(200);
+  });
+});
+
+describe('share: the unfurlable preview (spec 054)', () => {
+  const get = (path: string) => worker.fetch(req('GET', path, { token: null }), env);
+
+  it('answers a stranger with HTML carrying the tank name and its counts', async () => {
+    withManifest(MANIFEST);
+    const res = await get('/p/tok-abcdef12');
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type')).toMatch(/text\/html/);
+
+    const html = await res.text();
+    expect(html).toContain('<meta property="og:title" content="Deep Sea Collector">');
+    expect(html).toContain('2 fish · 1 species');
+  });
+
+  it('points og:image at the EXISTING media route, widening nothing', async () => {
+    // That route is gated on `permits()` - membership of this manifest's own
+    // allowedBlobKeys - so a key the preview names is one the token already
+    // served. The preview must not become a second, looser way in.
+    withManifest(MANIFEST);
+    const html = await (await get('/p/tok-abcdef12')).text();
+    expect(html).toContain('/shared/tok-abcdef12/media/blob_ok');
+  });
+
+  it('sends a person on to the app, fragment intact, so old links keep working', async () => {
+    withManifest(MANIFEST);
+    const html = await (await get('/p/tok-abcdef12')).text();
+    expect(html).toContain('https://leonidas47dario.github.io/Fish2tank/uat/#/share/tok-abcdef12');
+    // A meta refresh rather than a 302: a redirect would carry the unfurler
+    // past the tags to the app shell, which is the blank card all over again.
+    expect(html).toMatch(/http-equiv="refresh"/);
+  });
+
+  it('ESCAPES the tank name, which is the one place keeper text reaches markup', async () => {
+    withManifest({
+      ...MANIFEST,
+      tank: { ...MANIFEST.tank, name: '"><script>alert(1)</script>' },
+    });
+    const html = await (await get('/p/tok-abcdef12')).text();
+    expect(html).not.toContain('<script>alert(1)</script>');
+    expect(html).toContain('&quot;&gt;&lt;script&gt;');
+  });
+
+  it('previews a photo-less tank with its name and counts, and no image', async () => {
+    // Rather than a placeholder: a generic picture would make every tank look
+    // identical in a message thread, which is the failure this route fixes.
+    withManifest({ ...MANIFEST, tank: { name: 'Shrimp Bowl', kind: 'display' } });
+    const html = await (await get('/p/tok-abcdef12')).text();
+    expect(html).toContain('content="Shrimp Bowl"');
+    expect(html).not.toContain('og:image');
+  });
+
+  it('404s a revoked share, so it stops advertising a tank that is gone', async () => {
+    withManifest(undefined);
+    expect((await get('/p/tok-gone1234')).status).toBe(404);
+  });
+
+  it('is NOT a second way to read the snapshot', async () => {
+    withManifest(MANIFEST);
+    const html = await (await get('/p/tok-abcdef12')).text();
+    expect(html).not.toContain('ryan@example.com');   // owner
+    expect(html).not.toContain('Betta');              // the resident list
+  });
+
+  it('refuses a token that is not shaped like one', async () => {
+    withManifest(MANIFEST);
+    for (const token of ['a', 'x'.repeat(100), 'tok.abc']) {
+      expect((await get(`/p/${token}`)).status, token).toBe(400);
+    }
   });
 });

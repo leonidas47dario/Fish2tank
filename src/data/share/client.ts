@@ -58,8 +58,31 @@ export function shareBlocker(deps: ShareDeps = {}): ShareBlocker | undefined {
   return undefined;
 }
 
-/** The link a keeper hands out. A fragment, so the token never reaches a server log. */
-export function shareUrlFor(token: string): string {
+/**
+ * The link a keeper hands out - the Worker's preview route since spec 054.
+ *
+ * IT USED TO BE THE PAGES URL WITH THE TOKEN IN A FRAGMENT, on the reasoning
+ * that a fragment never reaches a server log. The cost was that a fragment
+ * never reaches ANY server, so an unfurler asking about a shared tank fetched
+ * the app shell and learned nothing - which is why a shared tank rendered in
+ * iMessage as a blank card with a compass glyph and no tank name.
+ *
+ * THE TRADE, STATED HONESTLY, because it is the argument this change turns on.
+ * A machine that unfurls the link now reads the tank's name, counts and photo
+ * automatically, where before it could have and did not. What it is NOT is the
+ * token becoming logged for the first time: the Worker already logs it on every
+ * `/shared/:token` read, so the fragment was protecting the token from GitHub's
+ * access logs, not from ours.
+ *
+ * `#/share/:token` KEEPS WORKING FOREVER. This is additive - the app still
+ * resolves that route, and every link already sent resolves exactly as it did.
+ * `publishTank` reuses a token on republish for the same reason.
+ *
+ * Falls back to the Pages URL when no Worker is configured, which is the
+ * `other` tier and every test that does not stand one up.
+ */
+export function shareUrlFor(token: string, workerUrl: string = MEDIA_WORKER_URL): string {
+  if (workerUrl) return `${workerUrl.replace(/\/+$/, '')}/p/${token}`;
   const base = import.meta.env.BASE_URL || '/';
   const origin = typeof location === 'undefined' ? '' : location.origin;
   return `${origin}${base}#/share/${token}`;
