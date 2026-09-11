@@ -76,7 +76,26 @@ export async function publishableKeyFor(
       mimeType: stripped.mimeType,
       storedAt: new Date().toISOString(),
     });
-    await database.media.update(media.id, { previewBlobKey: stripped.key });
+    /*
+     * AND QUEUED FOR UPLOAD - spec 067, the half spec 064 left out.
+     *
+     * `runUploadQueue` walks rows where `syncState !== 'synced'` and sends
+     * `transferOrder(media)`. Every row that reaches this line is `synced`:
+     * publishing gates on the bytes already being in R2, so a photograph old
+     * enough to be shared is a photograph the queue has finished with. Adding
+     * a blob to it without reopening the row wrote bytes that NOTHING would
+     * ever carry - `headBlob` answered no, the caller dropped the photograph,
+     * and it told the keeper to "sync your photos and update the shared page",
+     * which could not work however many times they did it.
+     *
+     * `retry-required` rather than `local-draft`: the row is not a draft, it
+     * is a synced row that owes the store one more object, which is exactly
+     * what the queue's own failure state means.
+     */
+    await database.media.update(media.id, {
+      previewBlobKey: stripped.key,
+      syncState: 'retry-required',
+    });
   });
 
   return stripped.key;
