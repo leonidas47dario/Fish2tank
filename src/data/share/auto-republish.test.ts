@@ -20,6 +20,10 @@ const share = (over: Partial<ShareRecord> = {}): ShareRecord => ({
   publishedAt: '2026-08-30T12:00:00.000Z',
   fingerprint: 'fp-1',
   photoIncluded: true,
+  // Spec 069: a row published by current code. Without this every fixture
+  // here is a pre-064 share, and "leaves an unchanged tank alone" would be
+  // asserting the opposite of what it says.
+  strippedMetadata: true,
   ...over,
 });
 

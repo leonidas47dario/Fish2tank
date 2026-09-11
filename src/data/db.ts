@@ -189,6 +189,20 @@ export interface ShareRecord {
   photoCount?: number;
   /** Why the last automatic republish failed, if it did. Cleared on success. */
   lastError?: string;
+  /**
+   * Whether the published copy was produced by code that strips metadata -
+   * spec 069, NFR-04.
+   *
+   * OPTIONAL, AND ABSENT IS THE WHOLE SIGNAL. Rows written before spec 064
+   * published `viewableBlobKey`, which is the preview where one exists and the
+   * ORIGINAL otherwise - so a tank containing a photo already under
+   * PREVIEW_EDGE published the keeper's file byte for byte, EXIF and GPS
+   * included. Those rows have no flag, and that is exactly how the republisher
+   * finds them.
+   *
+   * Never read as `false`: a row either carries `true` or carries nothing.
+   */
+  strippedMetadata?: boolean;
 }
 
 export class Fish2TankDB extends Dexie {

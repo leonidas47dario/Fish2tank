@@ -188,7 +188,7 @@ describe('fingerprintOf', () => {
 });
 
 describe('needsRepublish', () => {
-  const published = { fingerprint: 'fp-1', photoIncluded: true };
+  const published = { fingerprint: 'fp-1', photoIncluded: true, strippedMetadata: true };
 
   it('says no when nothing a guest sees has moved', () => {
     expect(needsRepublish(published, { fingerprint: 'fp-1', hasPhoto: true })).toBe(false);
@@ -211,9 +211,31 @@ describe('needsRepublish', () => {
     )).toBe(true);
   });
 
+  /**
+   * Spec 069, BUG-20. A share published before spec 064 names the keeper's
+   * ORIGINAL photograph in its manifest - EXIF and GPS, which for a tank in
+   * somebody's home is their home address. Nothing about the tank will ever
+   * change to reveal that, so the fingerprint cannot find these rows and only
+   * the absence of the flag can.
+   */
+  it('says yes for a share published before metadata was stripped, unchanged tank and all', () => {
+    expect(needsRepublish(
+      { fingerprint: 'fp-1', photoIncluded: true },          // no flag: pre-064
+      { fingerprint: 'fp-1', hasPhoto: true },
+    )).toBe(true);
+  });
+
+  /** And exactly once: the republish sets the flag, so the next pass is quiet. */
+  it('says no once that share has been republished', () => {
+    expect(needsRepublish(
+      { fingerprint: 'fp-1', photoIncluded: true, strippedMetadata: true },
+      { fingerprint: 'fp-1', hasPhoto: true },
+    )).toBe(false);
+  });
+
   it('says no for a tank that simply has no photo', () => {
     expect(needsRepublish(
-      { fingerprint: 'fp-1', photoIncluded: false },
+      { fingerprint: 'fp-1', photoIncluded: false, strippedMetadata: true },
       { fingerprint: 'fp-1', hasPhoto: false },
     )).toBe(false);
   });
@@ -292,7 +314,7 @@ describe("the keeper's own photos (spec 026)", () => {
 
   it('does not republish when every photographed fish is already published', () => {
     expect(needsRepublish(
-      { fingerprint: 'same', photoIncluded: true, photoCount: 2 },
+      { fingerprint: 'same', photoIncluded: true, photoCount: 2, strippedMetadata: true },
       { fingerprint: 'same', hasPhoto: true, photoCount: 2 },
     )).toBe(false);
   });
