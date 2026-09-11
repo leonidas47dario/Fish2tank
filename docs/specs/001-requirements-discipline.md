@@ -234,3 +234,38 @@ force the docs to be updated — but it makes `npm run refresh` a two-step act.
 **A third place for status to live.** README, BACKLOG and PRD could disagree.
 Mitigated by acceptance criterion 6: the README stops carrying the unbuilt list
 and points at BACKLOG instead.
+
+---
+
+## Revision, 2026-09-11 — the specs that never landed
+
+The gate above says write the spec before the code. It says nothing about
+getting the spec *merged*, and on 2026-09-11 three of them were found sitting on
+unmerged branches, invisible to anyone reading `docs/specs/`:
+
+| | branch | state when found |
+|---|---|---|
+| **059** — An origin we own | `claude/private-github-hosting-c2ws89` | direction approved, not built |
+| **060** — A missing branch and a broken connection | `claude/deploy-ls-remote-uat-gate` | **its fix was already live on production** |
+| **061** — A tank worth showing | `claude/a-tank-worth-showing` | specified, not built |
+
+Spec 060 is the one that matters. Its change — the `--exit-code` gate in
+`deploy.yml` that stops a failed `ls-remote` from deleting the `/uat/` site —
+has been running in production since it shipped. The reasoning behind it was on
+a branch nobody would think to look at. So for weeks the repository contained a
+load-bearing fix whose written argument existed and could not be found, which is
+precisely the state this spec was written to prevent. The gate held; the merge
+did not.
+
+Two of the three also collided: 059 and 061 were written in parallel on separate
+branches and both claimed **ENH-22** as the next free id, and by the time they
+landed ENH-22 had been taken by a third thing entirely. They are ENH-23 and
+ENH-24 now. A branch cannot see what another branch has claimed, so the id in a
+spec is a *proposal* until it lands.
+
+**What this does not propose is more process.** A CI check that fails a PR whose
+`docs/specs/` file is not on the default branch would catch this, and it would
+also fail every PR that legitimately carries its own new spec — the normal case.
+The cheaper habit: a spec written on a branch is not filed until that branch is
+merged, and a numbering gap in `docs/specs/` (059–061 here) is a symptom worth
+reading rather than a tidiness problem worth renumbering around.
