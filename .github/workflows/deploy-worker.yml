@@ -189,9 +189,15 @@ jobs:
           fi
           echo "OK - the Worker is live and refusing anonymous callers."
 
-      # Informational, not a gate. Says WHICH code is live, which the 401 above
-      # cannot: the share routes arrived in spec 023, so `no such share` proves
-      # the tier is running that code rather than something older.
+      # Says WHICH code is live, which the 401 above cannot: the share routes
+      # arrived in spec 023, so `no such share` proves the tier is running that
+      # code rather than something older.
+      #
+      # AND IT IS A GATE NOW, for one answer. `no such share` used to be
+      # reported here as success while it was also what a Worker that could not
+      # reach R2 at all said about every token in the tier - so this step could
+      # certify a wholly unserving tier as live. Spec 068 made the Worker
+      # separate the two; this reads the difference and fails on it.
       - name: Report which code is live
         run: |
           case "${{ inputs.environment }}" in
@@ -201,6 +207,11 @@ jobs:
           body=$(curl -s "https://$host.leonidas47dario.workers.dev/shared/probeprobe" || true)
           echo "GET /shared/probeprobe -> $body"
           case "$body" in
+            *"manifest read refused"*)
+              echo "::error::This tier CANNOT READ ITS OWN STORE - the R2 credentials are wrong."
+              echo "Every share here will answer as if it were revoked. Fix R2_ACCESS_KEY_ID /"
+              echo "R2_SECRET_ACCESS_KEY for this Worker (wrangler secret put --env ...)."
+              exit 1 ;;
             *"no such share"*) echo "Share routes (spec 023) are live." ;;
             *"no such route"*) echo "::warning::No share routes here - this tier predates spec 023." ;;
             *) echo "::warning::Unrecognised answer; check the Worker by hand." ;;

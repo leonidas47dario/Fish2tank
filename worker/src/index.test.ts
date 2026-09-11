@@ -246,6 +246,60 @@ function withManifest(manifest: unknown | undefined, sub = 'ryan@example.com') {
   });
 }
 
+/** The store answering 403, as a broken or revoked R2 credential does. */
+function withRefusedStore(code = 'InvalidAccessKeyId', sub = 'ryan@example.com') {
+  fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const url = String(input instanceof Request ? input.url : input);
+    if (url.includes('/token/validate')) return Response.json(validFor(sub));
+    const method = init?.method ?? (input instanceof Request ? input.method : 'GET');
+    if (method === 'GET') {
+      return new Response(
+        `<?xml version="1.0"?><Error><Code>${code}</Code></Error>`,
+        { status: 403 },
+      );
+    }
+    return new Response(null, { status: 200 });
+  });
+}
+
+/**
+ * A tier that cannot read its own store must not answer like a tier with
+ * nothing in it.
+ *
+ * This is the failure mode this project keeps paying for - a fault wearing the
+ * costume of an ordinary negative answer. With 403 collapsed into 404, a
+ * broken R2 credential made every share in the tier report "no such share":
+ * a revoked link, a live link and a Worker that could not reach R2 at all were
+ * one indistinguishable 404. The deploy probe agreed, because it reads
+ * `/shared/probeprobe`, sees `no such share` and calls the share routes live.
+ */
+describe('share: a store it cannot read is not an empty store', () => {
+  it('does not report a refused read as a revoked share', async () => {
+    withRefusedStore();
+    const res = await worker.fetch(new Request('https://w.example/shared/tok-anything1'), env);
+    expect(res.status).not.toBe(404);
+    expect(await res.text()).not.toContain('no such share');
+  });
+
+  it('says so on the preview route too, rather than previewing nothing', async () => {
+    withRefusedStore('SignatureDoesNotMatch');
+    const res = await worker.fetch(new Request('https://w.example/p/tok-anything1'), env);
+    expect(res.status).not.toBe(404);
+  });
+
+  /*
+   * The one 403 that really does mean absent, kept by its error CODE rather
+   * than its status - S3 answers this way for a missing object when the
+   * credential cannot list the bucket, and that IS a revoked share.
+   */
+  it('still treats a NoSuchKey 403 as a revoked share', async () => {
+    withRefusedStore('NoSuchKey');
+    const res = await worker.fetch(new Request('https://w.example/shared/tok-anything1'), env);
+    expect(res.status).toBe(404);
+    expect(await res.text()).toContain('no such share');
+  });
+});
+
 describe('share: the authenticated routes stay authenticated', () => {
   it('still refuses an anonymous caller everywhere it did before', async () => {
     for (const route of ['/presign/put', '/presign/get', '/head']) {
