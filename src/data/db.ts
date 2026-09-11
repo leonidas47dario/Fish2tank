@@ -154,6 +154,20 @@ export interface ShareRecord {
   aquariumId: Id;
   /** The unguessable path segment. Also the R2 object name. */
   token: string;
+  /**
+   * The link handed out, as VERIFIED at publish time - spec 054, and the
+   * reason it is stored rather than re-derived.
+   *
+   * `shareUrlFor` cannot know whether the Worker actually serves the preview
+   * route: the site and the Worker deploy separately, so the app can be new
+   * while the Worker is old. `publishTank` checks, and what it checked is what
+   * belongs on the record. Re-deriving it in the UI was how three call sites in
+   * ShareSheet went on handing out a route that answered 404.
+   *
+   * Optional because rows written before this exist. They fall back to the
+   * app link, which has always worked.
+   */
+  url?: string;
   publishedAt: string;
   /**
    * What the published copy contains, hashed (FR-S03). Compared against the

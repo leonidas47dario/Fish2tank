@@ -11,7 +11,7 @@
 import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Fish2TankDB } from '../db';
-import { publishTank, revokeTank } from './client';
+import { linkFor, publishTank, revokeTank } from './client';
 import { recordShare, shareFor } from './shares';
 import type { Aquarium, Holding, Media, Residency } from '@/domain/types';
 
@@ -259,6 +259,30 @@ describe('the link a keeper is handed', () => {
    * deploy failed on an expired Cloudflare token and every new share link
    * would have been a JSON 404.
    */
+  it('stores the verified link on the record, so the UI cannot re-derive a dead one', async () => {
+    /*
+     * The hole in the first version of this fix. publishTank checked the link
+     * and returned a good one - and ShareSheet went on calling shareUrlFor
+     * directly in three places, re-deriving the /p/ URL from the stored token
+     * and handing out a 404 anyway. The check is worth nothing unless what it
+     * checked is what gets stored.
+     */
+    const worker = fakeWorker({
+      preview: () => Response.json({ error: 'no such route' }, { status: 404 }),
+    });
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const result = await publishTank('aq_1', deps(worker.impl));
+    const record = await shareFor('aq_1', db);
+    expect(record?.url).toBe(result.url);
+    expect(linkFor(record!)).toMatch(/#\/share\//);
+    warn.mockRestore();
+  });
+
+  it('falls back to the app link for a record written before the URL was stored', async () => {
+    // Rows predating spec 054 carry a token and no url.
+    expect(linkFor({ token: 'tok-1' })).toMatch(/#\/share\/tok-1$/);
+  });
+
   it('hands out the preview URL when the Worker actually serves it', async () => {
     const worker = fakeWorker({
       preview: () => new Response('<html></html>', {
