@@ -6,6 +6,7 @@
 import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { db } from '../db';
+import { needsUpload } from '../sync/media-queue';
 import { publishableKeyFor } from './publishable';
 import type { Media } from '@/domain/types';
 
@@ -158,5 +159,27 @@ describe('publishableKeyFor', () => {
     // Nothing half-written: no stray blob, no preview key pointing at nothing.
     expect(await db.blobs.count()).toBe(1);
     warn.mockRestore();
+  });
+
+  it('QUEUES the stripped copy for upload, or the share can never carry it', async () => {
+    /*
+     * Spec 067, the defect spec 064 shipped with. `runUploadQueue` walks rows
+     * where `syncState !== 'synced'` and sends `transferOrder(media)`. A row
+     * that is already `synced` - which every publishable photo is, since the
+     * share gates on the bytes being in R2 - gains a brand new preview blob
+     * here and is never looked at again. `headBlob` then answers no, forever,
+     * and the photograph is dropped from every share the keeper ever makes.
+     */
+    const m = media();                       // syncState: 'synced'
+    await db.media.add(m);
+    await db.blobs.add({
+      key: 'blob_orig', data: withExif(), bytes: 4096,
+      mimeType: 'image/jpeg', storedAt: '2026-01-03T00:00:00.000Z',
+    } as never);
+
+    const key = await publishableKeyFor(m, db, fakeCanvas);
+    const after = (await db.media.get('media_x'))!;
+    expect(after.previewBlobKey).toBe(key);
+    expect(needsUpload(after)).toBe(true);
   });
 });

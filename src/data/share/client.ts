@@ -14,6 +14,7 @@ import { db as defaultDb, type Fish2TankDB } from '../db';
 import { loadTankResidents } from '../tank-residents';
 import { BUILD_ID, CLOUD_DATABASE_URL, DEPLOYMENT, MEDIA_WORKER_URL } from '@/build-info';
 import { publishableKeyFor } from './publishable';
+import type { DeriveDeps } from '../media/renditions';
 import { buildSnapshot, fingerprintOf, type PublicSnapshot, type SharedSnapshot } from './snapshot';
 import { forgetShare, recordShare, shareFor } from './shares';
 import type { Id } from '@/domain/types';
@@ -39,6 +40,12 @@ export interface ShareDeps {
   /** The signed-in subject, used only for logs - the Worker decides the real one. */
   account?: string;
   fetchImpl?: typeof fetch;
+  /**
+   * The canvas `publishableKeyFor` strips with, injected - spec 067. Node has
+   * no `createImageBitmap`, so without this seam the strip path cannot be
+   * driven in a test and the recovery it now performs would go unasserted.
+   */
+  derive?: DeriveDeps;
 }
 
 /**
@@ -150,7 +157,7 @@ export async function publishTank(
        * That fallback used to upload the keeper's file byte for byte, GPS tag
        * and all (NFR-04).
        */
-      const key = await publishableKeyFor(media, database);
+      const key = await publishableKeyFor(media, database, deps.derive);
       const present = key
         ? await headBlob(key, { workerUrl, accessToken, doFetch })
         : false;
@@ -161,8 +168,12 @@ export async function publishTank(
           'The tank photo has not finished syncing, so guests will see the placeholder. '
           + 'Sync your photos, then update the shared page.',
         );
+        // The key CHECKED, not the original. Spec 067: this line named
+        // `originalBlobKey` while `headBlob` had asked about the preview, so
+        // the one diagnostic in the system pointed at an object that was
+        // present and said it was missing.
         console.warn('[share] tank photo -> not in the bucket yet', {
-          ...identity, blobKey: media.originalBlobKey,
+          ...identity, blobKey: key, originalBlobKey: media.originalBlobKey,
         });
       }
     }
@@ -187,7 +198,7 @@ export async function publishTank(
     const media = await database.media.get(mediaId);
     if (!media) return;
     // Spec 064, as above: a stripped derivative, never the original.
-    const key = await publishableKeyFor(media, database);
+    const key = await publishableKeyFor(media, database, deps.derive);
     const present = key
       ? await headBlob(key, { workerUrl, accessToken, doFetch })
       : false;

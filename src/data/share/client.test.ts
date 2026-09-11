@@ -11,6 +11,7 @@
 import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Fish2TankDB } from '../db';
+import { needsUpload } from '../sync/media-queue';
 import { linkFor, publishTank, revokeTank } from './client';
 import { recordShare, shareFor } from './shares';
 import type { Aquarium, Holding, Media, Residency } from '@/domain/types';
@@ -208,6 +209,50 @@ describe('publishTank and the tank photo', () => {
     expect(snapshot.allowedBlobKeys).toEqual([]);
     expect(snapshot.tank.photoBlobKey).toBeUndefined();
     expect((await shareFor('aq_1', db))?.photoIncluded).toBe(false);
+  });
+
+  /**
+   * Spec 067. The photo that HAS no preview - the one spec 064 strips on the
+   * spot - and the recovery that was not possible before it.
+   *
+   * The first publish still goes out without the photograph: the stripped copy
+   * exists only on this device, and spec 026's rule is that a key is published
+   * only once R2 confirms it. What changed is that the row is now REOPENED, so
+   * the upload queue carries the new bytes and the keeper's next publish has a
+   * photo. Before this, the row stayed `synced`, the queue never looked at it
+   * again, and the warning's advice - sync, then update the shared page - was
+   * something the app could not act on however many times it was followed.
+   */
+  it('reopens the row for upload when it had to strip a copy, so a re-share carries it', async () => {
+    await db.media.update('media_1', { previewBlobKey: undefined });
+    await db.blobs.add({
+      key: 'blob_tank', data: new Uint8Array([0xFF, 0xD8, 0x42, 0x42]).buffer,
+      bytes: 4, mimeType: 'image/jpeg', storedAt: '2026-01-03T00:00:00.000Z',
+    } as never);
+
+    const stripped = { key: 'blob_stripped', bytes: 3 };
+    const canvas = {
+      decode: async () => ({ width: 800, height: 600 }),
+      encode: async () => new Uint8Array([0xFF, 0xD8, 0x00]).buffer,
+      newKey: () => stripped.key,
+    };
+
+    const worker = fakeWorker({ head: () => Response.json({ present: false }) });
+    const first = await publishTank('aq_1', { ...deps(worker.impl), derive: canvas });
+    expect(first.warnings.join(' ')).toMatch(/not finished syncing/i);
+
+    const row = (await db.media.get('media_1'))!;
+    expect(row.previewBlobKey).toBe(stripped.key);
+    // The assertion that matters: the queue will pick this row up again.
+    expect(needsUpload(row)).toBe(true);
+
+    // And once it has, the photograph is in the share.
+    const settled = fakeWorker();
+    const second = await publishTank('aq_1', { ...deps(settled.impl), derive: canvas });
+    expect(second.warnings).toEqual([]);
+    const sent = settled.calls.find((c) => c.method === 'POST' && c.url.endsWith('/shared'))!;
+    const snapshot = JSON.parse(sent.body!) as { tank: { photoBlobKey?: string } };
+    expect(snapshot.tank.photoBlobKey).toBe(stripped.key);
   });
 });
 
