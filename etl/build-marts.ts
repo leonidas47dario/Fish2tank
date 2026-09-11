@@ -288,7 +288,14 @@ async function main() {
     FROM read_parquet('${WAREHOUSE}/dim/dim_species.parquet') s
     LEFT JOIN best_image i ON i.species_id = s.species_id AND i.rn = 1
     WHERE s.is_current
-    ORDER BY s.common_name
+    -- DETERMINISTIC, and it has to be: 89 common names are claimed by more
+    -- than one species (FR-D08), so ordering on the name alone leaves those
+    -- ties to whatever DuckDB happens to do. Adding 1,015 image rows was
+    -- enough to reshuffle them, which moved "Jack Dempsey" onto the other of
+    -- its two rows and failed a market calibration test for a reason that had
+    -- nothing to do with images. A generated artifact must not churn on input
+    -- it does not depend on.
+    ORDER BY s.common_name, s.species_id
   `);
 
   const naming = { rederived: 0, overridden: 0, fellBack: 0 };

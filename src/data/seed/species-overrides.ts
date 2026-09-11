@@ -241,6 +241,16 @@ export interface SpeciesSynonym {
 
 export const SPECIES_SYNONYMS: SpeciesSynonym[] = [
   {
+    speciesId: 'sp_rocio_octofasciatum',
+    canonicalId: 'sp_jack_dempsey',
+    reason: 'Old masculine form. Rocio is feminine, so the accepted combination '
+      + 'is Rocio octofasciata; the species moved there from Heros octofasciatus. '
+      + 'Same shape as the aequifasciata entry below. THIS ONE SPLIT REAL '
+      + 'EVIDENCE: the two rows carried 13 listings across 3 stores and 10 across '
+      + '5, so the Jack Dempsey read as scarcer than it is on both.',
+    source: `${WIKI}Rocio_octofasciata`,
+  },
+  {
     speciesId: 'sp_symphysodon_aequifaciatus',
     canonicalId: 'sp_symphysodon_aequifasciatus',
     reason: 'Vendor typo: "aequifaciatus" is missing the s in -fasciatus.',

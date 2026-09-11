@@ -8,28 +8,22 @@
  * Each run stamps its own snapshot_date, so re-running accumulates the price
  * history that no single pull can contain.
  */
-import { DuckDBInstance, type DuckDBConnection } from '@duckdb/node-api';
+import { DuckDBInstance } from '@duckdb/node-api';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { SPECIES_CATALOG } from '@/data/seed/species-catalog';
 import { STORES, type LocalStore, type MarketListing, type StoreInventory } from './types';
 import { discoverSpecies } from './normalize/derive-species';
 import { waterTypeBySpecies, type WaterType } from './normalize/water-type';
 import { surrogateKey } from './surrogate-key';
+import { buildDimImage, writeTable } from './warehouse-dims';
 
 const WAREHOUSE = 'warehouse';
 const LISTINGS = 'data/market/listings.jsonl';
-const IMAGES = 'data/market/images.jsonl';
 const LOCAL_STORES = 'data/market/local-stores.jsonl';
 const STORE_INVENTORY = 'data/market/store-inventory.jsonl';
 
 export const dateKey = (iso: string): number => Number(iso.slice(0, 10).replace(/-/g, ''));
 
-async function writeTable(c: DuckDBConnection, name: string, folder: 'dim' | 'fact') {
-  const path = `${WAREHOUSE}/${folder}/${name}.parquet`;
-  // ZSTD: better ratio than snappy, and universally readable.
-  await c.run(`COPY ${name} TO '${path}' (FORMAT PARQUET, COMPRESSION ZSTD)`);
-  return path;
-}
 
 const SIZE_IN_SQL = `CASE WHEN l.size IS NULL THEN NULL
        WHEN l.size.unit = 'cm' THEN l.size.value / 2.54
@@ -224,22 +218,7 @@ async function main() {
            CAST(day(date) AS INTEGER) AS day, strftime(date, '%Y-%m') AS year_month
     FROM d WHERE date IS NOT NULL ORDER BY date`);
 
-  // Created even when empty: the schema must be complete so queries against
-  // dim_image do not fail before the image ETL has ever run.
-  await c.run(`CREATE TABLE dim_image (
-    image_key BIGINT, species_id VARCHAR, role VARCHAR, source VARCHAR,
-    provenance VARCHAR, url VARCHAR,
-    license VARCHAR, artist VARCHAR, attribution_url VARCHAR,
-    width INTEGER, height INTEGER, retrieved_at TIMESTAMP)`);
-
-  if (existsSync(IMAGES) && readFileSync(IMAGES, 'utf8').trim()) {
-    await c.run(`INSERT INTO dim_image SELECT
-      CAST(image_key AS BIGINT), species_id, role, source,
-      coalesce(provenance, 'wikimedia'), url, license, artist,
-      attribution_url, CAST(width AS INTEGER), CAST(height AS INTEGER),
-      CAST(retrieved_at AS TIMESTAMP)
-      FROM read_json_auto('${IMAGES}', format='newline_delimited')`);
-  }
+  await buildDimImage(c);
 
   // --- Facts -------------------------------------------------------------
   await c.run(`CREATE TABLE fact_listing AS

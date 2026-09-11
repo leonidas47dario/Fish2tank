@@ -24,6 +24,7 @@ const env: Env = {
   ENVIRONMENT: 'uat',
   R2_ACCESS_KEY_ID: 'test-key',
   R2_SECRET_ACCESS_KEY: 'test-secret',
+  APP_BASE_URL: 'https://leonidas47dario.github.io/Fish2tank/uat/',
 };
 
 /** A validation response for a token issued by the database we expect. */
@@ -245,6 +246,60 @@ function withManifest(manifest: unknown | undefined, sub = 'ryan@example.com') {
   });
 }
 
+/** The store answering 403, as a broken or revoked R2 credential does. */
+function withRefusedStore(code = 'InvalidAccessKeyId', sub = 'ryan@example.com') {
+  fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const url = String(input instanceof Request ? input.url : input);
+    if (url.includes('/token/validate')) return Response.json(validFor(sub));
+    const method = init?.method ?? (input instanceof Request ? input.method : 'GET');
+    if (method === 'GET') {
+      return new Response(
+        `<?xml version="1.0"?><Error><Code>${code}</Code></Error>`,
+        { status: 403 },
+      );
+    }
+    return new Response(null, { status: 200 });
+  });
+}
+
+/**
+ * A tier that cannot read its own store must not answer like a tier with
+ * nothing in it.
+ *
+ * This is the failure mode this project keeps paying for - a fault wearing the
+ * costume of an ordinary negative answer. With 403 collapsed into 404, a
+ * broken R2 credential made every share in the tier report "no such share":
+ * a revoked link, a live link and a Worker that could not reach R2 at all were
+ * one indistinguishable 404. The deploy probe agreed, because it reads
+ * `/shared/probeprobe`, sees `no such share` and calls the share routes live.
+ */
+describe('share: a store it cannot read is not an empty store', () => {
+  it('does not report a refused read as a revoked share', async () => {
+    withRefusedStore();
+    const res = await worker.fetch(new Request('https://w.example/shared/tok-anything1'), env);
+    expect(res.status).not.toBe(404);
+    expect(await res.text()).not.toContain('no such share');
+  });
+
+  it('says so on the preview route too, rather than previewing nothing', async () => {
+    withRefusedStore('SignatureDoesNotMatch');
+    const res = await worker.fetch(new Request('https://w.example/p/tok-anything1'), env);
+    expect(res.status).not.toBe(404);
+  });
+
+  /*
+   * The one 403 that really does mean absent, kept by its error CODE rather
+   * than its status - S3 answers this way for a missing object when the
+   * credential cannot list the bucket, and that IS a revoked share.
+   */
+  it('still treats a NoSuchKey 403 as a revoked share', async () => {
+    withRefusedStore('NoSuchKey');
+    const res = await worker.fetch(new Request('https://w.example/shared/tok-anything1'), env);
+    expect(res.status).toBe(404);
+    expect(await res.text()).toContain('no such share');
+  });
+});
+
 describe('share: the authenticated routes stay authenticated', () => {
   it('still refuses an anonymous caller everywhere it did before', async () => {
     for (const route of ['/presign/put', '/presign/get', '/head']) {
@@ -401,5 +456,76 @@ describe('share: publishing and revoking', () => {
     withManifest(MANIFEST, 'ryan@example.com');
     const res = await worker.fetch(req('DELETE', '/shared/tok-abcdef12'), env);
     expect(res.status).toBe(200);
+  });
+});
+
+describe('share: the unfurlable preview (spec 054)', () => {
+  const get = (path: string) => worker.fetch(req('GET', path, { token: null }), env);
+
+  it('answers a stranger with HTML carrying the tank name and its counts', async () => {
+    withManifest(MANIFEST);
+    const res = await get('/p/tok-abcdef12');
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type')).toMatch(/text\/html/);
+
+    const html = await res.text();
+    expect(html).toContain('<meta property="og:title" content="Deep Sea Collector">');
+    expect(html).toContain('2 fish · 1 species');
+  });
+
+  it('points og:image at the EXISTING media route, widening nothing', async () => {
+    // That route is gated on `permits()` - membership of this manifest's own
+    // allowedBlobKeys - so a key the preview names is one the token already
+    // served. The preview must not become a second, looser way in.
+    withManifest(MANIFEST);
+    const html = await (await get('/p/tok-abcdef12')).text();
+    expect(html).toContain('/shared/tok-abcdef12/media/blob_ok');
+  });
+
+  it('sends a person on to the app, fragment intact, so old links keep working', async () => {
+    withManifest(MANIFEST);
+    const html = await (await get('/p/tok-abcdef12')).text();
+    expect(html).toContain('https://leonidas47dario.github.io/Fish2tank/uat/#/share/tok-abcdef12');
+    // A meta refresh rather than a 302: a redirect would carry the unfurler
+    // past the tags to the app shell, which is the blank card all over again.
+    expect(html).toMatch(/http-equiv="refresh"/);
+  });
+
+  it('ESCAPES the tank name, which is the one place keeper text reaches markup', async () => {
+    withManifest({
+      ...MANIFEST,
+      tank: { ...MANIFEST.tank, name: '"><script>alert(1)</script>' },
+    });
+    const html = await (await get('/p/tok-abcdef12')).text();
+    expect(html).not.toContain('<script>alert(1)</script>');
+    expect(html).toContain('&quot;&gt;&lt;script&gt;');
+  });
+
+  it('previews a photo-less tank with its name and counts, and no image', async () => {
+    // Rather than a placeholder: a generic picture would make every tank look
+    // identical in a message thread, which is the failure this route fixes.
+    withManifest({ ...MANIFEST, tank: { name: 'Shrimp Bowl', kind: 'display' } });
+    const html = await (await get('/p/tok-abcdef12')).text();
+    expect(html).toContain('content="Shrimp Bowl"');
+    expect(html).not.toContain('og:image');
+  });
+
+  it('404s a revoked share, so it stops advertising a tank that is gone', async () => {
+    withManifest(undefined);
+    expect((await get('/p/tok-gone1234')).status).toBe(404);
+  });
+
+  it('is NOT a second way to read the snapshot', async () => {
+    withManifest(MANIFEST);
+    const html = await (await get('/p/tok-abcdef12')).text();
+    expect(html).not.toContain('ryan@example.com');   // owner
+    expect(html).not.toContain('Betta');              // the resident list
+  });
+
+  it('refuses a token that is not shaped like one', async () => {
+    withManifest(MANIFEST);
+    for (const token of ['a', 'x'.repeat(100), 'tok.abc']) {
+      expect((await get(`/p/${token}`)).status, token).toBe(400);
+    }
   });
 });

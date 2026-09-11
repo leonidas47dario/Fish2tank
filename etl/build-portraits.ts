@@ -159,17 +159,123 @@ async function main() {
    */
   const toFetch = rows.filter((r) =>
     r.attribution_url && isBundleable(r) && wanted.has(r.species_id) && !have.has(r.species_id));
-  const browser = toFetch.length > 0
-    ? await chromium.launch(
-      process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {},
-    )
-    : undefined;
-  const page = await browser?.newPage();
+  /*
+   * ONE BROWSER DOES NOT SURVIVE A THOUSAND IMAGES.
+   *
+   * Measured on 2026-09-09: a run of 1,016 downloads died at image 461 and
+   * then reported `Target page, context or browser has been closed` for the
+   * remaining 260 - a 36% failure rate that was really ONE failure repeated,
+   * because a dead browser is not a per-image problem and the catch block
+   * treated it as one. Disk was fine (30 GB free); Chromium had simply grown
+   * through hundreds of full-resolution decodes.
+   *
+   * Two changes, and the second is the one that matters. The page is RECYCLED
+   * every RECYCLE_EVERY images so the memory never accumulates that far, and a
+   * closed-browser error is caught as FATAL rather than counted alongside a
+   * .tif that would not decode - it relaunches once and retries, and gives up
+   * loudly if that fails too. A run that reports 255 failures it could have
+   * avoided is worse than one that stops and says why.
+   */
+  const RECYCLE_EVERY = 150;
+  const launch = () => chromium.launch(
+    process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {},
+  );
+  const isDead = (e: unknown) =>
+    /Target page, context or browser has been closed|Target closed|browser has disconnected/i
+      .test(e instanceof Error ? e.message : String(e));
+
+  let browser = toFetch.length > 0 ? await launch() : undefined;
+  let page = await browser?.newPage();
+  let sinceRecycle = 0;
+
+  /** A fresh page, and a fresh browser when the old one is gone. */
+  const renew = async () => {
+    try { await browser?.close(); } catch { /* already gone */ }
+    browser = await launch();
+    page = await browser.newPage();
+    sinceRecycle = 0;
+  };
 
   let saved = 0;
   let failed = 0;
   let skipped = 0;
   let bytes = 0;
+
+  /**
+   * Record which species the app should look for under `public/portraits/`.
+   *
+   * WRITTEN AS THE RUN GOES, not only at the end. This file is the app's only
+   * index of the tail - `portraitAsset` returns undefined for anything absent
+   * from it - so a run that downloads 300 portraits and is then interrupted
+   * used to leave 300 images on disk, in the build, and invisible. That
+   * happened twice here, killed by session pauses, and both times the fix was
+   * to regenerate this by hand afterwards. A crash should not need a human to
+   * notice it.
+   */
+  const writeManifest = () => {
+    const tail = [...present(TAIL_DIR)].sort();
+    writeFileSync(TAIL_MANIFEST, `${JSON.stringify(tail, null, 0)}\n`);
+  };
+
+  /**
+   * Fetch one row's image, downscale it in Chromium and write it to its tier.
+   *
+   * Extracted so the retry-after-a-browser-crash path runs exactly the same
+   * code as the first attempt - a retry that drifts from what it is retrying
+   * is a second bug waiting to happen.
+   */
+  const downloadInto = async (row: ImageRow) => {
+    const res = await fetchImage(row.url);
+    const b64 = Buffer.from(await res.arrayBuffer()).toString('base64');
+    const mime = res.headers.get('content-type') ?? 'image/jpeg';
+
+    // Chromium does the decode/resize/encode. It handles every format
+    // Commons serves, including the ones a minimal image library would not.
+    const out = await page!.evaluate(
+      async ({ b64, mime, maxWidth, quality }) => {
+        /*
+         * DECODE STRAIGHT TO SIZE, rather than decoding at full resolution and
+         * then shrinking.
+         *
+         * `new Image()` materialises the whole bitmap first. The catalog holds
+         * a 7319x10319 herbarium scan (75.5 MP, ~300 MB as RGBA) and an 81.4 MP
+         * one, and they killed the renderer outright - twice, at exactly the
+         * same species both times, which is what proved it was one poison
+         * image rather than memory creeping up over a long run.
+         *
+         * `createImageBitmap` with `resizeWidth` lets the decoder downsample as
+         * it reads, so the full-size bitmap never exists. Measured p50 is 2 MP
+         * and p99 is 33 MP, so this matters for about a dozen rows - but a
+         * dozen rows were enough to end a 1,016-image run at number 461.
+         */
+        const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+        const blob = new Blob([bytes], { type: mime });
+        const probe = await createImageBitmap(blob);
+        const scale = Math.min(1, maxWidth / probe.width);
+        const w = Math.round(probe.width * scale);
+        const h = Math.round(probe.height * scale);
+        probe.close();
+
+        const bitmap = await createImageBitmap(blob, {
+          resizeWidth: w, resizeHeight: h, resizeQuality: 'high',
+        });
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d')!;
+        ctx.drawImage(bitmap, 0, 0);
+        bitmap.close();
+        return { data: canvas.toDataURL('image/jpeg', quality).split(',')[1]!, w, h };
+      },
+      { b64, mime, maxWidth: MAX_WIDTH, quality: QUALITY },
+    );
+
+    const buf = Buffer.from(out.data, 'base64');
+    const dir = wanted.get(row.species_id) === 'core' ? CORE_DIR : TAIL_DIR;
+    writeFileSync(join(dir, `${row.species_id}.jpg`), buf);
+    bytes += buf.length;
+    saved += 1;
+    console.log(`ok  ${out.w}x${out.h}  ${(buf.length / 1024).toFixed(0)}KB`);
+  };
 
   for (const row of rows) {
     // Never bundle a picture we cannot account for, and never one the
@@ -183,41 +289,34 @@ async function main() {
     // Already on disk in the tier it belongs to. This is what makes a re-run
     // free rather than a two-hour no-op.
     if (have.has(row.species_id)) { skipped += 1; continue; }
+    if (sinceRecycle >= RECYCLE_EVERY) { await renew(); writeManifest(); }
+    sinceRecycle += 1;
     process.stdout.write(`  ${row.species_id.padEnd(28)}`);
     try {
-      const res = await fetchImage(row.url);
-      const b64 = Buffer.from(await res.arrayBuffer()).toString('base64');
-      const mime = res.headers.get('content-type') ?? 'image/jpeg';
-
-      // Chromium does the decode/resize/encode. It handles every format
-      // Commons serves, including the ones a minimal image library would not.
-      const out = await page!.evaluate(
-        async ({ b64, mime, maxWidth, quality }) => {
-          const img = new Image();
-          img.src = `data:${mime};base64,${b64}`;
-          await img.decode();
-          const scale = Math.min(1, maxWidth / img.naturalWidth);
-          const canvas = document.createElement('canvas');
-          canvas.width = Math.round(img.naturalWidth * scale);
-          canvas.height = Math.round(img.naturalHeight * scale);
-          const ctx = canvas.getContext('2d')!;
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          return {
-            data: canvas.toDataURL('image/jpeg', quality).split(',')[1]!,
-            w: canvas.width,
-            h: canvas.height,
-          };
-        },
-        { b64, mime, maxWidth: MAX_WIDTH, quality: QUALITY },
-      );
-
-      const buf = Buffer.from(out.data, 'base64');
-      const dir = wanted.get(row.species_id) === 'core' ? CORE_DIR : TAIL_DIR;
-      writeFileSync(join(dir, `${row.species_id}.jpg`), buf);
-      bytes += buf.length;
-      saved += 1;
-      console.log(`ok  ${out.w}x${out.h}  ${(buf.length / 1024).toFixed(0)}KB`);
+      await downloadInto(row);
     } catch (e) {
+      // A dead browser is not this image's fault and will not be the next
+      // image's fault either - every remaining iteration would fail the same
+      // way. Relaunch once and retry this species; a second failure stops the
+      // run rather than logging a thousand identical lines.
+      if (isDead(e)) {
+        console.log('browser died - relaunching');
+        await renew();
+        try {
+          await downloadInto(row);
+          continue;
+        } catch (again) {
+          // Twice on the SAME image means the image is the problem, not the
+          // browser. Skip it and carry on - one poison pill must not block the
+          // remaining hundreds, which is the failure this whole block exists
+          // to stop.
+          await renew();
+          failed += 1;
+          console.log(`  ${row.species_id.padEnd(28)}skipped (kills the renderer: `
+            + `${again instanceof Error ? again.message.slice(0, 40) : 'error'})`);
+          continue;
+        }
+      }
       failed += 1;
       // A missing portrait degrades to the card's silhouette, which is a
       // deliberate state - not a crash.
@@ -235,10 +334,9 @@ async function main() {
   console.log(`  removed     ${removed}`);
   console.log(`  failed      ${failed}`);
   console.log(`  new bytes   ${(bytes / 1e6).toFixed(2)} MB  (avg ${(bytes / Math.max(1, saved) / 1024).toFixed(0)}KB)`);
-  const tail = [...present(TAIL_DIR)].sort();
-  writeFileSync(TAIL_MANIFEST, `${JSON.stringify(tail, null, 0)}\n`);
+  writeManifest();
   console.log(`  core        ${present(CORE_DIR).size} in ${CORE_DIR}/  (bundled and precached)`);
-  console.log(`  tail        ${tail.length} in ${TAIL_DIR}/  (fetched on first view)`);
+  console.log(`  tail        ${present(TAIL_DIR).size} in ${TAIL_DIR}/  (fetched on first view)`);
   console.log(`  wrote       ${TAIL_MANIFEST}`);
 }
 

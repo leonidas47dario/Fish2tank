@@ -34,7 +34,8 @@
     "genera:classify": "tsx etl/classify-genera.ts",
     "repair:holdings": "tsx etl/repair-duplicate-holdings.ts",
     "sf:fetch": "tsx etl/fetch-seriously-fish.ts",
-    "sf:ingest": "tsx etl/ingest-seriously-fish.ts"
+    "sf:ingest": "tsx etl/ingest-seriously-fish.ts",
+    "reimage": "tsx etl/rebuild-dim-image.ts"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",
