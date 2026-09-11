@@ -271,12 +271,46 @@ function previewHtml(opts: {
 `;
 }
 
-/** The manifest, or undefined when there is none. Undefined is what revoked looks like. */
+/**
+ * The S3 error code inside an error body, e.g. `NoSuchKey`.
+ *
+ * Read with a regex rather than a parser because this runs on an error path
+ * that must not be able to throw: an unparseable body yields `undefined` and
+ * the caller treats the response as a fault, which is the safe direction.
+ */
+function s3ErrorCode(body: string): string | undefined {
+  return /<Code>([^<]+)<\/Code>/.exec(body)?.[1];
+}
+
+/**
+ * The manifest, or undefined when there is none. Undefined is what revoked
+ * looks like - and MUST NOT be what a broken credential looks like.
+ *
+ * THIS USED TO COLLAPSE 403 INTO 404, and it is exactly the failure this
+ * project keeps paying for: a fault reported as an ordinary negative answer.
+ * With an unreadable store, every share in the tier answers "no such share" -
+ * a revoked link, a live link and a Worker that cannot reach R2 at all are one
+ * indistinguishable 404. The deploy probe cannot tell them apart either: it
+ * reads `/shared/probeprobe`, sees `no such share`, and reports the share
+ * routes live. So a tier could be wholly unable to serve and every check in
+ * the system would agree it was fine.
+ *
+ * The 403 arm was defensive, against S3's habit of answering 403 for a missing
+ * object when the credential cannot list the bucket. That case is kept - by
+ * its error CODE rather than its status, which is the thing that actually
+ * distinguishes it - and every other 403 is a fault that says so.
+ */
 async function readManifest(
   aws: AwsClient, endpointFor: (key: string) => string, token: string,
 ): Promise<ShareManifest | undefined> {
   const res = await aws.fetch(endpointFor(manifestKeyFor(token)), { method: 'GET' });
-  if (res.status === 404 || res.status === 403) return undefined;
+  if (res.status === 404) return undefined;
+  if (res.status === 403) {
+    const code = s3ErrorCode(await res.text().catch(() => ''));
+    // The one 403 that really does mean absent.
+    if (code === 'NoSuchKey') return undefined;
+    throw new Error(`manifest read refused: 403 ${code ?? 'no error code'}`);
+  }
   if (!res.ok) throw new Error(`manifest read failed: ${res.status}`);
   return (await res.json()) as ShareManifest;
 }
