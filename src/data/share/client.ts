@@ -13,10 +13,11 @@
 import { db as defaultDb, type Fish2TankDB } from '../db';
 import { loadTankResidents } from '../tank-residents';
 import { BUILD_ID, CLOUD_DATABASE_URL, DEPLOYMENT, MEDIA_WORKER_URL } from '@/build-info';
-import { viewableBlobKey } from '../media/renditions';
+import { publishableKeyFor } from './publishable';
+import type { DeriveDeps } from '../media/renditions';
 import { buildSnapshot, fingerprintOf, type PublicSnapshot, type SharedSnapshot } from './snapshot';
 import { forgetShare, recordShare, shareFor } from './shares';
-import type { Id } from '@/domain/types';
+import type { Id, Media } from '@/domain/types';
 
 /** Why a publish could not even be attempted. `undefined` means it can. */
 export type ShareBlocker = 'not-configured' | 'signed-out' | 'offline';
@@ -39,6 +40,12 @@ export interface ShareDeps {
   /** The signed-in subject, used only for logs - the Worker decides the real one. */
   account?: string;
   fetchImpl?: typeof fetch;
+  /**
+   * The canvas `publishableKeyFor` strips with, injected - spec 067. Node has
+   * no `createImageBitmap`, so without this seam the strip path cannot be
+   * driven in a test and the recovery it now performs would go unasserted.
+   */
+  derive?: DeriveDeps;
 }
 
 /**
@@ -58,8 +65,31 @@ export function shareBlocker(deps: ShareDeps = {}): ShareBlocker | undefined {
   return undefined;
 }
 
-/** The link a keeper hands out. A fragment, so the token never reaches a server log. */
-export function shareUrlFor(token: string): string {
+/**
+ * The link a keeper hands out - the Worker's preview route since spec 054.
+ *
+ * IT USED TO BE THE PAGES URL WITH THE TOKEN IN A FRAGMENT, on the reasoning
+ * that a fragment never reaches a server log. The cost was that a fragment
+ * never reaches ANY server, so an unfurler asking about a shared tank fetched
+ * the app shell and learned nothing - which is why a shared tank rendered in
+ * iMessage as a blank card with a compass glyph and no tank name.
+ *
+ * THE TRADE, STATED HONESTLY, because it is the argument this change turns on.
+ * A machine that unfurls the link now reads the tank's name, counts and photo
+ * automatically, where before it could have and did not. What it is NOT is the
+ * token becoming logged for the first time: the Worker already logs it on every
+ * `/shared/:token` read, so the fragment was protecting the token from GitHub's
+ * access logs, not from ours.
+ *
+ * `#/share/:token` KEEPS WORKING FOREVER. This is additive - the app still
+ * resolves that route, and every link already sent resolves exactly as it did.
+ * `publishTank` reuses a token on republish for the same reason.
+ *
+ * Falls back to the Pages URL when no Worker is configured, which is the
+ * `other` tier and every test that does not stand one up.
+ */
+export function shareUrlFor(token: string, workerUrl: string = MEDIA_WORKER_URL): string {
+  if (workerUrl) return `${workerUrl.replace(/\/+$/, '')}/p/${token}`;
   const base = import.meta.env.BASE_URL || '/';
   const origin = typeof location === 'undefined' ? '' : location.origin;
   return `${origin}${base}#/share/${token}`;
@@ -72,6 +102,26 @@ export function shareUrlFor(token: string): string {
  * keeper has already sent out keep working. A new token per publish would
  * silently break every copy of the URL already in somebody's messages.
  */
+/**
+ * R2 does not hold a key this row names, so the row owes the store bytes -
+ * spec 067.
+ *
+ * REOPENING ON THE ANSWER, not only when a copy was just stripped. A device
+ * that stripped one BEFORE this fix shipped is the case that most needs it:
+ * the row carries a `previewBlobKey` pointing at a blob only that device has,
+ * so `publishableKeyFor` takes its cheap path, returns the key without writing
+ * anything, and would never reopen the row. Every publish would go on dropping
+ * the photograph forever. `headBlob` is the only thing in the system that
+ * knows the difference, so the recovery belongs next to its answer.
+ *
+ * Idempotent, and safe to call on a row that is already reopened.
+ */
+async function oweBytes(database: Fish2TankDB, media: Media): Promise<void> {
+  if (media.syncState === 'synced') {
+    await database.media.update(media.id, { syncState: 'retry-required' });
+  }
+}
+
 export async function publishTank(
   aquariumId: Id,
   deps: ShareDeps = {},
@@ -120,24 +170,32 @@ export async function publishTank(
         ...identity, photoMediaId: loaded.aquarium.photoMediaId,
       });
     } else {
-      // Spec 029: the preview where one exists, the original otherwise. A
-      // guest is sent the smallest honest copy, not the keeper's 3.6 MB
-      // original; `viewableBlobKey` falls back on its own for any photo
-      // already small enough not to have a rendition.
-      const key = viewableBlobKey(media);
-      const present = await headBlob(key, {
-        workerUrl, accessToken, doFetch,
-      });
-      if (present) {
+      /*
+       * Spec 064: never the original. The preview where one exists - which is
+       * canvas-derived and so carries no EXIF - and a stripped copy derived on
+       * the spot for any photo small enough never to have earned a preview.
+       * That fallback used to upload the keeper's file byte for byte, GPS tag
+       * and all (NFR-04).
+       */
+      const key = await publishableKeyFor(media, database, deps.derive);
+      const present = key
+        ? await headBlob(key, { workerUrl, accessToken, doFetch })
+        : false;
+      if (present && key) {
         tankPhotoBlobKey = key;
       } else {
         warnings.push(
           'The tank photo has not finished syncing, so guests will see the placeholder. '
           + 'Sync your photos, then update the shared page.',
         );
+        // The key CHECKED, not the original. Spec 067: this line named
+        // `originalBlobKey` while `headBlob` had asked about the preview, so
+        // the one diagnostic in the system pointed at an object that was
+        // present and said it was missing.
         console.warn('[share] tank photo -> not in the bucket yet', {
-          ...identity, blobKey: media.originalBlobKey,
+          ...identity, blobKey: key, originalBlobKey: media.originalBlobKey,
         });
+        await oweBytes(database, media);
       }
     }
   }
@@ -160,13 +218,16 @@ export async function publishTank(
   await Promise.all(loaded.ownArt.map(async ({ holdingId, mediaId }) => {
     const media = await database.media.get(mediaId);
     if (!media) return;
-    // Spec 029, as above: preview first, original as the honest fallback.
-    const key = viewableBlobKey(media);
-    const present = await headBlob(key, { workerUrl, accessToken, doFetch });
-    if (present) {
+    // Spec 064, as above: a stripped derivative, never the original.
+    const key = await publishableKeyFor(media, database, deps.derive);
+    const present = key
+      ? await headBlob(key, { workerUrl, accessToken, doFetch })
+      : false;
+    if (present && key) {
       residentPhotoKeys.set(holdingId, key);
     } else {
       unsyncedPhotos += 1;
+      await oweBytes(database, media);
     }
   }));
   if (unsyncedPhotos > 0) {
@@ -232,17 +293,90 @@ export async function publishTank(
     throw new Error('The published page does not match this tank.');
   }
 
+  /*
+   * Verified BEFORE the record is written, so the link ON the record is the
+   * link that answered. See ShareRecord.url for why it is stored rather than
+   * re-derived - three call sites in ShareSheet were re-deriving it and went on
+   * handing out a route that answered 404.
+   */
+  const url = await bestShareUrl(token, workerUrl, doFetch, identity);
+
   await recordShare(aquariumId, {
     token,
+    url,
     publishedAt: snapshot.publishedAt,
     fingerprint: fingerprintOf(snapshot, loaded.aquarium.photoMediaId, loaded.ownArt.map((a) => a.mediaId)),
     photoIncluded: Boolean(tankPhotoBlobKey),
     photoCount: residentPhotoKeys.size,
   }, database);
 
-  const url = shareUrlFor(token);
+  /*
+   * NEVER HAND OUT A LINK THAT DOES NOT ANSWER.
+   *
+   * `shareUrlFor` returns the Worker's preview route (spec 054), and the site
+   * and the Worker deploy SEPARATELY - `deploy-worker.yml` is
+   * `workflow_dispatch` only. So there is a real window where the app has been
+   * updated and the Worker has not, and in that window every link a keeper
+   * handed out was a JSON 404. That is not hypothetical: it happened in uat on
+   * 2026-09-10, when the Worker deploy failed on an expired Cloudflare token
+   * and the site shipped anyway.
+   *
+   * The same discipline the readback above already uses, applied one step
+   * further out: check the thing the keeper is about to send, and fall back to
+   * the Pages URL if it is not there. `#/share/:token` has always worked and
+   * always will, so the fallback is a real link rather than a degraded one.
+   *
+   * It self-heals: the next publish after the Worker deploys returns the
+   * preview URL with no code change and no second decision.
+   */
   console.info('[share] publish -> ok', { ...identity, token, url, warnings: warnings.length });
   return { token, url, warnings };
+}
+
+/**
+ * The link to hand out for a share already on record.
+ *
+ * SYNCHRONOUS ON PURPOSE, because the UI renders it - `ShareSheet` puts it in a
+ * field, on the clipboard and into the native share sheet, three times per
+ * render. It cannot go and check anything, which is exactly why the checking
+ * happens once at publish and the answer is stored.
+ *
+ * A record written before spec 054 has no `url`, and falls back to the app
+ * link - which has always worked and always will.
+ */
+export function linkFor(share: { token: string; url?: string }): string {
+  return share.url ?? shareUrlFor(share.token, '');
+}
+
+/**
+ * The preview URL when the Worker actually serves it, the Pages URL otherwise.
+ *
+ * A HEAD would be cheaper, but the route is only interesting if it returns
+ * HTML - an old Worker answers `/p/:token` with a JSON 404, and a 404 is
+ * exactly what has to be caught here.
+ */
+async function bestShareUrl(
+  token: string,
+  workerUrl: string,
+  doFetch: typeof fetch,
+  identity: Record<string, unknown>,
+): Promise<string> {
+  const preview = shareUrlFor(token, workerUrl);
+  const fallback = shareUrlFor(token, '');
+  if (preview === fallback) return fallback;
+
+  try {
+    const res = await doFetch(preview);
+    if (res.ok && (res.headers.get('content-type') ?? '').includes('text/html')) return preview;
+    console.warn('[share] preview route not live, handing out the app link instead', {
+      ...identity, token, status: res.status,
+    });
+  } catch (cause) {
+    console.warn('[share] preview route unreachable, handing out the app link instead', {
+      ...identity, token, cause: String(cause),
+    });
+  }
+  return fallback;
 }
 
 /**

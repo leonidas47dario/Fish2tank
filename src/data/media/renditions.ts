@@ -206,6 +206,66 @@ export async function deriveRenditions(
   }
 }
 
+/**
+ * A copy of a photograph with its metadata gone - spec 064, NFR-04.
+ *
+ * WHY THIS IS NOT `deriveRenditions` WITH A FLAG. That function is built on two
+ * rules that are right for storage and exactly wrong here: `planRendition`
+ * returns nothing when the source is already at or under the target, and a
+ * rendition no smaller than its original is discarded. Both would decline the
+ * only case this exists for - a photo small enough to have no preview, which is
+ * precisely the one the publisher would otherwise upload untouched.
+ *
+ * WHY A RE-ENCODE RATHER THAN A METADATA STRIPPER. A canvas holds pixels and
+ * nothing else, so the encode drops every APP segment by construction - a
+ * whitelist that cannot miss one. Writing a stripper means enumerating
+ * APP1/Exif, APP13/IPTC, XMP and whatever a future camera invents, and being
+ * wrong once publishes a home address. Measured in Chromium against a JPEG
+ * carrying a GPS block: APP1 present and the string "Exif" present before,
+ * neither after.
+ *
+ * SAME PIXELS, deliberately. No resize and no crop - this is about what the
+ * file carries, not what it shows. The result can come out slightly larger than
+ * the original, and that is accepted: the alternative is publishing a location.
+ *
+ * Returns `undefined` when the source cannot be decoded, and the caller MUST
+ * treat that as "do not publish". `deriveRenditions` keeps the photograph on a
+ * decode failure, which is right for storage and wrong for this - failing open
+ * here means shipping the bytes we were trying to clean.
+ */
+export async function stripForSharing(
+  blob: Blob,
+  deps: DeriveDeps = {},
+): Promise<DerivedRendition | undefined> {
+  if (!blob.type.startsWith('image/')) return undefined;
+
+  const decode = deps.decode ?? defaultDecode;
+  const encode = deps.encode ?? defaultEncode;
+  const newKey = deps.newKey ?? (() => `blob_${crypto.randomUUID()}`);
+
+  let source: { width: number; height: number; close?: () => void };
+  try {
+    source = await decode(blob);
+  } catch (cause) {
+    console.warn('[renditions] could not decode; refusing to publish it unstripped', {
+      cause: String(cause),
+    });
+    return undefined;
+  }
+
+  try {
+    const data = await encode(source, { width: source.width, height: source.height }, RENDITION_QUALITY);
+    return { key: newKey(), data, bytes: data.byteLength, mimeType: 'image/jpeg' };
+  } catch (cause) {
+    console.warn('[renditions] could not re-encode; refusing to publish it unstripped', {
+      cause: String(cause),
+    });
+    return undefined;
+  } finally {
+    source.close?.();
+  }
+}
+
 async function defaultDecode(blob: Blob) {
   const bitmap = await createImageBitmap(blob);
   return { width: bitmap.width, height: bitmap.height, close: () => bitmap.close(), bitmap } as never;

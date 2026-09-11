@@ -26,6 +26,8 @@ export interface Env {
   R2_ACCOUNT_ID: string;
   /** Comma-separated origins allowed to call this Worker. */
   ALLOWED_ORIGINS: string;
+  /** Where a person is sent after /p/:token. See spec 054. */
+  APP_BASE_URL: string;
   /** Which tier this is, for logs. NFR-13. */
   ENVIRONMENT: string;
   /** Secrets, set with `wrangler secret put`. Never in wrangler.toml. */
@@ -172,6 +174,8 @@ function manifestKeyFor(token: string): string {
 /** The two share paths. Non-global, so `.exec` carries no `lastIndex` state. */
 const SHARE_ROUTE = /^\/shared\/([^/]+)$/;
 const SHARE_MEDIA_ROUTE = /^\/shared\/([^/]+)\/media\/([^/]+)$/;
+/** The unfurlable preview - spec 054, ENH-18. Deliberately short: it goes in messages. */
+const SHARE_PREVIEW_ROUTE = /^\/p\/([^/]+)$/;
 
 /**
  * The published file, as the Worker needs to read it.
@@ -186,12 +190,127 @@ interface ShareManifest {
   [key: string]: unknown;
 }
 
-/** The manifest, or undefined when there is none. Undefined is what revoked looks like. */
+
+/**
+ * HTML-escape a value that came from a keeper.
+ *
+ * A tank is named by its owner and that name goes straight into an attribute
+ * here, so this is the one place in the Worker where user text reaches markup.
+ * `"` and `'` are escaped as well as the tag characters, because every
+ * interpolation below sits inside a quoted attribute.
+ */
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/** "24 fish · 15 species", from the snapshot's own counts. Never invented (P6). */
+function previewDescription(stats: unknown): string {
+  const s = (stats ?? {}) as { fish?: unknown; species?: unknown };
+  const parts: string[] = [];
+  const plural = (n: number, one: string) => `${n} ${n === 1 ? one : `${one}s`}`;
+  if (typeof s.fish === 'number') parts.push(plural(s.fish, 'fish').replace('fishs', 'fish'));
+  if (typeof s.species === 'number') parts.push(plural(s.species, 'species').replace('speciess', 'species'));
+  return parts.join(' · ');
+}
+
+/**
+ * The page an unfurler reads - spec 054, ENH-18.
+ *
+ * WHY THIS EXISTS AT ALL. `shareUrlFor` puts the token in a HASH fragment so it
+ * never reaches a server log, and a fragment is never sent anywhere - so an
+ * unfurler asking about a shared tank fetched the app shell and learned
+ * nothing, which is why a shared tank rendered in iMessage as a blank card with
+ * a compass glyph. Pages is static and unfurlers do not run JavaScript, so the
+ * Worker is the only part of this system that can answer per token.
+ *
+ * IT IS NOT A SECOND WAY TO READ THE SNAPSHOT. It returns four fields as
+ * markup - name, counts, one image URL, itself - and never the manifest. A
+ * machine that fetches this learns what the keeper chose to put on a card, not
+ * the resident list.
+ *
+ * The redirect is a meta refresh plus a real link rather than a 302, because a
+ * 302 would carry the unfurler straight past the tags to the app shell, which
+ * is the blank card again.
+ */
+function previewHtml(opts: {
+  title: string; description: string; imageUrl?: string; selfUrl: string; appUrl: string;
+}): string {
+  const { title, description, imageUrl, selfUrl, appUrl } = opts;
+  const t = escapeHtml(title);
+  const d = escapeHtml(description);
+  const image = imageUrl
+    ? `\n    <meta property="og:image" content="${escapeHtml(imageUrl)}">`
+      + `\n    <meta name="twitter:card" content="summary_large_image">`
+    // A tank with no photograph previews with its name and counts and NO image,
+    // rather than a placeholder - a generic picture would make every tank look
+    // identical in a thread, which is the failure this route exists to fix.
+    : '\n    <meta name="twitter:card" content="summary">';
+
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>${t}</title>
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Fish2Tank">
+    <meta property="og:title" content="${t}">
+    <meta property="og:description" content="${d}">
+    <meta property="og:url" content="${escapeHtml(selfUrl)}">${image}
+    <meta name="description" content="${d}">
+    <meta http-equiv="refresh" content="0; url=${escapeHtml(appUrl)}">
+  </head>
+  <body>
+    <p><a href="${escapeHtml(appUrl)}">${t}</a></p>
+  </body>
+</html>
+`;
+}
+
+/**
+ * The S3 error code inside an error body, e.g. `NoSuchKey`.
+ *
+ * Read with a regex rather than a parser because this runs on an error path
+ * that must not be able to throw: an unparseable body yields `undefined` and
+ * the caller treats the response as a fault, which is the safe direction.
+ */
+function s3ErrorCode(body: string): string | undefined {
+  return /<Code>([^<]+)<\/Code>/.exec(body)?.[1];
+}
+
+/**
+ * The manifest, or undefined when there is none. Undefined is what revoked
+ * looks like - and MUST NOT be what a broken credential looks like.
+ *
+ * THIS USED TO COLLAPSE 403 INTO 404, and it is exactly the failure this
+ * project keeps paying for: a fault reported as an ordinary negative answer.
+ * With an unreadable store, every share in the tier answers "no such share" -
+ * a revoked link, a live link and a Worker that cannot reach R2 at all are one
+ * indistinguishable 404. The deploy probe cannot tell them apart either: it
+ * reads `/shared/probeprobe`, sees `no such share`, and reports the share
+ * routes live. So a tier could be wholly unable to serve and every check in
+ * the system would agree it was fine.
+ *
+ * The 403 arm was defensive, against S3's habit of answering 403 for a missing
+ * object when the credential cannot list the bucket. That case is kept - by
+ * its error CODE rather than its status, which is the thing that actually
+ * distinguishes it - and every other 403 is a fault that says so.
+ */
 async function readManifest(
   aws: AwsClient, endpointFor: (key: string) => string, token: string,
 ): Promise<ShareManifest | undefined> {
   const res = await aws.fetch(endpointFor(manifestKeyFor(token)), { method: 'GET' });
-  if (res.status === 404 || res.status === 403) return undefined;
+  if (res.status === 404) return undefined;
+  if (res.status === 403) {
+    const code = s3ErrorCode(await res.text().catch(() => ''));
+    // The one 403 that really does mean absent.
+    if (code === 'NoSuchKey') return undefined;
+    throw new Error(`manifest read refused: 403 ${code ?? 'no error code'}`);
+  }
   if (!res.ok) throw new Error(`manifest read failed: ${res.status}`);
   return (await res.json()) as ShareManifest;
 }
@@ -258,9 +377,10 @@ export default {
     if (request.method === 'GET') {
       const shared = SHARE_ROUTE.exec(route);
       const media = SHARE_MEDIA_ROUTE.exec(route);
-      if (!shared && !media) return json({ error: 'no such route' }, 404, cors);
+      const preview = SHARE_PREVIEW_ROUTE.exec(route);
+      if (!shared && !media && !preview) return json({ error: 'no such route' }, 404, cors);
 
-      const token = safeToken(shared?.[1] ?? media?.[1]);
+      const token = safeToken(shared?.[1] ?? media?.[1] ?? preview?.[1]);
       if (!token) {
         console.warn('[worker] share read -> bad token', { env: env.ENVIRONMENT, route });
         return json({ error: 'bad token' }, 400, cors);
@@ -280,6 +400,46 @@ export default {
           const { owner: _owner, allowedBlobKeys: _keys, ...publicView } = manifest;
           console.info('[worker] share read -> ok', identity);
           return json(publicView, 200, cors);
+        }
+
+        if (preview) {
+          const tank = (manifest.tank ?? {}) as { name?: unknown; photoBlobKey?: unknown };
+          const name = typeof tank.name === 'string' && tank.name.trim()
+            ? tank.name.trim()
+            : 'A tank on Fish2Tank';
+
+          /*
+           * The image points at the EXISTING public media route, which is
+           * gated on `permits()` - membership of this manifest's own
+           * allowedBlobKeys. So this widens nothing: a key the preview names
+           * is a key the token already served.
+           */
+          const photoKey = typeof tank.photoBlobKey === 'string'
+            ? safeBlobKey(tank.photoBlobKey)
+            : undefined;
+          const imageUrl = photoKey
+            ? `${url.origin}/shared/${token}/media/${photoKey}`
+            : undefined;
+
+          console.info('[worker] share preview -> ok', { ...identity, photo: Boolean(imageUrl) });
+          return new Response(previewHtml({
+            title: name,
+            description: previewDescription(manifest.stats),
+            imageUrl,
+            selfUrl: `${url.origin}/p/${token}`,
+            // The fragment is preserved: this is where the app has always
+            // lived, and links already sent must go on resolving unchanged.
+            appUrl: `${env.APP_BASE_URL.replace(/\/+$/, '/')}#/share/${token}`,
+          }), {
+            status: 200,
+            headers: {
+              ...cors,
+              'content-type': 'text/html; charset=utf-8',
+              // Short, because a keeper who renames a tank and republishes
+              // should not be arguing with a week-old card in a message thread.
+              'cache-control': 'public, max-age=300',
+            },
+          });
         }
 
         const blobKey = safeBlobKey(media![2]);

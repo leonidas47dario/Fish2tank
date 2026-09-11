@@ -28,6 +28,14 @@ on:
         type: choice
         options: [uat, production]
         required: true
+      credentials:
+        description: >-
+          Which GitHub Environment to take CLOUDFLARE_API_TOKEN from.
+          Leave as `same` unless a tier's own token is broken.
+        type: choice
+        options: [same, uat, production]
+        default: same
+        required: false
 
 # A tier deploys one at a time. Never cancel one in flight: a half-applied
 # Worker deploy is the state this whole file exists to avoid.
@@ -41,7 +49,24 @@ jobs:
     # The GitHub Environment of the same name. It holds CLOUDFLARE_API_TOKEN,
     # and on `production` it is also what makes this wait for a human to
     # approve - matching the promotion PR that already gates production's site.
-    environment: ${{ inputs.environment }}
+    # WHICH SECRETS, which is no longer the same question as which tier.
+    #
+    # Both Workers live in ONE Cloudflare account - wrangler.toml carries the
+    # same R2_ACCOUNT_ID for [env.uat] and [env.production] - so a token with
+    # Workers Scripts:Edit on it can deploy either. That is what makes
+    # borrowing possible, and it is the only reason it works.
+    #
+    # WHY IT IS NEEDED: on 2026-09-10 the uat Worker deploy failed with
+    # `Authentication error [code: 10000]` and the run history showed why it
+    # was not a regression - the uat token had NEVER deployed successfully.
+    # The only success this workflow has ever had was production's. Waiting on
+    # a credential nobody has debugged, to ship a route that is already merged,
+    # is a worse outcome than borrowing a token that demonstrably works.
+    #
+    # Borrowing production's credentials also inherits production's approval
+    # gate, so it cannot happen without a human saying yes. That is the point,
+    # not a side effect.
+    environment: ${{ inputs.credentials == 'same' && inputs.environment || inputs.credentials }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -78,19 +103,40 @@ jobs:
       # ungated one that fails obscurely three steps later. That happened on
       # this workflow's first run: it never paused for approval, which was the
       # real signal, and the wrangler error buried it.
+      # The one direction that must never be available.
+      #
+      # Borrowing DOWNWARD - production's token to deploy uat - is a stronger
+      # credential aimed at a lower-stakes tier, and it still passes through
+      # production's reviewer. Borrowing UPWARD would let a uat token, which
+      # needs no approval, put code on production. That is a privilege
+      # escalation wearing a convenience flag.
+      - name: Refuse to deploy production on borrowed uat credentials
+        if: inputs.environment == 'production' && inputs.credentials == 'uat'
+        run: |
+          echo "::error::Refusing to deploy production using the uat environment's token."
+          cat <<'MSG'
+          production must be deployed with production's own credentials, so
+          that its required reviewer is the thing that gates it. Using uat's
+          token would route a production deploy around that approval.
+
+          If production's token is broken, fix production's token.
+          MSG
+          exit 1
+
       - name: The environment actually attached
         env:
           TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
           if [ -n "$TOKEN" ]; then
-            echo "CLOUDFLARE_API_TOKEN is present for environment '${{ inputs.environment }}'."
+            echo "CLOUDFLARE_API_TOKEN is present, from environment '${{ inputs.credentials == 'same' && inputs.environment || inputs.credentials }}'."
+            echo "Deploying the '${{ inputs.environment }}' Worker."
             exit 0
           fi
           echo "::error::No CLOUDFLARE_API_TOKEN reached this job."
           cat <<'MSG'
           The job asked for a GitHub Environment named exactly:
 
-              ${{ inputs.environment }}
+              ${{ inputs.credentials == 'same' && inputs.environment || inputs.credentials }}
 
           and got no secret from it. GitHub does not fail when an environment
           is missing - it creates an empty one - so the usual cause is a name
@@ -143,9 +189,15 @@ jobs:
           fi
           echo "OK - the Worker is live and refusing anonymous callers."
 
-      # Informational, not a gate. Says WHICH code is live, which the 401 above
-      # cannot: the share routes arrived in spec 023, so `no such share` proves
-      # the tier is running that code rather than something older.
+      # Says WHICH code is live, which the 401 above cannot: the share routes
+      # arrived in spec 023, so `no such share` proves the tier is running that
+      # code rather than something older.
+      #
+      # AND IT IS A GATE NOW, for one answer. `no such share` used to be
+      # reported here as success while it was also what a Worker that could not
+      # reach R2 at all said about every token in the tier - so this step could
+      # certify a wholly unserving tier as live. Spec 068 made the Worker
+      # separate the two; this reads the difference and fails on it.
       - name: Report which code is live
         run: |
           case "${{ inputs.environment }}" in
@@ -155,6 +207,11 @@ jobs:
           body=$(curl -s "https://$host.leonidas47dario.workers.dev/shared/probeprobe" || true)
           echo "GET /shared/probeprobe -> $body"
           case "$body" in
+            *"manifest read refused"*)
+              echo "::error::This tier CANNOT READ ITS OWN STORE - the R2 credentials are wrong."
+              echo "Every share here will answer as if it were revoked. Fix R2_ACCESS_KEY_ID /"
+              echo "R2_SECRET_ACCESS_KEY for this Worker (wrangler secret put --env ...)."
+              exit 1 ;;
             *"no such share"*) echo "Share routes (spec 023) are live." ;;
             *"no such route"*) echo "::warning::No share routes here - this tier predates spec 023." ;;
             *) echo "::warning::Unrecognised answer; check the Worker by hand." ;;

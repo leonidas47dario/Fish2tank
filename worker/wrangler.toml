@@ -26,6 +26,10 @@ R2_BUCKET = "fish2tank-media-uat"
 R2_ACCOUNT_ID = "4c73038eafb05b96ed7125aeeca9cfff"
 ALLOWED_ORIGINS = "https://leonidas47dario.github.io,http://localhost:5199"
 ENVIRONMENT = "uat"
+# Where /p/:token sends a person after an unfurler has read the tags (spec 054).
+# The ORIGIN alone is not enough - the app lives under a base path, and sending
+# someone to the wrong one lands them on production's copy of somebody's tank.
+APP_BASE_URL = "https://leonidas47dario.github.io/Fish2tank/uat/"
 
 [env.production]
 name = "fish2tank-media-prod"
@@ -36,3 +40,5 @@ R2_BUCKET = "fish2tank-media-prod"
 R2_ACCOUNT_ID = "4c73038eafb05b96ed7125aeeca9cfff"
 ALLOWED_ORIGINS = "https://leonidas47dario.github.io"
 ENVIRONMENT = "production"
+# See the note in [env.uat.vars].
+APP_BASE_URL = "https://leonidas47dario.github.io/Fish2tank/"

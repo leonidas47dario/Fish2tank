@@ -11,7 +11,8 @@
 import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Fish2TankDB } from '../db';
-import { publishTank, revokeTank } from './client';
+import { needsUpload } from '../sync/media-queue';
+import { linkFor, publishTank, revokeTank } from './client';
 import { recordShare, shareFor } from './shares';
 import type { Aquarium, Holding, Media, Residency } from '@/domain/types';
 
@@ -45,6 +46,8 @@ function fakeWorker(over: {
   read?: () => Response;
   del?: () => Response;
   head?: () => Response;
+  /** The unfurlable preview, `/p/:token` - spec 054. */
+  preview?: () => Response;
 } = {}) {
   const calls: Array<{ method: string; url: string; body?: string }> = [];
   const published: Record<string, unknown> = {};
@@ -54,6 +57,13 @@ function fakeWorker(over: {
     const method = init?.method ?? 'GET';
     calls.push({ method, url, body: init?.body ? String(init.body) : undefined });
 
+    if (/\/p\/[^/]+$/.test(url)) {
+      // Default: the route is live and returns HTML, which is what a deployed
+      // Worker does. The tests that matter override it.
+      return over.preview?.() ?? new Response('<html></html>', {
+        status: 200, headers: { 'content-type': 'text/html; charset=utf-8' },
+      });
+    }
     if (url.endsWith('/head')) {
       return over.head?.() ?? Response.json({ present: true, bytes: 10 });
     }
@@ -92,7 +102,11 @@ describe('publishTank', () => {
     const result = await publishTank('aq_1', deps(worker.impl));
 
     expect(result.token).toMatch(/^[0-9a-f-]{36}$/);
-    expect(result.url).toContain(`#/share/${result.token}`);
+    // Spec 054: the Worker's preview route, so the link unfurls as the tank.
+    // The fragment form is still what a person lands on, and is still what
+    // this returns when the Worker does not serve the preview - see "the link
+    // a keeper is handed" below.
+    expect(result.url).toContain(`/p/${result.token}`);
     expect(result.warnings).toEqual([]);
 
     const record = await shareFor('aq_1', db);
@@ -153,8 +167,16 @@ describe('publishTank', () => {
 
 describe('publishTank and the tank photo', () => {
   beforeEach(async () => {
+    /*
+     * A preview, deliberately - spec 064. A 3.6 MB original is over
+     * PREVIEW_EDGE so it HAS one, and that is the photo this suite is about:
+     * these tests are checking the HEAD-before-publish rule, not the strip.
+     * Without the preview key they would exercise the strip path instead and
+     * fail for a reason that has nothing to do with what they assert.
+     */
     await db.media.add({
       id: 'media_1', kind: 'photo', specimenIds: [], originalBlobKey: 'blob_tank',
+      previewBlobKey: 'blob_tank_preview',
       originalBytes: 3_600_000, mimeType: 'image/jpeg',
       capturedAt: '2026-01-03T00:00:00.000Z', syncState: 'synced',
     } as Media);
@@ -168,7 +190,7 @@ describe('publishTank and the tank photo', () => {
     expect(result.warnings).toEqual([]);
     const sent = worker.calls.find((c) => c.method === 'POST' && c.url.endsWith('/shared'))!;
     const snapshot = JSON.parse(sent.body!) as { allowedBlobKeys: string[] };
-    expect(snapshot.allowedBlobKeys).toEqual(['blob_tank']);
+    expect(snapshot.allowedBlobKeys).toEqual(['blob_tank_preview']);
     expect((await shareFor('aq_1', db))?.photoIncluded).toBe(true);
   });
 
@@ -187,6 +209,73 @@ describe('publishTank and the tank photo', () => {
     expect(snapshot.allowedBlobKeys).toEqual([]);
     expect(snapshot.tank.photoBlobKey).toBeUndefined();
     expect((await shareFor('aq_1', db))?.photoIncluded).toBe(false);
+  });
+
+  /**
+   * Spec 067, and the case that most needs it: a device that stripped a copy
+   * BEFORE the fix shipped.
+   *
+   * Its row already carries a `previewBlobKey` pointing at a blob only that
+   * device holds, so `publishableKeyFor` takes its cheap path - returns the
+   * key, writes nothing, reopens nothing. Fixing only the strip path would
+   * have left every already-bitten keeper dropping the photograph forever,
+   * which is the population the report came from. `headBlob` is the only thing
+   * that knows the difference, so the recovery hangs off its answer.
+   */
+  it('reopens the row when R2 does not hold a preview it already had, with nothing stripped', async () => {
+    const worker = fakeWorker({ head: () => Response.json({ present: false }) });
+
+    // previewBlobKey is already set by the fixture, and syncState is 'synced'.
+    const result = await publishTank('aq_1', deps(worker.impl));
+
+    expect(result.warnings.join(' ')).toMatch(/not finished syncing/i);
+    const row = (await db.media.get('media_1'))!;
+    expect(row.previewBlobKey).toBe('blob_tank_preview');   // nothing stripped
+    expect(needsUpload(row)).toBe(true);                    // and yet queued
+  });
+
+  /**
+   * Spec 067. The photo that HAS no preview - the one spec 064 strips on the
+   * spot - and the recovery that was not possible before it.
+   *
+   * The first publish still goes out without the photograph: the stripped copy
+   * exists only on this device, and spec 026's rule is that a key is published
+   * only once R2 confirms it. What changed is that the row is now REOPENED, so
+   * the upload queue carries the new bytes and the keeper's next publish has a
+   * photo. Before this, the row stayed `synced`, the queue never looked at it
+   * again, and the warning's advice - sync, then update the shared page - was
+   * something the app could not act on however many times it was followed.
+   */
+  it('reopens the row for upload when it had to strip a copy, so a re-share carries it', async () => {
+    await db.media.update('media_1', { previewBlobKey: undefined });
+    await db.blobs.add({
+      key: 'blob_tank', data: new Uint8Array([0xFF, 0xD8, 0x42, 0x42]).buffer,
+      bytes: 4, mimeType: 'image/jpeg', storedAt: '2026-01-03T00:00:00.000Z',
+    } as never);
+
+    const stripped = { key: 'blob_stripped', bytes: 3 };
+    const canvas = {
+      decode: async () => ({ width: 800, height: 600 }),
+      encode: async () => new Uint8Array([0xFF, 0xD8, 0x00]).buffer,
+      newKey: () => stripped.key,
+    };
+
+    const worker = fakeWorker({ head: () => Response.json({ present: false }) });
+    const first = await publishTank('aq_1', { ...deps(worker.impl), derive: canvas });
+    expect(first.warnings.join(' ')).toMatch(/not finished syncing/i);
+
+    const row = (await db.media.get('media_1'))!;
+    expect(row.previewBlobKey).toBe(stripped.key);
+    // The assertion that matters: the queue will pick this row up again.
+    expect(needsUpload(row)).toBe(true);
+
+    // And once it has, the photograph is in the share.
+    const settled = fakeWorker();
+    const second = await publishTank('aq_1', { ...deps(settled.impl), derive: canvas });
+    expect(second.warnings).toEqual([]);
+    const sent = settled.calls.find((c) => c.method === 'POST' && c.url.endsWith('/shared'))!;
+    const snapshot = JSON.parse(sent.body!) as { tank: { photoBlobKey?: string } };
+    expect(snapshot.tank.photoBlobKey).toBe(stripped.key);
   });
 });
 
@@ -227,5 +316,67 @@ describe('revokeTank', () => {
     const worker = fakeWorker();
     await expect(revokeTank('aq_1', deps(worker.impl))).resolves.toBeUndefined();
     expect(worker.calls).toHaveLength(0);
+  });
+});
+
+describe('the link a keeper is handed', () => {
+  /*
+   * Spec 054 routes share links through the Worker, but the site and the
+   * Worker deploy separately - so there is a window where the app is new and
+   * the Worker is old. On 2026-09-10 that window was real in uat: the Worker
+   * deploy failed on an expired Cloudflare token and every new share link
+   * would have been a JSON 404.
+   */
+  it('stores the verified link on the record, so the UI cannot re-derive a dead one', async () => {
+    /*
+     * The hole in the first version of this fix. publishTank checked the link
+     * and returned a good one - and ShareSheet went on calling shareUrlFor
+     * directly in three places, re-deriving the /p/ URL from the stored token
+     * and handing out a 404 anyway. The check is worth nothing unless what it
+     * checked is what gets stored.
+     */
+    const worker = fakeWorker({
+      preview: () => Response.json({ error: 'no such route' }, { status: 404 }),
+    });
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const result = await publishTank('aq_1', deps(worker.impl));
+    const record = await shareFor('aq_1', db);
+    expect(record?.url).toBe(result.url);
+    expect(linkFor(record!)).toMatch(/#\/share\//);
+    warn.mockRestore();
+  });
+
+  it('falls back to the app link for a record written before the URL was stored', async () => {
+    // Rows predating spec 054 carry a token and no url.
+    expect(linkFor({ token: 'tok-1' })).toMatch(/#\/share\/tok-1$/);
+  });
+
+  it('hands out the preview URL when the Worker actually serves it', async () => {
+    const worker = fakeWorker({
+      preview: () => new Response('<html></html>', {
+        status: 200, headers: { 'content-type': 'text/html; charset=utf-8' },
+      }),
+    });
+    const result = await publishTank('aq_1', deps(worker.impl));
+    expect(result.url).toMatch(/\/p\//);
+  });
+
+  it('FALLS BACK to the app link when the preview route is not deployed yet', async () => {
+    const worker = fakeWorker({
+      preview: () => Response.json({ error: 'no such route' }, { status: 404 }),
+    });
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const result = await publishTank('aq_1', deps(worker.impl));
+    expect(result.url).toMatch(/#\/share\//);
+    expect(result.url).not.toMatch(/\/p\//);
+    warn.mockRestore();
+  });
+
+  it('falls back rather than throwing when the preview route cannot be reached', async () => {
+    const worker = fakeWorker({ preview: () => { throw new Error('offline'); } });
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const result = await publishTank('aq_1', deps(worker.impl));
+    expect(result.url).toMatch(/#\/share\//);
+    warn.mockRestore();
   });
 });
