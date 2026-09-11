@@ -16,7 +16,7 @@ import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/data/db';
 import {
-  currentShareState, publishTank, revokeTank, shareBlocker, shareUrlFor,
+  currentShareState, linkFor, publishTank, revokeTank, shareBlocker,
 } from '@/data/share/client';
 import { needsRepublish } from '@/data/share/snapshot';
 import type { Aquarium } from '@/domain/types';
@@ -63,7 +63,7 @@ export default function ShareSheet({ aquarium, onClose }: {
   async function copy() {
     if (!share) return;
     try {
-      await navigator.clipboard.writeText(shareUrlFor(share.token));
+      await navigator.clipboard.writeText(linkFor(share));
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (cause) {
@@ -80,7 +80,7 @@ export default function ShareSheet({ aquarium, onClose }: {
       await navigator.share({
         title: aquarium.name,
         text: `${aquarium.name} on Fish2Tank`,
-        url: shareUrlFor(share.token),
+        url: linkFor(share),
       });
     } catch (cause) {
       // Cancelling the OS sheet rejects. That is not a failure worth showing.
@@ -124,7 +124,7 @@ export default function ShareSheet({ aquarium, onClose }: {
             id={`share-url-${aquarium.id}`}
             className="sharesheet__url data"
             readOnly
-            value={shareUrlFor(share.token)}
+            value={linkFor(share)}
             onFocus={(e) => e.currentTarget.select()}
           />
 

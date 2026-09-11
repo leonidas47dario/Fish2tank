@@ -260,8 +260,17 @@ export async function publishTank(
     throw new Error('The published page does not match this tank.');
   }
 
+  /*
+   * Verified BEFORE the record is written, so the link ON the record is the
+   * link that answered. See ShareRecord.url for why it is stored rather than
+   * re-derived - three call sites in ShareSheet were re-deriving it and went on
+   * handing out a route that answered 404.
+   */
+  const url = await bestShareUrl(token, workerUrl, doFetch, identity);
+
   await recordShare(aquariumId, {
     token,
+    url,
     publishedAt: snapshot.publishedAt,
     fingerprint: fingerprintOf(snapshot, loaded.aquarium.photoMediaId, loaded.ownArt.map((a) => a.mediaId)),
     photoIncluded: Boolean(tankPhotoBlobKey),
@@ -287,9 +296,23 @@ export async function publishTank(
    * It self-heals: the next publish after the Worker deploys returns the
    * preview URL with no code change and no second decision.
    */
-  const url = await bestShareUrl(token, workerUrl, doFetch, identity);
   console.info('[share] publish -> ok', { ...identity, token, url, warnings: warnings.length });
   return { token, url, warnings };
+}
+
+/**
+ * The link to hand out for a share already on record.
+ *
+ * SYNCHRONOUS ON PURPOSE, because the UI renders it - `ShareSheet` puts it in a
+ * field, on the clipboard and into the native share sheet, three times per
+ * render. It cannot go and check anything, which is exactly why the checking
+ * happens once at publish and the answer is stored.
+ *
+ * A record written before spec 054 has no `url`, and falls back to the app
+ * link - which has always worked and always will.
+ */
+export function linkFor(share: { token: string; url?: string }): string {
+  return share.url ?? shareUrlFor(share.token, '');
 }
 
 /**
