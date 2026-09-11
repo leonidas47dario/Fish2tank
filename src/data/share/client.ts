@@ -17,7 +17,7 @@ import { publishableKeyFor } from './publishable';
 import type { DeriveDeps } from '../media/renditions';
 import { buildSnapshot, fingerprintOf, type PublicSnapshot, type SharedSnapshot } from './snapshot';
 import { forgetShare, recordShare, shareFor } from './shares';
-import type { Id } from '@/domain/types';
+import type { Id, Media } from '@/domain/types';
 
 /** Why a publish could not even be attempted. `undefined` means it can. */
 export type ShareBlocker = 'not-configured' | 'signed-out' | 'offline';
@@ -102,6 +102,26 @@ export function shareUrlFor(token: string, workerUrl: string = MEDIA_WORKER_URL)
  * keeper has already sent out keep working. A new token per publish would
  * silently break every copy of the URL already in somebody's messages.
  */
+/**
+ * R2 does not hold a key this row names, so the row owes the store bytes -
+ * spec 067.
+ *
+ * REOPENING ON THE ANSWER, not only when a copy was just stripped. A device
+ * that stripped one BEFORE this fix shipped is the case that most needs it:
+ * the row carries a `previewBlobKey` pointing at a blob only that device has,
+ * so `publishableKeyFor` takes its cheap path, returns the key without writing
+ * anything, and would never reopen the row. Every publish would go on dropping
+ * the photograph forever. `headBlob` is the only thing in the system that
+ * knows the difference, so the recovery belongs next to its answer.
+ *
+ * Idempotent, and safe to call on a row that is already reopened.
+ */
+async function oweBytes(database: Fish2TankDB, media: Media): Promise<void> {
+  if (media.syncState === 'synced') {
+    await database.media.update(media.id, { syncState: 'retry-required' });
+  }
+}
+
 export async function publishTank(
   aquariumId: Id,
   deps: ShareDeps = {},
@@ -175,6 +195,7 @@ export async function publishTank(
         console.warn('[share] tank photo -> not in the bucket yet', {
           ...identity, blobKey: key, originalBlobKey: media.originalBlobKey,
         });
+        await oweBytes(database, media);
       }
     }
   }
@@ -206,6 +227,7 @@ export async function publishTank(
       residentPhotoKeys.set(holdingId, key);
     } else {
       unsyncedPhotos += 1;
+      await oweBytes(database, media);
     }
   }));
   if (unsyncedPhotos > 0) {

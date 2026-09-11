@@ -212,6 +212,29 @@ describe('publishTank and the tank photo', () => {
   });
 
   /**
+   * Spec 067, and the case that most needs it: a device that stripped a copy
+   * BEFORE the fix shipped.
+   *
+   * Its row already carries a `previewBlobKey` pointing at a blob only that
+   * device holds, so `publishableKeyFor` takes its cheap path - returns the
+   * key, writes nothing, reopens nothing. Fixing only the strip path would
+   * have left every already-bitten keeper dropping the photograph forever,
+   * which is the population the report came from. `headBlob` is the only thing
+   * that knows the difference, so the recovery hangs off its answer.
+   */
+  it('reopens the row when R2 does not hold a preview it already had, with nothing stripped', async () => {
+    const worker = fakeWorker({ head: () => Response.json({ present: false }) });
+
+    // previewBlobKey is already set by the fixture, and syncState is 'synced'.
+    const result = await publishTank('aq_1', deps(worker.impl));
+
+    expect(result.warnings.join(' ')).toMatch(/not finished syncing/i);
+    const row = (await db.media.get('media_1'))!;
+    expect(row.previewBlobKey).toBe('blob_tank_preview');   // nothing stripped
+    expect(needsUpload(row)).toBe(true);                    // and yet queued
+  });
+
+  /**
    * Spec 067. The photo that HAS no preview - the one spec 064 strips on the
    * spot - and the recovery that was not possible before it.
    *

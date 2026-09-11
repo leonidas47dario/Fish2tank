@@ -62,7 +62,22 @@ place — which, for four days, is what happened.
 ## In scope
 
 - Reopen the media row when a copy is stripped, so the upload queue carries it.
+- Reopen it **on `headBlob`'s answer too** — see below.
 - Log the key that was actually checked.
+
+### Why the strip path alone is not enough
+
+A device that stripped a copy *before* this fix is the population the report
+came from, and fixing only `publishableKeyFor` would have left it broken
+forever. Its row already carries a `previewBlobKey` pointing at a blob only
+that device holds, so `publishableKeyFor` takes its cheap path — returns the
+key, writes nothing, reopens nothing — and every publish goes on dropping the
+photograph exactly as before.
+
+`headBlob` is the only thing in the system that knows the difference between
+"a key this row names" and "a key the store actually holds". So the recovery
+hangs off its answer rather than off having just written something: when R2
+says no, the row owes the store bytes, whatever put it in that state.
 
 ## Out of scope
 
@@ -94,8 +109,10 @@ key and will not grow one on its own. Re-sharing is the fix, and it now works.
 3. The original is still untouched (NFR-03) and the stripped copy still carries
    no metadata (NFR-04) — spec 064's criteria, unchanged.
 4. The "not in the bucket yet" log names the key that was checked.
-5. Both new tests fail against the pre-fix code. Verified: reverting the one
-   line fails exactly the two new tests and nothing else.
+5. A row whose preview R2 does not hold is reopened even when nothing was
+   stripped — the already-bitten device.
+6. Every new test fails against the pre-fix code. Verified one revert at a
+   time: each fails exactly its own test and nothing else.
 
 ## Alternatives rejected
 
