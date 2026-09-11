@@ -308,6 +308,10 @@ export async function publishTank(
     fingerprint: fingerprintOf(snapshot, loaded.aquarium.photoMediaId, loaded.ownArt.map((a) => a.mediaId)),
     photoIncluded: Boolean(tankPhotoBlobKey),
     photoCount: residentPhotoKeys.size,
+    // Spec 069: every key above came from `publishableKeyFor`, which never
+    // returns an original. Recording that is what lets the republisher find
+    // the rows written before that was true.
+    strippedMetadata: true,
   }, database);
 
   /*

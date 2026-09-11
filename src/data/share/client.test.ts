@@ -195,6 +195,17 @@ describe('publishTank and the tank photo', () => {
   });
 
   /**
+   * Spec 069, BUG-20. Every key a publish sends now comes from
+   * `publishableKeyFor`, which never returns an original - so the record says
+   * so, and that is what tells the republisher which OLD rows still name one.
+   */
+  it('records that the published copy carries no metadata', async () => {
+    const worker = fakeWorker();
+    await publishTank('aq_1', deps(worker.impl));
+    expect((await shareFor('aq_1', db))?.strippedMetadata).toBe(true);
+  });
+
+  /**
    * The alternative is a torn image on a stranger's screen and no way for the
    * keeper to find out. Publishing without the photo and saying so is the only
    * honest option, and it is what makes the sheet able to explain itself.

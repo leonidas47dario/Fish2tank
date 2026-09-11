@@ -247,9 +247,22 @@ export function fingerprintOf(
  *      somebody pressed the button by hand.
  */
 export function needsRepublish(
-  published: { fingerprint: string; photoIncluded: boolean; photoCount?: number },
+  published: {
+    fingerprint: string; photoIncluded: boolean; photoCount?: number;
+    strippedMetadata?: boolean;
+  },
   current: { fingerprint: string; hasPhoto: boolean; photoCount?: number },
 ): boolean {
+  /*
+   * Spec 069, BUG-20, and the first thing checked because it is true of the
+   * row rather than of the tank: a share published before spec 064 names the
+   * keeper's ORIGINAL photograph in its manifest, EXIF and GPS included, and
+   * nothing about the tank will ever change to reveal that. Republishing
+   * reuses the token and REPLACES the manifest, so the original stops being
+   * named - which is the whole remedy, since `permits()` is the only thing
+   * that makes a blob publicly reachable.
+   */
+  if (!published.strippedMetadata) return true;
   if (current.fingerprint !== published.fingerprint) return true;
   if (current.hasPhoto && !published.photoIncluded) return true;
   // Spec 026, clause 2 again, per fish: a resident's photo that finished
