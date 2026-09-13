@@ -26,39 +26,96 @@ architecture does that, and no amount of care with the existing pieces gets
 there. So this spec's most useful section is not the feature list; it is the two
 things that have to be true first.
 
-### Blocker 1 — the account tier cannot hold a second user
+### Blocker 1 — CORRECTED: it was never three users
 
-From spec 005's own vendor table, the free Dexie Cloud tier is:
+**This section was wrong, and the correction came from Ryan looking at the
+running app:**
 
-> 3 production users, 10 databases, 100 MB storage split 25 MB object + 75 MB
-> blob
+> I saw we are already having and supporting multiple users right now. Why do
+> you think that they only support three users? I do not think that is true …
+> I saw we can already log in from Google for different users.
 
-**Three users.** Spec 023 already ran into the adjacent limit — it rejected
-Dexie Cloud realm sharing for shared tanks because "the recipient must accept an
-invitation and authenticate, so they need an account — exactly what 'anyone
-should be able to review the page' rules out. The free tier is 3 production
-seats." A friends list is that same wall with more people behind it.
+He is right, and the app proves it. The original text quoted spec 005's vendor
+table — "3 production users" — and treated that as the number of people who can
+use this app. It is not. Re-checked against Dexie Cloud's own pricing and
+access-control documentation on 2026-09-13:
 
-This is not a matter of writing the feature carefully. **A social feature costs
-money from its first real user**, and how much is a question this spec cannot
-answer because it depends on a pricing decision nobody has made. Dexie Cloud is
-€0.12/user/month at the published rate; a hundred keepers is €12/month, which is
-small, and a hundred thousand is not.
+| | free tier |
+|---|---|
+| **Evaluation users** | **50,000**, with user management and authentication |
+| **Production users** | 3 (€0.12/user/month beyond, sold in packs of 25) |
+| **Demo users** | unlimited, and they never expire |
 
-### Blocker 2 — there is no server that holds anyone else's records
+So signing in as a fourth, fifth or five-thousandth person works exactly as
+observed. Those are **evaluation users**, and they sync.
 
-The Worker (`worker/src/index.ts`) does exactly one job: it hands out
-short-lived presigned URLs for R2 objects, plus two token-scoped public reads
-for a shared tank. It holds no database, has no write route a client can call
-with content, and deliberately returns 404 for `/presign/delete`.
+**The limit is real but deferred, and its shape is worse than a wall.** An
+evaluation user gets **30 active days** — inactive days are not counted, so a
+weekend keeper takes months to spend them. When they run out:
 
-A feed needs the opposite: durable rows, written by many accounts, queried by
-relationship. That is a real backend — a database, an authorisation model, and
-somebody on the hook when it leaks.
+> "After an evaluation period ends, the user can continue using the app but
+> won't be able to sync data."
 
-**Neither blocker is a reason not to do this.** They are the reason it is a
-project rather than a feature, and they belong at the top rather than discovered
-in week three.
+Nothing is deleted. Local records and offline use are untouched. **Syncing
+stops, quietly.** Upgrading is a manual act in the Dexie Cloud management app or
+a REST call, or an automated payment integration nobody has built.
+
+**There is a live consequence today, independent of any social feature.** Every
+account signed in for testing is on that clock, and the only place the app says
+so is one line in the account panel:
+
+```
+Account licence is {license}. Records are safe on this device but are not syncing.
+```
+
+`AccountPanel.tsx:250`. That is correct, and it is a small grey line in a
+settings screen — not where a keeper would learn that their records stopped
+leaving the device. **Filed as BUG-23.**
+
+So the honest version of this blocker: accounts are not the problem, and the
+feature does not cost money at its first real user. It costs money at the first
+user who **stays past thirty active days**, which is a different and much later
+question — and the app should say so out loud before then.
+
+### Blocker 2 — REFINED: realms do most of this; a directory does not exist
+
+Also overstated. Dexie Cloud has **realms**: "access controlled partition[s] of
+data", with a `members` table, per-table `add` / `update` / `manage`
+permissions, and object ownership that survives them. One user really can share
+a set of objects with another named user, invited **by email**, and the
+recipient accepts — which the documentation is explicit is deliberate, because
+"it protects other users from unwillingly starting to see new data."
+
+Spec 023 rejected realms for a *shared tank*, correctly: a stranger reviewing a
+public page cannot be made to hold an account. **A friends list is the opposite
+case.** Both parties have accounts by definition, so the objection does not
+transfer, and it was sloppy to carry it across.
+
+What realms plausibly do, with no new backend:
+
+- add a friend, accept, see a friend list — that is the invite flow verbatim
+- see a friend's tanks, fish, timelines, memorials — objects in a shared realm
+- like and comment — rows in a realm both parties can write to
+
+What realms do **not** do, and this is the real gap:
+
+- **a global directory.** Nothing in the access-control model queries across the
+  database for users. You can *invite* a known email address; you cannot *search*
+  to find out whether one exists.
+- so **"search users by email"** as a lookup, and **"discover users near me"**,
+  both need a server that holds a queryable index of people — with everything
+  that implies about consent, because a directory of aquarium keepers with
+  approximate locations is a different privacy object from a tank photo.
+
+That server is still a real piece of work. It is now the blocker for *discovery*
+rather than for the whole feature.
+
+**Neither blocker is a reason not to do this**, and after the correction above
+neither is as large as this spec first claimed. They belong at the top rather
+than discovered in week three — but the first draft put them there with a number
+that did not survive being checked against the running app, which is its own
+lesson: "measure before asserting" applies to a vendor's pricing page as much as
+to a portrait count.
 
 ## What "mirror Fish Brain" actually maps onto
 
