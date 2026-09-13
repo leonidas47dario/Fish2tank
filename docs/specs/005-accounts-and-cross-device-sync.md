@@ -89,10 +89,18 @@ design that treats them the same is either too expensive or too small.
 Checked against vendor documentation and pricing pages on 2026-08-29, because
 free-tier terms move and the choice turns entirely on them.
 
+**Corrected 2026-09-13.** The Dexie Cloud row said "3 production users" and
+stopped there, and spec 061 then read that as the number of people who can use
+this app. It is not - the free tier also carries 50,000 evaluation users, which
+is why signing in as several people works today. Quoting the hardest number and
+omitting the one that governs ordinary behaviour is how a true row becomes a
+false conclusion two specs later. See BUG-23 for the consequence that is live
+right now.
+
 | Provider | Free tier | Beyond free | Verdict |
 |---|---|---|---|
 | Cloudflare R2 | 10 GB storage, 1M Class A ops, 10M Class B ops per month, egress always $0 | $0.015/GB-month | **Chosen for media.** 10 GB is ~2,800 Panther-sized originals; $10 buys ~666 GB. Zero egress means a new device pulling the whole library costs nothing. |
-| Dexie Cloud | 3 production users, 10 databases, 100 MB storage split 25 MB object + 75 MB blob | €0.12/user/month (the same thing as €3/25 seats), object storage €2/extra GB/month, blob storage €0.05/extra GB/month | **Chosen for records.** Syncs the Dexie database this app already runs on. |
+| Dexie Cloud | 3 production users **plus 50,000 evaluation users** (30 ACTIVE days each, inactive days not counted; after that the app keeps working offline but stops syncing), 10 databases, 100 MB storage split 25 MB object + 75 MB blob | €0.12/user/month (the same thing as €3/25 seats), object storage €2/extra GB/month, blob storage €0.05/extra GB/month | **Chosen for records.** Syncs the Dexie database this app already runs on. |
 | Cloudflare Workers | 100k requests/day | $5/month | **Chosen for the auth broker and signed URLs.** |
 | Supabase | 500 MB database, 1 GB storage | $25/month | **Rejected.** Free projects pause after 7 days of inactivity and need a manual dashboard unpause. An app opened on weekends would find a sleeping database. |
 | Firebase | Auth is free and generous | Storage egress $0.12/GB | **Rejected.** Egress billing punishes exactly the operation this feature exists to perform: a new device downloading everything. |
