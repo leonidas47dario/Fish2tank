@@ -733,6 +733,16 @@ export async function awardGolden(specimenId: Id, reason?: string, database: DB 
   await database.specimens.update(specimenId, { golden: { awardedAt: nowIso(), reason }, updatedAt: nowIso() });
 }
 
+/**
+ * Spec 070. Golden is a choice the keeper can change their mind about; until
+ * this existed, `awardGolden` had no caller (BUG-23) and so no undo was
+ * needed. Dexie's `update` deletes a key whose value is `undefined`, which is
+ * exactly the intent here and the trap BUG-09 fell into elsewhere.
+ */
+export async function removeGolden(specimenId: Id, database: DB = db): Promise<void> {
+  await database.specimens.update(specimenId, { golden: undefined, updatedAt: nowIso() });
+}
+
 // ---------------------------------------------------------------------------
 // Ownership and lifecycle (PRD 4.8)
 // ---------------------------------------------------------------------------

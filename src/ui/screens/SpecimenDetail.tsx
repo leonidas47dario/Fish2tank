@@ -38,7 +38,8 @@ import { IdentityBadge, VerdictBadge } from '../components/Badges';
 import { FactorList, MissingInputsNotice } from '../components/FactorList';
 import { InlineField, InlineNote } from '../components/InlineField';
 import { usePrefersReducedMotion } from '@/theme/ThemeProvider';
-import { CaretLeftIcon, CaretRightIcon } from '../components/Icons';
+import { CaretLeftIcon, CaretRightIcon, StickerIcon } from '../components/Icons';
+import { CardSheet } from '../components/CardSheet';
 import { CatchPhotos } from '../components/CatchPhotos';
 import { FishTimeline } from '../components/FishTimeline';
 
@@ -110,6 +111,7 @@ export default function SpecimenDetail() {
   // with it in spec 039 and briefly landed below these guards.
   const [busy, setBusy] = useState(false);
   const [openTank, setOpenTank] = useState<string | undefined>();
+  const [cardOpen, setCardOpen] = useState(false);
 
   if (!id) return <p className="empty">No specimen.</p>;
   if (specimen === undefined) return <p className="empty muted">Loading…</p>;
@@ -234,12 +236,18 @@ export default function SpecimenDetail() {
 
   return (
     <div className="screen">
-      <div className="topbar">
+      <div className="topbar topbar--clear">
         <button type="button" className="iconbtn" onClick={() => navigate(-1)} aria-label="Back">
           <CaretLeftIcon size={22} aria-hidden="true" />
         </button>
         <span className="grow" />
+        {/* Spec 070: this fish as a card you can keep or send. */}
+        <button type="button" className="btn--ghost topbar__act" onClick={() => setCardOpen(true)}>
+          <StickerIcon size={18} aria-hidden="true" />
+          Card
+        </button>
       </div>
+      {cardOpen && <CardSheet specimenId={specimen.id} onClose={() => setCardOpen(false)} />}
 
       {/* --- Media. Original, always (FR-J01, PRD 7.4) --------------------- */}
       <CatchPhotos specimenId={specimen.id} title={title} reducedMotion={reducedMotion} />

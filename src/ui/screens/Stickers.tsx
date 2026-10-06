@@ -22,6 +22,7 @@ import {
 import { Plate } from '../components/Plate';
 import { TileArt } from '../components/TileArt';
 import { CaretLeftIcon, StarIcon } from '../components/Icons';
+import { formatWhen } from '../format-when';
 
 const FILTERS: Array<{ id: StickerFilter; label: string }> = [
   { id: 'all', label: 'All' },
@@ -174,15 +175,4 @@ function StickerFace({ sticker }: { sticker: Sticker }) {
       )}
     </>
   );
-}
-
-/**
- * A calendar date is parsed as a LOCAL date, not as UTC midnight - which in
- * Chicago would print 14 March as 13 March.
- */
-function formatWhen(on: string): string {
-  const date = /^\d{4}-\d{2}-\d{2}$/.test(on)
-    ? new Date(Number(on.slice(0, 4)), Number(on.slice(5, 7)) - 1, Number(on.slice(8, 10)))
-    : new Date(on);
-  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 }

@@ -20,6 +20,7 @@ import {
   assertIdentity,
   assessmentHistory,
   awardGolden,
+  removeGolden,
   clearTankPhoto,
   createAquarium,
   createCatchDraft,
@@ -515,6 +516,12 @@ describe('End-to-end acceptance: the Panther (PRD 10)', () => {
     expect(golden!.golden!.reason).toBeTruthy();
     // FR-R06: Golden changes nothing objective.
     expect((await db.raritySnapshots.get(snapshot.id))!.totalScore).toBe(snapshot.totalScore);
+
+    // Spec 070: and taking it back changes nothing objective either.
+    await removeGolden(draft.specimen.id, db);
+    expect((await db.specimens.get(draft.specimen.id))!.golden).toBeUndefined();
+    expect((await db.raritySnapshots.get(snapshot.id))!.totalScore).toBe(snapshot.totalScore);
+    await awardGolden(draft.specimen.id, 'The way he tracked me across the glass.', db);
 
     // Step 7 - Leave responsibly. No holding, no ownership, no purchase.
     expect(await db.holdings.where('specimenId').equals(draft.specimen.id).count()).toBe(0);
