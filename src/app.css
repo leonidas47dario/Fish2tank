@@ -1640,6 +1640,9 @@ summary.factor::-webkit-details-marker { display: none; }
  */
 .app > .stack > header > h1,
 .app > .screen > header > h1 { padding-right: 3rem; }
+/* A top bar with something at its right end: the button covers that end, so
+   the bar stops short of it. The button's own width, its inset, and a gap. */
+.topbar--clear { padding-right: calc(2.25rem + var(--space-4) + var(--space-2)); }
 
 /*
  * The gate (FR-A09). Deliberately plain: it is the first thing a new device

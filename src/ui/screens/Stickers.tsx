@@ -73,7 +73,7 @@ export default function Stickers() {
 
   return (
     <div className="screen">
-      <div className="topbar">
+      <div className="topbar topbar--clear">
         <button type="button" className="iconbtn" onClick={() => navigate(-1)} aria-label="Back">
           <CaretLeftIcon size={22} aria-hidden="true" />
         </button>
