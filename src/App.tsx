@@ -12,6 +12,7 @@ import Heaven from './ui/screens/Heaven';
 import HeavenDetail from './ui/screens/HeavenDetail';
 import SpecimenDetail from './ui/screens/SpecimenDetail';
 import Settings from './ui/screens/Settings';
+import Stickers from './ui/screens/Stickers';
 import SharedTank from './ui/screens/SharedTank';
 import AuthGate from './ui/components/AuthGate';
 import AutoMediaSync from './ui/components/AutoMediaSync';
@@ -79,6 +80,9 @@ function GatedApp() {
               releases and may be bookmarked or linked from a story. */}
           <Route path="/collection" element={<Navigate to="/catalog" replace />} />
           <Route path="/species/:id" element={<SpeciesDetail />} />
+          {/* Spec 069: every fish, one sticker each. Reached from Home rather
+              than the nav, which PRD 3.2 fixed at five destinations. */}
+          <Route path="/stickers" element={<Stickers />} />
           <Route path="/catch" element={<CatchScreen />} />
           {/* The guided identify + reveal step, entered straight from a capture. */}
           <Route path="/catch/:specimenId/identify" element={<IdentifyFlow />} />

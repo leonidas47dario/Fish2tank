@@ -19,11 +19,12 @@ memory. Rows added since then name their own date.
 
 | ID | Summary | Found |
 |---|---|---|
+| BUG-23 | **Golden cannot be awarded.** FR-R06 is P0 and `awardGolden()` exists (`src/data/repositories.ts:732`), but no screen calls it (repro: `grep -rn awardGolden src/ui` finds nothing), so every Golden treatment in the app (the reveal's foil, the catalog's golden flag, the sticker book's foil and filter) draws a field no keeper can set. Spec 070 puts the control on the fish's card. | 2026-10-06, building spec 069's Golden filter |
 
 Add new ones here with a repro and a file:line, and move them down when they
 are fixed.
 
-**No open bugs as of 2026-09-04.** BUG-11 and BUG-12 had been fixed and
+**No open bugs as of 2026-09-04;** BUG-23 opened 2026-10-06. BUG-11 and BUG-12 had been fixed and
 withdrawn respectively and were left sitting in this table; both are moved
 below. BUG-09 was genuinely open and is fixed by spec 057.
 
@@ -100,6 +101,7 @@ warehouse, which nothing in the PRD anticipated.
 | FR-A09 | An account is required: no route renders without one, but the gate tests for a cached identity rather than a network, so a device that has signed in once keeps working offline | Built — spec 010, `src/ui/components/AuthGate.tsx`. Reverses FR-A05. |
 | FR-A10 | A profile affordance in the top right of every screen, reaching Settings in one tap and naming who is signed in | Built — spec 010, `src/ui/components/ProfileButton.tsx` |
 | FR-A11 | When a device holding records signs in, the gate says how many and asks which copy is the real one, defaulting to the account's and taking a backup either way | Built — spec 022, `src/ui/components/AuthGate.tsx`, `src/data/sync/joining-a-device.ts`. Closes BUG-08. Zero-record devices see the plain single button, which is every device that has synced before. |
+| FR-R15 | A sticker book: every fish you have met or kept, one sticker each, filterable by Caught / Kept / Golden without duplicating any fish | **Built - spec 069.** `src/domain/sticker-book.ts`, `src/ui/screens/Stickers.tsx`, `#/stickers` from Home. PRD 3.2's Collection listed "unique specimen cards" beside the species index; only the index had been built. |
 
 ---
 

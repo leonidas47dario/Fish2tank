@@ -53,6 +53,8 @@ export { GoogleLogoIcon } from '@phosphor-icons/react/dist/csr/GoogleLogo';
 export { ShareNetworkIcon } from '@phosphor-icons/react/dist/csr/ShareNetwork';
 export { HeartIcon } from '@phosphor-icons/react/dist/csr/Heart';
 export { LinkIcon } from '@phosphor-icons/react/dist/csr/Link';
+export { StarIcon } from '@phosphor-icons/react/dist/csr/Star';
+export { StickerIcon } from '@phosphor-icons/react/dist/csr/Sticker';
 
 /**
  * The one stroke weight, everywhere.

@@ -22,7 +22,7 @@ import { useRecentCatches, useTanksWithResidents } from '../hooks';
 import { homeSummary } from './home-summary';
 import { Plate } from '../components/Plate';
 import { useBlobUrl } from '../blob-url';
-import { CameraIcon, GearIcon } from '../components/Icons';
+import { CameraIcon, GearIcon, StickerIcon } from '../components/Icons';
 
 export default function Home() {
   const recent = useRecentCatches(8);
@@ -114,7 +114,17 @@ export default function Home() {
       </div>
 
       <section className="panel panel--flush">
-        <h2 className="sec-head">Recent catches</h2>
+        {/* Spec 069. The shelf stops at eight on purpose; the sticker book is
+            where every one of them lives, so the way in sits on the shelf. */}
+        <div className="sec-row">
+          <h2 className="sec-head">Recent catches</h2>
+          {recent && recent.length > 0 && (
+            <Link to="/stickers" className="sec-link">
+              <StickerIcon size={16} aria-hidden="true" />
+              Sticker book
+            </Link>
+          )}
+        </div>
         {recent?.length === 0 ? (
           <div className="prompt">
             <p className="prompt__title">Nothing here yet</p>

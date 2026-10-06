@@ -155,6 +155,20 @@
   --focus-ring: 0 0 0 2px var(--color-canvas), 0 0 0 4px var(--color-primary);
   --media-glow: none;
   --foil-strength: 0.5;
+  /* --- The sticker (spec 069) -------------------------------------------
+   * A die-cut paper edge around the whole photograph, tilted as if stuck to
+   * a page by hand. The edge is PAPER, so it is near-white on the dark
+   * territory and has to be told apart from a pale page on the light ones by
+   * its shadow rather than its colour - which is why the light territories
+   * deepen --elevation-sticker rather than darken the edge.
+   */
+  --sticker-edge: #f3f7f8;
+  --sticker-edge-width: 5px;
+  --radius-sticker: 18px;
+  --sticker-tilt: 1.6deg;
+  --elevation-sticker: 0 8px 18px -10px rgb(3 10 14 / 0.9), 0 1px 2px rgb(3 10 14 / 0.6);
+  /* Text on the mark chip. Dark on paper in every territory. */
+  --color-on-sticker: #102b3d;
 
   /* --- Motion and sound ------------------------------------------------- */
   --duration-fast: 110ms;
@@ -256,6 +270,9 @@
   --elevation-raised: 0 12px 28px rgb(16 43 61 / 0.14);
   --elevation-plate: 0 6px 18px -8px rgb(16 43 61 / 0.22);
   --foil-strength: 0.75;
+  --sticker-edge: #ffffff;
+  --radius-sticker: 26px;
+  --elevation-sticker: 0 8px 18px -8px rgb(16 43 61 / 0.35), 0 0 0 1px rgb(16 43 61 / 0.08);
   --reveal-intensity: 1.25;
   --texture-canvas: linear-gradient(180deg, #ffffff 0%, #eaf7ff 30%, #eaf6fd 100%);
   --surface-line: color-mix(in srgb, var(--color-accent) 30%, transparent);
@@ -309,6 +326,13 @@
   --elevation-raised: 0 6px 18px rgb(43 34 22 / 0.16);
   --elevation-plate: 0 2px 0 rgb(43 34 22 / 0.14);
   --foil-strength: 0.35;
+  /* Cream stock rather than white: a white sticker on warm paper reads as a
+     hole in the page. Square-ish, like a stamp pasted into a fieldbook. */
+  --sticker-edge: #fffaf1;
+  --radius-sticker: 4px;
+  --sticker-tilt: 1deg;
+  --elevation-sticker: 0 3px 8px -2px rgb(43 34 22 / 0.28), 0 0 0 1px rgb(43 34 22 / 0.12);
+  --color-on-sticker: #2b2216;
   --divider-style: dashed;
   --texture-canvas: none;
   --surface-line: color-mix(in srgb, var(--color-text) 18%, transparent);
