@@ -39,16 +39,57 @@ jobs:
           ref: main
           path: prod
 
+      # BUG-19. This answer decides whether /uat/ is included in the artifact,
+      # and the artifact is published WHOLE - so a wrong "no" here does not skip
+      # staging, it DELETES it. That makes every non-answer dangerous, and there
+      # were two:
+      #
+      #   - The call was anonymous. A private repository answers 404 to an
+      #     unauthenticated ls-remote, which is indistinguishable from "no such
+      #     branch", so making this repo private would have silently deleted
+      #     /uat/ on the next deploy.
+      #   - Every other failure - a network blip, a rate limit, an outage -
+      #     took the same branch. A transient error deleted staging.
+      #
+      # So: authenticate, and treat only git's own "no matching refs" (exit 2)
+      # as a real no. Anything else fails the job, because publishing half the
+      # site is worse than not publishing.
       - name: Does a uat branch exist yet?
         id: uat
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          if git ls-remote --exit-code --heads \
-              "https://github.com/${{ github.repository }}.git" uat >/dev/null 2>&1; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "exists=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::No uat branch yet; publishing production only."
-          fi
+          set +e
+          git ls-remote --exit-code --heads \
+            "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" \
+            uat >/dev/null 2>&1
+          rc=$?
+          set -e
+
+          case "$rc" in
+            0)
+              echo "exists=true" >> "$GITHUB_OUTPUT"
+              ;;
+            2)
+              # git's documented "no matching refs". The only safe no.
+              echo "exists=false" >> "$GITHUB_OUTPUT"
+              echo "::notice::No uat branch yet; publishing production only."
+              ;;
+            *)
+              echo "::error::Could not determine whether a uat branch exists (git ls-remote exit $rc)."
+              cat <<'MSG'
+          This step could not reach the remote, which is NOT the same as there
+          being no uat branch - and the difference matters, because the Pages
+          artifact is published whole. Continuing would publish production
+          alone and delete the live /uat/ site.
+
+          Failing instead. Re-run the job; if it keeps failing, check whether
+          the repository is reachable and whether GITHUB_TOKEN still has
+          contents:read.
+          MSG
+              exit 1
+              ;;
+          esac
 
       - name: Check out staging (uat)
         if: steps.uat.outputs.exists == 'true'
